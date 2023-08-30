@@ -1,0 +1,63 @@
+﻿@using Squadtalk.Client.Models
+<div class="message-container">
+    @if (Model.IsFirst)
+    {
+        <div class="padding"></div>
+        <img class="avatar" src="user.png" alt="Avatar"/>
+        <div class="username">@Model.Author</div>
+        <div class="date" data-date="@LongDate">@Date</div>
+    }
+    else
+    {
+        <div class="content-only-date">@ShortDate</div>
+    }
+
+    <div class="message-content">
+        @if (Model.Embed is not null)
+        {
+            <MessageEmbed Model="Model.Embed"/>
+        }
+        <div style="white-space: pre-wrap">@Model.Content</div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public required MessageModel Model { get; set; }
+
+    private string? _date;
+    private string? _longDate;
+    private string? _shortDate;
+
+    private string Date => _date ??= TimeStampConverter(Model.Timestamp, DateFormatMode.Default);
+    private string LongDate => _longDate ??= TimeStampConverter(Model.Timestamp, DateFormatMode.Long);
+    private string ShortDate => _shortDate ??= TimeStampConverter(Model.Timestamp, DateFormatMode.Short);
+
+    private static string TimeStampConverter(DateTimeOffset dateTime, DateFormatMode formatMode)
+    {
+        var format = formatMode == DateFormatMode.Long ? "HH:mm:ss" : "HH:mm";
+        if (formatMode == DateFormatMode.Short)
+        {
+            return dateTime.ToLocalTime().ToString(format);
+        }
+
+        if (dateTime.Date == DateTime.Today)
+        {
+            return $"Today {dateTime.ToLocalTime().ToString(format)}";
+        }
+
+        if (dateTime.Date == DateTime.Today.AddDays(-1))
+        {
+            return $"Yesterday {dateTime.ToLocalTime().ToString(format)}";
+        }
+
+        var fullFormat = formatMode == DateFormatMode.Long ? "dd-MM-yyyy HH:mm:ss" : "dd-MM-yyyy HH:mm";
+        return dateTime.ToLocalTime().ToString(fullFormat);
+    }
+
+    private enum DateFormatMode
+    {
+        Default,
+        Short,
+        Long
+    }
+}

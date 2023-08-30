@@ -1,0 +1,167 @@
+﻿@using System.Threading
+@using Microsoft.AspNetCore.Components.Rendering;
+@using Microsoft.JSInterop
+
+@typeparam T
+@inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
+
+@if (ItemTemplate != null)
+{
+    foreach (var item in Items)
+    {
+        @ItemTemplate(item)
+    }
+}
+@if (IsLoading)
+{
+    @LoadingTemplate
+}
+
+@RenderLastElement
+
+@code {
+    public List<T> Items { get; private set; } = new();
+
+    private ElementReference _lastItemIndicator;
+    private DotNetObjectReference<InfiniteScrolling<T>>? _currentComponentReference;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _instance;
+    private bool _enumerationCompleted;
+
+    private CancellationTokenSource? _loadItemsTokenSource;
+    private ItemsProviderRequestDelegate<T>? _itemsProvider;
+
+    private bool IsLoading => _loadItemsTokenSource != null;
+
+    [Parameter] public ItemsProviderRequestDelegate<T>? ItemsProvider { get; set; }
+    [Parameter] public RenderFragment<T>? ItemTemplate { get; set; }
+    [Parameter] public RenderFragment? LoadingTemplate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tag name of the HTML element that will be used as the virtualization spacer.
+    /// One such element will be rendered before the visible items, and one more after them, using
+    /// an explicit "height" style to control the scroll range.
+    ///
+    /// The default value is "div". If you are placing the <see cref="InfiniteScrolling{T}"/> instance inside
+    /// an element that requires a specific child tag name, consider setting that here. For example when
+    /// rendering inside a "tbody", consider setting <see cref="LastItemIndicatorElement"/> to the value "tr".
+    /// </summary>
+    [Parameter] public string LastItemIndicatorElement { get; set; } = "div";
+
+    [JSInvokable]
+    public async Task LoadMoreItems()
+    {
+        if (_loadItemsTokenSource != null) return;
+
+        if (ItemsProvider == null) return;
+
+        var currentItems = Items;
+        var cancellationTokenSource = new CancellationTokenSource();
+        _loadItemsTokenSource = cancellationTokenSource;
+        try
+        {
+            StateHasChanged();
+            try
+            {
+                var newItems = await ItemsProvider(new InfiniteScrollingItemsProviderRequest(currentItems.Count, cancellationTokenSource.Token));
+                if (!cancellationTokenSource.IsCancellationRequested)
+                {
+                    var length = currentItems.Count;
+                    currentItems.AddRange(newItems);
+
+                    if (currentItems.Count == length)
+                    {
+                        _enumerationCompleted = true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.Assert(_instance != null);
+                        await _instance.InvokeVoidAsync("onNewItems", cancellationTokenSource.Token);
+                    }
+                }
+            }
+            catch (OperationCanceledException e) when (e.CancellationToken == cancellationTokenSource.Token)
+            {
+            }
+        }
+        finally
+        {
+            _loadItemsTokenSource = null;
+            cancellationTokenSource.Dispose();
+        }
+
+        StateHasChanged();
+    }
+
+    public void InsertItem(int index, T item)
+    {
+        Items.Insert(index, item);
+        StateHasChanged();
+    }
+
+    public async Task RefreshDataAsync()
+    {
+        _loadItemsTokenSource?.Cancel(); 
+        _loadItemsTokenSource = null;
+
+        Items = new List<T>();
+        _enumerationCompleted = false;
+        await LoadMoreItems();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (ItemsProvider != _itemsProvider)
+        {
+            Items = new List<T>();
+            _enumerationCompleted = false;
+        }
+
+        _itemsProvider = ItemsProvider;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./infinite-scrolling.js");
+            _currentComponentReference = DotNetObjectReference.Create(this);
+            _instance = await _module.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_loadItemsTokenSource is not null)
+        {
+            _loadItemsTokenSource.Dispose();
+            _loadItemsTokenSource = null;
+        }
+
+        if (_instance is not null)
+        {
+            await _instance.InvokeVoidAsync("dispose");
+            await _instance.DisposeAsync();
+            _instance = null;
+        }
+
+        if (_module is not null)
+        {
+            await _module.DisposeAsync();
+        }
+
+        _currentComponentReference?.Dispose();
+    }
+
+    private void RenderLastElement(RenderTreeBuilder builder)
+    {
+        builder.OpenElement(1000, LastItemIndicatorElement);
+        var style = _enumerationCompleted ? "height:0;width:0" : "height:1px;width:1px;flex-shrink:0";
+        builder.AddAttribute(1001, "style", style);
+        builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
+        builder.CloseElement();
+    }
+}

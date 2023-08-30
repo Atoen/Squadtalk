@@ -1,0 +1,38 @@
+﻿@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorageService
+
+@if (_showBanner)
+{
+    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show" role="alert" style="margin-top: auto;">
+        This app only uses strictly necessary cookies to function. No personal data is collected
+        <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close" @onclick="AcceptMessage">
+            Accept Cookies
+        </button>
+    </div>
+}
+
+@code {
+    bool _showBanner;
+        
+    private const string PolicyAccepted = "CookiePolicyAccepted";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (await LocalStorageService.ContainKeyAsync(PolicyAccepted))
+        {
+            var accepted = await LocalStorageService.GetItemAsync<bool>(PolicyAccepted);
+            if (!accepted) _showBanner = true;
+        }
+        else
+        {
+            _showBanner = true;
+        }
+    }
+
+    private async Task AcceptMessage()
+    {
+        await LocalStorageService.SetItemAsync(PolicyAccepted, true);
+        _showBanner = false;
+    }
+}
+

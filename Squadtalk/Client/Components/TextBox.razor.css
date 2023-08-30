@@ -1,0 +1,79 @@
+﻿.add-button svg path {
+    fill: currentColor;
+}
+
+.add-button {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    margin: 0 10px;
+    color: dimgray;
+    border: none;
+    background: none;
+    transition: color 0.1s ease, transform 0.3s ease;
+}
+
+.add-button:hover {
+    color: white;
+    transform: rotate(90deg);
+}
+
+.add-button:active {
+    color: wheat;
+}
+
+.send-button svg path {
+    fill: currentColor;
+}
+
+.send-button {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    color: dimgray;
+    border: none;
+    background: none;
+    transition: color 0.1s ease, transform 0.2s ease;
+}
+
+.send-button:hover {
+    color: white;
+    transform: scale(1.1);
+}
+
+.send-button:active {
+    transform: translate(5px, 0px) scale(1.1);
+    color: wheat;
+}
+
+.text-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    width: 100%;
+}
+
+.textbox {
+    width: calc(100% - 150px);
+    min-height: 50px;
+    max-height: 400px;
+    resize: none;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    border-radius: 10px;
+}
+
+.textbox::placeholder {
+    color: gray;
+}
+
+.text-area-button {
+    width: 60px;
+    margin: 0px 4px;
+}
+
+.add-button {
+    fill: red;
+}

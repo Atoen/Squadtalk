@@ -1,0 +1,174 @@
+﻿@page "/app"
+@using Blazored.LocalStorage
+@using RestSharp
+@using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
+@using Squadtalk.Client.Shared
+@using Squadtalk.Shared
+
+@implements IAsyncDisposable
+
+<PageTitle>Squadtalk</PageTitle>
+
+<link rel="stylesheet" href="css/messageTemplate.css" />
+<link rel="stylesheet" href="css/uploadinfo.css" />
+
+<div style="background: #424242;">
+    <div class="message-listbox">
+        <InfiniteScrolling ItemsProvider="GetMessagePage" @ref="_scrollRef">
+            <ItemTemplate>
+                <MessageTemplate Model="context"/>
+            </ItemTemplate>
+
+            <LoadingTemplate>
+                <div>
+                    <span class="oi oi-reload spinner"></span> Loading more items...
+                </div>
+            </LoadingTemplate>
+        </InfiniteScrolling>
+    </div>
+    
+    <UploadInfo/>
+
+    <TextBox SignalRService="SignalRService"/>
+
+</div>
+
+<div id="overlay">Drop your file here!</div>
+
+<div>
+    <button @onclick="() => LogOut()">Log out</button>
+    <button @onclick="()=> LogOut(true)">Log out (all sessions)</button>
+    <button @onclick="Callback">Callback</button>
+</div>
+
+<AuthorizeView Policy="@IdentityData.UserPolicyName" Context="authContext">
+    <Authorized>
+        <div>
+            Authorized as:
+            @foreach (var claim in authContext.User.Claims)
+            {
+                <p>@claim</p>
+            }
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <p>You are not authorized to access this content.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+<style>
+    .page {
+        height: 100vh;
+        background: linear-gradient(0deg, rgba(26,85,134,1) 0%, rgba(111,0,163,1) 100%);
+    }
+    
+    .message-listbox {
+        height: 80vh;
+        overflow: auto;
+        display: flex;
+        flex-direction: column-reverse;
+    }
+
+    #overlay {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #000000;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        font-size: 24px;
+        text-align: center;
+        padding-top: 30%;
+    }
+</style>
+
+@inject JWTService JwtService
+@inject SignalRService SignalRService
+@inject MessageService MessageService
+@inject NavigationManager NavigationManager
+@inject RestClient RestClient
+@inject ILocalStorageService LocalStorageService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@code {
+    
+    private InfiniteScrolling<MessageModel> _scrollRef = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!JwtService.IsTokenSet)
+        {
+            NavigationManager.NavigateTo("");
+            return;
+        }
+        
+        var result = await SignalRService.ConnectAsync();
+        Console.WriteLine(result);
+
+        MessageService.MessageReceived = MessageServiceMessageReceived;
+        JwtService.UnableToRefreshToken = () => NavigationManager.NavigateTo("/");
+    }
+
+    private void MessageServiceMessageReceived(MessageModel model)
+    {
+        _scrollRef.InsertItem(0, model);
+    }
+
+    private async Task<IEnumerable<MessageModel>> GetMessagePage(InfiniteScrollingItemsProviderRequest request)
+    {
+        var page = await MessageService.GetMessagePageAsync(request.StartIndex);
+        if (_scrollRef.Items.Count > 0 && page.Count > 0)
+        {
+            MessageService.CheckIfIsFirst(_scrollRef.Items[^1], page[0]);
+        }
+
+        return page;
+    }
+
+    private async Task LogOut(bool invalidateAllSessions = false)
+    {
+        var request = new RestRequest("api/user/logout", Method.Post);
+        var currentRefreshToken = await LocalStorageService.GetItemAsync<string>("Token");
+
+        request.AddHeader("Authorization", $"Bearer {JwtService.Token}");
+
+        if (invalidateAllSessions)
+        {
+            request.AddQueryParameter("invalidateAllSessions", invalidateAllSessions);
+        }
+        else
+        {
+            request.AddBody($"\"{currentRefreshToken}\"");
+        }
+        
+        await RestClient.ExecuteAsync(request);
+
+        await LocalStorageService.RemoveItemAsync("Username");
+        JwtService.ClearToken();
+        
+        NavigationManager.NavigateTo("/");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await JwtService.CancelPendingRequests();
+
+        await SignalRService.DisposeAsync();
+        await _scrollRef.DisposeAsync();
+    }
+
+    private async Task Callback()
+     {
+         var a = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+         Console.WriteLine($"Claims: {a.User.Claims.Count()}");
+         
+         foreach (var claim in a.User.Claims)
+         {
+             Console.WriteLine(claim.Value);
+         }
+     }
+}
