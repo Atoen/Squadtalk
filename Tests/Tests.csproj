@@ -34,8 +34,5 @@
       <ProjectReference Include="..\Squadtalk\Shared\Squadtalk.Shared.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Tus\" />
-    </ItemGroup>
 
 </Project>

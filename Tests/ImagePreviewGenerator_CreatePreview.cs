@@ -12,7 +12,7 @@ public class ImagePreviewGenerator_CreatePreview
     [Fact]
     public async Task CreateImagePreview_Success()
     {
-        var dir = new DirectoryInfo("../../../Tus");
+        var dir = Directory.CreateDirectory("../../../Tus");
 
         foreach (var info in dir.GetFiles())
         {
