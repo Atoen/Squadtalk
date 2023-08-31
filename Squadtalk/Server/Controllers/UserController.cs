@@ -77,7 +77,7 @@ public class UserController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> LogOut(bool invalidateAllSessions = false)
     {
-        var userResult = await _userService.GetUser(HttpContext.User, true);
+        var userResult = await _userService.GetUserAsync(HttpContext.User, true);
         if (userResult.IsT1) return NotFound();
 
         var user = userResult.AsT0;

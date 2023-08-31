@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Squadtalk.Server.Services;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
-using tusdotnet.Stores;
 
 namespace Squadtalk.Server.Controllers;
 
@@ -22,14 +21,10 @@ public class FileController : ControllerBase
     [HttpGet]
     public async Task<ActionResult> DownloadFile([FromQuery] string id)
     {
-        // await Task.Delay(TimeSpan.FromSeconds(15));
-        
-        var store = new TusDiskStore(_diskStoreHelper.Path);
-
         ITusFile file;
         try
         {
-            file = await store.GetFileAsync(id, HttpContext.RequestAborted);
+            file = await _diskStoreHelper.Store.GetFileAsync(id, HttpContext.RequestAborted);
             if (file is null) return BadRequest("Invalid file id");
         }
         catch (TusStoreException e)

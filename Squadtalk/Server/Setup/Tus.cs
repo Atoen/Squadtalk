@@ -18,14 +18,11 @@ public class Tus
         var config = new DefaultTusConfiguration
         {
             Store = new TusDiskStore(path),
-            // Expiration = new SlidingExpiration(TimeSpan.FromMinutes(5)),
-            // UsePipelinesIfAvailable = true,
-
             Events = new Events
             {
                 OnAuthorizeAsync = AuthorizeHandler,
                 OnCreateCompleteAsync = CreateCompleteHandler,
-                OnFileCompleteAsync = FileCompleteHandler,
+                OnFileCompleteAsync = FileCompleteHandler
             }
         };
 
@@ -37,19 +34,21 @@ public class Tus
         var httpContext = authorizeContext.HttpContext;
         var logger = httpContext.RequestServices.GetRequiredService<ILogger<Tus>>();
 
-        if (httpContext.User.Identity is not { IsAuthenticated: true }) 
+        if (httpContext.User.Identity is not { IsAuthenticated: true })
         {
-            logger.LogInformation("Rejected unauthenticated request from {Remote}", httpContext.Connection.RemoteIpAddress);
+            logger.LogInformation("Rejected unauthenticated request from {Remote}",
+                httpContext.Connection.RemoteIpAddress);
+            
             authorizeContext.FailRequest(HttpStatusCode.Unauthorized);
         }
 
         return Task.CompletedTask;
     }
 
-    private static Task CreateCompleteHandler(CreateCompleteContext completeContext)
+    private static Task CreateCompleteHandler(CreateCompleteContext createContext)
     {
-        var logger = completeContext.HttpContext.RequestServices.GetRequiredService<ILogger<Tus>>();
-        logger.LogInformation("Created file {File}", completeContext.FileId);
+        var logger = createContext.HttpContext.RequestServices.GetRequiredService<ILogger<Tus>>();
+        logger.LogInformation("Created file {File}", createContext.FileId);
 
         return Task.CompletedTask;
     }
@@ -63,10 +62,10 @@ public class Tus
 
         var file = await fileContext.GetFileAsync();
         var embed = await httpContext.RequestServices.GetRequiredService<EmbedService>()
-            .CreateEmbed(file, httpContext);
+            .CreateEmbedAsync(file, httpContext);
 
         var userResult = await httpContext.RequestServices.GetRequiredService<UserService>()
-            .GetUser(httpContext.User);
+            .GetUserAsync(httpContext.User);
 
         var user = userResult.AsT0;
 
@@ -80,7 +79,7 @@ public class Tus
             Embed = embed
         };
 
-        await messageService.StoreMessage(message);
+        await messageService.StoreMessageAsync(message);
         await hub.Clients.All.SendAsync("ReceiveMessage", message.ToDto());
     }
 }

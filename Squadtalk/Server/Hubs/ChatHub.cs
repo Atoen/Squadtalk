@@ -24,7 +24,7 @@ public class ChatHub : Hub<IChatClient>
     
     public async Task SendMessage(string messageContent)
     {
-        var user = await _userService.GetUser(Context.User!);
+        var user = await _userService.GetUserAsync(Context.User!);
 
         var isGifSource = await _gifSourceVerifierService.VerifyAsync(messageContent);
 
@@ -47,7 +47,7 @@ public class ChatHub : Hub<IChatClient>
             };
         }
         
-        await _messageService.StoreMessage(message);
+        await _messageService.StoreMessageAsync(message);
         await Clients.All.ReceiveMessage(message);
     }
     

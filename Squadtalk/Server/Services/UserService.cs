@@ -106,7 +106,7 @@ public class UserService
             error => error);
     }
     
-    public async Task<OneOf<User, NotFound>> GetUser(ClaimsPrincipal claimsPrincipal, bool includeRefreshTokens = false)
+    public async Task<OneOf<User, NotFound>> GetUserAsync(ClaimsPrincipal claimsPrincipal, bool includeRefreshTokens = false)
     {
         var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtClaims.Uid);
         if (idClaim is null) return new NotFound();

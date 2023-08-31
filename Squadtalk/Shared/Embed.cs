@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
 using Newtonsoft.Json;
 
 namespace Squadtalk.Shared;
@@ -14,9 +13,6 @@ public class EmbedDto
     [NotMapped]
     public Dictionary<string, string> Data
     {
-        // get => JsonSerializer.Deserialize<Dictionary<string, string>>(DataJson)!;
-        // set => JsonSerializer.Serialize(value);
-        
         get => JsonConvert.DeserializeObject<Dictionary<string, string>>(DataJson)!;
         set => DataJson = JsonConvert.SerializeObject(value);
     }

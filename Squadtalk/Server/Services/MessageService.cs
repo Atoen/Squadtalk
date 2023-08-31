@@ -12,7 +12,7 @@ public class MessageService
         _dbContext = dbContext;
     }
 
-    public async Task StoreMessage(Message message)
+    public async Task StoreMessageAsync(Message message)
     {
         await _dbContext.Messages.AddAsync(message);
 

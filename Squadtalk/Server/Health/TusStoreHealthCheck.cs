@@ -17,8 +17,8 @@ public class TusStoreHealthCheck : IHealthCheck
     {
         try
         {
-            var store = new TusDiskStore(_diskStoreHelper.Path);
-            var id = await store.CreateFileAsync(0, "", cancellationToken);
+            var store = _diskStoreHelper.Store;
+            var id = await _diskStoreHelper.Store.CreateFileAsync(0, "", cancellationToken);
             await store.DeleteFileAsync(id, cancellationToken);
 
             return HealthCheckResult.Healthy();

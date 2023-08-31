@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squadtalk.Client", "Squadta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squadtalk.Shared", "Squadtalk\Shared\Squadtalk.Shared.csproj", "{542E2061-09F9-47E4-8596-FC7E69C8BC8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{7DB60458-9D74-43E7-9124-36231826F791}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DB60458-9D74-43E7-9124-36231826F791}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DB60458-9D74-43E7-9124-36231826F791}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DB60458-9D74-43E7-9124-36231826F791}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DB60458-9D74-43E7-9124-36231826F791}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

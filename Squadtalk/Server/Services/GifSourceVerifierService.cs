@@ -1,6 +1,6 @@
 ﻿namespace Squadtalk.Server.Services;
 
-public class GifSourceVerifierService
+public class GifSourceVerifierService : IGifSourceVerifier
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -27,7 +27,7 @@ public class GifSourceVerifierService
 
     private async Task<bool> VerifySourceAsync(Uri uri)
     {
-        using var client = _httpClientFactory.CreateClient();
+        using var client = _httpClientFactory.CreateClient("GifVerifier");
         var request = new HttpRequestMessage(HttpMethod.Head, uri);
 
         try

@@ -15,25 +15,17 @@ using tusdotnet.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.Listen(IPAddress.Any, 80);
-});
+builder.WebHost.ConfigureKestrel(options => { options.Listen(IPAddress.Any, 80); });
 
 builder.WebHost.UseStaticWebAssets();
 
-builder.Services.Configure<KestrelServerOptions>(options =>
-{
-    options.Limits.MaxRequestBodySize = 30 * 1024 * 1024;
-});
+builder.Services.Configure<KestrelServerOptions>(options => { options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; });
 
 builder.ConfigureAuthentication();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(IdentityData.AdminPolicyName, policyBuilder =>
-    {
-        policyBuilder.RequireClaim(IdentityData.AdminClaimName, "true");
-    });
+    options.AddPolicy(IdentityData.AdminPolicyName,
+        policyBuilder => { policyBuilder.RequireClaim(IdentityData.AdminClaimName, "true"); });
 });
 
 const string corsPolicy = "CorsPolicy";
@@ -70,7 +62,7 @@ builder.Services.AddSingleton<TusDiskStoreHelper>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<EmbedService>();
-builder.Services.AddScoped<GifSourceVerifierService>();
+builder.Services.AddScoped<IGifSourceVerifier, GifSourceVerifierService>();
 builder.Services.AddScoped<ImagePreviewGeneratorService>();
 
 builder.Services.AddControllersWithViews();

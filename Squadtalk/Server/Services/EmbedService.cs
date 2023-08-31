@@ -15,7 +15,7 @@ public class EmbedService
         _previewGeneratorService = previewGeneratorService;
     }
 
-    public async Task<Embed> CreateEmbed(ITusFile file, HttpContext context)
+    public async Task<Embed> CreateEmbedAsync(ITusFile file, HttpContext context)
     {
         var metadata = await file.GetMetadataAsync(context.RequestAborted);
 
@@ -55,7 +55,7 @@ public class EmbedService
 
         var (widthInt, heightInt) = (int.Parse(width), int.Parse(height));
         
-        if (widthInt > ImagePreviewGeneratorService.MaxWidth || heightInt > ImagePreviewGeneratorService.MaxHeight)
+        if (_previewGeneratorService.ShouldResize(widthInt, heightInt))
         {
             var (previewId, previewWidth, previewHeight) = await _previewGeneratorService.CreateImagePreviewAsync(file, context.RequestAborted);
 
