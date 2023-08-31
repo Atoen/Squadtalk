@@ -25,7 +25,7 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: ./Squadtalk/Server/
-          file: ./Dockerfile
+          context: .
+          file: ./Squadtalk/Server/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/squadtalk:latest
