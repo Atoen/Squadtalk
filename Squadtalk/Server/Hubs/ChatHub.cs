@@ -12,21 +12,21 @@ public class ChatHub : Hub<IChatClient>
 {
     private readonly UserService _userService;
     private readonly MessageService _messageService;
-    private readonly GifSourceVerifierService _gifSourceVerifierService;
+    private readonly IGifSourceVerifier _gifSourceVerifier;
     private static readonly ConcurrentDictionary<string, byte> Users = new();
 
-    public ChatHub(UserService userService, MessageService messageService, GifSourceVerifierService gifSourceVerifierService)
+    public ChatHub(UserService userService, MessageService messageService, IGifSourceVerifier gifSourceVerifier)
     {
         _userService = userService;
         _messageService = messageService;
-        _gifSourceVerifierService = gifSourceVerifierService;
+        _gifSourceVerifier = gifSourceVerifier;
     }
     
     public async Task SendMessage(string messageContent)
     {
         var user = await _userService.GetUserAsync(Context.User!);
 
-        var isGifSource = await _gifSourceVerifierService.VerifyAsync(messageContent);
+        var isGifSource = await _gifSourceVerifier.VerifyAsync(messageContent);
 
         var message = new Message
         {

@@ -7,7 +7,7 @@ namespace Squadtalk.Client.Services;
 public sealed class SignalRService : IAsyncDisposable
 {
     private readonly MessageService _messageService;
-    private readonly JWTService _jwtService;
+    private readonly JwtService _jwtService;
     private readonly HubConnection _connection;
 
     public string ConnectionStatus { get; private set; } = string.Empty;
@@ -16,7 +16,7 @@ public sealed class SignalRService : IAsyncDisposable
     private const string Online = "Reconnecting";
     private const string Disconnected = "Reconnecting";
     
-    public SignalRService(MessageService messageService, JWTService jwtService)
+    public SignalRService(MessageService messageService, JwtService jwtService)
     {
         _messageService = messageService;
         _jwtService = jwtService;

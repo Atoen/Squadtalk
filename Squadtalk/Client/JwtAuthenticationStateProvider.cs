@@ -7,10 +7,10 @@ namespace Squadtalk.Client;
 
 public sealed class JwtAuthenticationStateProvider : AuthenticationStateProvider, IDisposable
 {
-    private readonly JWTService _jwtService;
+    private readonly JwtService _jwtService;
     private AuthenticationState? _authenticationState;
 
-    public JwtAuthenticationStateProvider(JWTService jwtService)
+    public JwtAuthenticationStateProvider(JwtService jwtService)
     {
         _jwtService = jwtService;
         _jwtService.TokenUpdated += JwtServiceOnTokenUpdated;

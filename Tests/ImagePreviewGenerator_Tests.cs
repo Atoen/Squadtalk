@@ -7,25 +7,22 @@ using Squadtalk.Server.Services;
 
 namespace Tests;
 
-public class ImagePreviewGenerator_CreatePreview
+public class ImagePreviewGenerator_Tests
 {
     [Fact]
     public async Task CreateImagePreview_Success()
     {
-        var dir = Directory.CreateDirectory("../../../Tus");
-
-        foreach (var info in dir.GetFiles())
-        {
-            info.Delete();
-        }
-        
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("../../../Tus");
-        
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
         
         var imagePath = "../../../Beautiful-Sunflower.jpg";
         var fileInfo = new FileInfo(imagePath);
+        
+        if (!fileInfo.Exists)
+        {
+            Assert.Fail("Test file not found: Beautiful-Sunflower.jpg");
+        }
         
         var filename = Encoding.UTF8.GetBytes(fileInfo.Name); 
         var filetype = "image/jpg"u8.ToArray();
@@ -59,6 +56,44 @@ public class ImagePreviewGenerator_CreatePreview
         Assert.True(result.width <= previewGenerator.MaxWidth && result.height <= previewGenerator.MaxHeight);
         var aspectRatio = (double) result.width / result.height;
         Assert.True(Math.Abs(aspectRatio - 1) < 0.001);
+    }
+
+    [Fact]
+    public void ShouldResize_True()
+    {
+        var configSubstitute = Substitute.For<IConfiguration>();
+        configSubstitute["Tus:Address"].Returns("fakepath");
+        
+        var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
+        
+        var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
+        {
+            MaxWidth = 200,
+            MaxHeight = 200
+        };
+        
+        Assert.True(imagePreviewGenerator.ShouldResize(20, 300));
+        Assert.True(imagePreviewGenerator.ShouldResize(250, 30));
+        Assert.True(imagePreviewGenerator.ShouldResize(230, 300));
+    }
+    
+    [Fact]
+    public void ShouldResize_False()
+    {
+        var configSubstitute = Substitute.For<IConfiguration>();
+        configSubstitute["Tus:Address"].Returns("fakepath");
+        
+        var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
+        
+        var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
+        {
+            MaxWidth = 200,
+            MaxHeight = 200
+        };
+        
+        Assert.False(imagePreviewGenerator.ShouldResize(200, 200));
+        Assert.False(imagePreviewGenerator.ShouldResize(150, 30));
+        Assert.False(imagePreviewGenerator.ShouldResize(130, 30));
     }
     
     [Theory]

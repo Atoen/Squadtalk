@@ -5,7 +5,7 @@ using tusdotnet.Stores;
 
 namespace Squadtalk.Server.Services;
 
-public class ImagePreviewGeneratorService
+public class ImagePreviewGeneratorService : IImagePreviewGenerator
 {
     private readonly TusDiskStore _tusStore;
 

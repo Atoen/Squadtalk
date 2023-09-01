@@ -62,7 +62,7 @@ public class Tus
 
         var file = await fileContext.GetFileAsync();
         var embed = await httpContext.RequestServices.GetRequiredService<EmbedService>()
-            .CreateEmbedAsync(file, httpContext);
+            .CreateEmbedAsync(file, httpContext.Request.Scheme, httpContext.Request.Host.Host, httpContext.RequestAborted);
 
         var userResult = await httpContext.RequestServices.GetRequiredService<UserService>()
             .GetUserAsync(httpContext.User);

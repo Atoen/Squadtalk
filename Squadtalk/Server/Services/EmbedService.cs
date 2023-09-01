@@ -7,21 +7,28 @@ namespace Squadtalk.Server.Services;
 
 public class EmbedService
 {
-    private readonly ImagePreviewGeneratorService _previewGeneratorService;
+    private readonly IImagePreviewGenerator _previewGenerator;
     private static readonly string[] ImageExtensions = {".jpg", ".jpeg", ".png"};
 
-    public EmbedService(ImagePreviewGeneratorService previewGeneratorService)
+    // Service is transient
+    private string? _requestScheme;
+    private string? _requestHost;
+
+    public EmbedService(IImagePreviewGenerator previewGenerator)
     {
-        _previewGeneratorService = previewGeneratorService;
+        _previewGenerator = previewGenerator;
     }
 
-    public async Task<Embed> CreateEmbedAsync(ITusFile file, HttpContext context)
+    public async Task<Embed> CreateEmbedAsync(ITusFile file, string requestScheme, string requestHost, CancellationToken cancellationToken)
     {
-        var metadata = await file.GetMetadataAsync(context.RequestAborted);
+        _requestScheme = requestScheme;
+        _requestHost = requestHost;
+        
+        var metadata = await file.GetMetadataAsync(cancellationToken);
 
         var filename = metadata["filename"].GetString(Encoding.UTF8);
         var length = metadata["filesize"].GetString(Encoding.UTF8);
-        var uri = CreateUri(file.Id, context);
+        var uri = CreateUri(file.Id, requestScheme, requestHost);
 
         if (!HasImageExtension(filename))
         {
@@ -40,10 +47,10 @@ public class EmbedService
         var width = metadata["width"].GetString(Encoding.UTF8);
         var height = metadata["height"].GetString(Encoding.UTF8);
 
-        return await CreateImageEmbed(file, uri, width, height, context);
+        return await CreateImageEmbed(file, uri, width, height, cancellationToken);
     }
     
-    private async Task<Embed> CreateImageEmbed(ITusFile file, string uri, string width, string height, HttpContext context)
+    private async Task<Embed> CreateImageEmbed(ITusFile file, string uri, string width, string height, CancellationToken cancellationToken)
     {
         var data = new Dictionary<string, string>
         {
@@ -55,11 +62,11 @@ public class EmbedService
 
         var (widthInt, heightInt) = (int.Parse(width), int.Parse(height));
         
-        if (_previewGeneratorService.ShouldResize(widthInt, heightInt))
+        if (_previewGenerator.ShouldResize(widthInt, heightInt))
         {
-            var (previewId, previewWidth, previewHeight) = await _previewGeneratorService.CreateImagePreviewAsync(file, context.RequestAborted);
+            var (previewId, previewWidth, previewHeight) = await _previewGenerator.CreateImagePreviewAsync(file, cancellationToken);
 
-            data["Preview"] = CreateUri(previewId, context);
+            data["Preview"] = CreateUri(previewId, _requestScheme, _requestHost);
             data["Width"] = previewWidth.ToString();
             data["Height"] = previewHeight.ToString();
         }
@@ -73,8 +80,8 @@ public class EmbedService
 
     private bool HasImageExtension(string filename) => ImageExtensions.Any(filename.EndsWith);
 
-    private string CreateUri(string id, HttpContext context)
+    private string CreateUri(string id, string? requestScheme, string? requestHost)
     {
-        return $"{context.Request.Scheme}://{context.Request.Host}/api/File?id={id}";
+        return $"{requestScheme}://{requestHost}/api/File?id={id}";
     }
 }

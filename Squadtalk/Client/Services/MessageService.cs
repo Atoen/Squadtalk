@@ -8,7 +8,7 @@ namespace Squadtalk.Client.Services;
 
 public sealed class MessageService
 {
-    private readonly JWTService _jwtService;
+    private readonly JwtService _jwtService;
     private readonly RestClient _restClient;
     private readonly JwtAuthenticator _restAuthenticator;
     private readonly TimeSpan _firstMessageTimeSpan = TimeSpan.FromMinutes(5);
@@ -18,7 +18,7 @@ public sealed class MessageService
 
     public Action<MessageModel>? MessageReceived { get; set; }
 
-    public MessageService(JWTService jwtService)
+    public MessageService(JwtService jwtService)
     {
         _jwtService = jwtService;
         _restAuthenticator = new JwtAuthenticator(_jwtService.Token);

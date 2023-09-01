@@ -22,7 +22,7 @@ builder.Services.AddScoped(_ => new RestClient(options =>
 }));
 builder.Services.AddTransient<SignalRService>();
 builder.Services.AddScoped<MessageService>();
-builder.Services.AddScoped<JWTService>();
+builder.Services.AddScoped<JwtService>();
 builder.Services.Configure<JwtServiceOptions>(options =>
 {
     options.RetryAttempts = 5;

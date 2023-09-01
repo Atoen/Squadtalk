@@ -61,9 +61,9 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddSingleton<TusDiskStoreHelper>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MessageService>();
-builder.Services.AddScoped<EmbedService>();
+builder.Services.AddTransient<EmbedService>();
 builder.Services.AddScoped<IGifSourceVerifier, GifSourceVerifierService>();
-builder.Services.AddScoped<ImagePreviewGeneratorService>();
+builder.Services.AddScoped<IImagePreviewGenerator, ImagePreviewGeneratorService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

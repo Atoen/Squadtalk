@@ -8,7 +8,7 @@ namespace Squadtalk.Client.Services;
 
 public delegate void TokenUpdatedHandler(JwtSecurityToken securityToken);
 
-public sealed class JWTService
+public sealed class JwtService
 {
 	private readonly JwtServiceOptions _options;
 	private readonly RestClient _restClient;
@@ -23,7 +23,7 @@ public sealed class JWTService
 
 	public event TokenUpdatedHandler? TokenUpdated;
 
-	public JWTService(IOptions<JwtServiceOptions> options, RestClient restClient)
+	public JwtService(IOptions<JwtServiceOptions> options, RestClient restClient)
 	{
 		_options = options.Value;
 		_restClient = restClient;

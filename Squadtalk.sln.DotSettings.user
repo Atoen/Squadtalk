@@ -1,5 +1,10 @@
-<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\Artur\AppData\Local\JetBrains\Rider2023.2\resharper-host\temp\Rider\vAny\CoverageData\_Squadtalk.-956615539\Snapshot\snapshot.utdcvr</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=254a1b71_002D3dfc_002D4a6d_002Dac6b_002D8bff56b12dde/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="RevokeRefreshToken_InvalidToken_ReturnsFalse" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.TokenService_Tests.RevokeRefreshToken_InvalidToken_ReturnsFalse&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=ad3d621b_002D72bc_002D40b6_002D8183_002Dbb01b94d2539/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="PrimeService_IsPrimeShould" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.GifSourceVerifier_Verify&lt;/TestId&gt;&#xD;
@@ -10,5 +15,11 @@
     &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.ImagePreviewGenerator_CreatePreview.ResizeImage_AspectRatio&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.ImagePreviewGenerator_CreatePreview.ResizeImage_Height&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.ImagePreviewGenerator_CreatePreview&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.ImagePreviewGenerator_Tests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.EmbedService_Tests.CreateEmbed_File_Success&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.EmbedService_Tests.CreateEmbed_Image_Success&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.TokenService_Tests.VerifyRefreshToken_ValidToken_ReturnsTrue&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.TokenService_Tests.VerifyRefreshToken_InvalidToken_Returnsfalse&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::7DB60458-9D74-43E7-9124-36231826F791::net7.0::Tests.TokenService_Tests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
