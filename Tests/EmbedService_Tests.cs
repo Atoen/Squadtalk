@@ -12,6 +12,12 @@ namespace Tests;
 
 public class EmbedService_Tests
 {
+    public EmbedService_Tests()
+    {
+        Directory.CreateDirectory("../../../Tus");
+
+    }
+    
     [Fact]
     public async Task CreateEmbed_File_Success()
     {

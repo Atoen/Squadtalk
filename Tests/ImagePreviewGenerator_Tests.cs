@@ -12,6 +12,8 @@ public class ImagePreviewGenerator_Tests
     [Fact]
     public async Task CreateImagePreview_Success()
     {
+        Directory.CreateDirectory("../../../Tus");
+        
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("../../../Tus");
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
