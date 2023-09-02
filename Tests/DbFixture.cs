@@ -3,9 +3,9 @@ using Squadtalk.Server.Models;
 
 namespace Tests;
 
-public class DbFixture : IDisposable
+public sealed class DbFixture : IDisposable
 {
-    public AppDbContext DbContext { get; set; }
+    public AppDbContext DbContext { get; }
 
     public void Dispose()
     {

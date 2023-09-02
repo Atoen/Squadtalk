@@ -6,21 +6,15 @@ using NSubstitute;
 using Squadtalk.Server.Models;
 using Squadtalk.Server.Services;
 using Squadtalk.Shared;
-using Xunit.Abstractions;
 
 namespace Tests;
 
 public class TokenService_Tests : IClassFixture<DbFixture>
 {
     private readonly DbFixture _fixture;
-    private readonly ITestOutputHelper _testOutputHelper;
 
-    public TokenService_Tests(DbFixture fixture, ITestOutputHelper testOutputHelper)
-    {
-        _fixture = fixture;
-        _testOutputHelper = testOutputHelper;
-    }
-    
+    public TokenService_Tests(DbFixture fixture) => _fixture = fixture;
+
     [Fact]
     public void VerifyRefreshToken_ValidToken_ReturnsTrue()
     {
@@ -37,7 +31,7 @@ public class TokenService_Tests : IClassFixture<DbFixture>
     [Fact]
     public void VerifyRefreshToken_InvalidToken_ReturnsFalse()
     {
-        var user = CreateUser();
+        var user = CreateUser("validToken");
 
         var tokenService = new TokenService(CreateConfiguration(), _fixture.DbContext);
         var result = tokenService.VerifyRefreshToken(user, "invalid");
@@ -138,7 +132,7 @@ public class TokenService_Tests : IClassFixture<DbFixture>
         return configuration;
     }
 
-    private User CreateUser(string token = "validToken")
+    private User CreateUser(string token)
     {
         return new User
         {

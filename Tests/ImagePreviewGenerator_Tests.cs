@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using SixLabors.ImageSharp;
@@ -7,53 +6,29 @@ using Squadtalk.Server.Services;
 
 namespace Tests;
 
-public class ImagePreviewGenerator_Tests
+[Collection("Tus collection")]
+public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
 {
+    private readonly TusFixture _fixture;
+
+    public ImagePreviewGenerator_Tests(TusFixture fixture) => _fixture = fixture;
+    
     [Fact]
     public async Task CreateImagePreview_Success()
     {
-        Directory.CreateDirectory("../../../Tus");
-        
+        var fileId = await _fixture.CreateTestFileAsync("Beautiful-Sunflower.jpg");
+
         var configSubstitute = Substitute.For<IConfiguration>();
-        configSubstitute["Tus:Address"].Returns("../../../Tus");
+        configSubstitute["Tus:Address"].Returns(_fixture.StorePath);
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
         
-        var imagePath = "../../../Beautiful-Sunflower.jpg";
-        var fileInfo = new FileInfo(imagePath);
-        
-        if (!fileInfo.Exists)
-        {
-            Assert.Fail("Test file not found: Beautiful-Sunflower.jpg");
-        }
-        
-        var filename = Encoding.UTF8.GetBytes(fileInfo.Name); 
-        var filetype = "image/jpg"u8.ToArray();
-        var filesize = Encoding.UTF8.GetBytes(fileInfo.Length.ToString());
-
-        var name64 = Convert.ToBase64String(filename);
-        var type64 = Convert.ToBase64String(filetype);
-        var size64 = Convert.ToBase64String(filesize);
-
-        var meta = $"filename {name64},filetype {type64},filesize {size64}";
-
-        await using var stream = fileInfo.OpenRead();
-        stream.Seek(0, SeekOrigin.Begin);
-
-        var store = helperSubstitute.Store;
-        
-        var id = await store.CreateFileAsync(stream.Length, meta, CancellationToken.None).ConfigureAwait(false);
-        Assert.NotEmpty(id);
-        
-        await store.SetUploadLengthAsync(id, stream.Length, CancellationToken.None).ConfigureAwait(false);
-        await store.AppendDataAsync(id, stream, CancellationToken.None).ConfigureAwait(false);
-        
         var previewGenerator = new ImagePreviewGeneratorService(helperSubstitute);
-        var file = await store.GetFileAsync(id, CancellationToken.None).ConfigureAwait(false);
+        var file = await _fixture.Store.GetFileAsync(fileId, CancellationToken.None).ConfigureAwait(false);
 
         var result = await previewGenerator.CreateImagePreviewAsync(file, CancellationToken.None).ConfigureAwait(false);
         
         Assert.NotEmpty(result.id);
-        Assert.NotEqual(id, result.id);
+        Assert.NotEqual(fileId, result.id);
         
         Assert.True(result.width <= previewGenerator.MaxWidth && result.height <= previewGenerator.MaxHeight);
         var aspectRatio = (double) result.width / result.height;

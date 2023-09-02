@@ -8,7 +8,7 @@ using Squadtalk.Server.Models;
 
 namespace Squadtalk.Server.Services;
 
-public class TokenService
+public class TokenService : ITokenService
 {
     public TimeSpan AuthTokenTimeSpan { get; set; } = TimeSpan.FromMinutes(10);
     public TimeSpan RefreshTokenTimeSpan { get; set; } = TimeSpan.FromDays(7);

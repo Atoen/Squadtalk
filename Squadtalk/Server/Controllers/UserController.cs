@@ -14,10 +14,10 @@ namespace Squadtalk.Server.Controllers;
 public class UserController : ControllerBase
 {
     private readonly UserService _userService;
-    private readonly TokenService _tokenService;
+    private readonly ITokenService _tokenService;
     private const string CookieName = "refreshToken";
     
-    public UserController(UserService userService, TokenService tokenService)
+    public UserController(UserService userService, ITokenService tokenService)
     {
         _userService = userService;
         _tokenService = tokenService;

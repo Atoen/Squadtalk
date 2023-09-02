@@ -1,7 +1,4 @@
-using System.Text;
-using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using NSubstitute.Extensions;
 using Squadtalk.Server.Services;
 using Squadtalk.Shared;
 using tusdotnet.Interfaces;
@@ -10,61 +7,29 @@ using BindingFlags = System.Reflection.BindingFlags;
 
 namespace Tests;
 
-public class EmbedService_Tests
+[Collection("Tus collection")]
+public class EmbedService_Tests : IClassFixture<TusFixture>
 {
-    public EmbedService_Tests()
-    {
-        Directory.CreateDirectory("../../../Tus");
+    private readonly TusFixture _fixture;
 
-    }
-    
+    public EmbedService_Tests(TusFixture fixture) => _fixture = fixture;
+
     [Fact]
     public async Task CreateEmbed_File_Success()
     {
-        var configSubstitute = Substitute.For<IConfiguration>();
-        configSubstitute["Tus:Address"].Returns("../../../Tus");
-        var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
-
-        var filePath = "../../../Usings.cs";
-        var fileInfo = new FileInfo(filePath);
+        var fileId = await _fixture.CreateTestFileAsync("Usings.cs");
         
-        if (!fileInfo.Exists)
-        {
-            Assert.Fail("Test file not found: Usings.cs");
-        }
-        
-        var filename = Encoding.UTF8.GetBytes(fileInfo.Name); 
-        var filetype = "image/jpg"u8.ToArray();
-        var filesize = Encoding.UTF8.GetBytes(fileInfo.Length.ToString());
-
-        var name64 = Convert.ToBase64String(filename);
-        var type64 = Convert.ToBase64String(filetype);
-        var size64 = Convert.ToBase64String(filesize);
-
-        var meta = $"filename {name64},filetype {type64},filesize {size64}";
-        
-        await using var stream = fileInfo.OpenRead();
-        stream.Seek(0, SeekOrigin.Begin);
-
-        var store = helperSubstitute.Store;
-        
-        var id = await store.CreateFileAsync(stream.Length, meta, CancellationToken.None).ConfigureAwait(false);
-        Assert.NotEmpty(id);
-        
-        await store.SetUploadLengthAsync(id, stream.Length, CancellationToken.None).ConfigureAwait(false);
-        await store.AppendDataAsync(id, stream, CancellationToken.None).ConfigureAwait(false);
-
         var generatorSubstitute = Substitute.For<IImagePreviewGenerator>();
         generatorSubstitute.ShouldResize(0, 0).ReturnsForAnyArgs(false);
         
         var embedService = new EmbedService(generatorSubstitute);
-        var file = await store.GetFileAsync(id, CancellationToken.None).ConfigureAwait(false);
+        var file = await _fixture.Store.GetFileAsync(fileId, CancellationToken.None).ConfigureAwait(false);
         var result = await embedService.CreateEmbedAsync(file, "http", "localhost", CancellationToken.None)
             .ConfigureAwait(false);
         
         Assert.Equal(EmbedType.File, result.Type);
         Assert.Equal("Usings.cs", result.Data["Filename"]);
-        Assert.Equal($"http://localhost/api/File?id={id}", result.Data["Uri"]);
+        Assert.Equal($"http://localhost/api/File?id={fileId}", result.Data["Uri"]);
     }
     
     [Theory]
@@ -72,38 +37,7 @@ public class EmbedService_Tests
     [InlineData(false)]
     public async Task CreateEmbed_Image_Success(bool resize)
     {
-        var configSubstitute = Substitute.For<IConfiguration>();
-        configSubstitute["Tus:Address"].Returns("../../../Tus");
-        var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
-
-        var filePath = "../../../Beautiful-Sunflower.jpg";
-        var fileInfo = new FileInfo(filePath);
-
-        if (!fileInfo.Exists)
-        {
-            Assert.Fail("Test file not found: Beautiful-Sunflower.jpg");
-        }
-        
-        var filename = Encoding.UTF8.GetBytes(fileInfo.Name); 
-        var filetype = "image/jpg"u8.ToArray();
-        var filesize = Encoding.UTF8.GetBytes(fileInfo.Length.ToString());
-
-        var name64 = Convert.ToBase64String(filename);
-        var type64 = Convert.ToBase64String(filetype);
-        var size64 = Convert.ToBase64String(filesize);
-
-        var meta = $"filename {name64},filetype {type64},filesize {size64}";
-        
-        await using var stream = fileInfo.OpenRead();
-        stream.Seek(0, SeekOrigin.Begin);
-
-        var store = helperSubstitute.Store;
-        
-        var id = await store.CreateFileAsync(stream.Length, meta, CancellationToken.None).ConfigureAwait(false);
-        Assert.NotEmpty(id);
-        
-        await store.SetUploadLengthAsync(id, stream.Length, CancellationToken.None).ConfigureAwait(false);
-        await store.AppendDataAsync(id, stream, CancellationToken.None).ConfigureAwait(false);
+        var fileId = await _fixture.CreateTestFileAsync("Beautiful-Sunflower.jpg");
 
         var generatorSubstitute = Substitute.For<IImagePreviewGenerator>();
         generatorSubstitute.ShouldResize(0, 0).ReturnsForAnyArgs(resize);
@@ -111,14 +45,13 @@ public class EmbedService_Tests
             .ReturnsForAnyArgs(("fakeid", 123, 321));
         
         var embedService = new EmbedService(generatorSubstitute);
-        var file = await store.GetFileAsync(id, CancellationToken.None).ConfigureAwait(false);
+        var file = await _fixture.Store.GetFileAsync(fileId, CancellationToken.None).ConfigureAwait(false);
+
+        await using var content = await file.GetContentAsync(CancellationToken.None);
 
         var fileSubstitute = Substitute.For<ITusFile>();
-
-        fileSubstitute.GetContentAsync(CancellationToken.None)
-            .ReturnsForAnyArgs(file.GetContentAsync(CancellationToken.None));
-
-        fileSubstitute.Id.Returns(id);
+        fileSubstitute.GetContentAsync(CancellationToken.None).ReturnsForAnyArgs(content);
+        fileSubstitute.Id.Returns(fileId);
 
         var metadata = await file.GetMetadataAsync(CancellationToken.None);
         var metaType = typeof(Metadata);
@@ -134,6 +67,6 @@ public class EmbedService_Tests
             .ConfigureAwait(false);
         
         Assert.Equal(EmbedType.Image, result.Type);
-        Assert.Equal($"http://localhost/api/File?id={id}", result.Data["Uri"]);
+        Assert.Equal($"http://localhost/api/File?id={fileId}", result.Data["Uri"]);
     }
 }

@@ -21,7 +21,7 @@ public class ImagePreviewGeneratorService : IImagePreviewGenerator
 
     public async Task<(string id, int width, int height)> CreateImagePreviewAsync(ITusFile imageFile, CancellationToken cancellationToken)
     {
-        var imageData = await imageFile.GetContentAsync(cancellationToken).ConfigureAwait(false);
+        await using var imageData = await imageFile.GetContentAsync(cancellationToken).ConfigureAwait(false);
         var metadata = await imageFile.GetMetadataAsync(cancellationToken).ConfigureAwait(false);
         using var image = await Image.LoadAsync(imageData, cancellationToken).ConfigureAwait(false);
         
@@ -31,7 +31,7 @@ public class ImagePreviewGeneratorService : IImagePreviewGenerator
         
         using var stream = new MemoryStream();
         await image.SaveAsync(stream, new PngEncoder(), cancellationToken).ConfigureAwait(false);
-        
+            
         stream.Seek(0, SeekOrigin.Begin);
 
         var formattedMetadata = FormatMetadata(metadata);

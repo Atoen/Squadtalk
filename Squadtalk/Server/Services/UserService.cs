@@ -11,9 +11,9 @@ public class UserService
 {
     private readonly AppDbContext _dbContext;
     private readonly IHashService _hashService;
-    private readonly TokenService _tokenService;
+    private readonly ITokenService _tokenService;
 
-    public UserService(AppDbContext dbContext, IHashService hashService, TokenService tokenService)
+    public UserService(AppDbContext dbContext, IHashService hashService, ITokenService tokenService)
     {
         _dbContext = dbContext;
         _hashService = hashService;
@@ -50,7 +50,7 @@ public class UserService
         if (content.IsEmpty) return new Error();
 
         var delimiterIndex = content.LastIndexOf(' ');
-        if (delimiterIndex <= 0 || content.Length == delimiterIndex)
+        if (delimiterIndex <= 0 || content.Length - 1 == delimiterIndex)
         {
             return new Error();
         }
@@ -83,8 +83,7 @@ public class UserService
         return new Success<(User, RefreshToken)>((user, refreshToken));
     }
 
-    public async Task<OneOf<Success<(User, RefreshToken)>, Conflict, Error<string>>> 
-        RegisterAsync(UserCredentialsDto userCredentialsDto)
+    public async Task<OneOf<Success<(User, RefreshToken)>, Conflict, Error<string>>> RegisterAsync(UserCredentialsDto userCredentialsDto)
     {
         if (await CompiledQueries.UsernameExistsAsync(_dbContext, userCredentialsDto.Username))
         {
@@ -106,15 +105,19 @@ public class UserService
             error => error);
     }
     
-    public async Task<OneOf<User, NotFound>> GetUserAsync(ClaimsPrincipal claimsPrincipal, bool includeRefreshTokens = false)
+    public async Task<OneOf<User, NotFound, Error>> GetUserAsync(ClaimsPrincipal claimsPrincipal, bool 
+            includeRefreshTokens = false)
     {
         var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtClaims.Uid);
         if (idClaim is null) return new NotFound();
 
         var usernameClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtClaims.Username);
         if (usernameClaim is null) return new NotFound();
+        
+        var parsed = Guid.TryParse(idClaim.Value, out var guid);
 
-        var guid = Guid.Parse(idClaim.Value);
+        if (!parsed) return new Error();
+        
         var user = includeRefreshTokens
             ? await CompiledQueries.UserByGuidWithRefreshTokensAsync(_dbContext, guid)
             : await CompiledQueries.UserByGuidAsync(_dbContext, guid);

@@ -57,7 +57,7 @@ builder.Services.AddDbContext<AppDbContext>(optionsBuilder => optionsBuilder
 );
 
 builder.Services.AddTransient<IHashService, Argon2HashService>();
-builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<TusDiskStoreHelper>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MessageService>();
