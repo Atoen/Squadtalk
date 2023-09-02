@@ -78,7 +78,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> LogOut(bool invalidateAllSessions = false)
     {
         var userResult = await _userService.GetUserAsync(HttpContext.User, true);
-        if (userResult.IsT1) return NotFound();
+        if (!userResult.IsT0) return NotFound();
 
         var user = userResult.AsT0;
 
@@ -115,7 +115,7 @@ public class UserController : ControllerBase
             HttpOnly = true,
             Expires = token.Expires,
             IsEssential = true,
-            SameSite = SameSiteMode.Lax
+            SameSite = SameSiteMode.Strict
         };
 
         var value = $"{user.Username} {token.Token}";
