@@ -1,16 +1,14 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-preview.7-jammy-arm32v7 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:7.0.10-bullseye-slim-arm32v7 AS base
 
 WORKDIR /app
 EXPOSE 80
-EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.100-preview.7-jammy-arm32v7 AS build
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:7.0.400-bullseye-slim-arm32v7 AS build
 WORKDIR /src
 COPY ["Squadtalk/Server/Squadtalk.Server.csproj", "Squadtalk/Server/"]
 COPY ["Squadtalk/Client/Squadtalk.Client.csproj", "Squadtalk/Client/"]
 COPY ["Squadtalk/Shared/Squadtalk.Shared.csproj", "Squadtalk/Shared/"]
 
-RUN curl https://api.nuget.org/v3/index.json -k
 RUN dotnet restore "Squadtalk/Server/Squadtalk.Server.csproj"
 COPY . .
 WORKDIR "/src/Squadtalk/Server"

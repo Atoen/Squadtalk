@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
@@ -11,11 +11,11 @@
     <ItemGroup>
         <PackageReference Include="Blazored.LocalStorage" Version="4.4.0" />
         <PackageReference Include="FluentResults" Version="3.15.2" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.0-preview.7.23375.9" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.0-preview.7.23375.9" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="8.0.0-preview.7.23375.9" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.0-preview.7.23375.9" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0-preview.7.23375.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="7.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.9"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="7.0.9" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.9" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.9" />
         <PackageReference Include="RestSharp" Version="110.2.0" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.32.0" />
     </ItemGroup>
@@ -29,9 +29,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <Content Include="..\..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
 </Project>
