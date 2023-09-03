@@ -37,8 +37,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+      - name: Set up ARM environment
+        uses: pguyot/arm-runner-action@v2
+        with:
+          base_image: dietpi:rpi_armv7_bullseye
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -55,5 +57,4 @@ jobs:
           context: .
           file: ./Squadtalk/Server/arm.Dockerfile
           push: true
-          platforms: linux/arm/v7
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/squadtalk:latest-arm
