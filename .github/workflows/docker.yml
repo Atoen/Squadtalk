@@ -8,20 +8,33 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: 
+        platform:
+          - linux/amd64
+          - linux/arm/v6
+          - linux/arm/v7
+          - linux/arm64
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with: 
-          platforms: amd64,arm64,arm/v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -32,4 +45,5 @@ jobs:
           context: .
           file: ./Squadtalk/Server/Dockerfile
           push: true
+          platforms: ${{ matrix.platform }}
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/squadtalk:latest
