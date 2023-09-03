@@ -3,7 +3,7 @@
 WORKDIR /app
 EXPOSE 80
 
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:7.0.400-bullseye-slim-arm32v7 AS build
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 COPY ["Squadtalk/Server/Squadtalk.Server.csproj", "Squadtalk/Server/"]
 COPY ["Squadtalk/Client/Squadtalk.Client.csproj", "Squadtalk/Client/"]
