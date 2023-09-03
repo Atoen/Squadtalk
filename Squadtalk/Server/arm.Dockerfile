@@ -10,6 +10,7 @@ COPY ["Squadtalk/Server/Squadtalk.Server.csproj", "Squadtalk/Server/"]
 COPY ["Squadtalk/Client/Squadtalk.Client.csproj", "Squadtalk/Client/"]
 COPY ["Squadtalk/Shared/Squadtalk.Shared.csproj", "Squadtalk/Shared/"]
 
+RUN curl https://api.nuget.org/v3/index.json -k
 RUN dotnet restore "Squadtalk/Server/Squadtalk.Server.csproj"
 COPY . .
 WORKDIR "/src/Squadtalk/Server"
