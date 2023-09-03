@@ -31,7 +31,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/squadtalk:latest
   
   build_arm:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
