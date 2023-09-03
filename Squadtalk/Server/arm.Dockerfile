@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:7.0.10-bullseye-slim-arm32v7 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:7.0.10-bullseye-slim-arm64v8 AS base
 
 WORKDIR /app
 EXPOSE 80
