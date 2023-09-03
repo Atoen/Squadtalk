@@ -52,4 +52,5 @@ jobs:
           context: .
           file: ./Squadtalk/Server/arm.Dockerfile
           push: true
+          platforms: linux/arm64/v8
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/squadtalk:latest-arm
