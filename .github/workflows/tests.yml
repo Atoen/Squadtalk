@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs: 
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+    
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Test with dotnet
+        run: dotnet test
