@@ -24,7 +24,7 @@ public sealed class MessageService
         _restAuthenticator = new JwtAuthenticator(_jwtService.Token);
         _restClient = new RestClient(new RestClientOptions
         {
-            BaseUrl = new Uri("http://squadtalk.ddns.net"),
+            BaseUrl = new Uri("https://squadtalk.net"),
             Authenticator = _restAuthenticator
         });
     }

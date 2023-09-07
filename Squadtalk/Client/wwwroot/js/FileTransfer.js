@@ -77,7 +77,7 @@ async function uploadFile(file, instance) {
     const jwt = await instance.invokeMethodAsync("GetJwt");
 
     const uploadOptions = {
-        endpoint: "http://squadtalk.ddns.net/tus",
+        endpoint: "https://squadtalk.net/tus",
         retryDelays: [0, 3000, 5000, 10000, 20000],
         metadata: {
             filename: file.name,

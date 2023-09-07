@@ -15,7 +15,14 @@ using tusdotnet.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options => { options.Listen(IPAddress.Any, 80); });
+builder.WebHost.UseKestrel(options =>
+{
+    options.Listen(IPAddress.Any, 443, listenOptions =>
+    {
+        listenOptions.UseHttps();
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+    });
+});
 
 builder.WebHost.UseStaticWebAssets();
 
@@ -41,6 +48,11 @@ builder.Services.AddCors(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("MariaDB");
+if (connectionString is null)
+{
+    Console.WriteLine("connection string in file appsettings.json is missing");
+    return;
+}
 
 builder.Services.AddHealthChecks()
     .AddMariaDB(connectionString)
@@ -52,7 +64,13 @@ builder.Services.AddHttpClient();
 
 var serverVersion = new MySqlServerVersion(connectionString);
 builder.Services.AddDbContext<AppDbContext>(optionsBuilder => optionsBuilder
-    .UseMySql(connectionString, serverVersion)
+    .UseMySql(connectionString, serverVersion, contextOptionsBuilder =>
+    {
+        contextOptionsBuilder.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+    })
     .EnableDetailedErrors()
 );
 
@@ -70,6 +88,8 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
+app.UseHttpsRedirection();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -78,6 +98,7 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
+    app.UseHsts();
 }
 
 app.UseCors(corsPolicy);

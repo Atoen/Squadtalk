@@ -22,7 +22,7 @@ public sealed class SignalRService : IAsyncDisposable
         _jwtService = jwtService;
 
         _connection = new HubConnectionBuilder()
-            .WithUrl("http://squadtalk.ddns.net/chat",
+            .WithUrl("https://squadtalk.net/chat",
                 options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult<string?>(_jwtService.Token);

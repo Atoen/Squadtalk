@@ -18,7 +18,7 @@ builder.Services.AddScoped(_ => new HttpClient
 });
 builder.Services.AddScoped(_ => new RestClient(options =>
 {
-    options.BaseUrl = new Uri("http://squadtalk.ddns.net");
+    options.BaseUrl = new Uri("https://squadtalk.net");
 }));
 builder.Services.AddTransient<SignalRService>();
 builder.Services.AddScoped<MessageService>();
