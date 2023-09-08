@@ -1,0 +1,24 @@
+@using Squadtalk.Client.Models
+
+<div class="list-container">
+    @if (Template is not null)
+    {
+        foreach (var user in Users)
+        {
+            @Template(user)
+        }
+    }
+</div>
+
+
+@code {
+    [Parameter] public RenderFragment<UserModel>? Template { get; set; }
+
+    public List<UserModel> Users { get; } = new();
+
+    public void AddUser(UserModel userModel)
+    {
+        Users.Add(userModel);
+        StateHasChanged();
+    }
+}

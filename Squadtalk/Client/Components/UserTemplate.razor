@@ -1,0 +1,27 @@
+@using Squadtalk.Client.Models
+
+<div class="user-card">
+    <img src="@Model.AvatarUrl" class="avatar" alt="Avatar">
+    <div class="username" style="color: @Model.Color">@Model.Username</div>
+    <div class="connection-status" style="color: @_statusColor">@Model.StatusString</div>
+</div>
+
+@code {
+
+    [Parameter]
+    public required UserModel Model { get; set; }
+
+    private string? _statusColor;
+
+    protected override void OnInitialized()
+    {
+        _statusColor = Model.Status switch 
+        {
+            Models.UserStatus.Online => "#2ECC71",
+            Models.UserStatus.Away => "#FFD700",
+            Models.UserStatus.DoNotDisturb => "#FF6666",
+            Models.UserStatus.Offline => "gray",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+}

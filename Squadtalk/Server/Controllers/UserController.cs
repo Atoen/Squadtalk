@@ -113,6 +113,7 @@ public class UserController : ControllerBase
         var cookie = new CookieOptions
         {
             HttpOnly = true,
+            Secure = true,
             Expires = token.Expires,
             IsEssential = true,
             SameSite = SameSiteMode.Strict

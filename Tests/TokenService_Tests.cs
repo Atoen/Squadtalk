@@ -94,10 +94,7 @@ public class TokenService_Tests : IClassFixture<DbFixture>
 
         var dbUser = await _fixture.DbContext.Users.Include(x => x.RefreshTokens)
             .FirstAsync(x => x.Username == user.Username);
-        var dbToken = dbUser.RefreshTokens.First();
-        
-        Assert.False(dbToken.IsActive);
-        Assert.NotNull(dbToken.Revoked);
+        Assert.Empty(dbUser.RefreshTokens);
     }
     
     [Fact]

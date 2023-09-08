@@ -13,8 +13,8 @@ public sealed class SignalRService : IAsyncDisposable
     public string ConnectionStatus { get; private set; } = string.Empty;
 
     private const string Reconnecting = "Reconnecting";
-    private const string Online = "Reconnecting";
-    private const string Disconnected = "Reconnecting";
+    private const string Online = "Online";
+    private const string Disconnected = "Disconnected";
     
     public SignalRService(MessageService messageService, JwtService jwtService)
     {

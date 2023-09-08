@@ -22,7 +22,9 @@
 </div>
 
 @code {
-    [Parameter] public required MessageModel Model { get; set; }
+
+    [Parameter]
+    public required MessageModel Model { get; set; }
 
     private string? _date;
     private string? _longDate;
@@ -60,4 +62,5 @@
         Short,
         Long
     }
+
 }

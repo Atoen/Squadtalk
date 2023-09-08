@@ -90,6 +90,14 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    var clientIp = context.Connection.RemoteIpAddress;
+    Console.WriteLine(clientIp);
+
+    await next.Invoke();
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -1,0 +1,37 @@
+.background {
+    width: 100vw;
+    height: 100vh;
+    background: #424242;
+    display: grid;
+    grid-template-columns: 220px auto;
+    grid-template-rows: minmax(100px, auto) 80px;
+}
+
+.chat-area {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    display: grid;
+    grid-template-rows: auto min-content;
+}
+
+.message-listbox {
+    flex-direction: column-reverse;
+    overflow: auto;
+    display: flex;
+    grid-row: 1;
+}
+
+#overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 24px;
+    text-align: center;
+    padding-top: 30%;
+}

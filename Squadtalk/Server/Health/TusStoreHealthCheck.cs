@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Squadtalk.Server.Services;
-using tusdotnet.Stores;
 
 namespace Squadtalk.Server.Health;
 

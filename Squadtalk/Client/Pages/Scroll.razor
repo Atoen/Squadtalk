@@ -1,11 +1,9 @@
 ﻿@page "/infinite-scrolling"
 @using RestSharp
-@using Squadtalk.Client.Shared
-@using Squadtalk.Shared
 
 <link rel="stylesheet" href="css/message.css" />
 
-<div class="message-listbox">
+<div class="chat-area">
     <InfiniteScrolling ItemsProvider="GetMessages">
         <ItemTemplate Context="message">
                 

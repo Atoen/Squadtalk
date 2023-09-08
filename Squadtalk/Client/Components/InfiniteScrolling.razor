@@ -6,7 +6,7 @@
 @inject IJSRuntime JsRuntime
 @implements IAsyncDisposable
 
-@if (ItemTemplate != null)
+@if (ItemTemplate is not null)
 {
     foreach (var item in Items)
     {
@@ -18,7 +18,13 @@
     @LoadingTemplate
 }
 
+@* ReSharper disable once CSharpWarnings::CS8974 *@
 @RenderLastElement
+
+@if (_enumerationCompleted)
+{
+    <div>No more messages</div>
+}
 
 @code {
     public List<T> Items { get; private set; } = new();

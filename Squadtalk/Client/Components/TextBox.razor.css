@@ -52,6 +52,7 @@
     align-items: center;
     padding: 5px;
     width: 100%;
+    grid-row: 2;
 }
 
 .textbox {
@@ -66,7 +67,7 @@
 }
 
 .textbox::placeholder {
-    color: gray;
+    color: grey;
 }
 
 .text-area-button {

@@ -74,8 +74,8 @@ public class TokenService : ITokenService
         {
             return false;
         }
-        
-        refreshToken.Revoked = DateTime.UtcNow;
+
+        user.RefreshTokens.Remove(refreshToken);
 
         _dbContext.Update(user);
         await _dbContext.SaveChangesAsync();
