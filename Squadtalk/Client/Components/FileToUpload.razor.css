@@ -1,0 +1,58 @@
+.file {
+    width: auto;
+    min-width: 200px;
+    max-width: 300px;
+    max-height: 200px;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: #323232;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-rows: 1fr 1fr;
+}
+
+.icon {
+    width: 60px;
+    color: white;
+    grid-column: 1;
+    grid-row: 1/3;
+}
+
+.filename {
+    font-size: 18px;
+    color: whitesmoke;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    margin: 0 10px 5px 10px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.filesize {
+    font-size: 18px;
+    color: grey;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin: 0 10px;
+}
+
+.cancel {
+    width: 30px;
+    grid-column: 3;
+    grid-row: 1/3;
+    align-self: center;
+    color: white;
+}
+
+.cancel:hover {
+    color: red;
+}
+
+.cancel:active {
+    color: darkred;
+}

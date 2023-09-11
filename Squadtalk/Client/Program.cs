@@ -16,11 +16,14 @@ builder.Services.AddScoped(_ => new HttpClient
 {
     BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
 });
+
 builder.Services.AddScoped(_ => new RestClient(options =>
 {
     options.BaseUrl = new Uri("https://squadtalk.net");
 }));
+
 builder.Services.AddTransient<SignalRService>();
+builder.Services.AddScoped<FileTransferService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.Configure<JwtServiceOptions>(options =>

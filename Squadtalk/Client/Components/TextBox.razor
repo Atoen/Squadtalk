@@ -1,14 +1,25 @@
 ﻿@using Squadtalk.Client.Services
+@using Squadtalk.Client.Extensions
+
+<UploadInfo />
+
 <div class="text-area">
-    <textarea class="textbox"
-        rows="1"
-        placeholder="Type message"
-        @bind="_userMessage"
-        @bind:event="oninput"
-        @onkeydown="TextBoxCallback"
-        @onkeydown:preventDefault="@_preventDefaultEnter"
-        id="textBox">    
-    </textarea>
+    <div class="input">
+        
+        @if (FileTransfer.Selected)
+        {
+            <FileToUpload Filename="@FileTransfer.SelectedFilename" FileSize="@FileTransfer.SelectedFileSize" />
+        }
+        
+        <div class="grow-wrap">
+            <textarea rows="1" placeholder="Type message"
+                    @bind="_userMessage"
+                    @onkeydown="TextBoxCallback"
+                    @onkeydown:preventDefault="_preventDefaultEnter"
+                    id="textBox">
+            </textarea>
+        </div>
+    </div>
 
     <label class="add-button" for="filePicker">
         <svg id="Layer_1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1">
@@ -21,22 +32,29 @@
             <path d="m.172,3.708C-.216,2.646.076,1.47.917.713,1.756-.041,2.951-.211,3.965.282l18.09,8.444c.97.454,1.664,1.283,1.945,2.273H4.048L.229,3.835c-.021-.041-.04-.084-.057-.127Zm3.89,9.292L.309,20.175c-.021.04-.039.08-.054.122-.387,1.063-.092,2.237.749,2.993.521.467,1.179.708,1.841.708.409,0,.819-.092,1.201-.279l18.011-8.438c.973-.456,1.666-1.288,1.945-2.28H4.062Z"/>
         </svg>
     </label>
-    
-    <InputFile style="display: none" id="filePicker" />
+
+    <InputFile style="display: none" id="filePicker"/>
 </div>
 
-@code {
+@implements IAsyncDisposable
 
+@inject JwtService JwtService
+@inject IJSRuntime JsRuntime
+@inject FileTransferService FileTransfer
+
+@code {
     [Parameter] public required SignalRService SignalRService { get; set; }
     
     private string? _userMessage;
     private bool _preventDefaultEnter;
 
-    private async Task TextBoxCallback(KeyboardEventArgs obj)
+    private IJSObjectReference? _messageModule;
+
+    private async Task TextBoxCallback(KeyboardEventArgs e)
     {
         _preventDefaultEnter = false;
 
-        if (obj is { Key: "Enter", ShiftKey: false })
+        if (e is { Key: "Enter", ShiftKey: false })
         {
             await SendMessage();
         }
@@ -44,13 +62,45 @@
 
     private async Task SendMessage()
     {
-        var text = _userMessage;
-        _userMessage = string.Empty;
         _preventDefaultEnter = true;
 
-        if (!string.IsNullOrWhiteSpace(text))
+        var message = await _messageModule!.InvokeAsync<string>("getAndClearMessage");
+
+        if (FileTransfer.CanStartUpload)
         {
-            var result = await SignalRService.SendMessageAsync(text, CancellationToken.None);
+            await FileTransfer.UploadFileAsync();
         }
+        
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            var result = await SignalRService.SendMessageAsync(message, CancellationToken.None);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        FileTransfer.FileSelected += FileTransferOnFileSelected;
+    }
+
+    private void FileTransferOnFileSelected(string filename, string filesize)
+    {
+        Console.WriteLine($"File selected: {filename} {filesize}");
+        
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _messageModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/Message.js");
+        await _messageModule.InvokeVoidAsync("initialize");
+
+        await FileTransfer.InitializeModuleAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_messageModule is not null) await _messageModule.DisposeAsync();
     }
 }

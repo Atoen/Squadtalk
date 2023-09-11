@@ -1,69 +1,41 @@
-﻿let uploadInfo, progress, textBox, filePicker,
-    overlay, uploadCancel, upload, interval = null;
+﻿let uploadInfo, progress, textBox, filePicker, overlay, uploadCancel, upload, interval = null;
+let uploadSpeedData = [];
+let instance = null;
+let totalUploadedBytes = 0;
+let lastTimestamp = null;
+let updated = false;
+let fileToUpload = null;
 
+export function initialize(csInstance) {
+    
+    instance = csInstance;
+    
+    initializeElements();
+    addEventListeners();
+}
 
-export function initialize(instance) {
+export function isFileUploadReady() {
+    return fileToUpload !== null && !upload;
+}
 
+function initializeElements() {
     uploadInfo = document.getElementById("uploadinfo");
     uploadCancel = document.getElementById("uploadcancel");
     progress = document.getElementById("progressbar");
     textBox = document.getElementById("textBox");
     filePicker = document.getElementById("filePicker");
     overlay = document.getElementById("overlay");
+}
 
-    filePicker.addEventListener("change", async function (e) {
-        const file = e.target.files[0];
-        await uploadFile(file, instance);
-    });
-
-    textBox.addEventListener("paste", async function (e) {
-        const items = e.clipboardData.items;
-        if (!items) return;
-
-        const item = items[0];
-        if (item.type.indexOf("image") === -1) return;
-
-        const blob = item.getAsFile();
-        if (blob) {
-            const file = new File([blob], "image.png", { type: blob.type });
-            await uploadFile(file, instance);
-        }
-    });
-
-    window.addEventListener("dragenter", function(e) {
-        overlay.style.display = "block";
-    });
-
+function addEventListeners() {
+    filePicker.addEventListener("change", handleFileChange);
+    textBox.addEventListener("paste", handlePaste);
+    window.addEventListener("dragenter", showOverlay);
     overlay.addEventListener("dragenter", allowDrag);
     overlay.addEventListener("dragover", allowDrag);
-
-    overlay.addEventListener("dragleave", function(e) {
-        overlay.style.display = "none";
-    });
-
-    overlay.addEventListener("drop", async function(e) {
-        e.preventDefault();
-        overlay.style.display = "none";
-
-        const items = e.dataTransfer.items;
-        if (!items) return;
-
-        const item = items[0];
-
-        const blob = item.getAsFile();
-        if (blob) {
-            const file = new File([blob], blob.name, { type: blob.type });
-            await uploadFile(file, instance);
-        }
-    });
-
-    uploadCancel.addEventListener("click", function() {
-        if (upload) {
-            upload.abort();
-            uploadInfo.style.display = "none";
-            clearInterval(interval);
-        }
-    });
+    overlay.addEventListener("dragleave", hideOverlay);
+    overlay.addEventListener("drop", handleDrop);
+    uploadCancel.addEventListener("click", handleUploadCancel);
 }
 
 function allowDrag(e) {
@@ -71,10 +43,69 @@ function allowDrag(e) {
     e.preventDefault();
 }
 
-async function uploadFile(file, instance) {
+function showOverlay() {
+    overlay.style.display = "block";
+}
 
+function hideOverlay() {
+    overlay.style.display = "none";
+}
+
+async function handleFileChange(e) {
+    const file = e.target.files[0];
+    await selectFile(file);
+}
+
+async function selectFile(file){
+    
+    if (fileToUpload) {
+        alert("Upload pending...");
+        return;
+    }
+    
+    fileToUpload = file;
+    await instance.invokeMethodAsync("FileSelectedCallback", fileToUpload.name, fileToUpload.size.toString());
+}
+
+async function handlePaste(e) {
+    const items = e.clipboardData.items;
+    if (!items) return;
+
+    const item = items[0];
+    if (item.type.indexOf("image") === -1) return;
+
+    const blob = item.getAsFile();
+    if (blob) {
+        const file= new File([blob], "image.png", { type: blob.type });
+        await selectFile(file);
+    }
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    hideOverlay();
+
+    const items = e.dataTransfer.items;
+    if (!items) return;
+
+    const item = items[0];
+
+    const blob = item.getAsFile();
+    if (blob) {
+        const file = new File([blob], blob.name, { type: blob.type });
+        await selectFile(file);
+    }
+}
+
+export async function uploadSelectedFile(){
+    await uploadFile(fileToUpload);
+}
+
+async function uploadFile(file) {
     const chunk = 25 * 1024 * 1024;
     const jwt = await instance.invokeMethodAsync("GetJwt");
+
+    progress.style.width = "0";
 
     const uploadOptions = {
         endpoint: "https://squadtalk.net/tus",
@@ -87,54 +118,59 @@ async function uploadFile(file, instance) {
         chunkSize: chunk,
         headers: { Authorization: `Bearer ${jwt}` },
         onProgress: function(bytesUploaded, bytesTotal) {
+
             const percentage = bytesUploaded / bytesTotal;
-            progress.value = percentage;
+            progress.style.width = percentage * 100 + "%";
 
             calculateUploadSpeed(bytesUploaded);
         },
-        onSuccess: function() {
-            uploadInfo.style.display = "none";
-            clearInterval(interval);
-            console.log("File uploaded");
-
+        onSuccess: async () => {
+            await uploadEnded(null);
         },
-        onError: function(error) {
-            uploadInfo.style.display = "none";
-            clearInterval(interval);
-            console.log(`Error: ${error}`);
+        onError: async error => {
+            await uploadEnded(error);
         }
     };
 
     const isImage = file.type.startsWith("image/");
 
-    uploadInfo.style.display = "grid";
-    await instance.invokeMethodAsync("UploadStarted", file.name, file.size.toString());
+    await showUploadInfo(file);
 
     if (isImage) {
-        const image = new Image();
-        image.src = URL.createObjectURL(file);
-        image.onload = function () {
-            uploadOptions.metadata.width = image.width;
-            uploadOptions.metadata.height = image.height;
-            upload = new tus.Upload(file, uploadOptions);
-            startUpload(upload, instance);
-        };
-    } else {
-        upload = new tus.Upload(file, uploadOptions);
-        startUpload(upload, instance);
+        const image = await loadImage(file);
+        uploadOptions.metadata.width = image.width;
+        uploadOptions.metadata.height = image.height;
     }
+
+    upload = new tus.Upload(file, uploadOptions);
+    startUpload(instance);
 }
 
-function startUpload(instance) {
+async function loadImage(file) {
+    return new Promise((resolve) => {
+        const image = new Image();
+        image.src = URL.createObjectURL(file);
+        image.onload = () => resolve(image);
+    });
+}
+
+async function showUploadInfo(file) {
+    uploadInfo.style.display = "grid";
+    await instance.invokeMethodAsync("UploadStartedCallback", file.name, file.size.toString());
+}
+
+function startUpload() {
     interval = setInterval(async () => {
         const smoothUploadSpeed = calculateSmoothUploadSpeed(uploadSpeedData, 15);
-        
-        if (instance != null){
-            await instance.invokeMethodAsync("UpdateUploadSpeed", Math.floor(smoothUploadSpeed).toString());
+
+        if (instance != null) {
+            const uploadSpeed = Math.floor(smoothUploadSpeed).toString();
+
+            await instance.invokeMethodAsync("UpdateUploadSpeedCallback", uploadSpeed);
         }
     }, 1000);
 
-    upload.findPreviousUploads().then(function (previousUploads) {
+    upload.findPreviousUploads().then(previousUploads => {
         if (previousUploads.length) {
             upload.resumeFromPreviousUpload(previousUploads[0]);
         }
@@ -143,13 +179,25 @@ function startUpload(instance) {
     });
 }
 
-let uploadSpeedData = [];
-let totalUploadedBytes = 0;
-let lastTimestamp = null;
-let updated = false;
+async function handleUploadCancel() {
+    if (upload) {
+        upload.abort();
+    }
+    
+    await uploadEnded(null);
+}
+
+async function uploadEnded(reason){
+    upload = null;
+    fileToUpload = null;
+    uploadInfo.style.display = "none";
+    clearInterval(interval);
+    await instance.invokeMethodAsync("UploadEndedCallback", reason);
+    console.log(reason);
+}
+
 
 function calculateUploadSpeed(uploadedBytes) {
-
     const currentTime = Date.now();
 
     let elapsedTime = 0;
@@ -177,6 +225,7 @@ function calculateSmoothUploadSpeed(data, windowSize) {
 
     if (!updated) {
         uploadSpeedData.push(0);
+        uploadSpeedData.push(0);
     }
     updated = false;
 
@@ -184,7 +233,6 @@ function calculateSmoothUploadSpeed(data, windowSize) {
         data.splice(0, data.length - windowSize);
     }
 
-    // Calculate the sum of the last N data points
     const sum = data.reduce((acc, val) => acc + val, 0);
 
     return sum / data.length;

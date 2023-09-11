@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Runtime.CompilerServices;
 using Squadtalk.Client.Models;
 using Squadtalk.Shared;
 
@@ -79,8 +80,9 @@ public static class MessageExtensions
     private static readonly List<string> Code = new() { "cs", "java", "cpp", "py", "js", "c" };
     private static readonly List<string> Video = new() { "mp4", "avi", "mov", "mkv" };
     private static readonly List<string> Music = new() { "mp3", "wav", "flac", "mp2", "ogg" };
+    private static readonly List<string> Image = new() { "jpeg", "jpg", "png", "gif", "raw" };
 
-    private static FileType GetFileType(string filename)
+    public static FileType GetFileType(string filename)
     {
         var tokens = filename.Split('.');
 
@@ -94,18 +96,29 @@ public static class MessageExtensions
         if (Code.Contains(extension)) return FileType.Code;
         if (Video.Contains(extension)) return FileType.Video;
         if (Music.Contains(extension)) return FileType.Music;
+        if (Image.Contains(extension)) return FileType.Image;
 
+        Console.WriteLine($"returning default for {filename} - extension: {extension}");
+        
         return FileType.Default;
     }
 
-    public static string ConvertToFileSizeString(string value)
+    public static string ConvertToHumanReadableSize(string value, [CallerMemberName] string? name = null)
     {
         const long bytesPerKiloByte = 1024;
         const long bytesPerMegaByte = 1024 * bytesPerKiloByte;
         const long bytesPerGigaByte = 1024 * bytesPerMegaByte;
 
         string formattedValue;
-        var bytes = long.Parse(value);
+
+        var success = long.TryParse(value, out var bytes);
+
+        if (!success)
+        {
+            Console.WriteLine($"Couldn't parse value: {value} for {name}");
+            
+            return value;
+        }
 
         switch (bytes)
         {
@@ -146,5 +159,6 @@ public enum FileType
     Archive,
     Code,
     Video,
-    Music
+    Music,
+    Image
 }

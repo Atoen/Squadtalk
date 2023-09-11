@@ -3,7 +3,7 @@
     @if (Model.IsFirst)
     {
         <div class="padding"></div>
-        <img class="avatar" src="user.png" alt="Avatar"/>
+        <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
         <div class="username">@Model.Author</div>
         <div class="date" data-date="@LongDate">@Date</div>
     }
@@ -62,5 +62,4 @@
         Short,
         Long
     }
-
 }

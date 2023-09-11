@@ -26,10 +26,6 @@ a:hover {
     animation: shimmer 1.5s linear infinite;
 }
 
-@keyframes shimmer {
-    100% {-webkit-mask-position:left}
-}
-
 .embed {
     display: grid;
     background: #323232;

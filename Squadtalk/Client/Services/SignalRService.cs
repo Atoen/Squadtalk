@@ -7,25 +7,24 @@ namespace Squadtalk.Client.Services;
 public sealed class SignalRService : IAsyncDisposable
 {
     private readonly MessageService _messageService;
-    private readonly JwtService _jwtService;
     private readonly HubConnection _connection;
 
     public string ConnectionStatus { get; private set; } = string.Empty;
+    public Action? StatusChanged { get; set; }
 
-    private const string Reconnecting = "Reconnecting";
-    private const string Online = "Online";
-    private const string Disconnected = "Disconnected";
+    public const string Reconnecting = "Reconnecting";
+    public const string Online = "Online";
+    public const string Disconnected = "Disconnected";
     
     public SignalRService(MessageService messageService, JwtService jwtService)
     {
         _messageService = messageService;
-        _jwtService = jwtService;
 
         _connection = new HubConnectionBuilder()
             .WithUrl("https://squadtalk.net/chat",
                 options =>
                 {
-                    options.AccessTokenProvider = () => Task.FromResult<string?>(_jwtService.Token);
+                    options.AccessTokenProvider = () => Task.FromResult<string?>(jwtService.Token);
                 })
             .WithAutomaticReconnect()
             .Build();
@@ -67,18 +66,21 @@ public sealed class SignalRService : IAsyncDisposable
         _connection.Reconnecting += _ =>
         {
             ConnectionStatus = Reconnecting;
+            StatusChanged?.Invoke();
             return Task.CompletedTask;
         };
 
         _connection.Reconnected += _ =>
         {
             ConnectionStatus = Online;
+            StatusChanged?.Invoke();
             return Task.CompletedTask;
         };
 
         _connection.Closed += _ =>
         {
             ConnectionStatus = Disconnected;
+            StatusChanged?.Invoke();
             return Task.CompletedTask;
         };
 

@@ -24,7 +24,7 @@
       "launchBrowser": false,
       "launchUrl": "https://127.0.0.1:443",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Production"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "IIS Express": {

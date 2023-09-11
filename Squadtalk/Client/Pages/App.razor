@@ -19,7 +19,7 @@
             <UserTemplate Model="context" />
         </Template>
     </UsersList>
-    <UserStatus Username="User" ConnectionStatus="Online"/>
+    <UserStatus Username="User" ConnectionStatus="@SignalRService.ConnectionStatus"/>
     
     <div class="chat-area">
         <div class="message-listbox">
@@ -36,12 +36,8 @@
             </InfiniteScrolling>
         </div>
         
-        <UploadInfo/>
-        
-        <TextBox SignalRService="SignalRService"/>
+        <TextBox SignalRService="SignalRService" />
     </div>
-    
-
 </div>
 
 <div id="overlay">Drop your file here!</div>
@@ -72,6 +68,7 @@
         
         MessageService.MessageReceived = MessageServiceMessageReceived;
         JwtService.UnableToRefreshToken = () => NavigationManager.NavigateTo("/");
+        SignalRService.StatusChanged += StateHasChanged;
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -98,6 +95,14 @@
         {
             Username = "User",
             Status = UserStatus.Online,
+            AvatarUrl = "user.png",
+            Color = "#f2a203"
+        });
+        
+        _users.AddUser(new UserModel
+        {
+            Username = "User",
+            Status = UserStatus.Offline,
             AvatarUrl = "user.png",
             Color = "#f2a203"
         });

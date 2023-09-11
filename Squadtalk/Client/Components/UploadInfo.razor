@@ -1,6 +1,5 @@
 ﻿@using Squadtalk.Client.Services
 @using Squadtalk.Client.Extensions
-@implements IAsyncDisposable
 
 <div class="info" id="uploadinfo">
     <svg viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="icon">
@@ -11,55 +10,37 @@
     <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="cancel" id="uploadcancel">
         <polygon fill-rule="evenodd" points="8 9.414 3.707 13.707 2.293 12.293 6.586 8 2.293 3.707 3.707 2.293 8 6.586 12.293 2.293 13.707 3.707 9.414 8 13.707 12.293 12.293 13.707 8 9.414"/>
     </svg>
-    <progress class="progress" id="progressbar"></progress>
-    <div class="speed">@(_uploadSpeed)/s</div>
+    <div class="progress-border">
+        <div class="progress-value" id="progressbar"></div>
+    </div>
+    <div class="speed">@_uploadSpeed/s</div>
 </div>
 
 @inject JwtService JwtService
 @inject IJSRuntime JsRuntime
+@inject FileTransferService FileTransfer
 
 @code {
     private string? _filename;
     private string? _fileSize;
-    private string? _uploadSpeed = "0B";
+    private string? _uploadSpeed = "- B";
 
-    private IJSObjectReference? _module;
-    private DotNetObjectReference<UploadInfo>? _currentComponentReference;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            _module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/FileTransfer.js");
-            _currentComponentReference = DotNetObjectReference.Create(this);
-            await _module.InvokeVoidAsync("initialize", _currentComponentReference);
-        }
+        FileTransfer.UploadStarted += UploadStarted;
+        FileTransfer.UploadSpeedUpdated += UpdateUploadSpeed;
     }
 
-    [JSInvokable] public string GetJwt() => JwtService.Token;
-
-    [JSInvokable]
-    public void UploadStarted(string filename, string size)
+    private void UploadStarted(string filename, string size)
     {
         _filename = filename;
-        _fileSize = MessageExtensions.ConvertToFileSizeString(size);
+        _fileSize = size;
         StateHasChanged();
     }
 
-    [JSInvokable]
-    public void UpdateUploadSpeed(string bytesPerSecond)
+    private void UpdateUploadSpeed(string speed)
     {
-        _uploadSpeed = MessageExtensions.ConvertToFileSizeString(bytesPerSecond);
+        _uploadSpeed = speed;
         StateHasChanged();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_module is not null)
-        {
-            await _module.DisposeAsync();
-        }
-
-        _currentComponentReference?.Dispose();
     }
 }

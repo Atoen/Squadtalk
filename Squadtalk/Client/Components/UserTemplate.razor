@@ -1,7 +1,7 @@
 @using Squadtalk.Client.Models
 
 <div class="user-card">
-    <img src="@Model.AvatarUrl" class="avatar" alt="Avatar">
+    <img src="@Model.AvatarUrl" class="avatar" alt="Avatar" draggable="false">
     <div class="username" style="color: @Model.Color">@Model.Username</div>
     <div class="connection-status" style="color: @_statusColor">@Model.StatusString</div>
 </div>
