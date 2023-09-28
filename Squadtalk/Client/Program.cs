@@ -19,7 +19,7 @@ builder.Services.AddScoped(_ => new HttpClient
 
 builder.Services.AddScoped(_ => new RestClient(options =>
 {
-    options.BaseUrl = new Uri("https://squadtalk.net");
+    options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress);
 }));
 
 builder.Services.AddTransient<SignalRService>();
@@ -28,7 +28,6 @@ builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.Configure<JwtServiceOptions>(options =>
 {
-    options.RetryAttempts = 5;
     options.RetryDelays = new[] { 1, 2, 5, 10, 15 };
 });
 

@@ -100,7 +100,7 @@ public sealed class JwtService
 	private async Task<string?> GetTokenAsync(CancellationToken cancellationToken)
 	{
 		var attempt = 0;
-		while (attempt < _options.RetryAttempts)
+		while (attempt < _options.RetryDelays.Length)
 		{
 			attempt++;
 
@@ -109,7 +109,7 @@ public sealed class JwtService
 
 			RetryingToRefreshToken?.Invoke(attempt);
 			
-			var delay = _options.RetryDelays[Math.Min(attempt, _options.RetryDelays.Length) - 1];
+			var delay = _options.RetryDelays[attempt];
 			await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken);
 		}
 

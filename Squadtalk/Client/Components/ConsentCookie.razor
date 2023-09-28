@@ -1,11 +1,11 @@
 ﻿@using Blazored.LocalStorage
 @inject ILocalStorageService LocalStorageService
 
-@if (_showBanner)
+@if (_showBanner )
 {
-    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show" role="alert" style="margin-top: auto;">
-        This app only uses strictly necessary cookies to function. No personal data is collected
-        <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close" @onclick="AcceptMessage">
+    <div role="alert" class="banner">
+        This app only uses strictly necessary cookies to function. No personal data is collected.
+        <button type="button" class="button" @onclick="AcceptMessage">
             Accept Cookies
         </button>
     </div>

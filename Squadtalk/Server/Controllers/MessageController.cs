@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Squadtalk.Server.Models;
@@ -18,13 +19,38 @@ public class MessageController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async IAsyncEnumerable<MessageDto> GetMessages(int offset = 0)
+    public async IAsyncEnumerable<MessageDto> GetMessages(string? timestamp)
     {
-        var messages = CompiledQueries.MessagePageAsync(_context, offset);
+        var cursor = CreateCursor(timestamp);
+
+        var messages = cursor == default
+            ? CompiledQueries.MessageFirstPageAsync(_context)
+            : CompiledQueries.MessagePageByCursorAsync(_context, cursor);
         
         await foreach (var message in messages)
         {
             yield return message.ToDto();
         }
+    }
+
+    private static DateTimeOffset CreateCursor(string? timestamp)
+    {
+        if (timestamp is null)
+        {
+            return default;
+        }
+
+        Span<byte> buffer = stackalloc byte[80];
+
+        if (!Convert.TryFromBase64String(timestamp, buffer, out var written))
+        {
+            return default;
+        }
+
+        var converted = Encoding.UTF8.GetString(buffer[..written]);
+
+        return long.TryParse(converted, out var ticks)
+            ? new DateTimeOffset(ticks, TimeSpan.Zero)
+            : default;
     }
 }

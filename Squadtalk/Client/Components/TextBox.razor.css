@@ -14,12 +14,12 @@
 }
 
 .add-button:hover {
-    color: whitesmoke;
+    color: #9d00e7;
     transform: rotate(90deg);
 }
 
 .add-button:active {
-    color: #9d00e7;
+    color: #6f00a3;
 }
 
 .send-button svg path {
@@ -38,13 +38,13 @@
 }
 
 .send-button:hover {
-    color: whitesmoke;
+    color: #9d00e7;
     transform: scale(1.1);
 }
 
 .send-button:active {
     transform: translate(5px, 0px) scale(1.1);
-    color: #9d00e7;
+    color: #6f00a3;
 }
 
 .text-area {

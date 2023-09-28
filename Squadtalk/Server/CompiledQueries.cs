@@ -28,11 +28,21 @@ internal static class CompiledQueries
             (AppDbContext context, Guid id) => context
                 .Users.Include(x => x.RefreshTokens)
                 .FirstOrDefault(x => x.Id == id));
+    
+    public static readonly int MessagePageCount = 20;
 
-    public static readonly Func<AppDbContext, int, IAsyncEnumerable<Message>> MessagePageAsync = EF.CompileAsyncQuery(
-        (AppDbContext context, int offset) => context
+    public static readonly Func<AppDbContext, DateTimeOffset, IAsyncEnumerable<Message>> MessagePageByCursorAsync = EF.CompileAsyncQuery(
+        (AppDbContext context, DateTimeOffset cursor) => context
             .Messages.OrderByDescending(m => m.Timestamp)
-            .Skip(offset)
-            .Take(20)
-            .Include(m => m.Author));
+            .Where(m => m.Timestamp < cursor)
+            .Take(MessagePageCount)
+            .Include(m => m.Author)
+            .Reverse());
+    
+    public static readonly Func<AppDbContext, IAsyncEnumerable<Message>> MessageFirstPageAsync = EF.CompileAsyncQuery(
+        (AppDbContext context) => context
+            .Messages.OrderByDescending(m => m.Timestamp)
+            .Take(MessagePageCount)
+            .Include(m => m.Author)
+            .Reverse());
 }

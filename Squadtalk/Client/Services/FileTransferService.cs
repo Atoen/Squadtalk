@@ -11,12 +11,14 @@ public delegate void UploadSpeedUpdateHandler(string uploadSpeed);
 
 public delegate void UploadEndedHandler(string? error);
 
+public delegate void RemovedSelectedFileHandler();
+
 public class FileTransferService : IAsyncDisposable
 {
     private readonly JwtService _jwtService;
     private readonly IJSRuntime _jsRuntime;
     
-    private IJSObjectReference? _jsModule;
+    private IJSObjectReference? _module;
     private DotNetObjectReference<FileTransferService>? _objectReference;
     
     private bool _uploadInProgress;
@@ -29,6 +31,7 @@ public class FileTransferService : IAsyncDisposable
     public event UploadStartedHandler? UploadStarted;
     public event UploadEndedHandler? UploadEnded;
     public event UploadSpeedUpdateHandler? UploadSpeedUpdated;
+    public event RemovedSelectedFileHandler? RemovedSelectedFile;
     
     public FileTransferService(JwtService jwtService, IJSRuntime jsRuntime)
     {
@@ -40,10 +43,10 @@ public class FileTransferService : IAsyncDisposable
     {
         _objectReference ??= DotNetObjectReference.Create(this);
 
-        if (_jsModule is null)
+        if (_module is null)
         {
-            _jsModule = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/FileTransfer.js");
-            await _jsModule.InvokeVoidAsync("initialize", _objectReference);
+            _module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/FileTransfer.js");
+            await _module.InvokeVoidAsync("initialize", _objectReference);
         }
     }
 
@@ -51,9 +54,29 @@ public class FileTransferService : IAsyncDisposable
     {
         if (_uploadInProgress) return false;
         
-        await _jsModule!.InvokeVoidAsync("uploadSelectedFile");
+        await _module!.InvokeVoidAsync("uploadSelectedFile");
         
         return true;
+    }
+
+    public async Task CancelUpload()
+    {
+        if (!_uploadInProgress) return;
+
+        await _module!.InvokeVoidAsync("CancelUpload");
+    }
+
+    public async Task RemoveSelectedFile()
+    {
+        if (!Selected) return;
+
+        Selected = false;
+
+        SelectedFilename = null;
+        SelectedFileSize = null;
+        
+        await _module!.InvokeVoidAsync("removeSelectedFile");
+        RemovedSelectedFile?.Invoke();
     }
 
     [JSInvokable]
@@ -97,9 +120,9 @@ public class FileTransferService : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_jsModule is not null)
+        if (_module is not null)
         {
-            await _jsModule.DisposeAsync();
+            await _module.DisposeAsync();
         }
         
         _objectReference?.Dispose();

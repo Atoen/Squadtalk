@@ -17,7 +17,9 @@
             }
         }
     }, options);
+    
     observer.observe(lastIndicator);
+    
     return {
         dispose: () => Dispose(observer),
         onNewItems: () => {

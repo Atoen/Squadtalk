@@ -1,4 +1,4 @@
-﻿let uploadInfo, progress, textBox, filePicker, overlay, uploadCancel, upload, interval = null;
+﻿let uploadInfo, progress, textBox, filePicker, overlay, upload, interval = null;
 let uploadSpeedData = [];
 let instance = null;
 let totalUploadedBytes = 0;
@@ -20,7 +20,7 @@ export function isFileUploadReady() {
 
 function initializeElements() {
     uploadInfo = document.getElementById("uploadinfo");
-    uploadCancel = document.getElementById("uploadcancel");
+    // uploadCancel = document.getElementById("uploadcancel");
     progress = document.getElementById("progressbar");
     textBox = document.getElementById("textBox");
     filePicker = document.getElementById("filePicker");
@@ -35,7 +35,7 @@ function addEventListeners() {
     overlay.addEventListener("dragover", allowDrag);
     overlay.addEventListener("dragleave", hideOverlay);
     overlay.addEventListener("drop", handleDrop);
-    uploadCancel.addEventListener("click", handleUploadCancel);
+    // uploadCancel.addEventListener("click", CancelUpload);
 }
 
 function allowDrag(e) {
@@ -95,6 +95,10 @@ async function handleDrop(e) {
         const file = new File([blob], blob.name, { type: blob.type });
         await selectFile(file);
     }
+}
+
+export function removeSelectedFile(){
+    fileToUpload = null;
 }
 
 export async function uploadSelectedFile(){
@@ -179,7 +183,7 @@ function startUpload() {
     });
 }
 
-async function handleUploadCancel() {
+export async function CancelUpload() {
     if (upload) {
         upload.abort();
     }

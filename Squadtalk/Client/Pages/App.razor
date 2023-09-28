@@ -19,10 +19,10 @@
             <UserTemplate Model="context" />
         </Template>
     </UsersList>
-    <UserStatus Username="User" ConnectionStatus="@SignalRService.ConnectionStatus"/>
+    <UserStatus Username="User" ConnectionStatus="@SignalRService.ConnectionStatus" />
     
     <div class="chat-area">
-        <div class="message-listbox">
+        <div class="message-listbox" id="listbox">
             <InfiniteScrolling ItemsProvider="GetMessagePage" @ref="_scrollRef">
                 <ItemTemplate>
                     <MessageTemplate Model="context"/>
@@ -66,7 +66,7 @@
         var result = await SignalRService.ConnectAsync();
         Console.WriteLine(result);
         
-        MessageService.MessageReceived = MessageServiceMessageReceived;
+        MessageService.MessageReceived = _scrollRef.AddItem;
         JwtService.UnableToRefreshToken = () => NavigationManager.NavigateTo("/");
         SignalRService.StatusChanged += StateHasChanged;
     }
@@ -108,17 +108,12 @@
         });
     }
 
-    private void MessageServiceMessageReceived(MessageModel model)
+    private async Task<IEnumerable<MessageModel>> GetMessagePage(InfiniteScrollingItemsProviderRequest _)
     {
-        _scrollRef.InsertItem(0, model);
-    }
-
-    private async Task<IEnumerable<MessageModel>> GetMessagePage(InfiniteScrollingItemsProviderRequest request)
-    {
-        var page = await MessageService.GetMessagePageAsync(request.StartIndex);
+        var page = await MessageService.GetMessagePageAsync();
         if (_scrollRef.Items.Count > 0 && page.Count > 0)
         {
-            MessageService.CheckIfIsFirst(_scrollRef.Items[^1], page[0]);
+            MessageService.CheckIfIsFirst(_scrollRef.Items[0], page[^1]);
         }
 
         return page;

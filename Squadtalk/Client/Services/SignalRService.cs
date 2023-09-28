@@ -84,9 +84,9 @@ public sealed class SignalRService : IAsyncDisposable
             return Task.CompletedTask;
         };
 
-        _connection.On<MessageDto>("ReceiveMessage", message =>
+        _connection.On<MessageDto>("ReceiveMessage", async message =>
         {
-            _messageService.HandleIncomingMessage(message);
+            await _messageService.HandleIncomingMessage(message);
         });
     }
 

@@ -1,15 +1,16 @@
 ﻿@using Squadtalk.Client.Models
+@using System.Diagnostics.CodeAnalysis
 <div class="message-container">
     @if (Model.IsFirst)
     {
         <div class="padding"></div>
         <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
         <div class="username">@Model.Author</div>
-        <div class="date" data-date="@LongDate">@Date</div>
+        <div class="date" data-date="@_longDate">@_date</div>
     }
     else
     {
-        <div class="content-only-date">@ShortDate</div>
+        <div class="content-only-date">@_shortDate</div>
     }
 
     <div class="message-content">
@@ -30,30 +31,35 @@
     private string? _longDate;
     private string? _shortDate;
 
-    private string Date => _date ??= TimeStampConverter(Model.Timestamp, DateFormatMode.Default);
-    private string LongDate => _longDate ??= TimeStampConverter(Model.Timestamp, DateFormatMode.Long);
-    private string ShortDate => _shortDate ??= TimeStampConverter(Model.Timestamp, DateFormatMode.Short);
+    protected override void OnInitialized()
+    {
+        _date = TimeStampConverter(Model.Timestamp, DateFormatMode.Default);
+        _longDate = TimeStampConverter(Model.Timestamp, DateFormatMode.Long);
+        _shortDate = TimeStampConverter(Model.Timestamp, DateFormatMode.Short);
+    }
 
-    private static string TimeStampConverter(DateTimeOffset dateTime, DateFormatMode formatMode)
+    private static string TimeStampConverter(DateTimeOffset dateTimeOffset, DateFormatMode formatMode)
     {
         var format = formatMode == DateFormatMode.Long ? "HH:mm:ss" : "HH:mm";
         if (formatMode == DateFormatMode.Short)
         {
-            return dateTime.ToLocalTime().ToString(format);
+            return dateTimeOffset.ToLocalTime().ToString(format);
         }
 
-        if (dateTime.Date == DateTime.Today)
+        var localTime = dateTimeOffset.ToLocalTime();
+
+        if (localTime.Date == DateTime.Today)
         {
-            return $"Today {dateTime.ToLocalTime().ToString(format)}";
+            return $"Today {localTime.ToString(format)}";
         }
 
-        if (dateTime.Date == DateTime.Today.AddDays(-1))
+        if (localTime.Date == DateTime.Today.AddDays(-1))
         {
-            return $"Yesterday {dateTime.ToLocalTime().ToString(format)}";
+            return $"Yesterday {localTime.ToString(format)}";
         }
 
         var fullFormat = formatMode == DateFormatMode.Long ? "dd-MM-yyyy HH:mm:ss" : "dd-MM-yyyy HH:mm";
-        return dateTime.ToLocalTime().ToString(fullFormat);
+        return localTime.ToString(fullFormat);
     }
 
     private enum DateFormatMode

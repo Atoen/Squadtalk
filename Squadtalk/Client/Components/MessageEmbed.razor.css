@@ -34,7 +34,6 @@ a:hover {
     padding: 15px 10px;
     border-radius: 10px;
     width: min-content;
-    max-width: calc(100vw - 100px);
 }
 
 .icon {
@@ -51,7 +50,7 @@ a:hover {
     margin-top: 10px;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: calc(100vw - 200px);
+    max-width: calc(100vw - 420px);
 }
 
 .filesize {

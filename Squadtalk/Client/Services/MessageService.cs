@@ -1,4 +1,5 @@
-﻿using RestSharp;
+﻿using System.Text;
+using RestSharp;
 using RestSharp.Authenticators;
 using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Models;
@@ -12,11 +13,13 @@ public sealed class MessageService
     private readonly RestClient _restClient;
     private readonly JwtAuthenticator _restAuthenticator;
     private readonly TimeSpan _firstMessageTimeSpan = TimeSpan.FromMinutes(5);
+    
+    private MessageModel? _lastMessageReceived;
+    private MessageModel? _lastMessageFormatted;
 
-    private int _offset;
-    private MessageModel? _lastMessage;
+    private long _pageCursor;
 
-    public Action<MessageModel>? MessageReceived { get; set; }
+    public Func<MessageModel, Task>? MessageReceived { get; set; }
 
     public MessageService(JwtService jwtService)
     {
@@ -29,33 +32,37 @@ public sealed class MessageService
         });
     }
 
-    public void HandleIncomingMessage(MessageDto messageDto)
+    public async Task HandleIncomingMessage(MessageDto messageDto)
     {
-        var formatted = FormatMessage(messageDto);
-        _lastMessage = formatted;
+        var message = FormatMessage(messageDto, false);
+        _lastMessageReceived = message;
 
-        MessageReceived?.Invoke(formatted);
+        var task = MessageReceived?.Invoke(message);
+        if (task is not null)
+        {
+            await task;
+        }
     }
 
-    public async Task<IList<MessageModel>> GetMessagePageAsync(int requestOffset)
+    public async Task<IList<MessageModel>> GetMessagePageAsync()
     {
-        var pageOffset = _offset + requestOffset;
-
         _restAuthenticator.SetBearerToken(_jwtService.Token);
-        var restRequest = new RestRequest($"api/Message?offset={pageOffset}");
-        var response = await _restClient.GetAsync<List<MessageDto>>(restRequest);
-        var responseCount = response!.Count;
-        
-        var page = new MessageModel[responseCount];
+        var restRequest = new RestRequest("api/Message");
 
-        for (var i = responseCount - 1; i >= 0; i--)
+        if (_pageCursor != default)
         {
-            var model = FormatMessage(response[i]);
-            page[i] = model;
-            _lastMessage = model;
+            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(_pageCursor.ToString()));
+            restRequest.AddQueryParameter("timestamp", encoded);
         }
+        
+        var response = await _restClient.GetAsync<List<MessageDto>>(restRequest);
 
-        return page;
+        if (response!.Count > 0)
+        {
+            _pageCursor = response[0].Timestamp.UtcTicks;
+        }
+        
+        return FormatMessagePage(response);
     }
 
     public void CheckIfIsFirst(MessageModel previous, MessageModel next)
@@ -64,18 +71,36 @@ public sealed class MessageService
                            previous.Timestamp.Subtract(next.Timestamp) > _firstMessageTimeSpan;
     }
 
-    private MessageModel FormatMessage(MessageDto messageDto)
+    private MessageModel[] FormatMessagePage(IList<MessageDto> dtoPage)
+    {
+        var page = new MessageModel[dtoPage.Count];
+
+        for (var i = 0; i < dtoPage.Count; i++)
+        {
+            var model = FormatMessage(dtoPage[i], true);
+            page[i] = model;
+            _lastMessageFormatted = model;
+        }
+
+        _lastMessageReceived ??= page[^1];
+
+        return page;
+    }
+
+    private MessageModel FormatMessage(MessageDto messageDto, bool isFromPage)
     {
         var model = messageDto.ToModel();
 
-        if (_lastMessage is null)
+        var toCompare = isFromPage ? _lastMessageFormatted : _lastMessageReceived;
+
+        if (toCompare is null)
         {
             model.IsFirst = true;
             return model;
         }
 
-        if (model.Author != _lastMessage.Author ||
-            model.Timestamp.Subtract(_lastMessage.Timestamp) > _firstMessageTimeSpan)
+        if (model.Author != toCompare.Author ||
+            model.Timestamp.Subtract(toCompare.Timestamp) > _firstMessageTimeSpan)
         {
             model.IsFirst = true;
         }

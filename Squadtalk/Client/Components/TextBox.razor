@@ -79,14 +79,8 @@
 
     protected override void OnInitialized()
     {
-        FileTransfer.FileSelected += FileTransferOnFileSelected;
-    }
-
-    private void FileTransferOnFileSelected(string filename, string filesize)
-    {
-        Console.WriteLine($"File selected: {filename} {filesize}");
-        
-        StateHasChanged();
+        FileTransfer.FileSelected += (_, _) =>  StateHasChanged();
+        FileTransfer.RemovedSelectedFile += StateHasChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -101,6 +95,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (_messageModule is not null) await _messageModule.DisposeAsync();
+        await _messageModule.TryDisposeAsync();
     }
 }
