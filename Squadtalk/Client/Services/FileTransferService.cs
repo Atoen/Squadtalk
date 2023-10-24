@@ -41,13 +41,11 @@ public class FileTransferService : IAsyncDisposable
 
     public async Task InitializeModuleAsync()
     {
-        _objectReference ??= DotNetObjectReference.Create(this);
-
-        if (_module is null)
-        {
-            _module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/FileTransfer.js");
-            await _module.InvokeVoidAsync("initialize", _objectReference);
-        }
+        _objectReference?.Dispose();
+        _objectReference = DotNetObjectReference.Create(this);
+        
+        _module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/FileTransfer.js");
+        await _module.InvokeVoidAsync("initialize", _objectReference);
     }
 
     public async Task<bool> UploadFileAsync()

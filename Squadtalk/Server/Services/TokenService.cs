@@ -10,13 +10,14 @@ namespace Squadtalk.Server.Services;
 
 public class TokenService : ITokenService
 {
-    public TimeSpan AuthTokenTimeSpan { get; set; } = TimeSpan.FromMinutes(10);
+    public TimeSpan AuthTokenTimeSpan { get; set; } = TimeSpan.FromMinutes(5);
     public TimeSpan RefreshTokenTimeSpan { get; set; } = TimeSpan.FromDays(7);
     
     private readonly string? _issuer;
     private readonly string? _audience;
     private readonly byte[] _key;
     private readonly AppDbContext _dbContext;
+    private readonly JwtSecurityTokenHandler _tokenHandler = new();
     
     public TokenService(IConfiguration configuration, AppDbContext dbContext)
     {
@@ -40,11 +41,12 @@ public class TokenService : ITokenService
         var bytes = RandomNumberGenerator.GetBytes(48);
         var token = Convert.ToBase64String(bytes);
 
+        var created = DateTime.UtcNow;
         var refreshToken = new RefreshToken
         {
             Token = token,
-            Created = DateTime.UtcNow,
-            Expires = DateTime.UtcNow.Add(RefreshTokenTimeSpan)
+            Created = created,
+            Expires = created.Add(RefreshTokenTimeSpan)
         };
 
         return refreshToken;
@@ -60,10 +62,9 @@ public class TokenService : ITokenService
             Audience = _audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(_key), SecurityAlgorithms.HmacSha256)
         };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+        
+        var token = _tokenHandler.CreateToken(tokenDescriptor);
+        return _tokenHandler.WriteToken(token);
     }
 
     public async Task<bool> RevokeRefreshToken(User user, string token)

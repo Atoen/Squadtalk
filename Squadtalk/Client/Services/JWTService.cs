@@ -32,6 +32,8 @@ public sealed class JwtService
 	public string Token { get; private set; } = EmptyToken;
 	public JwtSecurityToken SecurityToken { get; private set; } = new();
 
+	public string? Username => SecurityToken.Claims.FirstOrDefault(x => x.Type == "unique_name")?.Value;
+
 	public void SetFirstToken(string token)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(token);
@@ -102,8 +104,6 @@ public sealed class JwtService
 		var attempt = 0;
 		while (attempt < _options.RetryDelays.Length)
 		{
-			attempt++;
-
 			var token = await RequestNewTokenAsync(cancellationToken);
 			if (token is not null) return token;
 
@@ -111,6 +111,8 @@ public sealed class JwtService
 			
 			var delay = _options.RetryDelays[attempt];
 			await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken);
+			
+			attempt++;
 		}
 
 		return null;

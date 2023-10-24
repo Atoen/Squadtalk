@@ -5,7 +5,6 @@ using Squadtalk.Server.Models;
 using Squadtalk.Server.Services;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
-using tusdotnet.Stores;
 
 namespace Squadtalk.Server.Setup;
 
@@ -13,11 +12,11 @@ public class Tus
 {
     public static Task<DefaultTusConfiguration> TusConfigurationFactory(HttpContext httpContext)
     {
-        var path = httpContext.RequestServices.GetRequiredService<TusDiskStoreHelper>().Path;
+        var helper = httpContext.RequestServices.GetRequiredService<TusDiskStoreHelper>();
 
         var config = new DefaultTusConfiguration
         {
-            Store = new TusDiskStore(path),
+            Store = helper.Store,
             Events = new Events
             {
                 OnAuthorizeAsync = AuthorizeHandler,
@@ -52,7 +51,7 @@ public class Tus
 
         return Task.CompletedTask;
     }
-
+    
     private static async Task FileCompleteHandler(FileCompleteContext fileContext)
     {
         var httpContext = fileContext.HttpContext;

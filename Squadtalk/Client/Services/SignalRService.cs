@@ -4,17 +4,29 @@ using Squadtalk.Shared;
 
 namespace Squadtalk.Client.Services;
 
+public delegate void ConnectedUsersReceivedHandler(IEnumerable<string> users);
+
+public delegate void UserDisconnectedHandler(string user);
+public delegate void UserConnectedHandler(string user);
+
+public delegate void ConnectionStatusChangedHandler(string status);
+
 public sealed class SignalRService : IAsyncDisposable
 {
     private readonly MessageService _messageService;
     private readonly HubConnection _connection;
 
     public string ConnectionStatus { get; private set; } = string.Empty;
-    public Action? StatusChanged { get; set; }
+    public event ConnectionStatusChangedHandler? StatusChanged;
+    public event UserDisconnectedHandler? UserDisconnected;
+    public event UserDisconnectedHandler? UserConnected;
+    public event ConnectedUsersReceivedHandler? ConnectedUsersReceived;
 
     public const string Reconnecting = "Reconnecting";
     public const string Online = "Online";
     public const string Disconnected = "Disconnected";
+
+    private bool _connected;
     
     public SignalRService(MessageService messageService, JwtService jwtService)
     {
@@ -32,12 +44,16 @@ public sealed class SignalRService : IAsyncDisposable
 
     public async Task<Result> ConnectAsync()
     {
+        if (_connected) return Result.Ok();
+        
         RegisterHandlers();
 
         try
         {
             await _connection.StartAsync();
             ConnectionStatus = Online;
+            StatusChanged?.Invoke(ConnectionStatus);
+            _connected = true;
         }
         catch (Exception e)
         {
@@ -66,32 +82,37 @@ public sealed class SignalRService : IAsyncDisposable
         _connection.Reconnecting += _ =>
         {
             ConnectionStatus = Reconnecting;
-            StatusChanged?.Invoke();
+            StatusChanged?.Invoke(ConnectionStatus);
             return Task.CompletedTask;
         };
 
         _connection.Reconnected += _ =>
         {
             ConnectionStatus = Online;
-            StatusChanged?.Invoke();
+            StatusChanged?.Invoke(ConnectionStatus);
             return Task.CompletedTask;
         };
 
         _connection.Closed += _ =>
         {
             ConnectionStatus = Disconnected;
-            StatusChanged?.Invoke();
+            StatusChanged?.Invoke(ConnectionStatus);
             return Task.CompletedTask;
         };
 
-        _connection.On<MessageDto>("ReceiveMessage", async message =>
-        {
-            await _messageService.HandleIncomingMessage(message);
-        });
+        _connection.On<MessageDto>("ReceiveMessage",  async message =>
+            await _messageService.HandleIncomingMessage(message));
+
+        _connection.On<IEnumerable<string>>("GetConnectedUsers", users =>
+            ConnectedUsersReceived?.Invoke(users));
+
+        _connection.On<string>("UserDisconnected", user => UserDisconnected?.Invoke(user));
+        _connection.On<string>("UserConnected", user => UserConnected?.Invoke(user));
     }
 
     public async ValueTask DisposeAsync()
     {
+        _connected = false;
         await _connection.DisposeAsync();
     }
 }

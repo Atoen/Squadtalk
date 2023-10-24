@@ -7,7 +7,12 @@ export function initialize() {
 export function scrollToBottom() {
     
     const last = listbox.lastElementChild
-    const scrollThreshold = last.clientHeight * 1.2;
+    if (!last) return;
+    
+    const secondToLast = last.previousElementSibling;
+    if (!secondToLast) return;
+
+    const scrollThreshold = last.clientHeight + secondToLast.clientHeight;
     
     const distanceFromBottom = listbox.scrollHeight - listbox.clientHeight - listbox.scrollTop;
     
@@ -17,7 +22,7 @@ export function scrollToBottom() {
 }
 
 export function markScroll() {
-    return  listbox.scrollHeight - listbox.clientHeight - listbox.scrollTop;
+    return listbox.scrollHeight - listbox.clientHeight - listbox.scrollTop;
 }
 
 export function scrollToMark(scrollPositionFromBottom) {    

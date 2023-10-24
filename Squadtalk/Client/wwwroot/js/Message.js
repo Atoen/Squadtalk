@@ -5,7 +5,7 @@ export function initialize() {
     textBox = document.getElementById("textBox");
     parent = textBox.parentNode;
     
-    textBox.oninput = e => {
+    textBox.oninput = () => {
         parent.dataset.replicatedValue = textBox.value;
     }
 }

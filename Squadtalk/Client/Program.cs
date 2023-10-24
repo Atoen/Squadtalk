@@ -22,7 +22,8 @@ builder.Services.AddScoped(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress);
 }));
 
-builder.Services.AddTransient<SignalRService>();
+builder.Services.AddScoped<SignalRService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<FileTransferService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<JwtService>();

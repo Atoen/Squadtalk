@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Squadtalk.Server.Models;
 using Squadtalk.Server.Services;
@@ -12,22 +11,21 @@ public class ChatHub : Hub<IChatClient>
 {
     private readonly UserService _userService;
     private readonly MessageService _messageService;
-    private readonly IGifSourceVerifier _gifSourceVerifier;
-    private static readonly ConcurrentDictionary<string, byte> Users = new();
+    private readonly UserManager _userManager;
 
-    public ChatHub(UserService userService, MessageService messageService, IGifSourceVerifier gifSourceVerifier)
+    public ChatHub(UserService userService, MessageService messageService, UserManager userManager)
     {
         _userService = userService;
         _messageService = messageService;
-        _gifSourceVerifier = gifSourceVerifier;
+        _userManager = userManager;
     }
     
-    public async Task SendMessage(string messageContent)
+    public async Task SendMessage(string messageContent, IGifSourceVerifier gifSourceVerifier)
     {
         var user = await _userService.GetUserAsync(Context.User!);
 
-        var isGifSource = await _gifSourceVerifier.VerifyAsync(messageContent);
-
+        var isGifSource = await gifSourceVerifier.VerifyAsync(messageContent);
+        
         var message = new Message
         {
             Author = user.AsT0,
@@ -55,20 +53,23 @@ public class ChatHub : Hub<IChatClient>
     {
         var user = Context.User?.Identity?.Name!;
 
-        Users.TryAdd(user, default);
+        var isUniqueUserConnection = await _userManager.UserConnected(user);
+        if (isUniqueUserConnection)
+        {
+            await Clients.Others.UserConnected(user);
+        }
 
-        var usernames = Users.Select(x => x.Key);
-
-        await Clients.Caller.GetConnectedUsers(usernames);
-        await Clients.Others.UserConnected(user);
+        await Clients.Caller.GetConnectedUsers(_userManager.ConnectedUsers);
     }
     
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var user = Context.User?.Identity?.Name!;
 
-        Users.TryRemove(user, out _);
-
-        await Clients.All.UserDisconnected(user);
+        var allConnectionsClosed = await _userManager.UserDisconnected(user);
+        if (allConnectionsClosed)
+        {
+            await Clients.Others.UserDisconnected(user);
+        }
     }
 }

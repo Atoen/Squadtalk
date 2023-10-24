@@ -1,11 +1,7 @@
 @page "/app"
-@using Blazored.LocalStorage
-@using RestSharp
-@using Squadtalk.Client.Models
+
 @using Squadtalk.Client.Services
 @using UserStatus = Squadtalk.Client.Models.UserStatus
-
-@implements IAsyncDisposable
 
 <PageTitle>Squadtalk</PageTitle>
 
@@ -19,11 +15,11 @@
             <UserTemplate Model="context" />
         </Template>
     </UsersList>
-    <UserStatus Username="User" ConnectionStatus="@SignalRService.ConnectionStatus" />
+    <UserStatus />
     
     <div class="chat-area">
         <div class="message-listbox" id="listbox">
-            <InfiniteScrolling ItemsProvider="GetMessagePage" @ref="_scrollRef">
+            <InfiniteScrolling>
                 <ItemTemplate>
                     <MessageTemplate Model="context"/>
                 </ItemTemplate>
@@ -36,7 +32,7 @@
             </InfiniteScrolling>
         </div>
         
-        <TextBox SignalRService="SignalRService" />
+        <TextBox />
     </div>
 </div>
 
@@ -44,15 +40,10 @@
 
 @inject JwtService JwtService
 @inject SignalRService SignalRService
-@inject MessageService MessageService
 @inject NavigationManager NavigationManager
-@inject RestClient RestClient
-@inject ILocalStorageService LocalStorageService
-@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @code {
     
-    private InfiniteScrolling<MessageModel> _scrollRef = null!;
     private UsersList _users = null!;
 
     protected override async Task OnInitializedAsync()
@@ -66,88 +57,6 @@
         var result = await SignalRService.ConnectAsync();
         Console.WriteLine(result);
         
-        MessageService.MessageReceived = _scrollRef.AddItem;
         JwtService.UnableToRefreshToken = () => NavigationManager.NavigateTo("/");
-        SignalRService.StatusChanged += StateHasChanged;
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender) return;
-        
-        _users.AddUser(new UserModel
-        {
-            Username = "User",
-            Status = UserStatus.Away,
-            AvatarUrl = "user.png",
-            Color = "blue"
-        });
-        
-        _users.AddUser(new UserModel
-        {
-            Username = "User",
-            Status = UserStatus.DoNotDisturb,
-            AvatarUrl = "user.png",
-            Color = "bdw"
-        });
-        
-        _users.AddUser(new UserModel
-        {
-            Username = "User",
-            Status = UserStatus.Online,
-            AvatarUrl = "user.png",
-            Color = "#f2a203"
-        });
-        
-        _users.AddUser(new UserModel
-        {
-            Username = "User",
-            Status = UserStatus.Offline,
-            AvatarUrl = "user.png",
-            Color = "#f2a203"
-        });
-    }
-
-    private async Task<IEnumerable<MessageModel>> GetMessagePage(InfiniteScrollingItemsProviderRequest _)
-    {
-        var page = await MessageService.GetMessagePageAsync();
-        if (_scrollRef.Items.Count > 0 && page.Count > 0)
-        {
-            MessageService.CheckIfIsFirst(_scrollRef.Items[0], page[^1]);
-        }
-
-        return page;
-    }
-
-    private async Task LogOut(bool invalidateAllSessions = false)
-    {
-        var request = new RestRequest("api/user/logout", Method.Post);
-        var currentRefreshToken = await LocalStorageService.GetItemAsync<string>("Token");
-
-        request.AddHeader("Authorization", $"Bearer {JwtService.Token}");
-
-        if (invalidateAllSessions)
-        {
-            request.AddQueryParameter("invalidateAllSessions", invalidateAllSessions);
-        }
-        else
-        {
-            request.AddBody($"\"{currentRefreshToken}\"");
-        }
-        
-        await RestClient.ExecuteAsync(request);
-
-        await LocalStorageService.RemoveItemAsync("Username");
-        JwtService.ClearToken();
-        
-        NavigationManager.NavigateTo("/");
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await JwtService.CancelPendingRequests();
-
-        await SignalRService.DisposeAsync();
-        await _scrollRef.DisposeAsync();
     }
 }

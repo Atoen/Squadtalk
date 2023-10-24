@@ -41,9 +41,10 @@
 @inject JwtService JwtService
 @inject IJSRuntime JsRuntime
 @inject FileTransferService FileTransfer
+@inject SignalRService SignalRService
 
 @code {
-    [Parameter] public required SignalRService SignalRService { get; set; }
+    // [Parameter] public required SignalRService SignalRService { get; set; }
     
     private string? _userMessage;
     private bool _preventDefaultEnter;
@@ -74,6 +75,13 @@
         if (!string.IsNullOrWhiteSpace(message))
         {
             var result = await SignalRService.SendMessageAsync(message, CancellationToken.None);
+            if (result.IsFailed)
+            {
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine(error.Message);
+                }
+            }
         }
     }
 

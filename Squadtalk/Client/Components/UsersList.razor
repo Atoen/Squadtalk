@@ -1,24 +1,29 @@
 @using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
 
 <div class="list-container">
     @if (Template is not null)
     {
-        foreach (var user in Users)
+        foreach (var user in UserService.Users)
         {
             @Template(user)
         }
     }
 </div>
 
+@implements IDisposable
+@inject UserService UserService
 
 @code {
     [Parameter] public RenderFragment<UserModel>? Template { get; set; }
 
-    public List<UserModel> Users { get; } = new();
-
-    public void AddUser(UserModel userModel)
+    protected override void OnInitialized()
     {
-        Users.Add(userModel);
-        StateHasChanged();
+        UserService.UserListChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        UserService.UserListChanged -= StateHasChanged;
     }
 }

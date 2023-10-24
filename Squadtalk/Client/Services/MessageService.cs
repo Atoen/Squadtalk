@@ -7,6 +7,8 @@ using Squadtalk.Shared;
 
 namespace Squadtalk.Client.Services;
 
+public delegate Task MessageReceived();
+
 public sealed class MessageService
 {
     private readonly JwtService _jwtService;
@@ -19,7 +21,9 @@ public sealed class MessageService
 
     private long _pageCursor;
 
-    public Func<MessageModel, Task>? MessageReceived { get; set; }
+    public List<MessageModel> Messages { get; } = new();
+
+    public event MessageReceived? MessageReceived;
 
     public MessageService(JwtService jwtService)
     {
@@ -36,11 +40,12 @@ public sealed class MessageService
     {
         var message = FormatMessage(messageDto, false);
         _lastMessageReceived = message;
+        
+        Messages.Add(message);
 
-        var task = MessageReceived?.Invoke(message);
-        if (task is not null)
+        if (MessageReceived is not null)
         {
-            await task;
+            await MessageReceived();
         }
     }
 
@@ -62,10 +67,23 @@ public sealed class MessageService
             _pageCursor = response[0].Timestamp.UtcTicks;
         }
         
-        return FormatMessagePage(response);
+        var page = FormatMessagePage(response);
+        if (Messages.Count > 0)
+        {
+            if (page.Length > 0)
+            {
+                CheckIfPreviousMessageWasFirst(Messages[0], page[^1]);
+            }
+            else
+            {
+                Messages[0].IsFirst = true;
+            }
+        }
+
+        return page;
     }
 
-    public void CheckIfIsFirst(MessageModel previous, MessageModel next)
+    private void CheckIfPreviousMessageWasFirst(MessageModel previous, MessageModel next)
     {
         previous.IsFirst = previous.Author != next.Author ||
                            previous.Timestamp.Subtract(next.Timestamp) > _firstMessageTimeSpan;
@@ -90,7 +108,6 @@ public sealed class MessageService
     private MessageModel FormatMessage(MessageDto messageDto, bool isFromPage)
     {
         var model = messageDto.ToModel();
-
         var toCompare = isFromPage ? _lastMessageFormatted : _lastMessageReceived;
 
         if (toCompare is null)

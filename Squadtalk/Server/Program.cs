@@ -77,6 +77,7 @@ builder.Services.AddDbContext<AppDbContext>(optionsBuilder => optionsBuilder
 builder.Services.AddTransient<IHashService, Argon2HashService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<TusDiskStoreHelper>();
+builder.Services.AddSingleton<UserManager>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddTransient<EmbedService>();
@@ -113,15 +114,15 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
+
 app.MapTus("/tus", Tus.TusConfigurationFactory);
+app.MapHub<ChatHub>("/chat");
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
-
 app.MapRazorPages();
-app.MapControllers();
-app.MapFallbackToFile("index.html");
 
-app.MapHub<ChatHub>("/chat");
+app.MapFallbackToFile("index.html");
 
 app.Run();
