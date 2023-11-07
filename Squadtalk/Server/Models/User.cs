@@ -9,6 +9,7 @@ public class User
     public required byte[] Salt { get; set; }
     public required string PasswordHash { get; set; }
     public List<RefreshToken> RefreshTokens { get; set; } = null!;
+    public List<Channel> Channels { get; set; } = null!;
 
     public MessageAuthorDto ToDto()
     {

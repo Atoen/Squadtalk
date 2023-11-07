@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.SignalR.Client;
 using Squadtalk.Shared;
 
@@ -28,12 +29,12 @@ public sealed class SignalRService : IAsyncDisposable
 
     private bool _connected;
     
-    public SignalRService(MessageService messageService, JwtService jwtService)
+    public SignalRService(MessageService messageService, JwtService jwtService, IWebAssemblyHostEnvironment hostEnvironment)
     {
         _messageService = messageService;
 
         _connection = new HubConnectionBuilder()
-            .WithUrl("https://squadtalk.net/chat",
+            .WithUrl($"{hostEnvironment.BaseAddress}chat",
                 options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult<string?>(jwtService.Token);

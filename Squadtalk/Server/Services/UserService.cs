@@ -115,7 +115,6 @@ public class UserService
         if (usernameClaim is null) return new NotFound();
         
         var parsed = Guid.TryParse(idClaim.Value, out var guid);
-
         if (!parsed) return new Error();
         
         var user = includeRefreshTokens

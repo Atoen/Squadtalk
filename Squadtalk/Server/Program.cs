@@ -12,21 +12,25 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using tusdotnet;
 using tusdotnet.Helpers;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Any, 443, listenOptions =>
+    options.Listen(IPAddress.Loopback, 1234, listenOptions =>
     {
-        listenOptions.UseHttps();
         listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
     });
 });
 
 builder.WebHost.UseStaticWebAssets();
 
-builder.Services.Configure<KestrelServerOptions>(options => { options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; });
+builder.Services.Configure<KestrelServerOptions>(options =>
+    options.Limits.MaxRequestBodySize = 100 * 1000 * 1000
+);
 
 builder.ConfigureAuthentication();
 builder.Services.AddAuthorization(options =>
@@ -47,29 +51,31 @@ builder.Services.AddCors(options =>
     });
 });
 
-var connectionString = builder.Configuration.GetConnectionString("MariaDB");
-if (connectionString is null)
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder
 {
-    Console.WriteLine("connection string in file appsettings.json is missing");
-    return;
-}
+    Host = builder.Configuration["Postgres:Host"],
+    Port = int.Parse(builder.Configuration["Postgres:Port"]!),
+    Username = builder.Configuration["Postgres:Username"],
+    Password = builder.Configuration["Postgres:Password"],
+    Database = builder.Configuration["Postgres:Database"],
+};
+
+var connectionString = connectionStringBuilder.ConnectionString;
 
 builder.Services.AddHealthChecks()
-    .AddMariaDB(connectionString)
+    .AddNpgSql(connectionString)
     .AddCheck<TusStoreHealthCheck>("TusStore");
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
-var serverVersion = new MySqlServerVersion(connectionString);
-builder.Services.AddDbContext<AppDbContext>(optionsBuilder => optionsBuilder
-    .UseMySql(connectionString, serverVersion, contextOptionsBuilder =>
-    {
-        contextOptionsBuilder.EnableRetryOnFailure(
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString, npsqlOptions => {
+        npsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null);
+            errorCodesToAdd: null);
     })
     .EnableDetailedErrors()
 );
@@ -78,6 +84,7 @@ builder.Services.AddTransient<IHashService, Argon2HashService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<TusDiskStoreHelper>();
 builder.Services.AddSingleton<UserManager>();
+builder.Services.AddScoped<ChannelService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddTransient<EmbedService>();
@@ -87,11 +94,20 @@ builder.Services.AddScoped<IImagePreviewGenerator, ImagePreviewGeneratorService>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddRateLimiter(limiterOptions => limiterOptions
+    .AddFixedWindowLimiter(policyName: "fixed", options =>
+    {
+        options.PermitLimit = 4;
+        options.Window = TimeSpan.FromSeconds(12);
+        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        options.QueueLimit = 2;
+    }));
+
 var app = builder.Build();
 
-app.UseHttpsRedirection();
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -99,7 +115,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
-    app.UseHsts();
 }
 
 app.UseCors(corsPolicy);
@@ -108,6 +123,13 @@ app.MapHealthChecks("_health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Blazor API V1");
+});
+
 
 app.UseRouting();
 

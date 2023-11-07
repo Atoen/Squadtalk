@@ -112,7 +112,7 @@ async function uploadFile(file) {
     progress.style.width = "0";
 
     const uploadOptions = {
-        endpoint: "https://squadtalk.net/tus",
+        endpoint: "http://127.0.0.1:1234/tus",
         retryDelays: [0, 3000, 5000, 10000, 20000],
         metadata: {
             filename: file.name,

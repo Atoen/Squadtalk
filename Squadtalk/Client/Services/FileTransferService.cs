@@ -21,7 +21,9 @@ public class FileTransferService : IAsyncDisposable
     private IJSObjectReference? _module;
     private DotNetObjectReference<FileTransferService>? _objectReference;
     
+    private bool _initialized;    
     private bool _uploadInProgress;
+    
     public bool CanStartUpload => Selected && !_uploadInProgress;
     public bool Selected { get; private set; }
     public string? SelectedFileSize { get; private set; }
@@ -41,11 +43,17 @@ public class FileTransferService : IAsyncDisposable
 
     public async Task InitializeModuleAsync()
     {
-        _objectReference?.Dispose();
+        if (_initialized) return;
+        _initialized = true;
+        
         _objectReference = DotNetObjectReference.Create(this);
         
         _module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/FileTransfer.js");
         await _module.InvokeVoidAsync("initialize", _objectReference);
+
+        _jwtService.TokenUpdatedAsync += async token =>
+            await _module.InvokeVoidAsync("updateJwt", token);
+
     }
 
     public async Task<bool> UploadFileAsync()

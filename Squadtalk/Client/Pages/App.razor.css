@@ -5,6 +5,7 @@
     grid-template-columns: 220px auto;
     grid-template-rows: minmax(100px, auto) 80px;
     max-height: 100%;
+    overflow: auto;
 }
 
 .chat-area {

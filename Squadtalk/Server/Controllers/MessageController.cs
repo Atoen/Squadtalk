@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Squadtalk.Server.Models;
+using Squadtalk.Server.Services;
 using Squadtalk.Shared;
 
 namespace Squadtalk.Server.Controllers;
@@ -11,21 +12,29 @@ namespace Squadtalk.Server.Controllers;
 public class MessageController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ChannelService _channelService;
 
-    public MessageController(AppDbContext context)
+    public MessageController(AppDbContext context, ChannelService channelService)
     {
         _context = context;
+        _channelService = channelService;
     }
 
-    [HttpGet]
+    [HttpGet("{channelId:guid}/{timestamp?}")]
     [Authorize]
-    public async IAsyncEnumerable<MessageDto> GetMessages(string? timestamp)
+    public async IAsyncEnumerable<MessageDto> GetMessages(Guid channelId, string? timestamp)
     {
+        var participates = await _channelService.CheckIfUserParticipatesInChannel(HttpContext.User, channelId);
+        if (!participates)
+        {
+            yield break;
+        }
+        
         var cursor = CreateCursor(timestamp);
-
+        
         var messages = cursor == default
-            ? CompiledQueries.MessageFirstPageAsync(_context)
-            : CompiledQueries.MessagePageByCursorAsync(_context, cursor);
+            ? CompiledQueries.MessageFirstPageAsync(_context, channelId)
+            : CompiledQueries.MessagePageByCursorAsync(_context, channelId, cursor);
         
         await foreach (var message in messages)
         {

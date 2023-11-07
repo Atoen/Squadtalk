@@ -20,6 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="7.1.0" />
         <PackageReference Include="AspNetCore.HealthChecks.SignalR" Version="7.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="7.1.0" />
         <PackageReference Include="EntityFramework" Version="6.4.4" />
@@ -34,9 +35,14 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Npgsql" Version="7.0.6" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
         <PackageReference Include="OneOf" Version="3.0.255" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.0.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.5.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.5.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
         <PackageReference Include="tusdotnet" Version="2.7.1" />
     </ItemGroup>
 

@@ -53,7 +53,6 @@ public class UserManager
             }
 
             return isTheOnlyConnection;
-            
         }
         finally
         {

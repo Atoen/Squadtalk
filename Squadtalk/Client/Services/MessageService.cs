@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using RestSharp;
 using RestSharp.Authenticators;
 using Squadtalk.Client.Extensions;
@@ -25,13 +26,13 @@ public sealed class MessageService
 
     public event MessageReceived? MessageReceived;
 
-    public MessageService(JwtService jwtService)
+    public MessageService(JwtService jwtService, IWebAssemblyHostEnvironment hostEnvironment)
     {
         _jwtService = jwtService;
         _restAuthenticator = new JwtAuthenticator(_jwtService.Token);
         _restClient = new RestClient(new RestClientOptions
         {
-            BaseUrl = new Uri("https://squadtalk.net"),
+            BaseUrl = new Uri(hostEnvironment.BaseAddress),
             Authenticator = _restAuthenticator
         });
     }

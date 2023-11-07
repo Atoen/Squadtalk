@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <script src="tus.min.js"></script>
+<script>
+    window.addEventListener("beforeunload", e => {
+        const warning = "";
+        e.returnValue = warning;
+        return warning;
+    });
+</script>
 <html lang="en">
 
 <head>

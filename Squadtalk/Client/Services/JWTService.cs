@@ -7,6 +7,7 @@ using Squadtalk.Client.Options;
 namespace Squadtalk.Client.Services;
 
 public delegate void TokenUpdatedHandler(JwtSecurityToken securityToken);
+public delegate Task TokenUpdatedHandlerAsync(string jwt);
 
 public sealed class JwtService
 {
@@ -22,6 +23,7 @@ public sealed class JwtService
 	private Task? _updateTask;
 
 	public event TokenUpdatedHandler? TokenUpdated;
+	public event TokenUpdatedHandlerAsync? TokenUpdatedAsync;
 
 	public JwtService(IOptions<JwtServiceOptions> options, RestClient restClient)
 	{
@@ -67,6 +69,11 @@ public sealed class JwtService
 			{
 				SecurityToken = _tokenHandler.ReadJwtToken(Token);
 				TokenUpdated?.Invoke(SecurityToken);
+
+				if (TokenUpdatedAsync is not null)
+				{
+					await TokenUpdatedAsync.Invoke(Token);
+				}
 				
 				await DelayNextRequest(cancellationToken);
 			}
@@ -79,6 +86,11 @@ public sealed class JwtService
 				Token = token;
 				SecurityToken = _tokenHandler.ReadJwtToken(token);
 				TokenUpdated?.Invoke(SecurityToken);
+
+				if (TokenUpdatedAsync is not null)
+				{
+					await TokenUpdatedAsync.Invoke(Token);
+				}
 				
 				await DelayNextRequest(cancellationToken);
 			}
