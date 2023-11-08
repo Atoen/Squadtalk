@@ -1,15 +1,14 @@
-﻿
-using Squadtalk.Server.Models;
+﻿using Squadtalk.Shared;
 
 namespace Squadtalk.Server.Hubs;
 
 public interface IChatClient
 {
-    Task ReceiveMessage(Message message);
+    Task ReceiveMessage(MessageDto message);
 
-    Task UserConnected(string user);
+    Task UserConnected(UserDto user);
 
-    Task UserDisconnected(string user);
+    Task UserDisconnected(UserDto user);
 
-    Task GetConnectedUsers(IEnumerable<string> users);
+    Task GetConnectedUsers(IEnumerable<UserDto> users);
 }

@@ -11,8 +11,14 @@
             <FileToUpload Filename="@FileTransfer.SelectedFilename" FileSize="@FileTransfer.SelectedFileSize" />
         }
         
+        @{
+            var placeholder = ChannelManager.CurrentName == ChannelManager.Global.Name
+                ? "Type message"
+                : $"Message @{ChannelManager.CurrentName}";
+        }
+        
         <div class="grow-wrap">
-            <textarea rows="1" placeholder="Type message"
+            <textarea rows="1" placeholder="@placeholder"
                     @bind="_userMessage"
                     @onkeydown="TextBoxCallback"
                     @onkeydown:preventDefault="_preventDefaultEnter"
@@ -42,6 +48,7 @@
 @inject IJSRuntime JsRuntime
 @inject FileTransferService FileTransfer
 @inject SignalRService SignalRService
+@inject ChannelManager ChannelManager
 
 @code {
     // [Parameter] public required SignalRService SignalRService { get; set; }
@@ -74,7 +81,7 @@
         
         if (!string.IsNullOrWhiteSpace(message))
         {
-            var result = await SignalRService.SendMessageAsync(message, CancellationToken.None);
+            var result = await SignalRService.SendMessageAsync(message, ChannelManager.CurrentId, CancellationToken.None);
             if (result.IsFailed)
             {
                 foreach (var error in result.Errors)
@@ -89,6 +96,7 @@
     {
         FileTransfer.FileSelected += (_, _) =>  StateHasChanged();
         FileTransfer.RemovedSelectedFile += StateHasChanged;
+        ChannelManager.ChannelChanged += (_, _) => StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

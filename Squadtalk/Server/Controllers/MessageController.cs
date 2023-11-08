@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Squadtalk.Server.Models;
 using Squadtalk.Server.Services;
@@ -20,8 +19,8 @@ public class MessageController : ControllerBase
         _channelService = channelService;
     }
 
+    // [Authorize]
     [HttpGet("{channelId:guid}/{timestamp?}")]
-    [Authorize]
     public async IAsyncEnumerable<MessageDto> GetMessages(Guid channelId, string? timestamp)
     {
         var participates = await _channelService.CheckIfUserParticipatesInChannel(HttpContext.User, channelId);

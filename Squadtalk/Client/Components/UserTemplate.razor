@@ -1,10 +1,13 @@
 @using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
 
-<div class="user-card">
+<div class="user-card" @onclick="() => ChannelManager.Select(Model.Username, Model.Id)">
     <img src="@Model.AvatarUrl" class="avatar" alt="Avatar" draggable="false">
     <div class="username" style="color: @Model.Color">@Model.Username</div>
     <div class="connection-status" style="color: @_statusColor">@Model.StatusString</div>
 </div>
+
+@inject ChannelManager ChannelManager
 
 @code {
 

@@ -11,9 +11,9 @@ public class User
     public List<RefreshToken> RefreshTokens { get; set; } = null!;
     public List<Channel> Channels { get; set; } = null!;
 
-    public MessageAuthorDto ToDto()
+    public UserDto ToDto()
     {
-        return new MessageAuthorDto
+        return new UserDto
         {
             Username = Username,
             Id = Id

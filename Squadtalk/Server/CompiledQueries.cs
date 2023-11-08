@@ -62,4 +62,10 @@ internal static class CompiledQueries
             (AppDbContext context, Guid channelId) => context
                 .Channels.Include(x => x.Participants)
                 .FirstOrDefault());
+
+    public static readonly Func<AppDbContext, string, Task<User?>> UserByNameWithChannelsAsync =
+        EF.CompileAsyncQuery(
+            (AppDbContext context, string username) => context
+                .Users.Include(x => x.Channels)
+                .FirstOrDefault(x => x.Username == username));
 }

@@ -1,0 +1,29 @@
+.channels {
+    grid-column: 1;
+    grid-row: 1;
+    background: #393939;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.global {
+    height: 50px;
+    background: #323232;
+    border-radius: 0 0 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+}
+
+.global:hover {
+    background: #292929;
+}
+
+.icon {
+    color: whitesmoke;
+    width: 30px;
+    margin-right: 10px;
+}

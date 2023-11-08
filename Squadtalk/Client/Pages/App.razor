@@ -10,11 +10,11 @@
 
 <div class="background">
     
-    <UsersList @ref="_users">
+    <ChannelsList>
         <Template>
             <UserTemplate Model="context" />
         </Template>
-    </UsersList>
+    </ChannelsList>
     <UserStatus />
     
     <div class="chat-area">
@@ -43,8 +43,6 @@
 @inject NavigationManager NavigationManager
 
 @code {
-    
-    private UsersList _users = null!;
 
     protected override async Task OnInitializedAsync()
     {

@@ -17,9 +17,9 @@ public class Message
         return new MessageDto
         {
             Author = Author.ToDto(),
-            Id = Id,
             Timestamp = Timestamp,
             Content = Content,
+            ChannelId = ChannelId,
             Embed = Embed?.ToDto()
         };
     }

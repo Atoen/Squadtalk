@@ -6,6 +6,7 @@ public sealed class UserModel
     public required string Color { get; set; }
     public required string AvatarUrl { get; set; }
     public UserStatus Status { get; set; }
+    public required Guid Id { get; set; }
 
     public string StatusString => Status switch
     {

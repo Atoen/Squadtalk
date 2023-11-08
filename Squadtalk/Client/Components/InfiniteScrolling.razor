@@ -28,12 +28,13 @@
     }
 }
 
-@inject IJSRuntime JsRuntime
 @implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
 @inject MessageService MessageService
+@inject ChannelManager ChannelManager
 
 @code {
-
+    
     private ElementReference _lastItemIndicator;
     private DotNetObjectReference<InfiniteScrolling>? _currentComponentReference;
     private IJSObjectReference? _module;
@@ -52,6 +53,7 @@
     protected override void OnInitialized()
     {
         MessageService.MessageReceived += UpdateOnMessage;
+        ChannelManager.ChannelChanged += (_, _) => StateHasChanged();
     }
 
     private async Task UpdateOnMessage()
@@ -71,7 +73,7 @@
         
         try
         {
-            var newItems = await MessageService.GetMessagePageAsync();
+            var newItems = await MessageService.GetMessagePageAsync(ChannelManager.CurrentId);
             if (!cancellationTokenSource.IsCancellationRequested)
             {
                 var length = currentItems.Count;

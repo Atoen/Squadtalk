@@ -11,16 +11,18 @@ public class ChatHub : Hub<IChatClient>
 {
     private readonly UserService _userService;
     private readonly MessageService _messageService;
-    private readonly UserManager _userManager;
+    private readonly ConnectionManager _connectionManager;
+    private readonly ChannelService _channelService;
 
-    public ChatHub(UserService userService, MessageService messageService, UserManager userManager)
+    public ChatHub(UserService userService, MessageService messageService, ConnectionManager connectionManager, ChannelService channelService)
     {
         _userService = userService;
         _messageService = messageService;
-        _userManager = userManager;
+        _connectionManager = connectionManager;
+        _channelService = channelService;
     }
     
-    public async Task SendMessage(string messageContent, IGifSourceVerifier gifSourceVerifier)
+    public async Task SendMessage(string messageContent, Guid channelId, IGifSourceVerifier gifSourceVerifier)
     {
         var user = await _userService.GetUserAsync(Context.User!);
 
@@ -30,7 +32,8 @@ public class ChatHub : Hub<IChatClient>
         {
             Author = user.AsT0,
             Timestamp = DateTimeOffset.Now,
-            Content = isGifSource ? string.Empty : messageContent
+            Content = isGifSource ? string.Empty : messageContent,
+            ChannelId = channelId
         };
 
         if (isGifSource)
@@ -46,30 +49,60 @@ public class ChatHub : Hub<IChatClient>
         }
         
         await _messageService.StoreMessageAsync(message);
-        await Clients.All.ReceiveMessage(message);
+        await Clients.All.ReceiveMessage(message.ToDto());
     }
     
     public override async Task OnConnectedAsync()
     {
-        var user = Context.User?.Identity?.Name!;
-
-        var isUniqueUserConnection = await _userManager.UserConnected(user);
+        var result = await _userService.GetUserAsync(Context.User!);
+        var user = result.AsT0;
+        var dto = user.ToDto();
+        
+        var isUniqueUserConnection = await _connectionManager.UserConnected(dto);
+        
+        await Groups.AddToGroupAsync(Context.ConnectionId, ChannelService.GlobalChannelIdString);
         if (isUniqueUserConnection)
         {
-            await Clients.Others.UserConnected(user);
+            await Clients.Group(ChannelService.GlobalChannelIdString).UserConnected(dto);
         }
 
-        await Clients.Caller.GetConnectedUsers(_userManager.ConnectedUsers);
+        await AddToPrivateChannelsAsync(dto, isUniqueUserConnection);
+        await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers);
+    }
+
+    private async Task AddToPrivateChannelsAsync(UserDto user, bool isUniqueUserConnection)
+    {
+        var channels = await _channelService.GetUserChannelsAsync(user.Username);
+        if (channels is null) return;
+        
+        foreach (var channel in channels)
+        {
+            var channelId = channel.Id.ToString();
+            
+            await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
+            if (isUniqueUserConnection)
+            {
+                await Clients.Group(channelId).UserConnected(user);
+            }
+        }
     }
     
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = Context.User?.Identity?.Name!;
+        var result = await _userService.GetUserAsync(Context.User!);
+        var user = result.AsT0;
+        var dto = user.ToDto();
 
-        var allConnectionsClosed = await _userManager.UserDisconnected(user);
-        if (allConnectionsClosed)
+        var allConnectionsClosed = await _connectionManager.UserDisconnected(dto);
+        if (!allConnectionsClosed) return;
+
+        await Clients.Group(ChannelService.GlobalChannelIdString).UserDisconnected(dto);
+        var channels = await _channelService.GetUserChannelsAsync(dto.Username);
+        if (channels is null) return;
+
+        foreach (var channel in channels)
         {
-            await Clients.Others.UserDisconnected(user);
+            await Clients.Group(channel.Id.ToString()).UserDisconnected(dto);
         }
     }
 }

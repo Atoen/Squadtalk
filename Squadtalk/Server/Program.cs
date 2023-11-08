@@ -6,7 +6,6 @@ using Squadtalk.Server.Services;
 using Squadtalk.Server.Setup;
 using Squadtalk.Shared;
 using HealthChecks.UI.Client;
-using LiteX.HealthChecks.MariaDB;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -83,7 +82,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddTransient<IHashService, Argon2HashService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<TusDiskStoreHelper>();
-builder.Services.AddSingleton<UserManager>();
+builder.Services.AddSingleton<ConnectionManager>();
 builder.Services.AddScoped<ChannelService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<MessageService>();

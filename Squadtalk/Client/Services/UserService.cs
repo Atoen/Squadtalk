@@ -1,4 +1,5 @@
 using Squadtalk.Client.Models;
+using Squadtalk.Shared;
 
 namespace Squadtalk.Client.Services;
 
@@ -20,22 +21,23 @@ public class UserService
         _signalRService.UserConnected += SignalRServiceOnUserConnected;
     }
 
-    private void SignalRServiceOnUserConnected(string user)
+    private void SignalRServiceOnUserConnected(UserDto user)
     {
-        if (user == _jwtService.Username) return;
+        if (user.Username == _jwtService.Username) return;
         
         Users.Add(new UserModel
         {
-            Username = user,
+            Username = user.Username,
             Status = UserStatus.Online,
             AvatarUrl = "user.png",
-            Color = "whitesmoke"
+            Color = "whitesmoke",
+            Id = user.Id
         });
         
         UserListChanged?.Invoke();
     }
 
-    private void SignalRServiceOnConnectedUsersReceived(IEnumerable<string> users)
+    private void SignalRServiceOnConnectedUsersReceived(IEnumerable<UserDto> users)
     {
         Users.Clear();
         
@@ -43,21 +45,22 @@ public class UserService
         {
             Users.Add(new UserModel
             {
-                Username = user,
+                Username = user.Username,
                 Status = UserStatus.Online,
                 AvatarUrl = "user.png",
-                Color = "whitesmoke"
+                Color = "whitesmoke",
+                Id = user.Id
             });
         }
         
         UserListChanged?.Invoke();
     }
     
-    private void SignalRServiceOnUserDisconnected(string user)
+    private void SignalRServiceOnUserDisconnected(UserDto user)
     {
-        if (user == _jwtService.Username) return;
+        if (user.Username == _jwtService.Username) return;
         
-        Users.RemoveAll(x => x.Username == user);
+        Users.RemoveAll(x => x.Username == user.Username);
         UserListChanged?.Invoke();
     }
 }

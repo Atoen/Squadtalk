@@ -1,14 +1,16 @@
+using Squadtalk.Shared;
+
 namespace Squadtalk.Server.Services;
 
-public class UserManager
+public class ConnectionManager
 {
-    private readonly List<string> _connectedUsers = new();
-    private readonly Dictionary<string, uint> _connections = new();
+    private readonly List<UserDto> _connectedUsers = new();
+    private readonly Dictionary<UserDto, uint> _connections = new();
     private readonly SemaphoreSlim _semaphore = new(1);
     
-    public IReadOnlyList<string> ConnectedUsers => _connectedUsers;
+    public IReadOnlyList<UserDto> ConnectedUsers => _connectedUsers;
 
-    public async Task<bool> UserConnected(string user)
+    public async Task<bool> UserConnected(UserDto user)
     {
         await _semaphore.WaitAsync();
 
@@ -33,7 +35,7 @@ public class UserManager
         }
     }
 
-    public async Task<bool> UserDisconnected(string user)
+    public async Task<bool> UserDisconnected(UserDto user)
     {
         await _semaphore.WaitAsync();
 

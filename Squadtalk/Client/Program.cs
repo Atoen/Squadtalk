@@ -22,22 +22,21 @@ builder.Services.AddScoped(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress);
 }));
 
-builder.Services.AddScoped<SignalRService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<FileTransferService>();
-builder.Services.AddScoped<MessageService>();
-builder.Services.AddScoped<JwtService>();
-builder.Services.Configure<JwtServiceOptions>(options =>
-{
-    options.RetryDelays = new[] { 1, 2, 5, 10, 15 };
-});
+builder.Services.AddScoped<SignalRService>()
+    .AddScoped<ChannelManager>()
+    .AddScoped<UserService>()
+    .AddScoped<FileTransferService>()
+    .AddScoped<MessageService>()
+    .AddScoped<JwtService>()
+    .Configure<JwtServiceOptions>(options =>
+    {
+        options.RetryDelays = new[] { 1, 2, 5, 10, 15 };
+    });
 
 builder.Services.AddAuthorizationCore(options =>
 {
-    options.AddPolicy(IdentityData.UserPolicyName, policy =>
-    {
-        policy.RequireClaim("role", IdentityData.UserClaimName);
-    });
+    options.AddPolicy(IdentityData.UserPolicyName,
+        policy => { policy.RequireClaim("role", IdentityData.UserClaimName); });
 });
 
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
