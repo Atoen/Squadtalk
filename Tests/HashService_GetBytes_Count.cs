@@ -16,13 +16,13 @@ public class HashService_GetBytes
 
         var hashService = new Argon2HashService();
         var salt = hashService.GetSalt(16);
-        
+
         var hash = await hashService.HashAsync(credentialsDto, salt);
-        
+
         Assert.NotNull(hash);
         Assert.NotEmpty(hash);
     }
-    
+
     [Theory]
     [InlineData(8)]
     [InlineData(12)]
@@ -31,10 +31,10 @@ public class HashService_GetBytes
     {
         var hashService = new Argon2HashService();
         var salt = hashService.GetSalt(count);
-        
+
         Assert.Equal(count, salt.Length);
     }
-    
+
     [Theory]
     [InlineData(32)]
     [InlineData(48)]
@@ -51,15 +51,15 @@ public class HashService_GetBytes
         {
             HashBytes = count
         };
-        
+
         var salt = hashService.GetSalt(16);
         var hash = await hashService.HashAsync(credentials, salt);
         var bytes = Convert.FromBase64String(hash);
-        
+
         Assert.Equal(hashService.HashBytes, bytes.Length);
     }
-    
-    
+
+
     [Fact]
     public async Task HashAsync_IdenticalCredentialsProduceDifferentHashes()
     {
@@ -70,10 +70,10 @@ public class HashService_GetBytes
         };
 
         var hashService = new Argon2HashService();
-        
+
         var hash1 = await hashService.HashAsync(credentials, hashService.GetSalt(16));
         var hash2 = await hashService.HashAsync(credentials, hashService.GetSalt(16));
-        
+
         Assert.NotNull(hash1);
         Assert.NotEmpty(hash1);
         Assert.NotNull(hash2);

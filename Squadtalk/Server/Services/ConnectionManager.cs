@@ -4,27 +4,33 @@ namespace Squadtalk.Server.Services;
 
 public class ConnectionManager
 {
-    private readonly List<UserDto> _connectedUsers = new();
-    private readonly Dictionary<UserDto, uint> _connections = new();
     private readonly SemaphoreSlim _semaphore = new(1);
-    
-    public IReadOnlyList<UserDto> ConnectedUsers => _connectedUsers;
+    private readonly Dictionary<UserDto, List<string>> _userConnectionIds = new();
+    private readonly Dictionary<UserDto, uint> _userConnectionsCount = new();
 
-    public async Task<bool> UserConnected(UserDto user)
+    public IEnumerable<UserDto> ConnectedUsers => _userConnectionsCount.Keys;
+
+    public IReadOnlyList<string> GetUserConnectionIds(UserDto user)
+    {
+        return _userConnectionIds[user];
+    }
+
+    public async Task<bool> UserConnected(UserDto user, string connectionId)
     {
         await _semaphore.WaitAsync();
 
         try
         {
-            var userAlreadyConnected = _connections.TryGetValue(user, out var existingConnectionCount);
+            var userAlreadyConnected = _userConnectionsCount.TryGetValue(user, out var existingConnectionCount);
             if (userAlreadyConnected)
             {
-                _connections[user] = existingConnectionCount + 1;
+                _userConnectionsCount[user] = existingConnectionCount + 1;
+                _userConnectionIds[user].Add(connectionId);
             }
             else
             {
-                _connections.Add(user, 1);
-                _connectedUsers.Add(user);
+                _userConnectionsCount.Add(user, 1);
+                _userConnectionIds[user] = new List<string> { connectionId };
             }
 
             return !userAlreadyConnected;
@@ -35,23 +41,24 @@ public class ConnectionManager
         }
     }
 
-    public async Task<bool> UserDisconnected(UserDto user)
+    public async Task<bool> UserDisconnected(UserDto user, string connectionId)
     {
         await _semaphore.WaitAsync();
 
         try
         {
-            var existingConnectionCount = _connections[user];
+            var existingConnectionCount = _userConnectionsCount[user];
             var isTheOnlyConnection = existingConnectionCount == 1;
-            
+
             if (isTheOnlyConnection)
             {
-                _connectedUsers.Remove(user);
-                _connections.Remove(user);
+                _userConnectionsCount.Remove(user);
+                _userConnectionIds.Remove(user);
             }
             else
             {
-                _connections[user] = existingConnectionCount - 1;
+                _userConnectionsCount[user] = existingConnectionCount - 1;
+                _userConnectionIds[user].Remove(connectionId);
             }
 
             return isTheOnlyConnection;

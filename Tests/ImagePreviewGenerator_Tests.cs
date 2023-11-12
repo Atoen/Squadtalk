@@ -11,8 +11,11 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
 {
     private readonly TusFixture _fixture;
 
-    public ImagePreviewGenerator_Tests(TusFixture fixture) => _fixture = fixture;
-    
+    public ImagePreviewGenerator_Tests(TusFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task CreateImagePreview_Success()
     {
@@ -21,15 +24,15 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns(_fixture.StorePath);
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
-        
+
         var previewGenerator = new ImagePreviewGeneratorService(helperSubstitute);
         var file = await _fixture.Store.GetFileAsync(fileId, CancellationToken.None).ConfigureAwait(false);
 
         var result = await previewGenerator.CreateImagePreviewAsync(file, CancellationToken.None).ConfigureAwait(false);
-        
+
         Assert.NotEmpty(result.id);
         Assert.NotEqual(fileId, result.id);
-        
+
         Assert.True(result.width <= previewGenerator.MaxWidth && result.height <= previewGenerator.MaxHeight);
         var aspectRatio = (double) result.width / result.height;
         Assert.True(Math.Abs(aspectRatio - 1) < 0.001);
@@ -40,39 +43,39 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
     {
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("fakepath");
-        
+
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
-        
+
         var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
         {
             MaxWidth = 200,
             MaxHeight = 200
         };
-        
+
         Assert.True(imagePreviewGenerator.ShouldResize(20, 300));
         Assert.True(imagePreviewGenerator.ShouldResize(250, 30));
         Assert.True(imagePreviewGenerator.ShouldResize(230, 300));
     }
-    
+
     [Fact]
     public void ShouldResize_False()
     {
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("fakepath");
-        
+
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
-        
+
         var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
         {
             MaxWidth = 200,
             MaxHeight = 200
         };
-        
+
         Assert.False(imagePreviewGenerator.ShouldResize(200, 200));
         Assert.False(imagePreviewGenerator.ShouldResize(150, 30));
         Assert.False(imagePreviewGenerator.ShouldResize(130, 30));
     }
-    
+
     [Theory]
     [InlineData(600, 400, 500, 700)]
     [InlineData(800, 600, 700, 900)]
@@ -83,7 +86,7 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         var image = new Image<Rgba32>(imageWidth, imageHeight);
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("fakepath");
-        
+
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
         var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
         {
@@ -92,15 +95,15 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         };
 
         var result = imagePreviewGenerator.GetResizedDimensions(image);
-        
+
         Assert.Equal(imageWidth, image.Width);
         Assert.Equal(imageHeight, image.Height);
-        
+
         Assert.True(targetWidth >= result.width && targetHeight >= result.height);
         Assert.Equal(targetWidth, result.width);
         Assert.Equal(0, result.height);
     }
-    
+
     [Theory]
     [InlineData(100, 200, 500, 500)]
     [InlineData(150, 250, 600, 600)]
@@ -111,7 +114,7 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         var image = new Image<Rgba32>(imageWidth, imageHeight);
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("fakepath");
-        
+
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
         var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
         {
@@ -120,10 +123,10 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         };
 
         var result = imagePreviewGenerator.GetResizedDimensions(image);
-        
+
         Assert.Equal(imageWidth, image.Width);
         Assert.Equal(imageHeight, image.Height);
-        
+
         Assert.True(targetWidth >= result.width && targetHeight >= result.height);
         Assert.Equal(targetHeight, result.height);
         Assert.Equal(0, result.width);
@@ -139,7 +142,7 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         var image = new Image<Rgba32>(imageWidth, imageHeight);
         var configSubstitute = Substitute.For<IConfiguration>();
         configSubstitute["Tus:Address"].Returns("fakepath");
-        
+
         var helperSubstitute = Substitute.For<TusDiskStoreHelper>(configSubstitute);
         var imagePreviewGenerator = new ImagePreviewGeneratorService(helperSubstitute)
         {
@@ -148,18 +151,15 @@ public class ImagePreviewGenerator_Tests : IClassFixture<TusFixture>
         };
 
         var result = imagePreviewGenerator.GetResizedDimensions(image);
-        
+
         Assert.Equal(imageWidth, image.Width);
         Assert.Equal(imageHeight, image.Height);
-        
+
         Assert.True(targetWidth >= result.width && targetHeight >= result.height);
 
         var aspectRatio = (double) imageWidth / imageHeight;
         var resizedAspectRatio = (double) result.width / result.height;
-        
+
         Assert.True(Math.Abs(aspectRatio - resizedAspectRatio) < 0.01);
     }
-    
-
-    
 }

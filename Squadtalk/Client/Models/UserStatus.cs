@@ -7,4 +7,3 @@ public enum UserStatus
     DoNotDisturb,
     Offline
 }
-

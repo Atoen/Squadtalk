@@ -10,7 +10,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgb(26,85,134);
+    background: rgb(26, 85, 134);
     background: linear-gradient(0deg, #1a5586 0%, #6f00a3 100%);
 }
 
@@ -52,9 +52,13 @@ p {
 }
 
 @keyframes title-wave {
-     0% {background-position:100% 0}
-     100% {background-position:0 0}
- }
+    0% {
+        background-position: 100% 0
+    }
+    100% {
+        background-position: 0 0
+    }
+}
 
 .form {
     position: relative;
@@ -83,10 +87,16 @@ p {
 }
 
 @keyframes f1 {
-     100% {transform:perspective(100px) rotateX(180deg)}
+    100% {
+        transform: perspective(100px) rotateX(180deg)
+    }
 }
 
 @keyframes f2 {
-     0%, 14.5%, 64.6%, 100% {background: #9d00e7}
-     14.6%, 64.5% {background: #117bd2}
- }
+    0%, 14.5%, 64.6%, 100% {
+        background: #9d00e7
+    }
+    14.6%, 64.5% {
+        background: #117bd2
+    }
+}

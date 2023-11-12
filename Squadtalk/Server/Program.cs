@@ -1,28 +1,26 @@
 using System.Net;
+using System.Threading.RateLimiting;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Squadtalk.Server.Health;
 using Squadtalk.Server.Hubs;
 using Squadtalk.Server.Models;
 using Squadtalk.Server.Services;
 using Squadtalk.Server.Setup;
 using Squadtalk.Shared;
-using HealthChecks.UI.Client;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore;
 using tusdotnet;
 using tusdotnet.Helpers;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Loopback, 1234, listenOptions =>
-    {
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-    });
+    options.Listen(IPAddress.Loopback, 1234,
+        listenOptions => { listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3; });
 });
 
 builder.WebHost.UseStaticWebAssets();
@@ -41,7 +39,7 @@ builder.Services.AddAuthorization(options =>
 const string corsPolicy = "CorsPolicy";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: corsPolicy, policy =>
+    options.AddPolicy(corsPolicy, policy =>
     {
         policy.AllowAnyOrigin()
             .AllowAnyHeader()
@@ -56,7 +54,7 @@ var connectionStringBuilder = new NpgsqlConnectionStringBuilder
     Port = int.Parse(builder.Configuration["Postgres:Port"]!),
     Username = builder.Configuration["Postgres:Username"],
     Password = builder.Configuration["Postgres:Password"],
-    Database = builder.Configuration["Postgres:Database"],
+    Database = builder.Configuration["Postgres:Database"]
 };
 
 var connectionString = connectionStringBuilder.ConnectionString;
@@ -70,25 +68,26 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString, npsqlOptions => {
-        npsqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 3,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorCodesToAdd: null);
-    })
-    .EnableDetailedErrors()
+    options.UseNpgsql(connectionString, npsqlOptions =>
+        {
+            npsqlOptions.EnableRetryOnFailure(
+                3,
+                TimeSpan.FromSeconds(10),
+                null);
+        })
+        .EnableDetailedErrors()
 );
 
-builder.Services.AddTransient<IHashService, Argon2HashService>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddSingleton<TusDiskStoreHelper>();
-builder.Services.AddSingleton<ConnectionManager>();
-builder.Services.AddScoped<ChannelService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<MessageService>();
-builder.Services.AddTransient<EmbedService>();
-builder.Services.AddScoped<IGifSourceVerifier, GifSourceVerifierService>();
-builder.Services.AddScoped<IImagePreviewGenerator, ImagePreviewGeneratorService>();
+builder.Services.AddTransient<IHashService, Argon2HashService>()
+    .AddScoped<ITokenService, TokenService>()
+    .AddSingleton<TusDiskStoreHelper>()
+    .AddSingleton<ConnectionManager>()
+    .AddScoped<ChannelService>()
+    .AddScoped<UserService>()
+    .AddScoped<MessageService>()
+    .AddTransient<EmbedService>()
+    .AddScoped<IGifSourceVerifier, GifSourceVerifierService>()
+    .AddScoped<IImagePreviewGenerator, ImagePreviewGeneratorService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -97,7 +96,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddRateLimiter(limiterOptions => limiterOptions
-    .AddFixedWindowLimiter(policyName: "fixed", options =>
+    .AddFixedWindowLimiter("fixed", options =>
     {
         options.PermitLimit = 4;
         options.Window = TimeSpan.FromSeconds(12);
@@ -108,13 +107,9 @@ builder.Services.AddRateLimiter(limiterOptions => limiterOptions
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{
     app.UseWebAssemblyDebugging();
-}
 else
-{
     app.UseExceptionHandler("/Error");
-}
 
 app.UseCors(corsPolicy);
 
@@ -124,10 +119,7 @@ app.MapHealthChecks("_health", new HealthCheckOptions
 });
 
 app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Blazor API V1");
-});
+app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Blazor API V1"); });
 
 
 app.UseRouting();

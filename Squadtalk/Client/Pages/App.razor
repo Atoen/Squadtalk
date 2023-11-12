@@ -1,22 +1,24 @@
 @page "/app"
-
 @using Squadtalk.Client.Services
 @using UserStatus = Squadtalk.Client.Models.UserStatus
 
 <PageTitle>Squadtalk</PageTitle>
 
-<link rel="stylesheet" href="css/messageTemplate.css" />
-<link rel="stylesheet" href="css/uploadinfo.css" />
+<link rel="stylesheet" href="css/messageTemplate.css"/>
+<link rel="stylesheet" href="css/uploadinfo.css"/>
 
 <div class="background">
-    
+
     <ChannelsList>
-        <Template>
-            <UserTemplate Model="context" />
-        </Template>
+        <GroupChatTemplate>
+            <ChannelTemplate Model="context"/>
+        </GroupChatTemplate>
+        <UserTemplate>
+            <UserTemplate Model="context"/>
+        </UserTemplate>
     </ChannelsList>
-    <UserStatus />
-    
+    <UserStatus/>
+
     <div class="chat-area">
         <div class="message-listbox" id="listbox">
             <InfiniteScrolling>
@@ -31,8 +33,8 @@
                 </LoadingTemplate>
             </InfiniteScrolling>
         </div>
-        
-        <TextBox />
+
+        <TextBox/>
     </div>
 </div>
 
@@ -51,10 +53,11 @@
             NavigationManager.NavigateTo("");
             return;
         }
-        
+
         var result = await SignalRService.ConnectAsync();
         Console.WriteLine(result);
-        
+
         JwtService.UnableToRefreshToken = () => NavigationManager.NavigateTo("/");
     }
+
 }

@@ -10,39 +10,39 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Squadtalk</title>
-    <base href="/" />
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/app.css" rel="stylesheet" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="Squadtalk.Client.styles.css" rel="stylesheet" />
-    <link href="manifest.json" rel="manifest" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Audiowide">
+    <base href="/"/>
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/app.css" rel="stylesheet"/>
+    <link href="favicon.png" rel="icon" type="image/png"/>
+    <link href="Squadtalk.Client.styles.css" rel="stylesheet"/>
+    <link href="manifest.json" rel="manifest"/>
+    <link href="icon-512.png" rel="apple-touch-icon" sizes="512x512"/>
+    <link href="icon-192.png" rel="apple-touch-icon" sizes="192x192"/>
+    <link href="https://fonts.googleapis.com/css?family=Audiowide" rel="stylesheet">
 </head>
 
 <body>
-    <div id="app">
-        <div class="index-loading">
-            <div class="index-loading-background">
-                <div class="index-loading-title">Squadtalk</div>
-                <div class="index-progress-border">
-                    <div class="index-progress-value"></div>
-                </div>
+<div id="app">
+    <div class="index-loading">
+        <div class="index-loading-background">
+            <div class="index-loading-title">Squadtalk</div>
+            <div class="index-progress-border">
+                <div class="index-progress-value"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-    <script src="_framework/blazor.webassembly.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a class="reload" href="">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+<script src="_framework/blazor.webassembly.js"></script>
+<script>navigator.serviceWorker.register('service-worker.js');</script>
 </body>
 
 <style>
@@ -55,8 +55,8 @@
         height: 100vh;
         justify-content: center;
         align-items: center;
-        background: rgb(26,85,134);
-        background: linear-gradient(0deg, rgba(26,85,134,1) 0%, rgba(111,0,163,1) 100%);
+        background: rgb(26, 85, 134);
+        background: linear-gradient(0deg, rgba(26, 85, 134, 1) 0%, rgba(111, 0, 163, 1) 100%);
     }
 
     .index-loading-background {

@@ -5,12 +5,10 @@ namespace Squadtalk.Server.Services;
 
 public class ChannelService
 {
-    private readonly UserService _userService;
+    public static readonly Guid GlobalChannelId = Guid.Empty;
     private readonly AppDbContext _dbContext;
     private readonly ILogger<ChannelService> _logger;
-
-    public static readonly Guid GlobalChannelId = Guid.Empty;
-    public static string GlobalChannelIdString { get; } = GlobalChannelId.ToString();
+    private readonly UserService _userService;
 
     public ChannelService(UserService userService, AppDbContext dbContext, ILogger<ChannelService> logger)
     {
@@ -18,20 +16,19 @@ public class ChannelService
         _dbContext = dbContext;
         _logger = logger;
     }
-    
+
+    public static string GlobalChannelIdString { get; } = GlobalChannelId.ToString();
+
     public async Task<bool> CheckIfUserParticipatesInChannel(ClaimsPrincipal principal, Guid channelId)
     {
-        if (channelId == GlobalChannelId)
-        {
-            return true;
-        }
+        if (channelId == GlobalChannelId) return true;
 
         var channel = await CompiledQueries.ChannelByIdAsync(_dbContext, channelId);
         if (channel is null)
         {
             return false;
         }
-        
+
         var userResult = await _userService.GetUserAsync(principal);
         if (!userResult.IsT0)
         {
@@ -51,7 +48,7 @@ public class ChannelService
         {
             return user.Channels;
         }
-        
+
         _logger.LogError("Could not retrieve list of channels for user {User}", username);
         return null;
     }

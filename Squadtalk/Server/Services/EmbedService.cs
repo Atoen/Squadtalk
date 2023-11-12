@@ -7,23 +7,24 @@ namespace Squadtalk.Server.Services;
 
 public class EmbedService
 {
+    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png" };
     private readonly IImagePreviewGenerator _previewGenerator;
-    private static readonly string[] ImageExtensions = {".jpg", ".jpeg", ".png"};
+    private string? _requestHost;
 
     // Service is transient
     private string? _requestScheme;
-    private string? _requestHost;
 
     public EmbedService(IImagePreviewGenerator previewGenerator)
     {
         _previewGenerator = previewGenerator;
     }
 
-    public async Task<Embed> CreateEmbedAsync(ITusFile file, string requestScheme, string requestHost, CancellationToken cancellationToken)
+    public async Task<Embed> CreateEmbedAsync(ITusFile file, string requestScheme, string requestHost,
+        CancellationToken cancellationToken)
     {
         _requestScheme = requestScheme;
         _requestHost = requestHost;
-        
+
         var metadata = await file.GetMetadataAsync(cancellationToken);
 
         var filename = metadata["filename"].GetString(Encoding.UTF8);
@@ -49,8 +50,9 @@ public class EmbedService
 
         return await CreateImageEmbed(file, uri, width, height, cancellationToken);
     }
-    
-    private async Task<Embed> CreateImageEmbed(ITusFile file, string uri, string width, string height, CancellationToken cancellationToken)
+
+    private async Task<Embed> CreateImageEmbed(ITusFile file, string uri, string width, string height,
+        CancellationToken cancellationToken)
     {
         var data = new Dictionary<string, string>
         {
@@ -61,7 +63,7 @@ public class EmbedService
         };
 
         var (widthInt, heightInt) = (int.Parse(width), int.Parse(height));
-        
+
         if (_previewGenerator.ShouldResize(widthInt, heightInt))
         {
             var (previewId, previewWidth, previewHeight) = await _previewGenerator.CreateImagePreviewAsync(file, cancellationToken);
@@ -78,7 +80,10 @@ public class EmbedService
         };
     }
 
-    private bool HasImageExtension(string filename) => ImageExtensions.Any(filename.EndsWith);
+    private bool HasImageExtension(string filename)
+    {
+        return ImageExtensions.Any(filename.EndsWith);
+    }
 
     private string CreateUri(string id, string? requestScheme, string? requestHost)
     {

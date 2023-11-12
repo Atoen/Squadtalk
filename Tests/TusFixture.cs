@@ -5,15 +5,15 @@ namespace Tests;
 
 public sealed class TusFixture : IDisposable
 {
-    public string StorePath => "../../../Tus";
-    public string Path => "../../..";
-    public TusDiskStore Store { get; }
-    
     public TusFixture()
     {
         Directory.CreateDirectory(StorePath);
         Store = new TusDiskStore(StorePath);
     }
+
+    public string StorePath => "../../../Tus";
+    public string Path => "../../..";
+    public TusDiskStore Store { get; }
 
     public void Dispose()
     {
@@ -25,16 +25,13 @@ public sealed class TusFixture : IDisposable
         {
         }
     }
-    
+
     public async Task<string> CreateTestFileAsync(string file)
     {
         var path = System.IO.Path.Combine(Path, file);
         var fileInfo = new FileInfo(path);
 
-        if (!fileInfo.Exists)
-        {
-            Assert.Fail($"Test file not found: {file}");
-        }
+        if (!fileInfo.Exists) Assert.Fail($"Test file not found: {file}");
 
         var filename = Encoding.UTF8.GetBytes(fileInfo.Name);
         var filetype = "image/jpg"u8.ToArray();

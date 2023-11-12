@@ -7,6 +7,8 @@ namespace Squadtalk.Server;
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 internal static class CompiledQueries
 {
+    private const int MessagePageCount = 20;
+
     public static readonly Func<AppDbContext, string, Task<bool>> UsernameExistsAsync =
         EF.CompileAsyncQuery(
             (AppDbContext context, string username) => context
@@ -34,8 +36,6 @@ internal static class CompiledQueries
                 .Users.Include(x => x.RefreshTokens)
                 .FirstOrDefault(x => x.Id == id));
 
-    private const int MessagePageCount = 20;
-
     public static readonly Func<AppDbContext, Guid, DateTimeOffset, IAsyncEnumerable<Message>>
         MessagePageByCursorAsync =
             EF.CompileAsyncQuery(
@@ -61,11 +61,21 @@ internal static class CompiledQueries
         EF.CompileAsyncQuery(
             (AppDbContext context, Guid channelId) => context
                 .Channels.Include(x => x.Participants)
-                .FirstOrDefault());
+                .FirstOrDefault(x => x.Id == channelId));
 
     public static readonly Func<AppDbContext, string, Task<User?>> UserByNameWithChannelsAsync =
         EF.CompileAsyncQuery(
             (AppDbContext context, string username) => context
                 .Users.Include(x => x.Channels)
+                .ThenInclude(x => x.Participants)
+                .AsSplitQuery()
                 .FirstOrDefault(x => x.Username == username));
+
+    public static readonly Func<AppDbContext, Guid, Task<User?>> UserByIdWithChannelsAsync =
+        EF.CompileAsyncQuery(
+            (AppDbContext context, Guid id) => context
+                .Users.Include(x => x.Channels)
+                .ThenInclude(x => x.Participants)
+                .AsSplitQuery()
+                .FirstOrDefault(x => x.Id == id));
 }

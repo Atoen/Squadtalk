@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c0849fc2-c2ce-41dd-be33-345a978dd552" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/ConsentCookie.razor.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Squadtalk/Client/wwwroot/js/Scroll.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/ConsentCookie.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/ConsentCookie.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/FileToUpload.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/FileToUpload.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/InfiniteScrolling.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/InfiniteScrolling.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/MessageEmbed.razor.css" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/MessageEmbed.razor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/MessageTemplate.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/MessageTemplate.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/MessageTemplate.razor.css" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/MessageTemplate.razor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/TextBox.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/TextBox.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/TextBox.razor.css" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/TextBox.razor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Components/UploadInfo.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Components/UploadInfo.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Pages/App.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Pages/App.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Pages/App.razor.css" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Pages/App.razor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Pages/Index.razor.css" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Pages/Index.razor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Services/FileTransferService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Services/FileTransferService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Services/MessageService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Services/MessageService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/Shared/MainLayout.razor" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/Shared/MainLayout.razor" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Client/wwwroot/js/FileTransfer.js" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Client/wwwroot/js/FileTransfer.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Server/CompiledQueries.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Server/CompiledQueries.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Squadtalk/Server/Controllers/MessageController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Squadtalk/Server/Controllers/MessageController.cs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="2VzS87NzgOHl6UC8iGb3HwFbBFw" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenDatabaseViewOnStart": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/Artur/RiderProjects/Squadtalk"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mariadb"
+    ]
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+</project>

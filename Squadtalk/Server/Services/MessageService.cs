@@ -22,7 +22,6 @@ public class MessageService
         }
         catch (DbUpdateException)
         {
-
         }
     }
 }

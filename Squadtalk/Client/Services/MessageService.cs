@@ -1,100 +1,104 @@
-﻿using System.Text;
+﻿using System.Collections.Concurrent;
+using System.Text;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using RestSharp;
 using RestSharp.Authenticators;
 using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Models;
+using Squadtalk.Client.Shared;
 using Squadtalk.Shared;
 
 namespace Squadtalk.Client.Services;
 
-public delegate Task MessageReceived();
+public delegate Task MessageReceived(Guid channelId);
 
 public sealed class MessageService
 {
-    private readonly JwtService _jwtService;
-    private readonly ChannelManager _channelManager;
-    private readonly RestClient _restClient;
-    private readonly JwtAuthenticator _restAuthenticator;
+    // private readonly ConcurrentDictionary<Guid, ChannelState> _channels = new();
+    private readonly CommunicationManager _communicationManager;
+    
     private readonly TimeSpan _firstMessageTimeSpan = TimeSpan.FromMinutes(5);
-
-    private MessageModel? _lastMessageReceived;
-    private MessageModel? _lastMessageFormatted;
-
-    private long _pageCursor;
-
-    private readonly Dictionary<Guid, List<MessageModel>> _messages = new()
-    {
-        { ChannelManager.Global.Id, new List<MessageModel>() }
-    };
-
-    private readonly List<MessageModel> _empty = new();
-
-    public List<MessageModel> Messages
-    {
-        get
-        {
-            if (!_messages.ContainsKey(_channelManager.CurrentId))
-            {
-                _messages[_channelManager.CurrentId] = new List<MessageModel>();
-            }
-
-            return _messages[_channelManager.CurrentId];
-        }
-    }
-
-    public event MessageReceived? MessageReceived;
+    
+    private readonly JwtService _jwtService;
+    private readonly JwtAuthenticator _restAuthenticator;
+    private readonly RestClient _restClient;
 
     public MessageService(JwtService jwtService, IWebAssemblyHostEnvironment hostEnvironment,
-        ChannelManager channelManager)
+        CommunicationManager communicationManager)
     {
         _jwtService = jwtService;
-        _channelManager = channelManager;
+        _communicationManager = communicationManager;
         _restAuthenticator = new JwtAuthenticator(_jwtService.Token);
         _restClient = new RestClient(new RestClientOptions
         {
             BaseUrl = new Uri(hostEnvironment.BaseAddress),
             Authenticator = _restAuthenticator
         });
-
-        _channelManager.ChannelChanged += (_, _) =>
-        {
-            if (!_messages.ContainsKey(_channelManager.CurrentId))
-            {
-                _messages[_channelManager.CurrentId] = new List<MessageModel>();
-            }
-        };
     }
+
+    // public List<MessageModel> Messages => ChannelState.Messages;
+    //
+    // public ChannelState ChannelState => GetChannelById(_communicationManager.CurrentChannel.Id);
+    //
+    // private ChannelState GetChannelById(Guid id)
+    // {
+    //     if (!_channels.ContainsKey(id))
+    //     {
+    //         _channels[id] = new ChannelState(id);
+    //     }
+    //
+    //     return _channels[id];
+    // }
+
+    public event MessageReceived? MessageReceived;
 
     public async Task HandleIncomingMessage(MessageDto messageDto)
     {
-        var message = FormatMessage(messageDto, false);
-        _lastMessageReceived = message;
-
-        if (!_messages.ContainsKey(messageDto.ChannelId))
+        var channel = _communicationManager.GetChannel(messageDto.ChannelId);
+        if (channel is null)
         {
-            _messages[messageDto.ChannelId] = new List<MessageModel> { message };
+            Console.WriteLine("Received message on nonexistent channel");
+            return;
         }
-        else
+
+        var state = channel.State;
+        var message = FormatMessage(state, messageDto, false);
+
+        state.Messages.Add(message);
+        state.LastMessageReceived = message;
+
+        if (state.Cursor == default)
         {
-            _messages[messageDto.ChannelId].Add(message);
+            state.Cursor = DateTimeOffset.UtcNow.UtcTicks;
         }
 
         if (MessageReceived is not null)
         {
-            await MessageReceived();
+            await MessageReceived(messageDto.ChannelId);
         }
     }
 
-    public async Task<IList<MessageModel>> GetMessagePageAsync(Guid channel)
-    {
-        _restAuthenticator.SetBearerToken(_jwtService.Token);
-        var restRequest = new RestRequest("api/message/{channel}/{timestamp}")
-            .AddUrlSegment("channel", channel);
+    private readonly List<MessageModel> _empty = new();
 
-        if (_pageCursor != default)
+    public async Task<IList<MessageModel>> GetMessagePageAsync(Guid channelId)
+    {
+        var channel = _communicationManager.GetChannel(channelId);
+
+        if (channel is null or { State.ReachedEnd: true })
         {
-            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(_pageCursor.ToString()));
+            return _empty;
+        }
+        
+        _restAuthenticator.SetBearerToken(_jwtService.Token);
+        
+        var restRequest = new RestRequest("api/message/{channel}/{timestamp}")
+            .AddUrlSegment("channel", channelId);
+
+        var state = channel.State;
+
+        if (state.Cursor != default)
+        {
+            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(state.Cursor.ToString()));
             restRequest.AddUrlSegment("timestamp", encoded);
         }
 
@@ -102,20 +106,22 @@ public sealed class MessageService
 
         if (response!.Count > 0)
         {
-            _pageCursor = response[0].Timestamp.UtcTicks;
+            state.Cursor = response[0].Timestamp.UtcTicks;
         }
 
-        var page = FormatMessagePage(response);
-        if (_messages[channel].Count > 0)
+        var page = FormatMessagePage(state, response);
+        if (state.Messages.Count == 0)
         {
-            if (page.Length > 0)
-            {
-                CheckIfPreviousMessageWasFirst(_messages[channel][0], page[^1]);
-            }
-            else
-            {
-                _messages[channel][0].IsFirst = true;
-            }
+            return page;
+        }
+
+        if (page.Length > 0)
+        {
+            CheckIfPreviousMessageWasFirst(state.Messages[0], page[^1]);
+        }
+        else
+        {
+            state.Messages[0].IsFirst = true;
         }
 
         return page;
@@ -127,26 +133,33 @@ public sealed class MessageService
                            previous.Timestamp.Subtract(next.Timestamp) > _firstMessageTimeSpan;
     }
 
-    private MessageModel[] FormatMessagePage(IList<MessageDto> dtoPage)
+    private MessageModel[] FormatMessagePage(ChannelState channelState, IList<MessageDto> dtoPage)
     {
+        if (dtoPage.Count == 0)
+        {
+            return Array.Empty<MessageModel>();
+        }
+
         var page = new MessageModel[dtoPage.Count];
 
         for (var i = 0; i < dtoPage.Count; i++)
         {
-            var model = FormatMessage(dtoPage[i], true);
+            var model = FormatMessage(channelState, dtoPage[i], true);
             page[i] = model;
-            _lastMessageFormatted = model;
+            channelState.LastMessageFormatted = model;
         }
 
-        _lastMessageReceived ??= page[^1];
+        channelState.LastMessageReceived ??= page[^1];
 
         return page;
     }
 
-    private MessageModel FormatMessage(MessageDto messageDto, bool isFromPage)
+    private MessageModel FormatMessage(ChannelState channelState, MessageDto messageDto, bool isFromPage)
     {
         var model = messageDto.ToModel();
-        var toCompare = isFromPage ? _lastMessageFormatted : _lastMessageReceived;
+        var toCompare = isFromPage
+            ? channelState.LastMessageFormatted
+            : channelState.LastMessageReceived;
 
         if (toCompare is null)
         {

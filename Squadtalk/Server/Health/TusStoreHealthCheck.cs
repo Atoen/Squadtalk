@@ -12,7 +12,8 @@ public class TusStoreHealthCheck : IHealthCheck
         _diskStoreHelper = diskStoreHelper;
     }
 
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+        CancellationToken cancellationToken = new())
     {
         try
         {

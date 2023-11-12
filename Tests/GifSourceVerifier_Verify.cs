@@ -15,13 +15,13 @@ public class GifSourceVerifier_Verify
         var mockClient = new MockHttpMessageHandler();
         mockClient.When(value).Respond(HttpStatusCode.OK);
         var client = mockClient.ToHttpClient();
-        
+
         var clientFactory = Substitute.For<IHttpClientFactory>();
         clientFactory.CreateClient("GifVerifier").Returns(client);
 
         var verifier = new GifSourceVerifierService(clientFactory);
         var result = await verifier.VerifyAsync(value);
-        
+
         Assert.True(result);
     }
 
@@ -38,13 +38,13 @@ public class GifSourceVerifier_Verify
         var mockClient = new MockHttpMessageHandler();
         mockClient.When(value).Respond(HttpStatusCode.OK);
         var client = mockClient.ToHttpClient();
-        
+
         var clientFactory = Substitute.For<IHttpClientFactory>();
         clientFactory.CreateClient("GifVerifier").Returns(client);
-        
+
         var verifier = new GifSourceVerifierService(clientFactory);
         var result = await verifier.VerifyAsync(value);
-        
+
         Assert.False(result);
     }
 }

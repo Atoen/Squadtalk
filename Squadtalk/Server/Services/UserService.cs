@@ -22,10 +22,16 @@ public class UserService
 
     public async Task<OneOf<Success<User>, NotFound, Unauthorized>> VerifyRefreshTokenAsync(string? cookieContent)
     {
-        if (cookieContent is null) return new Unauthorized();
+        if (cookieContent is null)
+        {
+            return new Unauthorized();
+        }
         var cookieResult = GetFormattedCookieContent(cookieContent.AsSpan());
 
-        if (cookieResult.IsT1) return new Unauthorized();
+        if (cookieResult.IsT1)
+        {
+            return new Unauthorized();
+        }
         var (username, token) = cookieResult.AsT0;
 
         var user = await CompiledQueries.UserByNameWithRefreshTokensAsync(_dbContext, username);
@@ -47,7 +53,10 @@ public class UserService
 
     public OneOf<(string username, string refreshToken), Error> GetFormattedCookieContent(ReadOnlySpan<char> content)
     {
-        if (content.IsEmpty) return new Error();
+        if (content.IsEmpty)
+        {
+            return new Error();
+        }
 
         var delimiterIndex = content.LastIndexOf(' ');
         if (delimiterIndex <= 0 || content.Length - 1 == delimiterIndex)
@@ -61,7 +70,8 @@ public class UserService
         return (username.ToString(), token.ToString());
     }
 
-    public async Task<OneOf<Success<(User, RefreshToken)>,NotFound, Unauthorized>> LoginAsync(UserCredentialsDto userCredentialsDto)
+    public async Task<OneOf<Success<(User, RefreshToken)>, NotFound, Unauthorized>> LoginAsync(
+        UserCredentialsDto userCredentialsDto)
     {
         var user = await CompiledQueries.UserByNameWithRefreshTokensAsync(_dbContext, userCredentialsDto.Username);
 
@@ -83,7 +93,8 @@ public class UserService
         return new Success<(User, RefreshToken)>((user, refreshToken));
     }
 
-    public async Task<OneOf<Success<(User, RefreshToken)>, Conflict, Error<string>>> RegisterAsync(UserCredentialsDto userCredentialsDto)
+    public async Task<OneOf<Success<(User, RefreshToken)>, Conflict, Error<string>>> RegisterAsync(
+        UserCredentialsDto userCredentialsDto)
     {
         if (await CompiledQueries.UsernameExistsAsync(_dbContext, userCredentialsDto.Username))
         {
@@ -104,19 +115,28 @@ public class UserService
             conflict => conflict,
             error => error);
     }
-    
-    public async Task<OneOf<User, NotFound, Error>> GetUserAsync(ClaimsPrincipal claimsPrincipal, bool 
-            includeRefreshTokens = false)
+
+    public async Task<OneOf<User, NotFound, Error>> GetUserAsync(ClaimsPrincipal claimsPrincipal, bool
+        includeRefreshTokens = false)
     {
         var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtClaims.Uid);
-        if (idClaim is null) return new NotFound();
+        if (idClaim is null)
+        {
+            return new NotFound();
+        }
 
         var usernameClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtClaims.Username);
-        if (usernameClaim is null) return new NotFound();
-        
+        if (usernameClaim is null)
+        {
+            return new NotFound();
+        }
+
         var parsed = Guid.TryParse(idClaim.Value, out var guid);
-        if (!parsed) return new Error();
-        
+        if (!parsed)
+        {
+            return new Error();
+        }
+
         var user = includeRefreshTokens
             ? await CompiledQueries.UserByGuidWithRefreshTokensAsync(_dbContext, guid)
             : await CompiledQueries.UserByGuidAsync(_dbContext, guid);
@@ -151,10 +171,7 @@ public class UserService
         }
         catch (DbUpdateException e)
         {
-            if (await _dbContext.Users.AnyAsync(x => x.Id == user.Id))
-            {
-                return new Conflict();
-            }
+            if (await _dbContext.Users.AnyAsync(x => x.Id == user.Id)) return new Conflict();
 
             return new Error<string>(e.Message);
         }

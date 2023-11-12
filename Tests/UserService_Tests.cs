@@ -11,7 +11,10 @@ public class UserService_Tests : IClassFixture<DbFixture>
 {
     private readonly DbFixture _fixture;
 
-    public UserService_Tests(DbFixture fixture) => _fixture = fixture;
+    public UserService_Tests(DbFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Theory]
     [InlineData("User sometokenstring")]
@@ -20,23 +23,23 @@ public class UserService_Tests : IClassFixture<DbFixture>
         var hashSubstitute = Substitute.For<IHashService>();
         var tokenSubstitute = Substitute.For<ITokenService>();
         tokenSubstitute.VerifyRefreshToken(null!, null!).ReturnsForAnyArgs(true);
-        
+
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var token = cookieToken[(cookieToken.LastIndexOf(' ') + 1)..];
         var username = cookieToken[..cookieToken.LastIndexOf(' ')];
 
         var user = CreateUser(token, username);
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
-        
+
         var result = await userService.VerifyRefreshTokenAsync(cookieToken);
         Assert.True(result.IsT0);
-        
+
         var dbUser = await _fixture.DbContext.Users.Include(x => x.RefreshTokens)
             .FirstAsync(x => x.Username == username);
-        
+
         Assert.NotEmpty(dbUser.RefreshTokens);
         Assert.Equal(RefreshToken.HashData(token), dbUser.RefreshTokens.First().Token);
     }
@@ -53,10 +56,10 @@ public class UserService_Tests : IClassFixture<DbFixture>
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
 
         var result = await userService.VerifyRefreshTokenAsync(cookieToken);
-        
+
         Assert.True(result.IsT2);
     }
-    
+
     [Theory]
     [InlineData("InvalidUser sometokenstring")]
     public async Task VerifyRefreshToken_Invalid_NotFound(string cookieToken)
@@ -64,19 +67,19 @@ public class UserService_Tests : IClassFixture<DbFixture>
         var hashSubstitute = Substitute.For<IHashService>();
         var tokenSubstitute = Substitute.For<ITokenService>();
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var token = cookieToken[(cookieToken.LastIndexOf(' ') + 1)..];
 
         var user = CreateUser(token, "otherUser");
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
 
         var result = await userService.VerifyRefreshTokenAsync(cookieToken);
-        
+
         Assert.True(result.IsT1);
     }
-    
+
     [Theory]
     [InlineData("user token")]
     [InlineData("user withspace token")]
@@ -90,14 +93,14 @@ public class UserService_Tests : IClassFixture<DbFixture>
         Assert.True(result.IsT0);
 
         var (parsedUsername, parsedToken) = result.AsT0;
-        
+
         var token = content[(content.LastIndexOf(' ') + 1)..];
         var username = content[..content.LastIndexOf(' ')];
-        
+
         Assert.Equal(parsedUsername, username);
         Assert.Equal(parsedToken, token);
     }
-    
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -120,7 +123,7 @@ public class UserService_Tests : IClassFixture<DbFixture>
     {
         var hashSubstitute = Substitute.For<IHashService>();
         hashSubstitute.HashAsync(null!, null!).ReturnsForAnyArgs("Hash");
-        
+
         var tokenSubstitute = Substitute.For<ITokenService>();
         tokenSubstitute.CreateRefreshToken().Returns(new RefreshToken
         {
@@ -128,9 +131,9 @@ public class UserService_Tests : IClassFixture<DbFixture>
             Expires = DateTime.UtcNow.AddMinutes(1),
             Token = "newToken"
         });
-        
+
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var credentials = new UserCredentialsDto
         {
             Username = username,
@@ -143,13 +146,13 @@ public class UserService_Tests : IClassFixture<DbFixture>
 
         var result = await userService.LoginAsync(credentials);
         Assert.True(result.IsT0);
-        
+
         var (dbUser, refreshToken) = result.AsT0.Value;
         Assert.Equal(credentials.Username, dbUser.Username);
         Assert.Equal(2, dbUser.RefreshTokens.Count);
-        
+
         Assert.All(dbUser.RefreshTokens, token => Assert.True(token.IsActive));
-        
+
         Assert.Equal("newToken", refreshToken.Token);
     }
 
@@ -160,18 +163,18 @@ public class UserService_Tests : IClassFixture<DbFixture>
         var hashSubstitute = Substitute.For<IHashService>();
         var tokenSubstitute = Substitute.For<ITokenService>();
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var user = CreateUser("token", "otherUser");
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
-        
+
         var credentials = new UserCredentialsDto
         {
             Username = username,
             PasswordHash = passwordHash
         };
-        
+
         var result = await userService.LoginAsync(credentials);
         Assert.True(result.IsT1);
         Assert.Single(user.RefreshTokens);
@@ -183,20 +186,20 @@ public class UserService_Tests : IClassFixture<DbFixture>
     {
         var hashSubstitute = Substitute.For<IHashService>();
         hashSubstitute.HashAsync(null!, null!).ReturnsForAnyArgs("InvalidHash");
-        
+
         var tokenSubstitute = Substitute.For<ITokenService>();
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
         var user = CreateUser("token", "User");
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
-        
+
         var credentials = new UserCredentialsDto
         {
             Username = username,
             PasswordHash = passwordHash
         };
-        
+
         var result = await userService.LoginAsync(credentials);
         Assert.True(result.IsT2);
         Assert.Single(user.RefreshTokens);
@@ -209,7 +212,7 @@ public class UserService_Tests : IClassFixture<DbFixture>
     {
         var hashSubstitute = Substitute.For<IHashService>();
         hashSubstitute.HashAsync(null!, null!).ReturnsForAnyArgs("Hash");
-        
+
         var tokenSubstitute = Substitute.For<ITokenService>();
         tokenSubstitute.CreateRefreshToken().Returns(new RefreshToken
         {
@@ -217,7 +220,7 @@ public class UserService_Tests : IClassFixture<DbFixture>
             Expires = DateTime.UtcNow.AddMinutes(1),
             Token = "newToken"
         });
-        
+
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
         var credentials = new UserCredentialsDto
         {
@@ -226,9 +229,9 @@ public class UserService_Tests : IClassFixture<DbFixture>
         };
 
         var result = await userService.RegisterAsync(credentials);
-        
+
         Assert.True(result.IsT0);
-        
+
         var (dbUser, refreshToken) = result.AsT0.Value;
         Assert.NotEmpty(dbUser.RefreshTokens);
         Assert.Equal("newToken", refreshToken.Token);
@@ -241,7 +244,7 @@ public class UserService_Tests : IClassFixture<DbFixture>
     {
         var hashSubstitute = Substitute.For<IHashService>();
         hashSubstitute.HashAsync(null!, null!).ReturnsForAnyArgs("Hash");
-        
+
         var tokenSubstitute = Substitute.For<ITokenService>();
         tokenSubstitute.CreateRefreshToken().Returns(new RefreshToken
         {
@@ -249,32 +252,32 @@ public class UserService_Tests : IClassFixture<DbFixture>
             Expires = DateTime.UtcNow.AddMinutes(1),
             Token = "newToken"
         });
-        
+
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
         var credentials = new UserCredentialsDto
         {
             Username = username,
             PasswordHash = passwordHash
         };
-        
+
         var user = CreateUser("token", username);
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
 
         var result = await userService.RegisterAsync(credentials);
         Assert.True(result.IsT1);
     }
-    
+
     [Fact]
     public async Task GetUser_Success()
     {
         var hashSubstitute = Substitute.For<IHashService>();
         var tokenSubstitute = Substitute.For<ITokenService>();
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var user = CreateUser("token", "SomeUser");
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
 
@@ -289,16 +292,16 @@ public class UserService_Tests : IClassFixture<DbFixture>
         var result = await userService.GetUserAsync(principal);
         Assert.True(result.IsT0);
     }
-    
+
     [Fact]
     public async Task GetUser_NotFound()
     {
         var hashSubstitute = Substitute.For<IHashService>();
         var tokenSubstitute = Substitute.For<ITokenService>();
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var user = CreateUser("token", "SomeUser");
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
 
@@ -313,16 +316,16 @@ public class UserService_Tests : IClassFixture<DbFixture>
         var result = await userService.GetUserAsync(principal);
         Assert.True(result.IsT1);
     }
-    
+
     [Fact]
     public async Task GetUser_Error()
     {
         var hashSubstitute = Substitute.For<IHashService>();
         var tokenSubstitute = Substitute.For<ITokenService>();
         var userService = new UserService(_fixture.DbContext, hashSubstitute, tokenSubstitute);
-        
+
         var user = CreateUser("token", "SomeUser");
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
 
@@ -355,6 +358,6 @@ public class UserService_Tests : IClassFixture<DbFixture>
                     Expires = DateTime.Now.AddMinutes(10)
                 }
             }
-        }; 
+        };
     }
 }

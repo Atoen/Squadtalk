@@ -7,6 +7,14 @@ namespace Squadtalk.Client.Extensions;
 
 public static class MessageExtensions
 {
+    private const string Pdf = "pdf";
+    private const string Text = "txt";
+    private static readonly List<string> Archive = new() { "zip", "rar", "7z" };
+    private static readonly List<string> Code = new() { "cs", "java", "cpp", "py", "js", "c" };
+    private static readonly List<string> Video = new() { "mp4", "avi", "mov", "mkv" };
+    private static readonly List<string> Music = new() { "mp3", "wav", "flac", "mp2", "ogg" };
+    private static readonly List<string> Image = new() { "jpeg", "jpg", "png", "gif", "raw" };
+
     public static MessageModel ToModel(this MessageDto message)
     {
         var model = new MessageModel
@@ -39,7 +47,7 @@ public static class MessageExtensions
                     { "Preview", message.Embed["Preview"] }
                 }
             };
-            
+
             if (message.Embed.Data.TryGetValue("Width", out var width) &&
                 message.Embed.Data.TryGetValue("Height", out var height))
             {
@@ -74,14 +82,6 @@ public static class MessageExtensions
         return model;
     }
 
-    private const string Pdf = "pdf";
-    private const string Text = "txt";
-    private static readonly List<string> Archive = new() { "zip", "rar", "7z" };
-    private static readonly List<string> Code = new() { "cs", "java", "cpp", "py", "js", "c" };
-    private static readonly List<string> Video = new() { "mp4", "avi", "mov", "mkv" };
-    private static readonly List<string> Music = new() { "mp3", "wav", "flac", "mp2", "ogg" };
-    private static readonly List<string> Image = new() { "jpeg", "jpg", "png", "gif", "raw" };
-
     public static FileType GetFileType(string filename)
     {
         var tokens = filename.Split('.');
@@ -99,7 +99,7 @@ public static class MessageExtensions
         if (Image.Contains(extension)) return FileType.Image;
 
         Console.WriteLine($"returning default for {filename} - extension: {extension}");
-        
+
         return FileType.Default;
     }
 
@@ -116,7 +116,7 @@ public static class MessageExtensions
         if (!success)
         {
             Console.WriteLine($"Couldn't parse value: {value} for {name}");
-            
+
             return value;
         }
 
@@ -129,19 +129,19 @@ public static class MessageExtensions
             }
             case < bytesPerMegaByte:
             {
-                var kiloBytes = (double)bytes / bytesPerKiloByte;
+                var kiloBytes = (double) bytes / bytesPerKiloByte;
                 formattedValue = $"{kiloBytes.ToString("F2", CultureInfo.InvariantCulture)} kB";
                 break;
             }
             case < bytesPerGigaByte:
             {
-                var megaBytes = (double)bytes / bytesPerMegaByte;
+                var megaBytes = (double) bytes / bytesPerMegaByte;
                 formattedValue = $"{megaBytes.ToString("F2", CultureInfo.InvariantCulture)} MB";
                 break;
             }
             default:
             {
-                var gigaBytes = (double)bytes / bytesPerGigaByte;
+                var gigaBytes = (double) bytes / bytesPerGigaByte;
                 formattedValue = $"{gigaBytes.ToString("F2", CultureInfo.InvariantCulture)} GB";
                 break;
             }

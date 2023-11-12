@@ -1,5 +1,4 @@
 @page "/Settings"
-
 @using RestSharp
 @using Squadtalk.Client.Services
 @using Blazored.LocalStorage
@@ -15,12 +14,12 @@
 @inject ILocalStorageService LocalStorageService
 
 @code {
-    
+
     private void Back()
     {
         NavigationManager.NavigateTo("app");
     }
-    
+
     private async Task LogOut()
     {
         var request = new RestRequest("api/user/logout", Method.Post);
@@ -29,7 +28,7 @@
         request.AddHeader("Authorization", $"Bearer {JwtService.Token}");
 
         var invalidateAllSessions = false;
-        
+
         if (invalidateAllSessions)
         {
             request.AddQueryParameter("invalidateAllSessions", invalidateAllSessions);
@@ -38,12 +37,13 @@
         {
             request.AddBody($"\"{currentRefreshToken}\"");
         }
-        
+
         await RestClient.ExecuteAsync(request);
 
         await LocalStorageService.RemoveItemAsync("Username");
         JwtService.ClearToken();
-        
+
         NavigationManager.NavigateTo("/", true);
     }
+
 }

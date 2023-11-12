@@ -1,7 +1,7 @@
 ﻿@using Blazored.LocalStorage
 @inject ILocalStorageService LocalStorageService
 
-@if (_showBanner )
+@if (_showBanner)
 {
     <div role="alert" class="banner">
         This app only uses strictly necessary cookies to function. No personal data is collected.
@@ -13,9 +13,8 @@
 
 @code {
     bool _showBanner;
-        
     private const string PolicyAccepted = "CookiePolicyAccepted";
-    
+
     protected override async Task OnInitializedAsync()
     {
         if (await LocalStorageService.ContainKeyAsync(PolicyAccepted))
@@ -35,4 +34,3 @@
         _showBanner = false;
     }
 }
-

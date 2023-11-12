@@ -1,20 +1,19 @@
 ﻿@page "/"
-
-@using Blazored.LocalStorage
 @using RestSharp
+@using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
+@using Blazored.LocalStorage
 @using System.Text.Json
 @using System.Text
 @using System.Security.Cryptography
 @using System.Net
-@using Squadtalk.Client.Models
-@using Squadtalk.Client.Services
 
 <PageTitle>Squadtalk</PageTitle>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Audiowide">
 
 <div class="background">
-    
+
     <div class="menu">
         <div class="title">Squadtalk</div>
         <div class="form">
@@ -33,7 +32,7 @@
             }
 
             <EditForm Model="_userCredentials" OnValidSubmit="FormCallback">
-                <DataAnnotationsValidator />
+                <DataAnnotationsValidator/>
 
                 <p>
                     <InputText @bind-Value="_userCredentials.Username" placeholder="Username"/>
@@ -42,7 +41,7 @@
                     <InputText @bind-Value="_userCredentials.Password" placeholder="Password" type="password"/>
                 </p>
 
-                <ValidationSummary />
+                <ValidationSummary/>
 
                 <p style="color: @_color;">@_info</p>
 
@@ -104,9 +103,9 @@
 
     private bool _rememberUser;
     private bool _working;
-    
-    private const string RememberUser = "Remember";
-    private const string Username = "Username";
+
+        private const string RememberUser = "Remember";
+        private const string Username = "Username";
 
     private string? _info;
     private string? _color;
@@ -134,7 +133,7 @@
         {
             _rememberUser = await LocalStorageService.GetItemAsync<bool>(RememberUser);
         }
-        
+
         if (_rememberUser && await LocalStorageService.ContainKeyAsync(Username))
         {
             _userCredentials.Username = await LocalStorageService.GetItemAsync<string>(Username);
@@ -156,9 +155,9 @@
 
         var remember = await LocalStorageService.GetItemAsync<bool>(RememberUser);
         if (!remember) return false;
-        
+
         if (!await LocalStorageService.ContainKeyAsync(Username)) return false;
-        
+
         _sessionDataPresent = true;
 
         var success = await OpenSession();
@@ -189,7 +188,7 @@
     private async Task FormCallback()
     {
         _working = true;
-        
+
         await LocalStorageService.SetItemAsync(RememberUser, _rememberUser);
 
         if (_rememberUser)
@@ -201,10 +200,10 @@
             ? ("api/user/login", "Logged in successfully")
             : ("api/user/signup", "Signed up successfully");
 
-        await AuthenticateAsync(endpoint, message);
-        var success = await OpenSession();
+        var success = await AuthenticateAsync(endpoint, message);
+        var sessionCreated = await OpenSession();
 
-        if (success)
+        if (success && sessionCreated)
         {
             Navigation.NavigateTo("app");
         }
@@ -212,11 +211,11 @@
         _working = false;
     }
 
-    private async Task AuthenticateAsync(string endpoint, string successMessage, CancellationToken cancellationToken = default)
+    private async Task<bool> AuthenticateAsync(string endpoint, string successMessage, CancellationToken cancellationToken = default)
     {
         _color = "white";
         _info = string.Empty;
-        
+
         StateHasChanged();
 
         var request = new RestRequest(endpoint, Method.Post);
@@ -226,22 +225,24 @@
 
         var dto = new UserCredentialsDto { Username = _userCredentials.Username!, PasswordHash = Convert.ToBase64String(hash) };
         request.AddBody(dto);
-        
+
         var response = await RestClient.ExecuteAsync(request, cancellationToken);
-        
+
         if (response.IsSuccessStatusCode)
         {
             _info = successMessage;
-            return;
+            return true;
         }
 
         _color = "red";
         _info = response switch
         {
-            {StatusCode:  HttpStatusCode.Conflict} => $"Username {_userCredentials.Username} is already taken",
-            {StatusCode:  HttpStatusCode.Unauthorized or HttpStatusCode.NotFound} => "Invalid username or password",
-            {StatusCode: 0} => "Unable to connect to the server",
+        {StatusCode:  HttpStatusCode.Conflict} => $"Username {_userCredentials.Username} is already taken",
+        {StatusCode:  HttpStatusCode.Unauthorized or HttpStatusCode.NotFound} => "Invalid username or password",
+        {StatusCode: 0} => "Unable to connect to the server",
             _ => $"Server error: {response.StatusCode}"
-        };
+            };
+
+        return false;
     }
 }

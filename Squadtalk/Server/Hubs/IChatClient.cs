@@ -11,4 +11,8 @@ public interface IChatClient
     Task UserDisconnected(UserDto user);
 
     Task GetConnectedUsers(IEnumerable<UserDto> users);
+
+    Task GetChannels(IEnumerable<ChannelDto> channel);
+
+    Task AddedToChannel(ChannelDto channel);
 }

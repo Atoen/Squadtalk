@@ -19,4 +19,12 @@ public class User
             Id = Id
         };
     }
+
+    // public ChannelUser ToChannelUser(Channel channel) => new()
+    // {
+    //     Channel = channel,
+    //     ChannelId = channel.Id,
+    //     User = this,
+    //     UserId = Id
+    // };
 }

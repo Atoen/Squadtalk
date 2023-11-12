@@ -1,24 +1,15 @@
-﻿@using Squadtalk.Client.Services
-@using Squadtalk.Client.Extensions
-
-<UploadInfo />
+﻿<UploadInfo/>
 
 <div class="text-area">
     <div class="input">
-        
+
         @if (FileTransfer.Selected)
         {
-            <FileToUpload Filename="@FileTransfer.SelectedFilename" FileSize="@FileTransfer.SelectedFileSize" />
+            <FileToUpload Filename="@FileTransfer.SelectedFilename" FileSize="@FileTransfer.SelectedFileSize"/>
         }
-        
-        @{
-            var placeholder = ChannelManager.CurrentName == ChannelManager.Global.Name
-                ? "Type message"
-                : $"Message @{ChannelManager.CurrentName}";
-        }
-        
+
         <div class="grow-wrap">
-            <textarea rows="1" placeholder="@placeholder"
+            <textarea rows="1" placeholder="@_placeholder"
                     @bind="_userMessage"
                     @onkeydown="TextBoxCallback"
                     @onkeydown:preventDefault="_preventDefaultEnter"
@@ -42,21 +33,33 @@
     <InputFile style="display: none" id="filePicker"/>
 </div>
 
+@using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Models
+@using Squadtalk.Client.Models.Communication
+@using Squadtalk.Client.Services
 @implements IAsyncDisposable
 
 @inject JwtService JwtService
 @inject IJSRuntime JsRuntime
 @inject FileTransferService FileTransfer
 @inject SignalRService SignalRService
-@inject ChannelManager ChannelManager
+@inject CommunicationManager CommunicationManager
 
 @code {
-    // [Parameter] public required SignalRService SignalRService { get; set; }
-    
+
     private string? _userMessage;
     private bool _preventDefaultEnter;
 
     private IJSObjectReference? _messageModule;
+
+    private string GetPlaceholder()
+    {
+        return CommunicationManager.CurrentChannel.IsGlobal()
+            ? "Type message"
+            : $"Message @{CommunicationManager.CurrentChannel.Name}";
+    }
+
+    private string? _placeholder;
 
     private async Task TextBoxCallback(KeyboardEventArgs e)
     {
@@ -72,16 +75,23 @@
     {
         _preventDefaultEnter = true;
 
+        var channel = CommunicationManager.CurrentChannel;
+        if (channel.IsFake())
+        {
+            await CreateRealDirectMessageChannel(channel);
+            channel = CommunicationManager.CurrentChannel;
+        }
+
         var message = await _messageModule!.InvokeAsync<string>("getAndClearMessage");
 
         if (FileTransfer.CanStartUpload)
         {
-            await FileTransfer.UploadFileAsync();
+            await FileTransfer.UploadFileAsync(channel.Id);
         }
-        
+
         if (!string.IsNullOrWhiteSpace(message))
         {
-            var result = await SignalRService.SendMessageAsync(message, ChannelManager.CurrentId, CancellationToken.None);
+            var result = await SignalRService.SendMessageAsync(message, channel.Id, CancellationToken.None);
             if (result.IsFailed)
             {
                 foreach (var error in result.Errors)
@@ -92,11 +102,25 @@
         }
     }
 
+    private async Task CreateRealDirectMessageChannel(Channel channel)
+    {
+        var otherUserId = ((DirectMessageChannel) channel).Other.Id;
+        var participants = new List<Guid> { JwtService.Id, otherUserId };
+        
+        await CommunicationManager.OpenNewChannel(participants);
+    }
+
     protected override void OnInitialized()
     {
-        FileTransfer.FileSelected += (_, _) =>  StateHasChanged();
+        FileTransfer.FileSelected += (_, _) => StateHasChanged();
         FileTransfer.RemovedSelectedFile += StateHasChanged;
-        ChannelManager.ChannelChanged += (_, _) => StateHasChanged();
+        CommunicationManager.ChannelChanged += () =>
+        {
+            _placeholder = GetPlaceholder();
+            StateHasChanged();
+        };
+
+        _placeholder = GetPlaceholder();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

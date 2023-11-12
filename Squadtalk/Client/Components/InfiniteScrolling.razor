@@ -1,13 +1,6 @@
-﻿@using System.Threading
-@using Microsoft.AspNetCore.Components.Rendering;
-@using Microsoft.JSInterop
-@using Squadtalk.Client.Extensions
-@using Squadtalk.Client.Models
-@using Squadtalk.Client.Services
-
-@if (_enumerationCompleted)
+﻿@if (CommunicationManager.CurrentChannelState.ReachedEnd)
 {
-    <div>No more messages</div>
+    <div>No more messages in @@@CommunicationManager.CurrentChannel.Name</div>
 }
 
 @if (IsLoading)
@@ -20,7 +13,7 @@
 
 @if (ItemTemplate is not null)
 {
-    foreach (var item in MessageService.Messages)
+    foreach (var item in CommunicationManager.CurrentChannelState.Messages)
     {
         <div @key="item">
             @ItemTemplate(item)
@@ -28,36 +21,52 @@
     }
 }
 
+@using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
+@using Microsoft.AspNetCore.Components.Rendering
+@using System.Diagnostics
 @implements IAsyncDisposable
 @inject IJSRuntime JsRuntime
 @inject MessageService MessageService
-@inject ChannelManager ChannelManager
+@inject CommunicationManager CommunicationManager;
 
 @code {
-    
+
     private ElementReference _lastItemIndicator;
     private DotNetObjectReference<InfiniteScrolling>? _currentComponentReference;
     private IJSObjectReference? _module;
     private IJSObjectReference? _autoScrollModule;
     private IJSObjectReference? _instance;
-    private bool _enumerationCompleted;
+    // private bool _enumerationCompleted;
 
     private CancellationTokenSource? _loadItemsTokenSource;
 
     private bool IsLoading => _loadItemsTokenSource != null;
-    
-    [Parameter] public RenderFragment<MessageModel>? ItemTemplate { get; set; }
-    [Parameter] public RenderFragment? LoadingTemplate { get; set; }
-    [Parameter] public string LastItemIndicatorElement { get; set; } = "div";
+
+    [Parameter]
+    public RenderFragment<MessageModel>? ItemTemplate { get; set; }
+
+    [Parameter]
+    public RenderFragment? LoadingTemplate { get; set; }
+
+    [Parameter]
+    public string LastItemIndicatorElement { get; set; } = "div";
 
     protected override void OnInitialized()
     {
         MessageService.MessageReceived += UpdateOnMessage;
-        ChannelManager.ChannelChanged += (_, _) => StateHasChanged();
+        CommunicationManager.ChannelChanged += () =>
+        {
+            StateHasChanged();
+            _ = _instance!.InvokeVoidAsync("onNewItems");
+        };
     }
 
-    private async Task UpdateOnMessage()
+    private async Task UpdateOnMessage(Guid channelId)
     {
+        if (CommunicationManager.CurrentChannel.Id != channelId) return;
+
         StateHasChanged();
         await _autoScrollModule!.InvokeVoidAsync("scrollToBottom");
     }
@@ -66,26 +75,26 @@
     public async Task LoadMoreItems()
     {
         if (_loadItemsTokenSource != null) return;
-        
-        var currentItems = MessageService.Messages;
+
+        var channel = CommunicationManager.CurrentChannel;
+        var channelState = channel.State;
         var cancellationTokenSource = new CancellationTokenSource();
         _loadItemsTokenSource = cancellationTokenSource;
-        
+
         try
         {
-            var newItems = await MessageService.GetMessagePageAsync(ChannelManager.CurrentId);
+            var newItems = await MessageService.GetMessagePageAsync(channel.Id);
             if (!cancellationTokenSource.IsCancellationRequested)
             {
-                var length = currentItems.Count;
-                currentItems.InsertRange(0, newItems);
+                channelState.Messages.InsertRange(0, newItems);
 
-                if (currentItems.Count == length)
+                if (newItems.Count == 0)
                 {
-                    _enumerationCompleted = true;
+                    channelState.ReachedEnd = true;
                 }
                 else
                 {
-                    System.Diagnostics.Debug.Assert(_instance != null);
+                    Debug.Assert(_instance != null);
                     await _instance.InvokeVoidAsync("onNewItems", cancellationTokenSource.Token);
                 }
             }
@@ -107,7 +116,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        
+
         _module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./infinite-scrolling.js");
         _currentComponentReference = DotNetObjectReference.Create(this);
         _instance = await _module.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
@@ -136,17 +145,20 @@
         await _autoScrollModule.TryDisposeAsync();
 
         _currentComponentReference?.Dispose();
-        
-        MessageService.MessageReceived -= UpdateOnMessage;
 
+        MessageService.MessageReceived -= UpdateOnMessage;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
     {
         builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = _enumerationCompleted ? "height:0;width:0" : "height:1px;width:1px;flex-shrink:0";
+        var style = CommunicationManager.CurrentChannelState.ReachedEnd
+            ? "height:0;width:0"
+            : "height:1px;width:1px;flex-shrink:0";
+        
         builder.AddAttribute(1001, "style", style);
         builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
         builder.CloseElement();
     }
+
 }

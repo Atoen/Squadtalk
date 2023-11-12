@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using Microsoft.AspNetCore.SignalR;
 using Squadtalk.Server.Hubs;
 using Squadtalk.Server.Models;
@@ -37,7 +38,7 @@ public class Tus
         {
             logger.LogInformation("Rejected unauthenticated request from {Remote}",
                 httpContext.Connection.RemoteIpAddress);
-            
+
             authorizeContext.FailRequest(HttpStatusCode.Unauthorized);
         }
 
@@ -51,7 +52,7 @@ public class Tus
 
         return Task.CompletedTask;
     }
-    
+
     private static async Task FileCompleteHandler(FileCompleteContext fileContext)
     {
         var httpContext = fileContext.HttpContext;
@@ -60,8 +61,14 @@ public class Tus
         logger.LogInformation("Completed file {File}", fileContext.FileId);
 
         var file = await fileContext.GetFileAsync();
+        var metaData = await file.GetMetadataAsync(httpContext.RequestAborted);
+
+        var channelId =  metaData["channelId"].GetString(Encoding.UTF8);
+        var channelGuid = Guid.Parse(channelId);
+        
         var embed = await httpContext.RequestServices.GetRequiredService<EmbedService>()
-            .CreateEmbedAsync(file, httpContext.Request.Scheme, httpContext.Request.Host.Host, httpContext.RequestAborted);
+            .CreateEmbedAsync(file, httpContext.Request.Scheme, httpContext.Request.Host.Host,
+                httpContext.RequestAborted);
 
         var userResult = await httpContext.RequestServices.GetRequiredService<UserService>()
             .GetUserAsync(httpContext.User);
@@ -70,15 +77,17 @@ public class Tus
 
         var messageService = httpContext.RequestServices.GetRequiredService<MessageService>();
         var hub = httpContext.RequestServices.GetRequiredService<IHubContext<ChatHub>>();
+        
 
         var message = new Message
         {
             Author = user,
             Timestamp = DateTimeOffset.Now,
-            Embed = embed
+            Embed = embed,
+            ChannelId = channelGuid
         };
 
         await messageService.StoreMessageAsync(message);
-        await hub.Clients.All.SendAsync("ReceiveMessage", message.ToDto());
+        await hub.Clients.Group(channelId).SendAsync("ReceiveMessage", message.ToDto());
     }
 }

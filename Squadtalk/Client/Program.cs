@@ -1,4 +1,3 @@
-using Squadtalk.Shared;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -7,6 +6,7 @@ using RestSharp;
 using Squadtalk.Client;
 using Squadtalk.Client.Options;
 using Squadtalk.Client.Services;
+using Squadtalk.Shared;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -23,15 +23,12 @@ builder.Services.AddScoped(_ => new RestClient(options =>
 }));
 
 builder.Services.AddScoped<SignalRService>()
-    .AddScoped<ChannelManager>()
     .AddScoped<UserService>()
     .AddScoped<FileTransferService>()
     .AddScoped<MessageService>()
+    .AddScoped<CommunicationManager>()
     .AddScoped<JwtService>()
-    .Configure<JwtServiceOptions>(options =>
-    {
-        options.RetryDelays = new[] { 1, 2, 5, 10, 15 };
-    });
+    .Configure<JwtServiceOptions>(options => { options.RetryDelays = new[] { 1, 2, 5, 10, 15 }; });
 
 builder.Services.AddAuthorizationCore(options =>
 {

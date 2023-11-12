@@ -7,9 +7,9 @@ let updated = false;
 let fileToUpload = null;
 
 export function initialize(csInstance) {
-    
+
     instance = csInstance;
-    
+
     initializeElements();
     addEventListeners();
 }
@@ -56,13 +56,13 @@ async function handleFileChange(e) {
     await selectFile(file);
 }
 
-async function selectFile(file){
-    
+async function selectFile(file) {
+
     if (fileToUpload) {
         alert("Upload pending...");
         return;
     }
-    
+
     fileToUpload = file;
     await instance.invokeMethodAsync("FileSelectedCallback", fileToUpload.name, fileToUpload.size.toString());
 }
@@ -76,7 +76,7 @@ async function handlePaste(e) {
 
     const blob = item.getAsFile();
     if (blob) {
-        const file= new File([blob], "image.png", { type: blob.type });
+        const file = new File([blob], "image.png", {type: blob.type});
         await selectFile(file);
     }
 }
@@ -92,20 +92,20 @@ async function handleDrop(e) {
 
     const blob = item.getAsFile();
     if (blob) {
-        const file = new File([blob], blob.name, { type: blob.type });
+        const file = new File([blob], blob.name, {type: blob.type});
         await selectFile(file);
     }
 }
 
-export function removeSelectedFile(){
+export function removeSelectedFile() {
     fileToUpload = null;
 }
 
-export async function uploadSelectedFile(){
-    await uploadFile(fileToUpload);
+export async function uploadSelectedFile(channelId) {
+    await uploadFile(fileToUpload, channelId);
 }
 
-async function uploadFile(file) {
+async function uploadFile(file, channel) {
     const chunk = 25 * 1024 * 1024;
     const jwt = await instance.invokeMethodAsync("GetJwt");
 
@@ -117,11 +117,12 @@ async function uploadFile(file) {
         metadata: {
             filename: file.name,
             filetype: file.type,
-            filesize: file.size
+            filesize: file.size,
+            channelId: channel
         },
         chunkSize: chunk,
-        headers: { Authorization: `Bearer ${jwt}` },
-        onProgress: function(bytesUploaded, bytesTotal) {
+        headers: {Authorization: `Bearer ${jwt}`},
+        onProgress: function (bytesUploaded, bytesTotal) {
 
             const percentage = bytesUploaded / bytesTotal;
             progress.style.width = percentage * 100 + "%";
@@ -187,11 +188,11 @@ export async function CancelUpload() {
     if (upload) {
         upload.abort();
     }
-    
+
     await uploadEnded(null);
 }
 
-async function uploadEnded(reason){
+async function uploadEnded(reason) {
     upload = null;
     fileToUpload = null;
     uploadInfo.style.display = "none";

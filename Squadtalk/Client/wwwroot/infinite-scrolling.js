@@ -17,9 +17,9 @@
             }
         }
     }, options);
-    
+
     observer.observe(lastIndicator);
-    
+
     return {
         dispose: () => Dispose(observer),
         onNewItems: () => {
@@ -28,6 +28,7 @@
         },
     };
 }
+
 function findClosestScrollContainer(element) {
     while (element) {
         const style = getComputedStyle(element);
@@ -38,9 +39,11 @@ function findClosestScrollContainer(element) {
     }
     return null;
 }
+
 function Dispose(observer) {
     observer.disconnect();
 }
+
 function isValidTableElement(element) {
     if (element === null) {
         return false;

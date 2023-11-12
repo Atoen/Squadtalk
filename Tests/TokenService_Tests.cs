@@ -13,7 +13,10 @@ public class TokenService_Tests : IClassFixture<DbFixture>
 {
     private readonly DbFixture _fixture;
 
-    public TokenService_Tests(DbFixture fixture) => _fixture = fixture;
+    public TokenService_Tests(DbFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
     [Fact]
     public void VerifyRefreshToken_ValidToken_ReturnsTrue()
@@ -24,10 +27,10 @@ public class TokenService_Tests : IClassFixture<DbFixture>
 
         var tokenService = new TokenService(CreateConfiguration(), _fixture.DbContext);
         var result = tokenService.VerifyRefreshToken(user, token);
-        
+
         Assert.True(result);
     }
-    
+
     [Fact]
     public void VerifyRefreshToken_InvalidToken_ReturnsFalse()
     {
@@ -35,7 +38,7 @@ public class TokenService_Tests : IClassFixture<DbFixture>
 
         var tokenService = new TokenService(CreateConfiguration(), _fixture.DbContext);
         var result = tokenService.VerifyRefreshToken(user, "invalid");
-        
+
         Assert.False(result);
     }
 
@@ -46,9 +49,9 @@ public class TokenService_Tests : IClassFixture<DbFixture>
         {
             RefreshTokenTimeSpan = TimeSpan.FromMinutes(1)
         };
-        
+
         var token = tokenService.CreateRefreshToken();
-        
+
         Assert.NotNull(token);
         Assert.NotEmpty(token.Token);
 
@@ -67,36 +70,36 @@ public class TokenService_Tests : IClassFixture<DbFixture>
         };
 
         var token = tokenService.CreateAuthToken(claims);
-        
+
         Assert.NotEmpty(token);
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var content = tokenHandler.ReadJwtToken(token);
-        
+
         Assert.NotEmpty(content.Claims);
         Assert.Equal("iss", content.Issuer);
         Assert.Equal("aud", content.Audiences.First());
     }
-    
+
     [Fact]
     public async Task RevokeRefreshToken_InvalidToken_ReturnsTrue()
     {
         var token = "someToken";
         var user = CreateUser(token);
         var tokenService = new TokenService(CreateConfiguration(), _fixture.DbContext);
-        
+
         await _fixture.DbContext.Users.AddAsync(user);
         await _fixture.DbContext.SaveChangesAsync();
-        
+
         var result = await tokenService.RevokeRefreshToken(user, token);
-        
+
         Assert.True(result);
 
         var dbUser = await _fixture.DbContext.Users.Include(x => x.RefreshTokens)
             .FirstAsync(x => x.Username == user.Username);
         Assert.Empty(dbUser.RefreshTokens);
     }
-    
+
     [Fact]
     public async Task RevokeRefreshToken_InvalidToken_ReturnsFalse()
     {
@@ -108,13 +111,13 @@ public class TokenService_Tests : IClassFixture<DbFixture>
         await _fixture.DbContext.SaveChangesAsync();
 
         var result = await tokenService.RevokeRefreshToken(user, "invalidtoken");
-        
+
         Assert.False(result);
 
         var dbUser = await _fixture.DbContext.Users.Include(x => x.RefreshTokens)
             .FirstAsync(x => x.Username == user.Username);
         var dbToken = dbUser.RefreshTokens.First();
-        
+
         Assert.True(dbToken.IsActive);
         Assert.Null(dbToken.Revoked);
     }
@@ -146,6 +149,6 @@ public class TokenService_Tests : IClassFixture<DbFixture>
                     Expires = DateTime.Now.AddMinutes(10)
                 }
             }
-        }; 
+        };
     }
 }

@@ -9,25 +9,26 @@ namespace Squadtalk.Server.Hubs;
 [Authorize]
 public class ChatHub : Hub<IChatClient>
 {
-    private readonly UserService _userService;
-    private readonly MessageService _messageService;
-    private readonly ConnectionManager _connectionManager;
     private readonly ChannelService _channelService;
+    private readonly ConnectionManager _connectionManager;
+    private readonly MessageService _messageService;
+    private readonly UserService _userService;
 
-    public ChatHub(UserService userService, MessageService messageService, ConnectionManager connectionManager, ChannelService channelService)
+    public ChatHub(UserService userService, MessageService messageService, ConnectionManager connectionManager,
+        ChannelService channelService)
     {
         _userService = userService;
         _messageService = messageService;
         _connectionManager = connectionManager;
         _channelService = channelService;
     }
-    
+
     public async Task SendMessage(string messageContent, Guid channelId, IGifSourceVerifier gifSourceVerifier)
     {
         var user = await _userService.GetUserAsync(Context.User!);
 
         var isGifSource = await gifSourceVerifier.VerifyAsync(messageContent);
-        
+
         var message = new Message
         {
             Author = user.AsT0,
@@ -47,38 +48,42 @@ public class ChatHub : Hub<IChatClient>
                 }
             };
         }
-        
+
         await _messageService.StoreMessageAsync(message);
-        await Clients.All.ReceiveMessage(message.ToDto());
+        await Clients.Group(channelId.ToString()).ReceiveMessage(message.ToDto());
     }
-    
+
     public override async Task OnConnectedAsync()
     {
         var result = await _userService.GetUserAsync(Context.User!);
         var user = result.AsT0;
-        var dto = user.ToDto();
-        
-        var isUniqueUserConnection = await _connectionManager.UserConnected(dto);
-        
+        var userDto = user.ToDto();
+
+        var isUniqueUserConnection = await _connectionManager.UserConnected(userDto, Context.ConnectionId);
+
         await Groups.AddToGroupAsync(Context.ConnectionId, ChannelService.GlobalChannelIdString);
         if (isUniqueUserConnection)
         {
-            await Clients.Group(ChannelService.GlobalChannelIdString).UserConnected(dto);
+            await Clients.Group(ChannelService.GlobalChannelIdString).UserConnected(userDto);
         }
 
-        await AddToPrivateChannelsAsync(dto, isUniqueUserConnection);
         await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers);
-    }
 
-    private async Task AddToPrivateChannelsAsync(UserDto user, bool isUniqueUserConnection)
-    {
         var channels = await _channelService.GetUserChannelsAsync(user.Username);
         if (channels is null) return;
-        
+
+        await AddToPrivateChannelsAsync(userDto, channels, isUniqueUserConnection);
+
+        var channelDtos = channels.Select(x => x.ToDto);
+        await Clients.Caller.GetChannels(channelDtos);
+    }
+
+    private async Task AddToPrivateChannelsAsync(UserDto user, List<Channel> channels, bool isUniqueUserConnection)
+    {
         foreach (var channel in channels)
         {
             var channelId = channel.Id.ToString();
-            
+
             await Groups.AddToGroupAsync(Context.ConnectionId, channelId);
             if (isUniqueUserConnection)
             {
@@ -86,14 +91,14 @@ public class ChatHub : Hub<IChatClient>
             }
         }
     }
-    
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var result = await _userService.GetUserAsync(Context.User!);
         var user = result.AsT0;
         var dto = user.ToDto();
 
-        var allConnectionsClosed = await _connectionManager.UserDisconnected(dto);
+        var allConnectionsClosed = await _connectionManager.UserDisconnected(dto, Context.ConnectionId);
         if (!allConnectionsClosed) return;
 
         await Clients.Group(ChannelService.GlobalChannelIdString).UserDisconnected(dto);

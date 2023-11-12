@@ -10,15 +10,13 @@ namespace Squadtalk.Server.Services;
 
 public class TokenService : ITokenService
 {
-    public TimeSpan AuthTokenTimeSpan { get; set; } = TimeSpan.FromMinutes(5);
-    public TimeSpan RefreshTokenTimeSpan { get; set; } = TimeSpan.FromDays(7);
-    
-    private readonly string? _issuer;
     private readonly string? _audience;
-    private readonly byte[] _key;
     private readonly AppDbContext _dbContext;
+
+    private readonly string? _issuer;
+    private readonly byte[] _key;
     private readonly JwtSecurityTokenHandler _tokenHandler = new();
-    
+
     public TokenService(IConfiguration configuration, AppDbContext dbContext)
     {
         _dbContext = dbContext;
@@ -27,10 +25,13 @@ public class TokenService : ITokenService
         _key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!);
     }
 
+    public TimeSpan AuthTokenTimeSpan { get; set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan RefreshTokenTimeSpan { get; set; } = TimeSpan.FromDays(7);
+
     public bool VerifyRefreshToken(User user, string token)
     {
         var hash = RefreshToken.HashData(token);
-        
+
         var isValid = user.RefreshTokens.Any(x => x.Token == hash && x.IsActive);
 
         return isValid;
@@ -51,7 +52,7 @@ public class TokenService : ITokenService
 
         return refreshToken;
     }
-    
+
     public string CreateAuthToken(params Claim[] claims)
     {
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -62,7 +63,7 @@ public class TokenService : ITokenService
             Audience = _audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(_key), SecurityAlgorithms.HmacSha256)
         };
-        
+
         var token = _tokenHandler.CreateToken(tokenDescriptor);
         return _tokenHandler.WriteToken(token);
     }
@@ -71,10 +72,7 @@ public class TokenService : ITokenService
     {
         var hash = RefreshToken.HashData(token);
         var refreshToken = user.RefreshTokens.FirstOrDefault(x => x.Token == hash);
-        if (refreshToken is null)
-        {
-            return false;
-        }
+        if (refreshToken is null) return false;
 
         user.RefreshTokens.Remove(refreshToken);
 
@@ -91,7 +89,7 @@ public class TokenService : ITokenService
         await _dbContext.Database.ExecuteSqlRawAsync(
             "delete from RefreshToken where UserId = {0}",
             user.Id);
-        
+
         user.RefreshTokens.Clear();
     }
 }
