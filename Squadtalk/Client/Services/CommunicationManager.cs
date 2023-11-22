@@ -40,6 +40,8 @@ public class CommunicationManager
         get => _currentChannel;
         private set
         {
+            ArgumentNullException.ThrowIfNull(value);
+            
             var last = _currentChannel;
             _currentChannel = value;
             _currentChannel.IsSelected = true;
@@ -68,24 +70,23 @@ public class CommunicationManager
         Console.WriteLine("Channels received");
         foreach (var channel in channels)
         {
-            AddChannel(channel);
+            AddChannel(channel, true);
         }
     }
 
-    private void AddChannel(ChannelDto channel) => AddChannel(channel, false);
+    private void AddChannel(ChannelDto channelDto) => AddChannel(channelDto, false);
 
-    private void AddChannel(ChannelDto channelDto, bool select)
+    private void AddChannel(ChannelDto channelDto, bool bulk)
     {
         if (AllChannels.Exists(x => x.Id == channelDto.Id)) return;
-
-        if (CurrentChannel.IsFake())
-        {
-            select = true;
-        }
         
         Console.WriteLine(channelDto);
         Console.WriteLine(string.Join(", ", channelDto.Participants.Select(x => x.Username)));
         var model = CreateChannelModel(channelDto);
+        if (!bulk)
+        {
+            model.State.ReachedEnd = true;
+        }
         
         AllChannels.Add(model);
 
@@ -97,12 +98,6 @@ public class CommunicationManager
         {
             var directMessageChannel = (DirectMessageChannel) model;
             DirectMessageChannels.Add(directMessageChannel);
-        }
-
-        if (select)
-        {
-            CurrentChannel = model;
-            ChannelChanged?.Invoke();
         }
 
         StateChanged?.Invoke();
@@ -164,8 +159,13 @@ public class CommunicationManager
             .AddHeader("Authorization", $"Bearer ${_jwtService.Token}")
             .AddBody(participants);
 
-        var channelDto =  await _restClient.PostAsync<ChannelDto>(request);
-        AddChannel(channelDto!, true);
+        var createdId = await _restClient.PostAsync<Guid>(request);
+        var opened = GetChannel(createdId);
+
+        if (opened is not null)
+        {
+            CurrentChannel = opened;
+        }
     }
 
     public void ChangeChannel(Guid id)

@@ -88,7 +88,7 @@ public class MessageController : ControllerBase
             }
         }
 
-        return Ok(dto);
+        return Ok(dto.Id);
     }
 
     [Authorize]

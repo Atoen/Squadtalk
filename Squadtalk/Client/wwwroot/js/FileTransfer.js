@@ -5,6 +5,7 @@ let totalUploadedBytes = 0;
 let lastTimestamp = null;
 let updated = false;
 let fileToUpload = null;
+let uploadOptions = null;
 
 export function initialize(csInstance) {
 
@@ -105,14 +106,21 @@ export async function uploadSelectedFile(channelId) {
     await uploadFile(fileToUpload, channelId);
 }
 
+export function updateJwt(jwt){
+    if (uploadOptions) {
+        uploadOptions.headers.Authorization = `Bearer ${jwt}`;
+        console.log("auth header updated");
+    }
+}
+
 async function uploadFile(file, channel) {
-    const chunk = 25 * 1024 * 1024;
+    const chunk = 30 * 1000 * 100;
     const jwt = await instance.invokeMethodAsync("GetJwt");
 
     progress.style.width = "0";
 
     const uploadOptions = {
-        endpoint: "http://127.0.0.1:1234/tus",
+        endpoint: "https://squadtalk.net/tus",
         retryDelays: [0, 3000, 5000, 10000, 20000],
         metadata: {
             filename: file.name,
@@ -134,6 +142,16 @@ async function uploadFile(file, channel) {
         },
         onError: async error => {
             await uploadEnded(error);
+        },
+        onShouldRetry: async (err, retryAtempt, options) => {
+            var status = err.originalResponse ? err.originalResponse.getStatus() : 0;
+
+            if (status === 401) {
+                const newJwt = await instance.invokeMethodAsync("GetJwt");
+                updateJwt(newJwt);
+            }
+
+            return true;
         }
     };
 

@@ -106,8 +106,16 @@
     {
         var otherUserId = ((DirectMessageChannel) channel).Other.Id;
         var participants = new List<Guid> { JwtService.Id, otherUserId };
+
+        try
+        {
+            await CommunicationManager.OpenNewChannel(participants);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error opening channel: {e}");
+        }
         
-        await CommunicationManager.OpenNewChannel(participants);
     }
 
     protected override void OnInitialized()
