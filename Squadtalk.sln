@@ -1,28 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squadtalk.Server", "Squadtalk\Server\Squadtalk.Server.csproj", "{348EABBC-AC67-402B-B83D-8C90D6B74080}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squadtalk.Client", "Squadtalk\Client\Squadtalk.Client.csproj", "{8D7FFAB1-B555-4999-A450-E713B770278D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squadtalk.Shared", "Squadtalk\Shared\Squadtalk.Shared.csproj", "{542E2061-09F9-47E4-8596-FC7E69C8BC8C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{348EABBC-AC67-402B-B83D-8C90D6B74080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{348EABBC-AC67-402B-B83D-8C90D6B74080}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{348EABBC-AC67-402B-B83D-8C90D6B74080}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{348EABBC-AC67-402B-B83D-8C90D6B74080}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D7FFAB1-B555-4999-A450-E713B770278D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D7FFAB1-B555-4999-A450-E713B770278D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D7FFAB1-B555-4999-A450-E713B770278D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D7FFAB1-B555-4999-A450-E713B770278D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{542E2061-09F9-47E4-8596-FC7E69C8BC8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
