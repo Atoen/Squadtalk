@@ -10,13 +10,13 @@ using Squadtalk.Data;
 using System.Security.Claims;
 using System.Text.Json;
 
-namespace Microsoft.AspNetCore.Routing
+namespace Microsoft.AspNetCore.Routing;
+
+internal static class IdentityComponentsEndpointRouteBuilderExtensions
 {
-    internal static class IdentityComponentsEndpointRouteBuilderExtensions
+    // These endpoints are required by the Identity Razor components defined in the /Components/Account/Pages directory of this project.
+    public static IEndpointConventionBuilder MapAdditionalIdentityEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        // These endpoints are required by the Identity Razor components defined in the /Components/Account/Pages directory of this project.
-        public static IEndpointConventionBuilder MapAdditionalIdentityEndpoints(this IEndpointRouteBuilder endpoints)
-        {
             ArgumentNullException.ThrowIfNull(endpoints);
 
             var accountGroup = endpoints.MapGroup("/Account");
@@ -28,8 +28,8 @@ namespace Microsoft.AspNetCore.Routing
                 [FromForm] string returnUrl) =>
             {
                 IEnumerable<KeyValuePair<string, StringValues>> query = [
-                    new("ReturnUrl", returnUrl),
-                    new("Action", ExternalLogin.LoginCallbackAction)];
+                    new KeyValuePair<string, StringValues>("ReturnUrl", returnUrl),
+                    new KeyValuePair<string, StringValues>("Action", ExternalLogin.LoginCallbackAction)];
 
                 var redirectUrl = UriHelper.BuildRelative(
                     context.Request.PathBase,
@@ -83,7 +83,7 @@ namespace Microsoft.AspNetCore.Routing
                 }
 
                 var userId = await userManager.GetUserIdAsync(user);
-                downloadLogger.LogInformation("User with ID '{UserId}' asked for their personal data.", userId);
+                downloadLogger.LogInformation("User with ID '{UserId}' asked for their personal data", userId);
 
                 // Only include personal data for download
                 var personalData = new Dictionary<string, string>();
@@ -109,5 +109,4 @@ namespace Microsoft.AspNetCore.Routing
 
             return accountGroup;
         }
-    }
 }

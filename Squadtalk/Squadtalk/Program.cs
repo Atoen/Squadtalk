@@ -1,3 +1,5 @@
+using System.Net;
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -5,8 +7,11 @@ using Squadtalk.Client.Pages;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
 using Squadtalk.Data;
+using Squadtalk.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.UseKestrel(options => options.Listen(IPAddress.Loopback, 1234));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -35,7 +40,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton<SmtpClient>();
+
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
+// builder.Services.AddSingleton()
 
 var app = builder.Build();
 

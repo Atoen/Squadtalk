@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Authorization
+@inherits LayoutComponentBase
+@layout MainLayout
+
+@attribute [Authorize]
+
+<PageTitle>Squadtalk | Chat</PageTitle>
+
+<h1>Chat</h1>
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+<hr />
+
+<div>
+    <div class="row">
+        <div class="col-md-3">
+            <ChatNavMenu />
+        </div>
+    </div>
+    <div class="col-md-9">
+        @Body
+    </div>
+</div>
+
+@code {
+    
+}

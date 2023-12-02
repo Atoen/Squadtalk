@@ -7,4 +7,10 @@
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        
+        <p role="alert">Sorry, there's nothing at this address.</p>
+        <NavLink class="nav-link" href="">Go Back to Main Page</NavLink>
+    </NotFound>
 </Router>

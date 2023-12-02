@@ -9,102 +9,102 @@ using Squadtalk.Data;
 using System.Diagnostics;
 using System.Security.Claims;
 
-namespace Squadtalk.Components.Account
+namespace Squadtalk.Components.Account;
+
+// This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
+// every 30 minutes an interactive circuit is connected. It also uses PersistentComponentState to flow the
+// authentication state to the client which is then fixed for the lifetime of the WebAssembly application.
+internal sealed class PersistingRevalidatingAuthenticationStateProvider : RevalidatingServerAuthenticationStateProvider
 {
-    // This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
-    // every 30 minutes an interactive circuit is connected. It also uses PersistentComponentState to flow the
-    // authentication state to the client which is then fixed for the lifetime of the WebAssembly application.
-    internal sealed class PersistingRevalidatingAuthenticationStateProvider : RevalidatingServerAuthenticationStateProvider
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly PersistentComponentState _state;
+    private readonly IdentityOptions _options;
+
+    private readonly PersistingComponentStateSubscription _subscription;
+
+    private Task<AuthenticationState>? _authenticationStateTask;
+
+    public PersistingRevalidatingAuthenticationStateProvider(
+        ILoggerFactory loggerFactory,
+        IServiceScopeFactory serviceScopeFactory,
+        PersistentComponentState persistentComponentState,
+        IOptions<IdentityOptions> optionsAccessor)
+        : base(loggerFactory)
     {
-        private readonly IServiceScopeFactory scopeFactory;
-        private readonly PersistentComponentState state;
-        private readonly IdentityOptions options;
+        _scopeFactory = serviceScopeFactory;
+        _state = persistentComponentState;
+        _options = optionsAccessor.Value;
 
-        private readonly PersistingComponentStateSubscription subscription;
+        AuthenticationStateChanged += OnAuthenticationStateChanged;
+        _subscription = _state.RegisterOnPersisting(OnPersistingAsync, RenderMode.InteractiveWebAssembly);
+    }
 
-        private Task<AuthenticationState>? authenticationStateTask;
+    protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(30);
 
-        public PersistingRevalidatingAuthenticationStateProvider(
-            ILoggerFactory loggerFactory,
-            IServiceScopeFactory serviceScopeFactory,
-            PersistentComponentState persistentComponentState,
-            IOptions<IdentityOptions> optionsAccessor)
-            : base(loggerFactory)
+    protected override async Task<bool> ValidateAuthenticationStateAsync(
+        AuthenticationState authenticationState, CancellationToken cancellationToken)
+    {
+        // Get the user manager from a new scope to ensure it fetches fresh data
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        return await ValidateSecurityStampAsync(userManager, authenticationState.User);
+    }
+
+    private async Task<bool> ValidateSecurityStampAsync(UserManager<ApplicationUser> userManager, ClaimsPrincipal principal)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null)
         {
-            scopeFactory = serviceScopeFactory;
-            state = persistentComponentState;
-            options = optionsAccessor.Value;
-
-            AuthenticationStateChanged += OnAuthenticationStateChanged;
-            subscription = state.RegisterOnPersisting(OnPersistingAsync, RenderMode.InteractiveWebAssembly);
+            return false;
         }
 
-        protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(30);
-
-        protected override async Task<bool> ValidateAuthenticationStateAsync(
-            AuthenticationState authenticationState, CancellationToken cancellationToken)
+        if (!userManager.SupportsUserSecurityStamp)
         {
-            // Get the user manager from a new scope to ensure it fetches fresh data
-            await using var scope = scopeFactory.CreateAsyncScope();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            return await ValidateSecurityStampAsync(userManager, authenticationState.User);
+            return true;
         }
 
-        private async Task<bool> ValidateSecurityStampAsync(UserManager<ApplicationUser> userManager, ClaimsPrincipal principal)
+        var principalStamp = principal.FindFirstValue(_options.ClaimsIdentity.SecurityStampClaimType);
+        var userStamp = await userManager.GetSecurityStampAsync(user);
+        return principalStamp == userStamp;
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        _authenticationStateTask = task;
+    }
+
+    private async Task OnPersistingAsync()
+    {
+        if (_authenticationStateTask is null)
         {
-            var user = await userManager.GetUserAsync(principal);
-            if (user is null)
-            {
-                return false;
-            }
-            else if (!userManager.SupportsUserSecurityStamp)
-            {
-                return true;
-            }
-            else
-            {
-                var principalStamp = principal.FindFirstValue(options.ClaimsIdentity.SecurityStampClaimType);
-                var userStamp = await userManager.GetSecurityStampAsync(user);
-                return principalStamp == userStamp;
-            }
+            throw new UnreachableException($"Authentication state not set in {nameof(OnPersistingAsync)}().");
         }
 
-        private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+        var authenticationState = await _authenticationStateTask;
+        var principal = authenticationState.User;
+
+        if (principal.Identity?.IsAuthenticated == true)
         {
-            authenticationStateTask = task;
-        }
+            var userId = principal.FindFirst(_options.ClaimsIdentity.UserIdClaimType)?.Value;
+            var email = principal.FindFirst(_options.ClaimsIdentity.EmailClaimType)?.Value;
+            var username = principal.FindFirstValue(_options.ClaimsIdentity.UserNameClaimType);
 
-        private async Task OnPersistingAsync()
-        {
-            if (authenticationStateTask is null)
+            if (userId != null && email != null && username != null)
             {
-                throw new UnreachableException($"Authentication state not set in {nameof(OnPersistingAsync)}().");
-            }
-
-            var authenticationState = await authenticationStateTask;
-            var principal = authenticationState.User;
-
-            if (principal.Identity?.IsAuthenticated == true)
-            {
-                var userId = principal.FindFirst(options.ClaimsIdentity.UserIdClaimType)?.Value;
-                var email = principal.FindFirst(options.ClaimsIdentity.EmailClaimType)?.Value;
-
-                if (userId != null && email != null)
+                _state.PersistAsJson(nameof(UserInfo), new UserInfo
                 {
-                    state.PersistAsJson(nameof(UserInfo), new UserInfo
-                    {
-                        UserId = userId,
-                        Email = email,
-                    });
-                }
+                    UserId = userId,
+                    Email = email,
+                    Name = username
+                });
             }
         }
+    }
 
-        protected override void Dispose(bool disposing)
-        {
-            subscription.Dispose();
-            AuthenticationStateChanged -= OnAuthenticationStateChanged;
-            base.Dispose(disposing);
-        }
+    protected override void Dispose(bool disposing)
+    {
+        _subscription.Dispose();
+        AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        base.Dispose(disposing);
     }
 }
