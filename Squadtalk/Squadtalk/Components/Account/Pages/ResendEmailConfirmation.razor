@@ -41,10 +41,16 @@
 
     private async Task OnValidSubmitAsync()
     {
-        var user = await UserManager.FindByEmailAsync(Input.Email!);
+        var user = await UserManager.FindByEmailAsync(Input.Email);
         if (user is null)
         {
             _message = "Verification email sent. Please check your email.";
+            return;
+        }
+
+        if (user.EmailConfirmed)
+        {
+            _message = "Your email is already confirmed. No further action is required.";;
             return;
         }
 

@@ -77,6 +77,21 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
+        var alreadyRegistered = await UserManager.FindByEmailAsync(Input.Email);
+        if (alreadyRegistered is not null)
+        {
+            _identityErrors = new List<IdentityError>
+            {
+                new()
+                {
+                    Description = $"Email '{Input.Email}' is already registered.",
+                    Code = "Email"
+                }
+            };
+            
+            return;
+        }
+        
         var user = CreateUser();
 
         await UserStore.SetUserNameAsync(user, Input.Username, CancellationToken.None);

@@ -3,6 +3,7 @@ using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Polly.Registry;
 using Squadtalk.Client.Pages;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
@@ -41,6 +42,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<SmtpClient>();
+builder.Services.AddSingleton<ResiliencePipelineRegistry<string>>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
 // builder.Services.AddSingleton()
