@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="Polly" Version="8.2.0" />
+    <PackageReference Include="Riok.Mapperly" Version="3.3.0-next.5" />
+    <ProjectReference Include="..\..\Shared\Shared.csproj" />
     <ProjectReference Include="..\Squadtalk.Client\Squadtalk.Client.csproj" />
     <PackageReference Include="MailKit" Version="4.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
