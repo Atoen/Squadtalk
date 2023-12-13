@@ -4,7 +4,7 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Squadtalk</a>
+        <a class="navbar-brand" href="">Squadtalk (@RenderMode)</a>
     </div>
 </div>
 
@@ -60,6 +60,8 @@
 
 @code {
     private string? _currentUrl;
+
+    private string RenderMode => Environment.MachineName == "localhost" ? "client side" : "server side";
 
     protected override void OnInitialized()
     {

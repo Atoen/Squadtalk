@@ -1,12 +1,24 @@
 @page "/Chat"
 @using Squadtalk.Client.Layout
 @using Microsoft.AspNetCore.Authorization
+@using Shared.Services
+
 @layout ChatLayout
 
 @attribute [Authorize]
 
 <h3>Messages</h3>
 
+<div class="chat-container flex-row">
+    <InputBox />
+</div>
+
+@inject ISignalrService SignalRService
+
 @code {
     
+    protected override async Task OnInitializedAsync()
+    {
+        await SignalRService.ConnectAsync();
+    }
 }

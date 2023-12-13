@@ -26,20 +26,13 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         _logger = logger;
         _registry = registry;
 
-        var senderName = configuration["Mail:Username"];
-        var senderAddress = configuration["Mail:Address"];
+        _password = configuration["Mail:Password"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Password");
+        _host = configuration["Mail:Host"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Host");
         
-        ArgumentException.ThrowIfNullOrWhiteSpace(senderName);
-        ArgumentException.ThrowIfNullOrWhiteSpace(senderAddress);
-        
+        var senderName = configuration["Mail:Username"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Username");
+        var senderAddress = configuration["Mail:Address"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Address");
+
         _sender = new MailboxAddress(senderName, senderAddress);
-        
-        _password = configuration["Mail:Password"]!;
-        _host = configuration["Mail:Host"]!;
-        
-        ArgumentException.ThrowIfNullOrWhiteSpace(_password);
-        ArgumentException.ThrowIfNullOrWhiteSpace(_host);
-        
         _port = Convert.ToInt32(configuration["Mail:Port"]);
     }
     
@@ -90,6 +83,7 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         try
         {
             await pipeline.ExecuteAsync((msg, _) => SendAsync(msg), message);
+            
             _logger.LogInformation("Successfully sent email to {Address}, subject: '{Subject}'",
                 address, message.Subject);
         }

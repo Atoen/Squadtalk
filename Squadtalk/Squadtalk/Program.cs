@@ -4,8 +4,11 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Polly.Registry;
+using RestSharp;
 using Shared.DTOs;
+using Shared.Services;
 using Squadtalk.Client.Pages;
+using Squadtalk.Client.Services;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
 using Squadtalk.Data;
@@ -33,9 +36,9 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -50,6 +53,14 @@ builder.Services.AddSingleton<ResiliencePipelineRegistry<string>>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
 builder.Services.AddSingleton<ChatConnectionManager<UserDto>>();
 builder.Services.AddScoped<MessageStorageService>();
+
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
+builder.Services.AddScoped<ISignalrService, SignalRService>();
+
+builder.Services.AddSingleton(_ => new RestClient(options =>
+    options.BaseUrl = new Uri("localhost:1234")
+));
 
 builder.Services.AddSignalR();
 
@@ -68,6 +79,9 @@ else
 }
 
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()

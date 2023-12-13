@@ -3,11 +3,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Squadtalk.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
     public DbSet<Message> Messages { get; set; } = default!;
 
     public DbSet<Channel> Channels { get; set; } = default!;
+    
+    
 
     // protected override void OnModelCreating(ModelBuilder builder)
     // {

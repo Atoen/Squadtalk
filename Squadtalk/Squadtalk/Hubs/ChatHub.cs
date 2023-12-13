@@ -15,9 +15,10 @@ public class ChatHub : Hub<IChatClient>
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<ChatHub> _logger;
 
-    private const string GlobalChannelId = "#Global";
+    private const string GlobalChannelId = "global";
 
-    public ChatHub(ChatConnectionManager<UserDto> connectionManager, UserManager<ApplicationUser> userManager, ILogger<ChatHub> logger)
+    public ChatHub(ChatConnectionManager<UserDto> connectionManager, UserManager<ApplicationUser> userManager, 
+        ILogger<ChatHub> logger)
     {
         _connectionManager = connectionManager;
         _userManager = userManager;
@@ -26,7 +27,7 @@ public class ChatHub : Hub<IChatClient>
 
     private async Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal? principal)
     {
-        if (principal is null)
+        if (principal is not {Identity.IsAuthenticated: true })
         {
             return null;
         }
@@ -54,13 +55,15 @@ public class ChatHub : Hub<IChatClient>
     public async Task SendMessage(string messageContent, string channelId, MessageStorageService messageStorageService)
     {
         var user = await GetUserAsync(Context.User);
+        
         if (user is null)
         {
             _logger.LogWarning("SendMessage: Unable to get user data");
+            
             return;
         }
 
-        if (!CheckIfUserParticipatesInChannel(user, channelId))
+        if (channelId != GlobalChannelId && !CheckIfUserParticipatesInChannel(user, channelId))
         {
             return;
         }
@@ -74,7 +77,9 @@ public class ChatHub : Hub<IChatClient>
         };
 
         await messageStorageService.StoreMessageAsync(message);
-        await Clients.Group(channelId).ReceiveMessage(message.ToDto());
+
+        var dto = message.ToDto();
+        await Clients.Group(channelId).ReceiveMessage(dto);
     }
 
     public override async Task OnConnectedAsync()
@@ -95,6 +100,10 @@ public class ChatHub : Hub<IChatClient>
         {
             await Clients.Group(GlobalChannelId).UserConnected(dto);
         }
+        
+        var channelDtos = user.Channels.Select(x => x.ToDto());
+        await Clients.Caller.GetChannels(channelDtos);
+        await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers);
 
         if (user.Channels is not { Count: > 0 })
         {
@@ -102,10 +111,6 @@ public class ChatHub : Hub<IChatClient>
         }
 
         await AddUserToPrivateChannelsAsync(dto, user.Channels, isUniqueConnection);
-
-        var channelDtos = user.Channels.Select(x => x.ToDto());
-        await Clients.Caller.GetChannels(channelDtos);
-        await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
