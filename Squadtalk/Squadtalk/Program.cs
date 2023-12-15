@@ -24,6 +24,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddControllers();
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -33,8 +35,7 @@ builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+    }).AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -54,9 +55,12 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
 builder.Services.AddSingleton<ChatConnectionManager<UserDto>>();
 builder.Services.AddScoped<MessageStorageService>();
 
-builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IMessageService, ServersideMessagesService>();
+builder.Services.AddScoped<IMessageModelService<Message>, MessageModelService<Message>>();
+builder.Services.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
+
 builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
-builder.Services.AddScoped<ISignalrService, SignalRService>();
+builder.Services.AddScoped<ISignalrService, ServersideSignalrService>();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri("localhost:1234")
@@ -91,6 +95,8 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+app.MapControllers();
 
 app.MapHub<ChatHub>("/chathub", options =>
 {

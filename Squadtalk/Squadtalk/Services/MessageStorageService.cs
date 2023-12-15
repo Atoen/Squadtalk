@@ -14,6 +14,14 @@ public class MessageStorageService
         _logger = logger;
     }
 
+    public Message CreateMessage(ApplicationUser author, string content, string channelId) => new()
+    {
+        Author = author,
+        Content = content,
+        ChannelId = channelId,
+        Timestamp = DateTimeOffset.Now
+    };
+    
     public async Task StoreMessageAsync(Message message)
     {
         await _dbContext.Messages.AddAsync(message);

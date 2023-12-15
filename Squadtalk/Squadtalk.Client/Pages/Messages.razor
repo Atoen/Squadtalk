@@ -9,8 +9,21 @@
 
 <h3>Messages</h3>
 
-<div class="chat-container flex-row">
-    <InputBox />
+<div class="chat-container">
+    <div class="message-listbox" id="listbox">
+        <InfiniteScrolling>
+            <ItemTemplate>
+                <MessageTemplate Model="context"/>
+            </ItemTemplate>
+            <LoadingTemplate>
+                <div class="spinner-border" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+            </LoadingTemplate>
+        </InfiniteScrolling>
+    </div>
+    
+    <InputBox/>
 </div>
 
 @inject ISignalrService SignalRService

@@ -23,8 +23,7 @@ public class CommunicationManager : ICommunicationManager
     public List<TextChannel> AllChannels { get; } = []; 
     public List<GroupChat> GroupChats { get; } = [];
     public List<DirectMessageChannel> DirectMessageChannels { get; } = [];
-
-
+    
     public CommunicationManager(AuthenticationStateProvider authenticationStateProvider, RestClient restClient, ISignalrService signalrService)
     {
         _authenticationStateProvider = authenticationStateProvider;

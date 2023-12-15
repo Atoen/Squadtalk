@@ -1,4 +1,9 @@
 .chat-container {
-    max-height: 100%;
-    overflow: auto;
+    display: grid;
+    grid-template-rows: minmax(100px, auto) min-content;
 }
+
+.message-listbox {
+    grid-row: 1;
+}
+

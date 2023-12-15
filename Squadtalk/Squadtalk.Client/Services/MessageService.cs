@@ -1,40 +1,34 @@
 using System.Text;
-using Microsoft.AspNetCore.Components;
 using RestSharp;
-using Shared.Communication;
 using Shared.DTOs;
+using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
-using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
 public class MessageService : IMessageService
 {
-    private readonly TimeSpan _separateMessageTimeSpan = TimeSpan.FromMinutes(1);
-    
-    private readonly NavigationManager _navigationManager;
     private readonly RestClient _restClient;
     private readonly ILogger<MessageService> _logger;
     
     private readonly ISignalrService _signalrService;
+    private readonly IMessageModelService<MessageDto> _modelService;
     private readonly ICommunicationManager _communicationManager;
-
-    private readonly List<MessageModel> _empty = [];
     
     public event Func<string, Task>? MessageReceived;
     
     public MessageService(
         ICommunicationManager communicationManager,
-        NavigationManager navigationManager,
         RestClient restClient,
         ISignalrService signalrService,
+        IMessageModelService<MessageDto> modelService,
         ILogger<MessageService> logger)
     {
         _communicationManager = communicationManager;
-        _navigationManager = navigationManager;
         _restClient = restClient;
         _signalrService = signalrService;
+        _modelService = modelService;
         _logger = logger;
 
         _signalrService.MessageReceived += HandleIncomingMessage;
@@ -52,7 +46,7 @@ public class MessageService : IMessageService
         }
 
         var state = channel.State;
-        var message = FormatMessage(state, messageDto, false);
+        var message = _modelService.CreateModel(messageDto, state, false);
 
         state.Messages.Add(message);
         state.LastMessageReceived = message;
@@ -62,18 +56,16 @@ public class MessageService : IMessageService
             state.Cursor = DateTimeOffset.UtcNow.UtcTicks;
         }
 
-        return MessageReceived is not null
-            ? MessageReceived(messageDto.ChannelId)
-            : Task.CompletedTask;
+        return MessageReceived.TryInvoke(messageDto.ChannelId);
     }
     
-    public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId)
+    public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)
     {
         var channel = _communicationManager.GetChannel(channelId);
 
         if (channel is null or { State.ReachedEnd: true })
         {
-            return _empty;
+            return ArraySegment<MessageModel>.Empty;
         }
         
         var restRequest = new RestRequest("api/message/{channel}/{timestamp}")
@@ -87,77 +79,13 @@ public class MessageService : IMessageService
             restRequest.AddUrlSegment("timestamp", encoded);
         }
 
-        var response = await _restClient.GetAsync<List<MessageDto>>(restRequest);
+        var response = await _restClient.GetAsync<List<MessageDto>>(restRequest, cancellationToken);
 
         if (response!.Count > 0)
         {
             state.Cursor = response[0].Timestamp.UtcTicks;
         }
 
-        var page = FormatMessagePage(state, response);
-        if (state.Messages.Count == 0)
-        {
-            return page;
-        }
-
-        if (page.Length > 0)
-        {
-            CheckIfPreviousMessageWasFirst(state.Messages[0], page[^1]);
-        }
-        else
-        {
-            state.Messages[0].IsSeparate = true;
-        }
-
-        return page;
-    }
-    
-    private void CheckIfPreviousMessageWasFirst(MessageModel previous, MessageModel next)
-    {
-        previous.IsSeparate = previous.Author != next.Author ||
-                           previous.Timestamp.Subtract(next.Timestamp) > _separateMessageTimeSpan;
-    }
-
-    private MessageModel[] FormatMessagePage(TextChannelState channelState, IList<MessageDto> dtoPage)
-    {
-        if (dtoPage.Count == 0)
-        {
-            return Array.Empty<MessageModel>();
-        }
-
-        var page = new MessageModel[dtoPage.Count];
-
-        for (var i = 0; i < dtoPage.Count; i++)
-        {
-            var model = FormatMessage(channelState, dtoPage[i], true);
-            page[i] = model;
-            channelState.LastMessageFormatted = model;
-        }
-
-        channelState.LastMessageReceived ??= page[^1];
-
-        return page;
-    }
-
-    private MessageModel FormatMessage(TextChannelState channelState, MessageDto messageDto, bool isFromPage)
-    {
-        var model = messageDto.ToModel();
-        var toCompare = isFromPage
-            ? channelState.LastMessageFormatted
-            : channelState.LastMessageReceived;
-
-        if (toCompare is null)
-        {
-            model.IsSeparate = true;
-            return model;
-        }
-
-        if (model.Author != toCompare.Author ||
-            model.Timestamp.Subtract(toCompare.Timestamp) > _separateMessageTimeSpan)
-        {
-            model.IsSeparate = true;
-        }
-
-        return model;
+        return _modelService.CreateModelPage(response, state);
     }
 }

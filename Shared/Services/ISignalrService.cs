@@ -2,16 +2,13 @@ using Shared.DTOs;
 
 namespace Shared.Services;
 
-public delegate Task ChannelsReceivedHandler(IEnumerable<ChannelDto> channel);
-
-public delegate Task AddedToChannelHandler(ChannelDto channel);
-
 public interface ISignalrService : IAsyncDisposable
 {
     const string Online = "Online";
     const string Connecting = "Connecting";
     const string Reconnecting = "Reconnecting";
     const string Disconnected = "Disconnected";
+    const string Offline = "Offline";
     
     event Func<MessageDto, Task>? MessageReceived;
     
@@ -22,8 +19,14 @@ public interface ISignalrService : IAsyncDisposable
     event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
 
     event Func<string, Task>? ConnectionStatusChanged;
+
+    event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
+
+    event Func<ChannelDto, Task>? AddedToTextChannel; 
     
     string ConnectionStatus { get; }
+    
+    bool Connected { get; }
     
     Task ConnectAsync();
     

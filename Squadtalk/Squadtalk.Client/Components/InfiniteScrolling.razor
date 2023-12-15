@@ -31,6 +31,7 @@
 @inject IJSRuntime JsRuntime
 @inject ICommunicationManager CommunicationManager
 @inject IMessageService MessageService
+@inject ILogger<InfiniteScrolling> Logger
 
 @code {
 
@@ -41,7 +42,7 @@
 
     private CancellationTokenSource? _loadItemsTokenSource;
 
-    private bool IsLoading => _loadItemsTokenSource != null;
+    private bool IsLoading => _loadItemsTokenSource is not null;
 
     [Parameter]
     public RenderFragment<MessageModel>? ItemTemplate { get; set; }
@@ -54,12 +55,16 @@
 
     protected override void OnInitialized()
     {
+        Logger.LogInformation("Initialized");
+        
         MessageService.MessageReceived += UpdateOnMessage;
-        CommunicationManager.ChannelChanged += () =>
-        {
-            StateHasChanged();
-            _ = _instance!.InvokeVoidAsync("onNewItems");
-        };
+        CommunicationManager.ChannelChanged += OnCommunicationManagerOnChannelChanged;
+    }
+
+    private void OnCommunicationManagerOnChannelChanged()
+    {
+        StateHasChanged();
+        _ = _instance!.InvokeVoidAsync("onNewItems");
     }
 
     private async Task UpdateOnMessage(string channelId)
@@ -73,6 +78,8 @@
     [JSInvokable]
     public async Task LoadMoreItems()
     {
+        Logger.LogInformation("Loading more items");
+        
         if (_loadItemsTokenSource != null) return;
 
         var channel = CommunicationManager.CurrentChannel;
@@ -82,7 +89,11 @@
 
         try
         {
-            var newItems = await MessageService.GetMessagePageAsync(channel.Id);
+            var token = _loadItemsTokenSource.Token;
+            var newItems = await MessageService.GetMessagePageAsync(channel.Id, token);
+
+            Logger.LogInformation("Loaded {Count} messages", newItems.Count);
+
             if (!cancellationTokenSource.IsCancellationRequested)
             {
                 channelState.Messages.InsertRange(0, newItems);
@@ -100,6 +111,10 @@
         }
         catch (OperationCanceledException e) when (e.CancellationToken == cancellationTokenSource.Token)
         {
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "Error while loading new messages");
         }
         finally
         {
@@ -143,6 +158,7 @@
         _currentComponentReference?.Dispose();
 
         MessageService.MessageReceived -= UpdateOnMessage;
+        CommunicationManager.ChannelChanged -= OnCommunicationManagerOnChannelChanged;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
@@ -156,5 +172,4 @@
         builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
         builder.CloseElement();
     }
-
 }

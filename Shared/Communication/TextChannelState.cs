@@ -10,5 +10,5 @@ public class TextChannelState
     public List<MessageModel> Messages { get; } = [];
     
     public MessageModel? LastMessageReceived { get; set; }
-    public MessageModel? LastMessageFormatted { get; set; }
+    public MessageModel? LastPageMessageReceived { get; set; }
 }

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Shared.Communication;
 using Shared.DTOs;
 using Squadtalk.Data;
 using Squadtalk.Services;
@@ -14,8 +15,6 @@ public class ChatHub : Hub<IChatClient>
     private readonly ChatConnectionManager<UserDto> _connectionManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<ChatHub> _logger;
-
-    private const string GlobalChannelId = "global";
 
     public ChatHub(ChatConnectionManager<UserDto> connectionManager, UserManager<ApplicationUser> userManager, 
         ILogger<ChatHub> logger)
@@ -59,23 +58,15 @@ public class ChatHub : Hub<IChatClient>
         if (user is null)
         {
             _logger.LogWarning("SendMessage: Unable to get user data");
-            
             return;
         }
 
-        if (channelId != GlobalChannelId && !CheckIfUserParticipatesInChannel(user, channelId))
+        if (channelId != GroupChat.GlobalChatId && !CheckIfUserParticipatesInChannel(user, channelId))
         {
             return;
         }
 
-        var message = new Message
-        {
-            Author = user,
-            Timestamp = DateTimeOffset.Now,
-            Content = messageContent,
-            ChannelId = channelId
-        };
-
+        var message = messageStorageService.CreateMessage(user, messageContent, channelId);
         await messageStorageService.StoreMessageAsync(message);
 
         var dto = message.ToDto();
@@ -95,10 +86,10 @@ public class ChatHub : Hub<IChatClient>
 
         var isUniqueConnection = await _connectionManager.Add(dto, Context.ConnectionId);
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, GlobalChannelId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupChat.GlobalChatId);
         if (isUniqueConnection)
         {
-            await Clients.Group(GlobalChannelId).UserConnected(dto);
+            await Clients.Group(GroupChat.GlobalChatId).UserConnected(dto);
         }
         
         var channelDtos = user.Channels.Select(x => x.ToDto());
@@ -127,7 +118,7 @@ public class ChatHub : Hub<IChatClient>
         var allConnectionsClosed = await _connectionManager.Remove(dto, Context.ConnectionId);
         if (!allConnectionsClosed) return;
 
-        await Clients.Group(GlobalChannelId).UserDisconnected(dto);
+        await Clients.Group(GroupChat.GlobalChatId).UserDisconnected(dto);
         if (user.Channels is not { Count: > 0 })
         {
             return;

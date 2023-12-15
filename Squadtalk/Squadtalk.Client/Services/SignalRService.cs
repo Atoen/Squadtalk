@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.DTOs;
+using Shared.Extensions;
 using Shared.Services;
 using Squadtalk.Client.SignalR;
 
@@ -12,35 +13,21 @@ public sealed class SignalRService : ISignalrService
 
     private readonly HubConnection _connection;
 
-    private bool _connected;
     private bool _handlersRegistered;
-    
-    private string _connectionStatus = ISignalrService.Connecting;
 
     public event Func<string, Task>? ConnectionStatusChanged;
+    public event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
+    public event Func<ChannelDto, Task>? AddedToTextChannel;
     public event Func<UserDto, Task>? UserDisconnected;
     public event Func<UserDto, Task>? UserConnected;
     public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
     public event Func<MessageDto, Task>? MessageReceived;
 
-    public event ChannelsReceivedHandler? ChannelsReceived;
-    public event AddedToChannelHandler? AddedToChannel;
-    
-    public string ConnectionStatus
-    {
-        get => _connectionStatus;
-        private set
-        {
-            var previousStatus = _connectionStatus;
-            _connectionStatus = value;
+    private bool _connectionStared;
+    public bool Connected { get; private set; }
 
-            if (previousStatus != _connectionStatus)
-            {
-                ConnectionStatusChanged?.Invoke(_connectionStatus);
-            }
-        }
-    }
-    
+    public string ConnectionStatus { get; private set; } = ISignalrService.Offline;
+
     public SignalRService(NavigationManager navigationManager, ILogger<SignalRService> logger)
     {
         _logger = logger;
@@ -53,8 +40,6 @@ public sealed class SignalRService : ISignalrService
             {
                 options.HttpMessageHandlerFactory = innerHandler =>
                     new IncludeRequestCredentialsMessageHandler { InnerHandler = innerHandler };
-                
-                // options.Cookies
             })
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
@@ -63,8 +48,9 @@ public sealed class SignalRService : ISignalrService
 
     public async Task ConnectAsync()
     {
-        if (_connected) return;
-
+        if (_connectionStared) return;
+        _connectionStared = true;
+        
         if (!_handlersRegistered)
         {
             RegisterHandlers();
@@ -73,10 +59,13 @@ public sealed class SignalRService : ISignalrService
 
         try
         {
+            ConnectionStatus = ISignalrService.Connecting;
+            await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
             await _connection.StartAsync();
-            _connected = true;
             
+            Connected = true;
             ConnectionStatus = ISignalrService.Online;
+            await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
             
             _logger.LogInformation("Successfully connected to chat hub");
         }
@@ -105,53 +94,41 @@ public sealed class SignalRService : ISignalrService
         _connection.Reconnecting += _ =>
         {
             ConnectionStatus = ISignalrService.Reconnecting;
-            ConnectionStatusChanged?.Invoke(ConnectionStatus);
-            return Task.CompletedTask;
+            Connected = false;
+            return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.Reconnected += _ =>
         {
             ConnectionStatus = ISignalrService.Online;
-            ConnectionStatusChanged?.Invoke(ConnectionStatus);
-            return Task.CompletedTask;
+            Connected = true;
+            return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.Closed += _ =>
         {
             ConnectionStatus = ISignalrService.Disconnected;
-            ConnectionStatusChanged?.Invoke(ConnectionStatus);
-            return Task.CompletedTask;
+            Connected = false;
+            return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.On<MessageDto>("ReceiveMessage", message =>
-            MessageReceived is not null
-                ? MessageReceived.Invoke(message)
-                : Task.CompletedTask);
+            MessageReceived.TryInvoke(message));
 
         _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
-            ConnectedUsersReceived is not null
-                ? ConnectedUsersReceived.Invoke(users)
-                : Task.CompletedTask);
+            ConnectedUsersReceived.TryInvoke(users));
 
         _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
-            ChannelsReceived is not null
-                ? ChannelsReceived.Invoke(channels)
-                : Task.CompletedTask);
+            TextChannelsReceived.TryInvoke(channels));
 
         _connection.On<ChannelDto>("AddedToChannel", channel =>
-            AddedToChannel is not null
-                ? AddedToChannel.Invoke(channel)
-                : Task.CompletedTask);
+            AddedToTextChannel.TryInvoke(channel));
 
         _connection.On<UserDto>("UserDisconnected", user =>
-            UserDisconnected is not null
-                ? UserDisconnected.Invoke(user)
-                : Task.CompletedTask);
-        
+            UserDisconnected.TryInvoke(user));
+
         _connection.On<UserDto>("UserConnected", user =>
-            UserConnected is not null
-                ? UserConnected.Invoke(user)
-                : Task.CompletedTask);
+            UserConnected.TryInvoke(user));
     }
 
     public ValueTask DisposeAsync()

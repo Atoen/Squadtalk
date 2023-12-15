@@ -1,14 +1,16 @@
 @using Squadtalk.Client.Services
 @using Squadtalk.Client.Extensions
 @using Shared.Services
+@using System.Diagnostics.CodeAnalysis
 
-<div class="input-box">
+<div class="input-box" style="@GetStyle()">
     <div class="grow-wrap">
         <textarea rows="1" placeholder="@_placeholder"
             @bind="_userMessage"
             @onkeydown="TextareaCallback"
             @onkeydown:preventDefault="@_preventDefaultOnKeyDown"
-            id="textBox">
+            id="textBox"
+            disabled="@(!SignalRService.Connected)">
         </textarea>
     </div>
     
@@ -27,6 +29,8 @@
     <InputFile class="d-none" id="file-picker"></InputFile>
 </div>
 
+@implements IAsyncDisposable
+
 @inject IMessageService MessageService
 @inject IJSRuntime JSRuntime
 @inject ICommunicationManager CommunicationManager
@@ -34,6 +38,9 @@
 @inject ILogger<InputBox> Logger
 
 @code {
+    private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";
+    private const string DefaultPlaceholder = "Type message";
+    
     private string? _placeholder;
     private string? _userMessage;
     private bool _preventDefaultOnKeyDown;
@@ -42,9 +49,20 @@
 
     protected override void OnInitialized()
     {
-        _placeholder = GetPlaceholder();
+        Logger.LogInformation("Initialized");
+        
+        _placeholder = SignalRService.ConnectionStatus;
+        SignalRService.ConnectionStatusChanged += OnSignalRServiceOnConnectionStatusChanged;
     }
-    
+
+    private Task OnSignalRServiceOnConnectionStatusChanged(string status)
+    {
+        _placeholder = SignalRService.Connected ? DefaultPlaceholder : status;
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -52,10 +70,10 @@
         _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "../Components/InputBox.razor.js");
         await _jsModule.InvokeVoidAsync("initialize");
     }
-
-    private string GetPlaceholder()
+    
+    private string GetStyle()
     {
-        return "Type message";
+        return SignalRService.Connected ? string.Empty : DisabledStyle;
     }
 
     private async Task TextareaCallback(KeyboardEventArgs e)
@@ -81,5 +99,11 @@
         {
            await SignalRService.SendMessageAsync(message, channel.Id);
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _jsModule.TryDisposeAsync();
+        SignalRService.ConnectionStatusChanged -= OnSignalRServiceOnConnectionStatusChanged;
     }
 }
