@@ -1,5 +1,6 @@
 using System.Text;
 using RestSharp;
+using Shared.Communication;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
@@ -41,11 +42,17 @@ public class MessageService : IMessageService
         var channel = _communicationManager.GetChannel(messageDto.ChannelId);
         if (channel is null)
         {
-            Console.WriteLine("Received message on nonexistent channel");
+            _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
             return Task.CompletedTask;
         }
 
         var state = channel.State;
+
+        if (_communicationManager.CurrentChannel != channel)
+        {
+            state.UnreadMessages++;
+        }
+        
         var message = _modelService.CreateModel(messageDto, state, false);
 
         state.Messages.Add(message);

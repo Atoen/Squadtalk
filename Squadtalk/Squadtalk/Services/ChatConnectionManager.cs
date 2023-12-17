@@ -1,14 +1,22 @@
 namespace Squadtalk.Services;
 
-public class ChatConnectionManager<T> where T : notnull
+public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey : IEquatable<TKey>
 {
+    private readonly IConnectionKeyAccessor<TUser, TKey> _keyAccessor;
     private readonly SemaphoreSlim _semaphore = new(1);
-    private readonly Dictionary<T, HashSet<string>> _connections = [];
+    private readonly Dictionary<TKey, HashSet<string>> _connections = [];
+    private readonly List<TUser> _connectedUsers = [];
 
-    public IReadOnlyCollection<T> ConnectedUsers => _connections.Keys;
+    public IReadOnlyCollection<TUser> ConnectedUsers => _connectedUsers;
 
-    public IEnumerable<string> GetUserConnections(T key)
+    public ChatConnectionManager(IConnectionKeyAccessor<TUser, TKey> keyAccessor)
     {
+        _keyAccessor = keyAccessor;
+    }
+
+    public IEnumerable<string> GetUserConnections(TUser user)
+    {
+        var key = _keyAccessor.GetKey(user);
         if (_connections.TryGetValue(key, out var connections))
         {
             return connections;
@@ -17,12 +25,13 @@ public class ChatConnectionManager<T> where T : notnull
         return Enumerable.Empty<string>();
     }
 
-    public async Task<bool> Add(T key, string connectionId)
+    public async Task<bool> Add(TUser user, string connectionId)
     {
         await _semaphore.WaitAsync();
 
         try
         {
+            var key = _keyAccessor.GetKey(user);
             var alreadyConnected = _connections.TryGetValue(key, out var existingConnections);
             if (alreadyConnected)
             {
@@ -30,6 +39,7 @@ public class ChatConnectionManager<T> where T : notnull
             }
             else
             {
+                _connectedUsers.Add(user);
                 _connections[key] = [connectionId];
             }
 
@@ -41,12 +51,13 @@ public class ChatConnectionManager<T> where T : notnull
         }
     }
     
-    public async Task<bool> Remove(T key, string connectionId)
+    public async Task<bool> Remove(TUser user, string connectionId)
     {
         await _semaphore.WaitAsync();
 
         try
         {
+            var key = _keyAccessor.GetKey(user);
             if (!_connections.TryGetValue(key, out var existingConnections) || existingConnections.Count == 0)
             {
                 return false;
@@ -55,6 +66,7 @@ public class ChatConnectionManager<T> where T : notnull
             var isTheOnlyConnection = existingConnections.Count == 1;
             if (isTheOnlyConnection)
             {
+                _connectedUsers.RemoveAll(x => _keyAccessor.GetKey(x).Equals(key));
                 _connections.Remove(key);
             }
             else

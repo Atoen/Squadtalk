@@ -3,9 +3,9 @@
     border-radius: 0.5em;
     flex-direction: row;
     display: flex;
-    align-items: center;
+    align-items: end;
     justify-content: center;
-    grid-row: 2;
+    grid-row: 3;
 }
 
 .grow-wrap {
@@ -62,11 +62,12 @@
     display: inline-block;
     width: 30px;
     height: 30px;
-    margin: 0 10px;
     color: dimgray;
     border: none;
     background: none;
     transition: color 0.1s ease, transform 0.3s ease;
+    margin: 0 10px 17px;
+
 }
 
 .add-button:hover {
@@ -91,6 +92,7 @@
     background: none;
     transition: color 0.1s ease, transform 0.2s ease;
     margin-right: 5px;
+    margin-bottom: 17px;
 }
 
 .send-button:hover {

@@ -11,4 +11,6 @@ public class TextChannelState
     
     public MessageModel? LastMessageReceived { get; set; }
     public MessageModel? LastPageMessageReceived { get; set; }
+    
+    public int UnreadMessages { get; set; }
 }

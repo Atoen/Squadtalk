@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Squadtalk.Client.Extensions;
+namespace Shared.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

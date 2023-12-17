@@ -14,16 +14,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Channel> Channels { get; set; } = default!;
     
-    
-
-    // protected override void OnModelCreating(ModelBuilder builder)
-    // {
-    //     builder.Entity<Channel>()
-    //         .HasMany(x => x.Participants)
-    //         .WithMany(x => x.Channels);
-    //     
-    //     builder.Entity<ApplicationUser>()
-    //         .Navigation(x => x.Channels)
-    //         .AutoInclude(false);
-    // }
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        
+        builder.Entity<Channel>()
+            .HasMany(x => x.Participants)
+            .WithMany(x => x.Channels);
+        
+        builder.Entity<ApplicationUser>()
+            .Navigation(x => x.Channels)
+            .AutoInclude(false);
+    }
 }

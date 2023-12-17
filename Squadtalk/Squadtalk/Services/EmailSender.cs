@@ -66,8 +66,14 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         await _client.AuthenticateAsync(_sender.Address, _password);
     }
 
-    private async Task TrySendAsync(MimeMessage message, string address)
+    private async Task TrySendAsync(MimeMessage? message, string address)
     {
+        if (message is null)
+        {
+            _logger.LogWarning("MimeMessage is null");
+            return;
+        }
+        
         var pipeline = _registry.GetOrAddPipeline("smtp", builder =>
         {
             builder.AddRetry(new RetryStrategyOptions
@@ -103,16 +109,27 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         await _client.SendAsync(message);
     }
 
-    private MimeMessage CreateMessage(string username, string email, string subject, string body) => new()
+    private MimeMessage? CreateMessage(string username, string email, string subject, string body)
     {
-        From = { _sender },
-        To = { new MailboxAddress(username, email) },
-        Subject = subject,
-        Body = new TextPart(TextFormat.Html)
+        try
         {
-            Text = body
+            return new MimeMessage
+            {
+                From = { _sender },
+                To = { new MailboxAddress(username, email) },
+                Subject = subject,
+                Body = new TextPart(TextFormat.Html)
+                {
+                    Text = body
+                }
+            };
         }
-    };
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Failed to create MimeMessage");
+            return null;
+        }
+    }
 
     public void Dispose()
     {

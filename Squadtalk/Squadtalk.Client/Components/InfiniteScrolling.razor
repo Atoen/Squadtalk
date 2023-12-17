@@ -1,6 +1,20 @@
+@using Squadtalk.Client.Extensions
+@using Microsoft.AspNetCore.Components.Rendering
+@using System.Diagnostics
+@using Shared.Communication
+@using Shared.Models
+@using Shared.Services
+
 @if (CommunicationManager.CurrentChannelState.ReachedEnd)
 {
-    <div>No more messages in @@@CommunicationManager.CurrentChannel.Name</div>
+    if (CommunicationManager.CurrentChannel is GroupChat)
+    {
+        <div>No more messages in @CommunicationManager.CurrentChannel.Name</div>
+    }
+    else
+    {
+        <div>No more messages with @CommunicationManager.CurrentChannel.Name</div>
+    }
 }
 
 @if (IsLoading)
@@ -21,11 +35,6 @@
     }
 }
 
-@using Squadtalk.Client.Extensions
-@using Microsoft.AspNetCore.Components.Rendering
-@using System.Diagnostics
-@using Shared.Models
-@using Shared.Services
 @implements IAsyncDisposable
 
 @inject IJSRuntime JsRuntime

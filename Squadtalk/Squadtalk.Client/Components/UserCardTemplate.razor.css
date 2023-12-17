@@ -1,0 +1,29 @@
+.user-card {
+    height: 75px;
+    width: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+    cursor: pointer;
+    position: relative;
+}
+
+.avatar {
+    width: 48px;
+    border: 4px solid;
+    border-radius: 50%;
+}
+
+.username {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9em;
+    max-width: 100%;
+}
+
+.connection-status {
+    align-self: start;
+}

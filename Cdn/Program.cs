@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Cdn;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -27,7 +28,10 @@ todosApi.MapGet("/{id:int}", (int id) =>
 
 app.Run();
 
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
+namespace Cdn
+{
+    public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
 
-[JsonSerializable(typeof(Todo[]))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext;
+    [JsonSerializable(typeof(Todo[]))]
+    internal partial class AppJsonSerializerContext : JsonSerializerContext;
+}

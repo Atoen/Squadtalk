@@ -1,0 +1,37 @@
+@using Shared.Models
+@using Shared.Services
+@using Squadtalk.Client.Extensions
+@using Shared.Communication
+
+<div class="user-card rounded mx-1" style="@Style"
+     @onclick="() => CommunicationManager.OpenOrCreateFakeDirectMessageChannel(Model)">
+    <img src="@Model.AvatarUrl" class="avatar" alt="Avatar" draggable="false" style="@BorderStyle"/>
+    <div class="username px-2">@Model.Username</div>
+
+    @if (CommunicationManager.CurrentChannel != _channel && _channel!.State.UnreadMessages > 0)
+    {
+        <Badge Color="BadgeColor.Danger"
+               Position="Position.Absolute"
+               Placement="BadgePlacement.TopRight"
+               IndicatorType="BadgeIndicatorType.RoundedPill"
+               VisuallyHiddenText="unread messages">@_channel.State.UnreadMessages</Badge>
+    }
+    
+</div>
+
+@inject ICommunicationManager CommunicationManager
+
+@code {
+    [Parameter]
+    public required UserModel Model { get; set; }
+
+    private DirectMessageChannel? _channel;
+
+    private string Style => Model.Selected ? "background: var(--bs-primary); color: white;" : "color: var(--bs-primary)";
+    private string BorderStyle => $"border-color: {Model.StatusColor()};";
+
+    protected override void OnInitialized()
+    {
+        _channel = CommunicationManager.DirectMessageChannels.First(x => x.Other.Id == Model.Id);
+    }
+}

@@ -1,4 +1,5 @@
 using System.Net;
+using Blazored.LocalStorage;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -37,7 +38,9 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     }).AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
+var connectionString = builder.Configuration.GetConnectionString("Postgres")
+                       ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -52,21 +55,25 @@ builder.Services.AddSingleton<SmtpClient>();
 builder.Services.AddSingleton<ResiliencePipelineRegistry<string>>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
-builder.Services.AddSingleton<ChatConnectionManager<UserDto>>();
+builder.Services.AddSingleton<ChatConnectionManager<UserDto, string>>();
+builder.Services.AddSingleton<IConnectionKeyAccessor<UserDto, string>, ConnectionKeyAccessor>();
 builder.Services.AddScoped<MessageStorageService>();
 
 builder.Services.AddScoped<IMessageService, ServersideMessagesService>();
 builder.Services.AddScoped<IMessageModelService<Message>, MessageModelService<Message>>();
 builder.Services.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
 
-builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
+builder.Services.AddScoped<ICommunicationManager, ServersideCommunicationManager>();
 builder.Services.AddScoped<ISignalrService, ServersideSignalrService>();
+builder.Services.AddScoped<ITabManager, ServersideTabManager>();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri("localhost:1234")
 ));
 
 builder.Services.AddSignalR();
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 

@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -7,10 +9,8 @@ using Microsoft.Extensions.Primitives;
 using Squadtalk.Components.Account.Pages;
 using Squadtalk.Components.Account.Pages.Manage;
 using Squadtalk.Data;
-using System.Security.Claims;
-using System.Text.Json;
 
-namespace Microsoft.AspNetCore.Routing;
+namespace Squadtalk.Components.Account;
 
 internal static class IdentityComponentsEndpointRouteBuilderExtensions
 {

@@ -86,7 +86,6 @@ public sealed class SignalRService : ISignalrService
         {
             _logger.LogError(e, "Failed to send message");
         }
-        
     }
     
     private void RegisterHandlers()
@@ -119,7 +118,12 @@ public sealed class SignalRService : ISignalrService
             ConnectedUsersReceived.TryInvoke(users));
 
         _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
-            TextChannelsReceived.TryInvoke(channels));
+        {
+            _logger.LogInformation("Received channels: {Channels}", string.Join(", ", channels.SelectMany(x => x
+                .Participants.Select(userDto => userDto.Username))));
+            
+            return TextChannelsReceived.TryInvoke(channels);
+        });
 
         _connection.On<ChannelDto>("AddedToChannel", channel =>
             AddedToTextChannel.TryInvoke(channel));

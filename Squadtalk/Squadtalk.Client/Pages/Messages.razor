@@ -1,4 +1,4 @@
-@page "/Chat"
+@page "/Chat/{id?}"
 @using Squadtalk.Client.Layout
 @using Microsoft.AspNetCore.Authorization
 @using Shared.Services
@@ -7,10 +7,18 @@
 
 @attribute [Authorize]
 
-<h3>Messages</h3>
-
 <div class="chat-container">
-    <div class="message-listbox" id="listbox">
+    
+    <ChannelSelector>
+        @* <GroupChatTemplate> *@
+        @*     <GroupChatTemplate Model="context"/> *@
+        @* </GroupChatTemplate> *@
+        <UserTemplate>
+            <UserCardTemplate Model="context"/>
+        </UserTemplate>
+    </ChannelSelector>
+    
+    <div class="message-listbox rounded my-1" id="listbox">
         <InfiniteScrolling>
             <ItemTemplate>
                 <MessageTemplate Model="context"/>
@@ -30,8 +38,11 @@
 
 @code {
     
-    protected override async Task OnInitializedAsync()
+    [Parameter]
+    public string? Id { get; set; }
+
+    protected override Task OnInitializedAsync()
     {
-        await SignalRService.ConnectAsync();
+        return SignalRService.ConnectAsync();
     }
 }

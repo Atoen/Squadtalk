@@ -1,0 +1,37 @@
+.global {
+    height: 75px;
+    width: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 0.5em;
+    cursor: pointer;
+    position: relative;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+}
+
+svg path {
+    fill: currentColor;
+}
+
+.icon {
+    width: 30px;
+}
+
+.menu {
+    grid-row: 1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.communication-tabs {
+    display: flex;
+    overflow-y: auto;
+}
+
+.channels {
+    width: min-content;
+    background: #dfdfdf;
+}

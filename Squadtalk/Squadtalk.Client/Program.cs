@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using RestSharp;
@@ -15,11 +16,15 @@ builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress)
 ));
 
-builder.Services.AddSingleton<ICommunicationManager, CommunicationManager>();
-builder.Services.AddSingleton<ISignalrService, SignalRService>();
+builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
+builder.Services.AddScoped<ISignalrService, SignalRService>();
 
-builder.Services.AddSingleton<IMessageService, MessageService>();
-builder.Services.AddSingleton<IMessageModelService<MessageDto>, MessageModelService<MessageDto>>();
-builder.Services.AddSingleton<IMessageModelMapper<MessageDto>, DtoMessageModelMapper>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IMessageModelService<MessageDto>, MessageModelService<MessageDto>>();
+builder.Services.AddScoped<IMessageModelMapper<MessageDto>, DtoMessageModelMapper>();
+builder.Services.AddScoped<ITabManager, TabManager>();
+
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddBlazorBootstrap();
 
 await builder.Build().RunAsync();

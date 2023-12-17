@@ -91,13 +91,17 @@
         _preventDefaultOnKeyDown = true;
 
         var channel = CommunicationManager.CurrentChannel;
+        if (channel.IsFake())
+        {
+            await CommunicationManager.CreateRealDirectMessageChannel(channel);
+        }
 
         var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
-        Logger.LogInformation("Sending message: {Content}", message);
+        Logger.LogInformation("Sending message: {Content} to channel: {Channel}", message, CommunicationManager.CurrentChannel.Id);
 
         if (!string.IsNullOrWhiteSpace(message))
         {
-           await SignalRService.SendMessageAsync(message, channel.Id);
+           await SignalRService.SendMessageAsync(message, CommunicationManager.CurrentChannel.Id);
         }
     }
 

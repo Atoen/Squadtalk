@@ -1,11 +1,16 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
 using Shared.DTOs;
+using Shared.Extensions;
 using Squadtalk.Data;
+using Squadtalk.Hubs;
+using Squadtalk.Services;
 
 namespace Squadtalk.Controllers;
 
@@ -26,31 +31,40 @@ public class MessageController : ControllerBase
     }
     
     private const int MessagePageCount = 20;
-    
-    public static readonly Func<ApplicationDbContext, string, IAsyncEnumerable<Message>> MessageFirstPageAsync =
+
+    private static readonly Func<ApplicationDbContext, string, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, string channelId) => context
-                .Messages.OrderByDescending(m => m.Timestamp)
+            (ApplicationDbContext context, string channelId) => context.Messages
+                .OrderByDescending(m => m.Timestamp)
                 .Where(m => m.ChannelId == channelId)
                 .Take(MessagePageCount)
                 .Include(m => m.Author)
                 .Reverse());
-    
-    public static readonly Func<ApplicationDbContext, string, DateTimeOffset, IAsyncEnumerable<Message>>
+
+    private static readonly Func<ApplicationDbContext, string, DateTimeOffset, IAsyncEnumerable<Message>>
         MessagePageByCursorAsync =
             EF.CompileAsyncQuery(
-                (ApplicationDbContext context, string channelId, DateTimeOffset cursor) => context
-                    .Messages.OrderByDescending(m => m.Timestamp)
+                (ApplicationDbContext context, string channelId, DateTimeOffset cursor) => context.Messages
+                    .OrderByDescending(m => m.Timestamp)
                     .Where(m => m.ChannelId == channelId)
                     .Where(m => m.Timestamp < cursor)
                     .Take(MessagePageCount)
                     .Include(m => m.Author)
                     .Reverse());
 
+    private static readonly Func<ApplicationDbContext, string, Task<ApplicationUser?>> UserWithChannelsByIdAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, string userId) => context.Users
+                .Include(x => x.Channels)
+                .ThenInclude(x => x.Participants)
+                .AsSplitQuery()
+                .FirstOrDefault(x => x.Id == userId));
+
     [HttpGet("{channelId}/{timestamp?}")]
     public async IAsyncEnumerable<MessageDto> GetMessages(string channelId, string? timestamp)
     {
-        var user = await _userManager.GetUserAsync(HttpContext.User);
+        var userId = HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        var user = await UserWithChannelsByIdAsync(_dbContext, userId);
         if (user is null)
         {
             _logger.LogWarning("Cannot retrieve user data");
@@ -76,6 +90,55 @@ public class MessageController : ControllerBase
         {
             yield return message.ToDto();
         }
+    }
+    
+    [HttpPost("createChannel")]
+    public async Task<IActionResult> CreateChannel(List<string> participantsId,
+        [FromServices] IHubContext<ChatHub> hubContext,
+        [FromServices] ChatConnectionManager<UserDto, string> connectionManager)
+    {
+        if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
+        {
+            return BadRequest();
+        }
+
+        var participants = await _dbContext.Users
+            .Where(x => participantsId.Contains(x.Id))
+            .ToListAsync();
+
+        if (participants.Count != participantsId.Count)
+        {
+            return BadRequest();
+        }
+
+        var channel = new Channel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Participants = participants
+        };
+
+        await _dbContext.Channels.AddAsync(channel);
+        await _dbContext.SaveChangesAsync();
+
+        var dto = new ChannelDto
+        {
+            Id = channel.Id,
+            Participants = participants.Select(x => x.ToDto()).ToList()
+        };
+
+        var channelIdString = channel.Id;
+        
+        foreach (var userDto in dto.Participants)
+        {
+            var userConnections = connectionManager.GetUserConnections(userDto);
+            foreach (var connection in userConnections)
+            {
+                await hubContext.Groups.AddToGroupAsync(connection, channelIdString);
+                await hubContext.Clients.Client(connection).SendAsync("AddedToChannel", dto);
+            }
+        }
+
+        return Ok(dto.Id);
     }
     
     private static DateTimeOffset CreateCursor(string? timestamp)
