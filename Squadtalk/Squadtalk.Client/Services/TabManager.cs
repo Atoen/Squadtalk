@@ -87,12 +87,12 @@ public class TabManager : ITabManager
     {
         StateChanged?.Invoke();
         
-        return ShowHiddenTab(channelId);
+        return StopHidingTab(channelId);
     }
 
-    public Task ShowHiddenTab(string tabId)
+    public Task StopHidingTab(string channelId)
     {
-        var channel = _communicationManager.GetChannel(tabId);
+        var channel = _communicationManager.GetChannel(channelId);
 
         if (channel is DirectMessageChannel directMessageChannel)
         {

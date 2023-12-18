@@ -11,7 +11,7 @@ public interface ITabManager
     
     IReadOnlyList<UserModel> VisibleUsers { get; }
 
-    Task ShowHiddenTab(string tabId);
+    Task StopHidingTab(string channelId);
 
     Task HideTab(string tabId);
 }

@@ -9,6 +9,7 @@
     transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
     cursor: pointer;
     position: relative;
+    border: 1px solid;
 }
 
 .avatar {

@@ -10,6 +10,7 @@
     cursor: pointer;
     position: relative;
     transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+    border: 1px solid;
 }
 
 svg path {
@@ -29,9 +30,18 @@ svg path {
 .communication-tabs {
     display: flex;
     overflow-y: auto;
+    
+    padding-top: 0.75em;
+    padding-bottom: 0.25em;
+    padding-right: 1em;
 }
 
 .channels {
     width: min-content;
     background: #dfdfdf;
+}
+
+.hide-channel {
+    padding-top: 0.75em;
+    padding-bottom: 0.25em;
 }

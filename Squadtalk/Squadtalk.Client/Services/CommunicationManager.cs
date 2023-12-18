@@ -116,15 +116,20 @@ public class CommunicationManager : ICommunicationManager
     public async Task CreateRealDirectMessageChannel(TextChannel channel)
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        var userId = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
 
         var otherUserId = ((DirectMessageChannel) channel).Other.Id;
-        var participants = new List<string> {id, otherUserId};
+        var participants = new List<string> {userId, otherUserId};
 
-        await OpenNewChannel(participants);
+        var channelId = await OpenNewChannel(participants);
+
+        if (channelId is not null)
+        {
+            CurrentChannel = GetChannel(channelId)!;
+        }
     }
 
-    private async Task OpenNewChannel(List<string> participants)
+    private async Task<string?> OpenNewChannel(List<string> participants)
     {
         var request = new RestRequest("api/message/createChannel")
             .AddBody(participants);
@@ -132,13 +137,13 @@ public class CommunicationManager : ICommunicationManager
         try
         {
             var createdChannelId = await _restClient.PostAsync<string>(request);
-            var created = GetChannel(createdChannelId!);
-
-            CurrentChannel = created!;
+            return createdChannelId;
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Unable to create new channel");
+            _logger.LogError(e, "Error while sending create channel request");
+
+            return null;
         }
     }
 
@@ -241,9 +246,13 @@ public class CommunicationManager : ICommunicationManager
         }
 
         var other = others[0];
-        var user = Users.FirstOrDefault(x => x.Id == other.Id) ?? GetOrCreateUserModel(other);
+        var user = GetOrCreateUserModel(other);
+        
+        var channel = new DirectMessageChannel(user, channelDto.Id);
 
-        return new DirectMessageChannel(user, channelDto.Id);
+        user.OpenChannel = channel;
+
+        return channel;
     }
 
     private async Task ReceivedConnectedUsers(IEnumerable<UserDto> users)

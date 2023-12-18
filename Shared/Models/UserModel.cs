@@ -16,4 +16,5 @@ public class UserModel : ICommunicationTab
     public bool Selected { get; set; }
     public string Name => Username;
     
+    public DirectMessageChannel? OpenChannel { get; set; }
 }

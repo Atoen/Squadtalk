@@ -9,7 +9,7 @@ public class ServersideTabManager : ITabManager
     public event Action? StateChanged;
     public IReadOnlyList<GroupChat> VisibleGroupChats { get; } = [];
     public IReadOnlyList<UserModel> VisibleUsers { get; } = [];
-    public Task ShowHiddenTab(string tabId)
+    public Task StopHidingTab(string channelId)
     {
         // throw new NotImplementedException();
         return Task.CompletedTask;

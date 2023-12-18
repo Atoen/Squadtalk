@@ -4,34 +4,40 @@
 @using Shared.Communication
 
 <div class="user-card rounded mx-1" style="@Style"
-     @onclick="() => CommunicationManager.OpenOrCreateFakeDirectMessageChannel(Model)">
+     @onclick="ChangeChannel">
     <img src="@Model.AvatarUrl" class="avatar" alt="Avatar" draggable="false" style="@BorderStyle"/>
     <div class="username px-2">@Model.Username</div>
-
-    @if (CommunicationManager.CurrentChannel != _channel && _channel!.State.UnreadMessages > 0)
+    
+    @if (Channel is { State.UnreadMessages: > 0 })
     {
         <Badge Color="BadgeColor.Danger"
                Position="Position.Absolute"
                Placement="BadgePlacement.TopRight"
                IndicatorType="BadgeIndicatorType.RoundedPill"
-               VisuallyHiddenText="unread messages">@_channel.State.UnreadMessages</Badge>
+               VisuallyHiddenText="unread messages">@Channel.State.UnreadMessages</Badge>
     }
     
 </div>
 
 @inject ICommunicationManager CommunicationManager
+@inject ITabManager TabManager
 
 @code {
     [Parameter]
     public required UserModel Model { get; set; }
 
-    private DirectMessageChannel? _channel;
+    private DirectMessageChannel? Channel => Model.OpenChannel;
 
     private string Style => Model.Selected ? "background: var(--bs-primary); color: white;" : "color: var(--bs-primary)";
     private string BorderStyle => $"border-color: {Model.StatusColor()};";
 
-    protected override void OnInitialized()
+    private async Task ChangeChannel()
     {
-        _channel = CommunicationManager.DirectMessageChannels.First(x => x.Other.Id == Model.Id);
+        await CommunicationManager.OpenOrCreateFakeDirectMessageChannel(Model);
+
+        if (Channel is not null)
+        {
+            await TabManager.StopHidingTab(Channel.Id);
+        }
     }
 }
