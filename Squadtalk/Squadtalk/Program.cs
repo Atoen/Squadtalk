@@ -4,6 +4,7 @@ using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Polly.Registry;
 using RestSharp;
 using Shared.DTOs;

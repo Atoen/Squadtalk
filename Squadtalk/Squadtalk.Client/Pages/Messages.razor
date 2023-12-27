@@ -7,31 +7,33 @@
 
 @attribute [Authorize]
 
-<div class="chat-container">
-    
-    <ChannelSelector>
-        @* <GroupChatTemplate> *@
-        @*     <GroupChatTemplate Model="context"/> *@
-        @* </GroupChatTemplate> *@
-        <UserTemplate>
-            <UserCardTemplate Model="context"/>
-        </UserTemplate>
-    </ChannelSelector>
-    
-    <div class="message-listbox rounded my-1" id="listbox">
-        <InfiniteScrolling>
-            <ItemTemplate>
-                <MessageTemplate Model="context"/>
-            </ItemTemplate>
-            <LoadingTemplate>
-                <div class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-            </LoadingTemplate>
-        </InfiniteScrolling>
+<div class="d-grid">
+    <div class="chat-container">
+        
+        <ChannelSelector>
+            @* <GroupChatTemplate> *@
+            @*     <GroupChatTemplate Model="context"/> *@
+            @* </GroupChatTemplate> *@
+            <UserTemplate>
+                <UserCardTemplate Model="context"/>
+            </UserTemplate>
+        </ChannelSelector>
+        
+        <div class="message-listbox rounded my-1" id="listbox">
+            <InfiniteScrolling>
+                <ItemTemplate>
+                    <MessageTemplate Model="context"/>
+                </ItemTemplate>
+                <LoadingTemplate>
+                    <div class="spinner-border" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                </LoadingTemplate>
+            </InfiniteScrolling>
+        </div>
+        
+        <InputBox />
     </div>
-    
-    <InputBox/>
 </div>
 
 @inject ISignalrService SignalRService

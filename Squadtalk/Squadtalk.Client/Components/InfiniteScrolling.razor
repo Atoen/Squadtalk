@@ -29,9 +29,7 @@
 {
     foreach (var item in CommunicationManager.CurrentChannelState.Messages)
     {
-        <div @key="item">
-            @ItemTemplate(item)
-        </div>
+        @ItemTemplate(item)
     }
 }
 
@@ -62,6 +60,8 @@
     [Parameter]
     public string LastItemIndicatorElement { get; set; } = "div";
 
+    private bool _channelChanged;
+
     protected override void OnInitialized()
     {
         Logger.LogInformation("Initialized");
@@ -72,8 +72,17 @@
 
     private void OnCommunicationManagerOnChannelChanged()
     {
+        _channelChanged = true;
+        
         StateHasChanged();
-        _ = _instance!.InvokeVoidAsync("onNewItems");
+        
+        // var inProcessModule = (IJSInProcessObjectReference) _jsModule!;
+        var inProcessInstance = (IJSInProcessObjectReference) _instance!;
+        //
+        // inProcessModule.InvokeVoid("scrollToBottom");
+        inProcessInstance.InvokeVoid("onNewItems");
+        //
+        // StateHasChanged();
     }
 
     private async Task UpdateOnMessage(string channelId)
@@ -129,6 +138,13 @@
         {
             _loadItemsTokenSource = null;
             cancellationTokenSource.Dispose();
+        }
+
+        if (_channelChanged)
+        {
+            _channelChanged = false;
+            await _jsModule!.InvokeVoidAsync("scrollToBottom", CancellationToken.None);
+            return;
         }
 
         var scrollPosition = await _jsModule!.InvokeAsync<double>("markScroll", CancellationToken.None);

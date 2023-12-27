@@ -61,7 +61,7 @@
 @code {
     private string? _currentUrl;
 
-    private string RenderMode => Environment.MachineName == "localhost" ? "client side" : "server side";
+    private string RenderMode => OperatingSystem.IsBrowser() ? "client side" : "server side";
 
     protected override void OnInitialized()
     {

@@ -70,6 +70,8 @@ export function scrollToBottom() {
 
     if (distanceFromBottom < scrollThreshold) {
         listbox.scrollTop = listbox.scrollHeight;
+        
+        console.log("Scrolling to bottom");
     }
 }
 
@@ -79,4 +81,7 @@ export function markScroll() {
 
 export function scrollToMark(scrollPositionFromBottom) {
     listbox.scrollTop = listbox.scrollHeight - scrollPositionFromBottom - listbox.clientHeight;
+
+    console.log(`Scrolling to mark ${scrollPositionFromBottom}`);
+    
 }

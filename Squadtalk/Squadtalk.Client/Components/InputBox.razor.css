@@ -6,6 +6,7 @@
     align-items: end;
     justify-content: center;
     grid-row: 3;
+    margin-top: 0.25em;
 }
 
 .grow-wrap {

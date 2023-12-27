@@ -6,6 +6,15 @@
 
 main {
     flex: 1;
+    max-height: calc(100vh - 56px);
+    max-width: 100vw;
+}
+
+@media (min-width: 641px) {
+    main {
+        max-height: 100vh;
+        max-width: calc(100vw - 250px);
+    }
 }
 
 .sidebar {

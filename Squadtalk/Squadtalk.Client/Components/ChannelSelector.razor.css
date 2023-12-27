@@ -25,6 +25,7 @@ svg path {
     grid-row: 1;
     display: flex;
     justify-content: space-between;
+    overflow: auto;
 }
 
 .communication-tabs {
@@ -44,4 +45,5 @@ svg path {
 .hide-channel {
     padding-top: 0.75em;
     padding-bottom: 0.25em;
+    padding-left: 0.25em;
 }
