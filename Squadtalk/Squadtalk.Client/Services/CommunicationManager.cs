@@ -37,7 +37,7 @@ public class CommunicationManager : ICommunicationManager
         _signalrService = signalrService;
         _logger = logger;
 
-        _signalrService.UserConnected += UserConnected;
+        _signalrService.UserConnected += userDto => UserConnected(userDto, false);
         _signalrService.UserDisconnected += UserDisconnected;
         _signalrService.ConnectedUsersReceived += ReceivedConnectedUsers;
         _signalrService.TextChannelsReceived += TextChannelsReceived;
@@ -47,27 +47,9 @@ public class CommunicationManager : ICommunicationManager
     public event Action? StateChanged;
     public event Func<Task>? StateChangedAsync;
     public event Action? ChannelChanged;
+    public event Func<Task>? ChannelChangedAsync; 
 
-    public TextChannel CurrentChannel
-    {
-        get => _currentChannel;
-        private set
-        {
-            ArgumentNullException.ThrowIfNull(value);
-
-            var last = _currentChannel;
-
-            _currentChannel.Selected = false;
-            _currentChannel = value;
-            _currentChannel.Selected = true;
-            _currentChannel.State.UnreadMessages = 0;
-
-            if (_currentChannel != last)
-            {
-                ChannelChanged?.Invoke();
-            }
-        }
-    }
+    public TextChannel CurrentChannel => _currentChannel;
 
     public TextChannel? GetChannel(string id)
     {
@@ -76,24 +58,43 @@ public class CommunicationManager : ICommunicationManager
             : AllChannels.FirstOrDefault(x => x.Id == id);
     }
 
-    public void ChangeChannel(string id)
+    public Task ChangeChannelAsync(string channelId)
     {
-        if (CurrentChannel.Id == id) return;
-
-        if (id == GroupChat.GlobalChatId)
+        if (CurrentChannel.Id == channelId)
         {
-            CurrentChannel = GroupChat.GlobalChat;
-            return;
+            return Task.CompletedTask;
         }
 
-        var selectedChannel = GetChannel(id);
+        if (channelId == GroupChat.GlobalChatId)
+        {
+            return ChangeChannelAsync(GroupChat.GlobalChat);
+        }
+
+        var selectedChannel = GetChannel(channelId);
         if (selectedChannel is null)
         {
-            _logger.LogWarning("Cannot find channel with id {Id}", id);
-            return;
+            _logger.LogWarning("Cannot find channel with id {Id}", channelId);
+            return Task.CompletedTask;
         }
 
-        CurrentChannel = selectedChannel;
+        return ChangeChannelAsync(selectedChannel);
+    }
+
+    public Task ChangeChannelAsync(TextChannel channel)
+    {
+        if (_currentChannel == channel)
+        {
+            return Task.CompletedTask;
+        }
+
+        _currentChannel.Selected = false;
+        
+        _currentChannel = channel;
+        _currentChannel.Selected = true;
+        _currentChannel.State.UnreadMessages = 0;
+        
+        ChannelChanged?.Invoke();
+        return ChannelChangedAsync.TryInvoke();
     }
 
     public async Task OpenOrCreateFakeDirectMessageChannel(UserModel model)
@@ -106,11 +107,11 @@ public class CommunicationManager : ICommunicationManager
         var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == model.Id);
         if (openDirectMessageChannelWithUser is not null)
         {
-            CurrentChannel = openDirectMessageChannelWithUser;
+            await ChangeChannelAsync(openDirectMessageChannelWithUser);
             return;
         }
         
-        CurrentChannel = DirectMessageChannel.CreateFakeChannel(model);
+        await ChangeChannelAsync(DirectMessageChannel.CreateFakeChannel(model));
     }
 
     public async Task CreateRealDirectMessageChannel(TextChannel channel)
@@ -123,9 +124,9 @@ public class CommunicationManager : ICommunicationManager
 
         var channelId = await OpenNewChannel(participants);
 
-        if (channelId is not null)
+        if (channelId is not null && GetChannel(channelId) is { } openedChannel)
         {
-            CurrentChannel = GetChannel(channelId)!;
+            await ChangeChannelAsync(openedChannel);
         }
     }
 
@@ -173,7 +174,7 @@ public class CommunicationManager : ICommunicationManager
     private async Task AddedToTextChannel(ChannelDto dto)
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        AddChannel(dto, authenticationState, false);
+        await AddChannel(dto, authenticationState, false);
         
         await StateChangedAsync.TryInvoke();
     }
@@ -184,14 +185,14 @@ public class CommunicationManager : ICommunicationManager
         
         foreach (var channelDto in dtos)
         {
-             AddChannel(channelDto, authenticationState, true);
+             await AddChannel(channelDto, authenticationState, true);
         }
 
         StateChanged?.Invoke();
         await StateChangedAsync.TryInvoke();
     }
     
-    private void AddChannel(ChannelDto channelDto, AuthenticationState authenticationState, bool bulk)
+    private async Task AddChannel(ChannelDto channelDto, AuthenticationState authenticationState, bool bulk)
     {
         if (_allChannels.Exists(x => x.Id == channelDto.Id)) return;
         
@@ -212,22 +213,25 @@ public class CommunicationManager : ICommunicationManager
             var directMessageChannel = (DirectMessageChannel) model;
             _directMessageChannels.Add(directMessageChannel);
 
-            CheckIfNeedToUpgradeCurrentFakeChannelToReal(directMessageChannel);
+            await CheckIfNeedToUpgradeCurrentFakeChannelToReal(directMessageChannel);
         }
 
         if (!bulk)
         {
             StateChanged?.Invoke();
+            await StateChangedAsync.TryInvoke();
         }
     }
 
-    private void CheckIfNeedToUpgradeCurrentFakeChannelToReal(DirectMessageChannel openedDirectMessageChannel)
+    private Task CheckIfNeedToUpgradeCurrentFakeChannelToReal(DirectMessageChannel openedDirectMessageChannel)
     {
         if (_currentChannel is DirectMessageChannel { Id: DirectMessageChannel.FakeChannelId } currentFakeDm &&
             currentFakeDm.Other.Id == openedDirectMessageChannel.Other.Id)
         {
-            CurrentChannel = openedDirectMessageChannel;
+            return ChangeChannelAsync(openedDirectMessageChannel);
         }
+        
+        return Task.CompletedTask;
     }
     
     private TextChannel CreateChannelModel(ChannelDto channelDto, AuthenticationState authenticationState)
@@ -265,11 +269,6 @@ public class CommunicationManager : ICommunicationManager
 
         StateChanged?.Invoke();
         await StateChangedAsync.TryInvoke();
-    }
-
-    private Task UserConnected(UserDto user)
-    {
-        return UserConnected(user, false);
     }
 
     private async Task UserConnected(UserDto userDto, bool bulkAdd)

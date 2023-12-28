@@ -17,7 +17,7 @@
     }
 }
 
-@if (IsLoading)
+@if (_loading)
 {
     @LoadingTemplate
 }
@@ -47,9 +47,8 @@
     private IJSObjectReference? _jsModule;
     private IJSObjectReference? _instance;
 
-    private CancellationTokenSource? _loadItemsTokenSource;
-
-    private bool IsLoading => _loadItemsTokenSource is not null;
+    private bool _loading;
+    private bool _changedChannel;
 
     [Parameter]
     public RenderFragment<MessageModel>? ItemTemplate { get; set; }
@@ -60,94 +59,71 @@
     [Parameter]
     public string LastItemIndicatorElement { get; set; } = "div";
 
-    private bool _channelChanged;
-
     protected override void OnInitialized()
     {
         Logger.LogInformation("Initialized");
         
         MessageService.MessageReceived += UpdateOnMessage;
-        CommunicationManager.ChannelChanged += OnCommunicationManagerOnChannelChanged;
+        CommunicationManager.ChannelChangedAsync += ChannelChangedAsync;
     }
 
-    private void OnCommunicationManagerOnChannelChanged()
+    private async Task ChannelChangedAsync()
     {
-        _channelChanged = true;
+        _changedChannel = true;
         
-        StateHasChanged();
-        
-        // var inProcessModule = (IJSInProcessObjectReference) _jsModule!;
-        var inProcessInstance = (IJSInProcessObjectReference) _instance!;
-        //
-        // inProcessModule.InvokeVoid("scrollToBottom");
-        inProcessInstance.InvokeVoid("onNewItems");
-        //
-        // StateHasChanged();
+        await LoadMoreItems();
+        await _instance!.InvokeVoidAsync("onNewItems");
     }
 
-    private async Task UpdateOnMessage(string channelId)
+    private Task UpdateOnMessage(string channelId)
     {
-        if (CommunicationManager.CurrentChannel.Id != channelId) return;
+        if (CommunicationManager.CurrentChannel.Id != channelId)
+        {
+            return Task.CompletedTask;
+        }
 
         StateHasChanged();
-        await _jsModule!.InvokeVoidAsync("scrollToBottom");
+        return _jsModule!.InvokeVoidAsync("scrollToBottom").AsTask();
     }
 
     [JSInvokable]
     public async Task LoadMoreItems()
     {
-        Logger.LogInformation("Loading more items");
-        
-        if (_loadItemsTokenSource != null) return;
+        if (_loading) return;
 
         var channel = CommunicationManager.CurrentChannel;
         var channelState = channel.State;
-        var cancellationTokenSource = new CancellationTokenSource();
-        _loadItemsTokenSource = cancellationTokenSource;
 
-        try
+        if (!channelState.ReachedEnd && !_changedChannel)
         {
-            var token = _loadItemsTokenSource.Token;
-            var newItems = await MessageService.GetMessagePageAsync(channel.Id, token);
-
-            Logger.LogInformation("Loaded {Count} messages", newItems.Count);
-
-            if (!cancellationTokenSource.IsCancellationRequested)
+            try
             {
-                channelState.Messages.InsertRange(0, newItems);
-
+                var newItems = await MessageService.GetMessagePageAsync(channel.Id, CancellationToken.None);
                 if (newItems.Count == 0)
                 {
                     channelState.ReachedEnd = true;
                 }
                 else
                 {
-                    Debug.Assert(_instance != null);
-                    await _instance.InvokeVoidAsync("onNewItems", cancellationTokenSource.Token);
+                    Logger.LogInformation("Loaded {Count} messages", newItems.Count);
+                    channelState.Messages.InsertRange(0, newItems);
+                    await _instance!.InvokeVoidAsync("onNewItems");
                 }
-            }
-        }
-        catch (OperationCanceledException e) when (e.CancellationToken == cancellationTokenSource.Token)
-        {
-        }
-        catch (Exception e)
-        {
-            Logger.LogError(e, "Error while loading new messages");
-        }
-        finally
-        {
-            _loadItemsTokenSource = null;
-            cancellationTokenSource.Dispose();
-        }
 
-        if (_channelChanged)
-        {
-            _channelChanged = false;
-            await _jsModule!.InvokeVoidAsync("scrollToBottom", CancellationToken.None);
-            return;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, "Error while loading message page");
+            }
         }
 
         var scrollPosition = await _jsModule!.InvokeAsync<double>("markScroll", CancellationToken.None);
+        if (_changedChannel)
+        {
+            scrollPosition = 0;
+            _changedChannel = false;
+        }
+        
         StateHasChanged();
         await _jsModule!.InvokeVoidAsync("scrollToMark", CancellationToken.None, scrollPosition);
     }
@@ -155,7 +131,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-
+    
         _jsModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "../Components/InfiniteScrolling.razor.js");
         _currentComponentReference = DotNetObjectReference.Create(this);
         _instance = await _jsModule.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
@@ -165,12 +141,6 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (_loadItemsTokenSource is not null)
-        {
-            _loadItemsTokenSource.Dispose();
-            _loadItemsTokenSource = null;
-        }
-
         if (_instance is not null)
         {
             await _instance.InvokeVoidAsync("dispose");
@@ -183,7 +153,7 @@
         _currentComponentReference?.Dispose();
 
         MessageService.MessageReceived -= UpdateOnMessage;
-        CommunicationManager.ChannelChanged -= OnCommunicationManagerOnChannelChanged;
+        CommunicationManager.ChannelChangedAsync -= ChannelChangedAsync;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)

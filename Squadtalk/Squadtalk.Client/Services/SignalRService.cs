@@ -118,12 +118,7 @@ public sealed class SignalRService : ISignalrService
             ConnectedUsersReceived.TryInvoke(users));
 
         _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
-        {
-            _logger.LogInformation("Received channels: {Channels}", string.Join(", ", channels.SelectMany(x => x
-                .Participants.Select(userDto => userDto.Username))));
-            
-            return TextChannelsReceived.TryInvoke(channels);
-        });
+            TextChannelsReceived.TryInvoke(channels));
 
         _connection.On<ChannelDto>("AddedToChannel", channel =>
             AddedToTextChannel.TryInvoke(channel));

@@ -21,9 +21,13 @@ public interface ICommunicationManager
 
     event Action StateChanged;
 
-    event Func<Task> StateChangedAsync; 
+    event Func<Task> StateChangedAsync;
     
-    void ChangeChannel(string globalChatId);
+    event Func<Task> ChannelChangedAsync; 
+    
+    Task ChangeChannelAsync(string channelId);
+
+    Task ChangeChannelAsync(TextChannel channel);
     
     Task OpenOrCreateFakeDirectMessageChannel(UserModel model);
     

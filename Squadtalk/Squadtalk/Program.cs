@@ -4,7 +4,6 @@ using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Polly.Registry;
 using RestSharp;
 using Shared.DTOs;
@@ -64,9 +63,9 @@ builder.Services.AddScoped<IMessageService, ServersideMessagesService>();
 builder.Services.AddScoped<IMessageModelService<Message>, MessageModelService<Message>>();
 builder.Services.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
 
-builder.Services.AddScoped<ICommunicationManager, ServersideCommunicationManager>();
+builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
 builder.Services.AddScoped<ISignalrService, ServersideSignalrService>();
-builder.Services.AddScoped<ITabManager, ServersideTabManager>();
+builder.Services.AddScoped<ITabManager, TabManager>();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri("localhost:1234")

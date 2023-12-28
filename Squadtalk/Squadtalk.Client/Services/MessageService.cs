@@ -1,6 +1,7 @@
+using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Components.Authorization;
 using RestSharp;
-using Shared.Communication;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
@@ -12,9 +13,9 @@ public class MessageService : IMessageService
 {
     private readonly RestClient _restClient;
     private readonly ILogger<MessageService> _logger;
-    
     private readonly ISignalrService _signalrService;
     private readonly IMessageModelService<MessageDto> _modelService;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly ICommunicationManager _communicationManager;
     
     public event Func<string, Task>? MessageReceived;
@@ -24,18 +25,20 @@ public class MessageService : IMessageService
         RestClient restClient,
         ISignalrService signalrService,
         IMessageModelService<MessageDto> modelService,
+        AuthenticationStateProvider authenticationStateProvider,
         ILogger<MessageService> logger)
     {
         _communicationManager = communicationManager;
         _restClient = restClient;
         _signalrService = signalrService;
         _modelService = modelService;
+        _authenticationStateProvider = authenticationStateProvider;
         _logger = logger;
 
         _signalrService.MessageReceived += HandleIncomingMessage;
     }
 
-    private Task HandleIncomingMessage(MessageDto messageDto)
+    private async Task HandleIncomingMessage(MessageDto messageDto)
     {
         _logger.LogInformation("{Author}: {Content}", messageDto.Author.Username, messageDto.Content);
         
@@ -43,14 +46,20 @@ public class MessageService : IMessageService
         if (channel is null)
         {
             _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
-            return Task.CompletedTask;
+            return;
         }
 
         var state = channel.State;
 
         if (_communicationManager.CurrentChannel != channel)
         {
-            state.UnreadMessages++;
+            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+
+            if (messageDto.Author.Id != id)
+            {
+                state.UnreadMessages++;
+            }
         }
         
         var message = _modelService.CreateModel(messageDto, state, false);
@@ -63,7 +72,7 @@ public class MessageService : IMessageService
             state.Cursor = DateTimeOffset.UtcNow.UtcTicks;
         }
 
-        return MessageReceived.TryInvoke(messageDto.ChannelId);
+        await MessageReceived.TryInvoke(messageDto.ChannelId);
     }
     
     public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)

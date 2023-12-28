@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -20,13 +19,11 @@ namespace Squadtalk.Controllers;
 public class MessageController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<MessageController> _logger;
 
-    public MessageController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, ILogger<MessageController> logger)
+    public MessageController(ApplicationDbContext dbContext, ILogger<MessageController> logger)
     {
         _dbContext = dbContext;
-        _userManager = userManager;
         _logger = logger;
     }
     
@@ -76,7 +73,6 @@ public class MessageController : ControllerBase
         if (channelId != GroupChat.GlobalChatId && !user.Channels.Exists(x=> x.Id == channelId))
         {
             HttpContext.Response.StatusCode = 401;
-            
             yield break;
         }
 
@@ -94,7 +90,7 @@ public class MessageController : ControllerBase
     
     [HttpPost("createChannel")]
     public async Task<IActionResult> CreateChannel(List<string> participantsId,
-        [FromServices] IHubContext<ChatHub> hubContext,
+        [FromServices] IHubContext<ChatHub, IChatClient> hubContext,
         [FromServices] ChatConnectionManager<UserDto, string> connectionManager)
     {
         if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
@@ -125,16 +121,14 @@ public class MessageController : ControllerBase
             Id = channel.Id,
             Participants = participants.Select(x => x.ToDto()).ToList()
         };
-
-        var channelIdString = channel.Id;
         
         foreach (var userDto in dto.Participants)
         {
             var userConnections = connectionManager.GetUserConnections(userDto);
             foreach (var connection in userConnections)
             {
-                await hubContext.Groups.AddToGroupAsync(connection, channelIdString);
-                await hubContext.Clients.Client(connection).SendAsync("AddedToChannel", dto);
+                await hubContext.Groups.AddToGroupAsync(connection, channel.Id);
+                await hubContext.Clients.Client(connection).AddedToChannel(dto);
             }
         }
 
