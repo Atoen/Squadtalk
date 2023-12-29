@@ -7,14 +7,8 @@
 
 @if (CommunicationManager.CurrentChannelState.ReachedEnd)
 {
-    if (CommunicationManager.CurrentChannel is GroupChat)
-    {
-        <div>No more messages in @CommunicationManager.CurrentChannel.Name</div>
-    }
-    else
-    {
-        <div>No more messages with @CommunicationManager.CurrentChannel.Name</div>
-    }
+    var preposition = CommunicationManager.CurrentChannel is GroupChat ? "in" : "with";
+    <div>No more messages @preposition @CommunicationManager.CurrentChannel.Name</div>
 }
 
 @if (_loading)
@@ -91,11 +85,15 @@
     {
         if (_loading) return;
 
+        _loading = true;
+
         var channel = CommunicationManager.CurrentChannel;
         var channelState = channel.State;
 
         if (!channelState.ReachedEnd && !_changedChannel)
         {
+            StateHasChanged();
+            
             try
             {
                 var newItems = await MessageService.GetMessagePageAsync(channel.Id, CancellationToken.None);
@@ -109,7 +107,6 @@
                     channelState.Messages.InsertRange(0, newItems);
                     await _instance!.InvokeVoidAsync("onNewItems");
                 }
-
             }
             catch (Exception e)
             {
@@ -123,6 +120,8 @@
             scrollPosition = 0;
             _changedChannel = false;
         }
+
+        _loading = false;
         
         StateHasChanged();
         await _jsModule!.InvokeVoidAsync("scrollToMark", CancellationToken.None, scrollPosition);
@@ -145,7 +144,6 @@
         {
             await _instance.InvokeVoidAsync("dispose");
             await _instance.DisposeAsync();
-            _instance = null;
         }
 
         await _jsModule.TryDisposeAsync();

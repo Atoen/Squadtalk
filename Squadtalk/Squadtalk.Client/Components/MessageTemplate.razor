@@ -1,12 +1,14 @@
 @using Shared.Models
 
-<div class="message-container rounded my-1">
+<div class="message-container rounded">
     @if (Model.IsSeparate)
     {
         <div class="padding"></div>
         <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
-        <div class="username">@Model.Author</div>
-        <div class="date" data-date="@_longDate">@_date</div>
+        <div class="label">
+            <div class="username">@Model.Author</div>
+            <div class="date" data-date="@_longDate">@_date</div>
+        </div>
     }
     else
     {

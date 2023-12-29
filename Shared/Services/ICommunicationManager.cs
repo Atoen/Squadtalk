@@ -17,13 +17,13 @@ public interface ICommunicationManager
     
     IReadOnlyList<UserModel> Users { get; }
 
-    event Action ChannelChanged;
+    event Action? ChannelChanged;
 
-    event Action StateChanged;
+    event Action? StateChanged;
 
-    event Func<Task> StateChangedAsync;
+    event Func<Task>? StateChangedAsync;
     
-    event Func<Task> ChannelChangedAsync; 
+    event Func<Task>? ChannelChangedAsync; 
     
     Task ChangeChannelAsync(string channelId);
 

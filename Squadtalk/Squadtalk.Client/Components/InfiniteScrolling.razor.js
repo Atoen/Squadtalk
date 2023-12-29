@@ -1,6 +1,12 @@
+let listbox;
+
 export function initialize(lastIndicator, instance)
 {
     listbox = document.getElementById("listbox");
+
+    listbox.addEventListener("scroll", () => {
+        scrollPositionFromBottom = markScroll();
+    });
     
     const options = {
         root: findClosestScrollContainer(lastIndicator),
@@ -55,7 +61,6 @@ function isValidTableElement(element) {
         || ((element instanceof HTMLTableSectionElement && element.style.display === "") || element.style.display === "table-row-group");
 }
 
-let listbox;
 export function scrollToBottom() {
 
     const last = listbox.lastElementChild
@@ -79,3 +84,9 @@ export function markScroll() {
 export function scrollToMark(scrollPositionFromBottom) {
     listbox.scrollTop = listbox.scrollHeight - scrollPositionFromBottom - listbox.clientHeight;    
 }
+
+let scrollPositionFromBottom = 0;
+
+window.addEventListener("resize", () => {
+   scrollToMark(scrollPositionFromBottom);
+});

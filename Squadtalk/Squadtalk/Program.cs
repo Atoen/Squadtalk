@@ -18,7 +18,7 @@ using Squadtalk.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseKestrel(options => options.Listen(IPAddress.Loopback, 1234));
+builder.WebHost.UseKestrel(options => options.Listen(IPAddress.Any, 1235));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -27,6 +27,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddControllers();
 
+builder.Services.AddResponseCompression();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -68,7 +69,7 @@ builder.Services.AddScoped<ISignalrService, ServersideSignalrService>();
 builder.Services.AddScoped<ITabManager, TabManager>();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
-    options.BaseUrl = new Uri("localhost:1234")
+    options.BaseUrl = new Uri("localhost:1235")
 ));
 
 builder.Services.AddSignalR();
@@ -85,8 +86,8 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseResponseCompression();
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseResponseCompression();
 }
 
 app.UseStaticFiles();

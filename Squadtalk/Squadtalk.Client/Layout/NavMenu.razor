@@ -3,9 +3,19 @@
 @inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
+    <div class="container-fluid" style="z-index: 1">
         <a class="navbar-brand" href="">Squadtalk (@RenderMode)</a>
     </div>
+    
+    @if (RenderMode == ServerSide)
+    {
+        <div class="progress-bar"></div>
+    }
+    else
+    {
+        <div class="finished-loading"></div>
+    }
+    
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
@@ -59,10 +69,14 @@
 </div>
 
 @code {
+
+    private const string ClientSide = "Client Side";
+    private const string ServerSide = "Server Side";
+    
     private string? _currentUrl;
-
-    private string RenderMode => OperatingSystem.IsBrowser() ? "client side" : "server side";
-
+    
+    private string RenderMode => OperatingSystem.IsBrowser() ? ClientSide : ServerSide;
+    
     protected override void OnInitialized()
     {
         _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
