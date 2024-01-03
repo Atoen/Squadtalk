@@ -1,3 +1,5 @@
+"use strict"
+
 let listbox;
 
 export function initialize(lastIndicator, instance)

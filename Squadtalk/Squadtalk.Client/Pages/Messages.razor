@@ -1,7 +1,6 @@
 @page "/Chat/{id?}"
 @using Squadtalk.Client.Layout
 @using Microsoft.AspNetCore.Authorization
-@using Shared.Services
 
 @layout ChatLayout
 
@@ -31,6 +30,8 @@
                 </LoadingTemplate>
             </InfiniteScrolling>
         </div>
+        
+        <UploadInfo />
         
         <InputBox />
     </div>

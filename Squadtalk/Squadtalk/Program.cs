@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Polly.Registry;
 using RestSharp;
+using tusdotnet;
+using tusdotnet.Helpers;
 using Shared.DTOs;
 using Shared.Services;
 using Squadtalk.Client.Pages;
@@ -15,6 +17,7 @@ using Squadtalk.Components.Account;
 using Squadtalk.Data;
 using Squadtalk.Hubs;
 using Squadtalk.Services;
+using Squadtalk.Tus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,16 +70,37 @@ builder.Services.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
 builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
 builder.Services.AddScoped<ISignalrService, ServersideSignalrService>();
 builder.Services.AddScoped<ITabManager, TabManager>();
+builder.Services.AddScoped<IFileTransferService, FileTransferService>();
+builder.Services.AddScoped<EmbedService>();
+builder.Services.AddScoped<ImagePreviewGenerator>();
+builder.Services.AddScoped<TusHelper>();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri("localhost:1235")
 ));
 
+builder.Services.AddSingleton<TusHelper>();
+
 builder.Services.AddSignalR();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazorBootstrap();
 
+const string corsPolicy = "cors";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(corsPolicy, policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithExposedHeaders(CorsHelper.GetExposedHeaders());
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors(corsPolicy);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -110,5 +134,7 @@ app.MapHub<ChatHub>("/chathub", options =>
 {
     options.AllowStatefulReconnects = true;
 });
+
+app.MapTus("/Upload", TusConfigurationFactory.GetConfiguration);
 
 app.Run();

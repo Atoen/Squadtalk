@@ -23,5 +23,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/dotnet8</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="dotnet8@192.168.1.175" uuid="21f45f93-7ed5-4fec-974b-b428e22aada1">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://192.168.1.175:5432/dotnet8</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

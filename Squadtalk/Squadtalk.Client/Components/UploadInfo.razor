@@ -1,0 +1,59 @@
+<div class="info rounded" id="uploadInfo">
+    
+    @if (!FileTransferService.IsQueueEmpty)
+    {
+        <UploadQueue />
+    }
+    
+    <div class="progress-grid">
+        <svg viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="icon">
+            <path d="M1344 1472q0-26-19-45t-45-19-45 19-19 45 19 45 45 19 45-19 19-45zm256 0q0-26-19-45t-45-19-45 19-19 45 19 45 45 19 45-19 19-45zm128-224v320q0 40-28 68t-68 28h-1472q-40 0-68-28t-28-68v-320q0-40 28-68t68-28h427q21 56 70.5 92t110.5 36h256q61 0 110.5-36t70.5-92h427q40 0 68 28t28 68zm-325-648q-17 40-59 40h-256v448q0 26-19 45t-45 19h-256q-26 0-45-19t-19-45v-448h-256q-42 0-59-40-17-39 14-69l448-448q18-19 45-19t45 19l448 448q31 30 14 69z"/>
+        </svg>
+        <div class="filename">@_file?.Name</div>
+        <div class="filesize">@_file?.Size</div>
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="cancel" @onclick="CancelUpload">
+            <polygon fill-rule="evenodd" points="8 9.414 3.707 13.707 2.293 12.293 6.586 8 2.293 3.707 3.707 2.293 8 6.586 12.293 2.293 13.707 3.707 9.414 8 13.707 12.293 12.293 13.707 8 9.414"/>
+        </svg>
+        <div class="progress-border">
+            <div class="progress-value" id="progressbar"></div>
+        </div>
+        <div class="speed" id="uploadSpeed"></div>
+    </div>
+</div>
+
+@using Shared.Communication
+@implements IDisposable 
+@inject IFileTransferService FileTransferService
+@inject ILogger<UploadInfo> Logger
+
+@code {
+
+    private FileModel? _file;
+    private TextChannel? _channel;
+
+    protected override void OnInitialized()
+    {
+        FileTransferService.UploadStarted += FileTransferServiceOnUploadStarted;
+        FileTransferService.StateChanged += StateHasChanged;
+    }
+
+    private void FileTransferServiceOnUploadStarted(FileModel fileModel, TextChannel textChannel)
+    {
+        _file = fileModel;
+
+        Logger.LogInformation("Uploading {Filename}", fileModel.Name);
+
+        StateHasChanged();
+    }
+
+    private Task CancelUpload()
+    {
+        return FileTransferService.CancelUploadAsync();
+    }
+
+    public void Dispose()
+    {
+        FileTransferService.UploadStarted -= FileTransferServiceOnUploadStarted;
+        FileTransferService.StateChanged -= StateHasChanged;
+    }
+}

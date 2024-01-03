@@ -1,3 +1,5 @@
+"use strict"
+
 let textBox = null;
 let parent = null;
 
@@ -11,7 +13,6 @@ export function initialize() {
 }
 
 export function getAndClearMessage() {
-
     const message = textBox.value;
     textBox.value = "";
     parent.dataset.replicatedValue = "";

@@ -11,4 +11,6 @@ public class Message
     public DateTimeOffset Timestamp { get; set; }
     
     public string Content { get; set; } = string.Empty;
+    
+    public Embed? Embed { get; set; }
 }

@@ -4,5 +4,5 @@ public enum EmbedType
 {
     File,
     Image,
-    Gif
+    Video
 }

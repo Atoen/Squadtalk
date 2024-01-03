@@ -1,0 +1,33 @@
+<div class="queue">
+    +@Count in queue
+    <div class="queue-details">
+        @for (var i = Queue.Count - 1; i >= 0; i--)
+        {
+            var file = Queue[i];
+            <div class="queue-item">
+                <div>@file.Name @file.Size</div>
+                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="remove" @onclick="() => RemoveFromQueue(file)">
+                    <polygon fill-rule="evenodd" points="8 9.414 3.707 13.707 2.293 12.293 6.586 8 2.293 3.707 3.707 2.293 8 6.586 12.293 2.293 13.707 3.707 9.414 8 13.707 12.293 12.293 13.707 8 9.414"/>
+                </svg>
+            </div>
+        }
+    </div>
+</div>
+
+@inject IFileTransferService FileTransferService
+
+@code {
+    private List<FileModel> Queue => FileTransferService.UploadQueue;
+    private int Count => Queue.Count;
+
+    private void RemoveFromQueue(FileModel fileModel)
+    {
+        FileTransferService.RemoveFileFromQueue(fileModel);
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        FileTransferService.StateChanged += StateHasChanged;
+    }
+}
