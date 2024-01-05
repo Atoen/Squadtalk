@@ -1,57 +1,44 @@
-using System.Runtime.InteropServices.JavaScript;
+using BlazorBootstrap;
+using Microsoft.JSInterop;
 using Shared.Communication;
 using Shared.Models;
 using Shared.Services;
+using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
-public sealed partial class FileTransferService : IFileTransferService
+public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
 {
+    private readonly IJSRuntime _jsRuntime;
     private readonly ILogger<FileTransferService> _logger;
-
+    private readonly ToastService _toastService;
+    private readonly DotNetObjectReference<FileTransferService> _dotNetObject;
+    private IJSObjectReference? _jsModule;
+    
     public event Action<FileModel>? FileSelected;
     public event Action? SelectionCleared;
     public event Action<FileModel, TextChannel>? UploadStarted;
-    public event Action<string?>? UploadEnded;
-    public event Action<double>? UploadProgressUpdated;
-    public event Action<string>? UploadSpeedUpdated;
     public event Action? StateChanged;
-    
-    private bool _uploadInProgress;
-    
-    public TextChannel? UploadChannel { get; private set; }
-    
+
+    public int SelectedCount { get; private set; }
     public FileModel? SelectedFile { get; private set; }
-
+    public FileModel? CurrentlyUploadedFile { get; private set; }
+    public TextChannel? UploadChannel { get; private set; }
     public List<FileModel> UploadQueue { get; } = [];
-    // [
-    //     new FileModel { Name = "File.txtfhwe87guifvgwiyvgwyvgwyvwuey fdwrgfwrgwrgwgwr", Size = "23.43GB" },
-    //     new FileModel { Name = "File1.txt", Size = "23.43GB" },
-    //     new FileModel { Name = "File2.txt", Size = "23.43GB" }
-    // ];
 
-    public FileTransferService(ILogger<FileTransferService> logger)
+    public FileTransferService(IJSRuntime jsRuntime, ILogger<FileTransferService> logger, ToastService toastService)
     {
+        _jsRuntime = jsRuntime;
         _logger = logger;
-
-        if (_instance is not null)
-        {
-            _logger.LogCritical("Instance not null");
-        }
-        
-        _instance = this;
+        _toastService = toastService;
+        _dotNetObject = DotNetObjectReference.Create(this);
     }
-
+    
     public async Task InitializeAsync()
     {
-        if (!OperatingSystem.IsBrowser())
-        {
-            return;
-        }
+        _jsModule ??= await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "../js/FileTransfer.js");
 
-        await JSHost.ImportAsync(Module, "../js/FileTransfer.js");
-        
-        InitializeModule("http://localhost:1235/Upload");
+        await _jsModule.InvokeVoidAsync("initialize", _dotNetObject, "127.0.0.1:1235/Upload");
     }
 
     public Task UploadFileAsync(TextChannel channel)
@@ -62,76 +49,91 @@ public sealed partial class FileTransferService : IFileTransferService
             return Task.CompletedTask;
         }
 
-        // if (_uploadInProgress)
-        // {
-        //     ;
-        // }
-        //
-        // UploadStarted?.Invoke(SelectedFile, channel);
-        
         SelectedFile = null;
-        
-        return UploadSelectedFile(channel.Id);
+        UploadChannel = channel;
+
+        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", channel.Id, channel.Name).AsTask();
     }
 
     public Task CancelUploadAsync()
     {
-        CancelUpload();
+        if (UploadQueue.Count == 0)
+        {
+            UploadChannel = null;
+        }
         
-        return Task.CompletedTask;
+        return _jsModule!.InvokeVoidAsync("cancelUpload").AsTask();
     }
 
-    public Task RemoveSelectedFileAsync()
+    public async Task RemoveSelectedFileAsync()
     {
-        RemoveSelectedFile();
+        await _jsModule!.InvokeVoidAsync("removeSelectedFile");
+        
         SelectedFile = null;
-        
         SelectionCleared?.Invoke();
-        
-        return Task.CompletedTask;
     }
 
-    public void RemoveFileFromQueue(FileModel file)
+    public async Task RemoveFileFromQueueAsync(FileModel file)
     {
         var index = UploadQueue.IndexOf(file);
-
         if (index == -1)
         {
             _logger.LogWarning("Attempt to remove nonexistent index: {Index}", index);
             return;
         }
-        
-        UploadQueue.RemoveAt(index);
-        RemoveFromQueue(index);
 
+        await _jsModule!.InvokeVoidAsync("removeFromQueue", index);
+        UploadQueue.RemoveAt(index);
+        
         if (UploadQueue.Count == 0)
         {
             StateChanged?.Invoke();
         }
     }
 
-    private void SelectFile(FileModel file)
+    [JSInvokable]
+    public void InvalidUploadCallback(string reason)
     {
-        SelectedFile = file;
-        FileSelected?.Invoke(SelectedFile);
-    }
-    
-    private void UploadEnd(string? error)
-    {
-        _uploadInProgress = false;
-        UploadEnded?.Invoke(error);
+        var toast = new ToastMessage(ToastType.Warning, reason);
+        _toastService.Notify(toast);
     }
 
-    private void FileAddedToQueue(FileModel file)
+    [JSInvokable]
+    public void FileSelectedCallback(string filename, long filesize, int count)
     {
-        _logger.LogInformation("Adding {File} to queue", file.Name);
-        
+        SelectedCount = count;
+        SelectedFile = FileModel.Create(filename, filesize);
+        FileSelected?.Invoke(SelectedFile);
+    }
+
+    [JSInvokable]
+    public void FileAddedToQueueCallback(string filename, long filesize)
+    {
+        var file = FileModel.Create(filename, filesize);
         UploadQueue.Add(file);
+        
+        _logger.LogInformation("Added {FileName} to queue", file.Name);
+        
         StateChanged?.Invoke();
     }
 
-    private void UploadStarted2(FileModel file)
+    [JSInvokable]
+    public void UploadStartedCallback(string filename, long filesize)
     {
-        UploadStarted?.Invoke(file, GroupChat.GlobalChat);
+        CurrentlyUploadedFile = FileModel.Create(filename, filesize);
+        UploadStarted?.Invoke(CurrentlyUploadedFile, GroupChat.GlobalChat);
+    }
+
+    [JSInvokable]
+    public void UploadingFileFromQueueCallback()
+    {
+        UploadQueue.RemoveAt(0);
+        StateChanged?.Invoke();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _dotNetObject.Dispose();
+        return _jsModule.TryDisposeAsync();
     }
 }

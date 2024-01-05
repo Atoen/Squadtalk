@@ -9,16 +9,17 @@ public interface IFileTransferService
     event Action? SelectionCleared;
 
     event Action<FileModel, TextChannel>? UploadStarted; 
-    event Action<string?>? UploadEnded;
-
-    event Action<double>? UploadProgressUpdated;
-    event Action<string>? UploadSpeedUpdated;
-
     event Action? StateChanged;
 
     bool IsFileAvailable => SelectedFile is not null;
+
+    int SelectedCount { get; }
+
+    bool SelectedMultiple => SelectedCount > 1;
     
     FileModel? SelectedFile { get; }
+    
+    FileModel? CurrentlyUploadedFile { get; }
 
     TextChannel? UploadChannel { get; }
     
@@ -34,5 +35,5 @@ public interface IFileTransferService
 
     Task RemoveSelectedFileAsync();
 
-    void RemoveFileFromQueue(FileModel file);
+    Task RemoveFileFromQueueAsync(FileModel file);
 }

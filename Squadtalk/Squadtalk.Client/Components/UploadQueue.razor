@@ -14,20 +14,26 @@
     </div>
 </div>
 
+@implements IDisposable
 @inject IFileTransferService FileTransferService
 
 @code {
     private List<FileModel> Queue => FileTransferService.UploadQueue;
     private int Count => Queue.Count;
 
-    private void RemoveFromQueue(FileModel fileModel)
+    private async Task RemoveFromQueue(FileModel fileModel)
     {
-        FileTransferService.RemoveFileFromQueue(fileModel);
+        await FileTransferService.RemoveFileFromQueueAsync(fileModel);
         StateHasChanged();
     }
 
     protected override void OnInitialized()
     {
         FileTransferService.StateChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        FileTransferService.StateChanged -= StateHasChanged;
     }
 }

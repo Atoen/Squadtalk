@@ -25,4 +25,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <TypeScriptCompile Include="wwwroot\js\Files.ts" />
+  </ItemGroup>
+
 </Project>

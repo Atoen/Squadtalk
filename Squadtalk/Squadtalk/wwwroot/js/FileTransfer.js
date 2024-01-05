@@ -1,25 +1,22 @@
+// noinspection JSUnusedGlobalSymbols
+
 "use strict"
 
 let uploadEndpoint = null;
+let dotNetObject = null;
 
 let filePicker = null;
 let textBox = null;
 let uploadInfo = null;
 let progressbar = null;
 
-let selectedFile = null;
 let currentUpload = null;
 
 const fileQueue = [];
+let selectedFiles = [];
 
-const { getAssemblyExports } = await globalThis.getDotnetRuntime(0);
-const exports = await getAssemblyExports("Squadtalk.Client.dll");
-
-const fileTransfer = exports.Squadtalk.Client.Services.FileTransferService;
-
-export function getMessage() {
-    return "Totalne oro";
-}
+let currentChannelId = "";
+let currentChannelName = "";
 
 export function removeFromQueue(index) {
     console.log(`Removing ${index} from queue`);
@@ -28,16 +25,21 @@ export function removeFromQueue(index) {
     console.log(`queue length: ${fileQueue.length}`);
 }
 
-export function initialize(endpoint) {
-    
+export function initialize(object, endpoint) {
+    dotNetObject = object;
     uploadEndpoint = endpoint;
 
     getElements();
     addHandlers();
+    
+    if (currentUpload) {
+        uploadInfo.style.display = "grid";
+    }
 }
 
-export async function uploadSelectedFile(channelId) {
-    if (!selectedFile) {
+export async function uploadSelectedFiles(channelId, channelName) {
+        
+    if (!selectedFiles) {
         console.error("Cannot upload file: no file selected");
         return;
     }
@@ -47,28 +49,47 @@ export async function uploadSelectedFile(channelId) {
         return;
     }
     
-    const file = selectedFile;
-    selectedFile = null;
-    
-    if (currentUpload) {
-        fileQueue.push(file);
-        fileTransfer.FileAddedToQueueCallback(file.name, file.size);
+    if (currentUpload || fileQueue.length) {
+        if (channelId !== currentChannelId){
+            await dotNetObject.invokeMethodAsync(
+                "InvalidUploadCallback", 
+                `A pending upload is currently active on another channel: ${currentChannelName}`);
+            return;
+        }
+        
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            fileQueue.push(file);
+            await dotNetObject.invokeMethodAsync("FileAddedToQueueCallback", file.name, file.size);
+        }
+        
         return;
     }
     
-    await uploadFile(file, channelId);
+    currentChannelId = channelId;
+    currentChannelName = channelName;
+    
+    const [first, ...rest] = selectedFiles;
+    
+    for (let i = 0; i < rest.length; i++) {
+        const file = rest[i];
+        fileQueue.push(file);
+        await dotNetObject.invokeMethodAsync("FileAddedToQueueCallback", file.name, file.size);
+    }
+    
+    await uploadFile(first, channelId);
 }
 
 export function removeSelectedFile() {
-    selectedFile = null;
+    selectedFiles = [];
 }
 
-export function cancelUpload() {
+export async function cancelUpload() {
     if (currentUpload) {
-        currentUpload.abort();
+        currentUpload.abort(true);
     }
     
-    uploadEnded(null);
+    await uploadEnded(null);
 }
 
 function getElements() {
@@ -84,8 +105,8 @@ function addHandlers() {
 }
 
 async function HandleFileChange(e) {
-    const file = e.target.files[0];
-    await selectFile(file);
+    const files = e.target.files;
+    await selectFile(files);
 }
 
 async function handlePaste(e) {
@@ -96,18 +117,13 @@ async function handlePaste(e) {
     if (!blob) return;
 
     const file = new File([blob], blob.name, {type: blob.type});
-    await selectFile(file);
+    await selectFile([file]);
 }
 
-async function selectFile(file) {
-    // if (selectedFile || currentUpload) {
-    //     alert("Upload pending...");
-    //     return;
-    // }
-
-    selectedFile = file;
-    fileTransfer.FileSelectedCallback(file.name, file.size);
-    // await dotnetInstance.invokeMethodAsync("FileSelectedCallback", file.name, file.size);
+async function selectFile(files) {
+    selectedFiles = files;
+    const first = selectedFiles[0];
+    await dotNetObject.invokeMethodAsync("FileSelectedCallback", first.name, first.size, selectedFiles.length);
 }
 
 async function uploadFile(file, channelId) {
@@ -116,16 +132,16 @@ async function uploadFile(file, channelId) {
     
     progressbar.style.width = "0";
     uploadInfo.style.display = "grid";
+    
+    await dotNetObject.invokeMethodAsync("UploadStartedCallback", file.name, file.size);
 
-    fileTransfer.UploadStartedCallback(file.name, file.size);
-
-    // currentUpload.start();
+    currentUpload.start();
 }
 
 async function createUploadOptions(file, channelId) {
     const uploadOptions = {
-        endpoint: uploadEndpoint,
-        retryDelays: [0, 1000, 3000, 5000, 10000],
+        endpoint: "Upload",
+        removeFingerprintOnSuccess: true,
         metadata: {
             file_name: file.name,
             content_type: file.type || "application/octet-stream",
@@ -139,11 +155,11 @@ async function createUploadOptions(file, channelId) {
 
             progressbar.style.width = percentage * 100 + "%";
         },
-        onSuccess: () => {
-            uploadEnded(null);
+        onSuccess: async () => {
+            await uploadEnded(null);
         },
-        onError: (error) => {
-            uploadEnded(error);
+        onError: async (error) => {
+            await uploadEnded(error);
         }
     }
 
@@ -157,18 +173,28 @@ async function createUploadOptions(file, channelId) {
     return uploadOptions;
 }
 
-function uploadEnded(error) {
+async function uploadNextFileFromQueue() {
+    if (!fileQueue.length) {
+        uploadInfo.style.display = "none";
+        return;
+    }
+    
+    console.log(fileQueue);
+    const file = fileQueue.shift();
+    console.log(file);
+    if (file) {
+        await dotNetObject.invokeMethodAsync("UploadingFileFromQueueCallback");
+        await uploadFile(file, "global");
+    }
+}
+
+async function uploadEnded(error) {
     if (error) {
         console.log(error);
     }
 
     currentUpload = null;
-
-    fileTransfer.UploadEndedCallback(null);
-}
-
-function uploadQueueFinished() {
-    uploadInfo.style.display = "none";
+    await uploadNextFileFromQueue();
 }
 
 function loadImage(file){

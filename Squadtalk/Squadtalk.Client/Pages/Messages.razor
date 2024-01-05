@@ -1,6 +1,9 @@
 @page "/Chat/{id?}"
 @using Squadtalk.Client.Layout
 @using Microsoft.AspNetCore.Authorization
+@using System.Threading.Channels
+
+@implements IDisposable
 
 @layout ChatLayout
 
@@ -38,6 +41,8 @@
 </div>
 
 @inject ISignalrService SignalRService
+@inject ToastService ToastService
+@inject IFileTransferService FileTransferService
 
 @code {
     
@@ -47,5 +52,13 @@
     protected override Task OnInitializedAsync()
     {
         return SignalRService.ConnectAsync();
+    }
+
+    public void Dispose()
+    {
+        if (FileTransferService.UploadChannel is not { } channel) return;
+
+        var toast = new ToastMessage(ToastType.Success, $"Your upload to {channel.Name} is still in progress.");
+        ToastService.Notify(toast);
     }
 }

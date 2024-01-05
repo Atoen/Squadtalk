@@ -15,7 +15,7 @@
     background: var(--bs-gray-500);
     padding: 5px;
     z-index: 1;
-    max-width: 100%;
+    width: 100%;
     border-radius: 0.25em 0.25em 0 0;
 }
 

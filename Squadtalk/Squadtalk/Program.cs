@@ -21,7 +21,7 @@ using Squadtalk.Tus;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseKestrel(options => options.Listen(IPAddress.Any, 1235));
+builder.WebHost.UseKestrel(options => options.Listen(IPAddress.Loopback, 1235));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
