@@ -9,4 +9,6 @@ public class MessageDto
     public string ChannelId { get; set; } = default!;
     
     public DateTimeOffset Timestamp { get; set; }
+    
+    public EmbedDto? Embed { get; set; }
 }

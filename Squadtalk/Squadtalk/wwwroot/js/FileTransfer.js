@@ -38,7 +38,6 @@ export function initialize(object, endpoint) {
 }
 
 export async function uploadSelectedFiles(channelId, channelName) {
-        
     if (!selectedFiles) {
         console.error("Cannot upload file: no file selected");
         return;
@@ -176,6 +175,7 @@ async function createUploadOptions(file, channelId) {
 async function uploadNextFileFromQueue() {
     if (!fileQueue.length) {
         uploadInfo.style.display = "none";
+        await dotNetObject.invokeMethodAsync("UploadQueueFinishedCallback");
         return;
     }
     

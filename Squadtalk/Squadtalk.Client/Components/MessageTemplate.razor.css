@@ -1,6 +1,6 @@
 .message-container {
     display: grid;
-    grid-template-columns: 50px auto;
+    grid-template-columns: 45px auto;
     grid-template-rows: min-content;
     margin-top: 5px;
     padding: 0 5px 1px;

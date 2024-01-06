@@ -131,6 +131,12 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         StateChanged?.Invoke();
     }
 
+    [JSInvokable]
+    public void UploadQueueFinishedCallback()
+    {
+        UploadChannel = null;
+    }
+
     public ValueTask DisposeAsync()
     {
         _dotNetObject.Dispose();

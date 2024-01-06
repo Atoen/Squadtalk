@@ -16,10 +16,10 @@
     }
 
     <div class="message-content">
-        @* @if (Model.Embed is not null) *@
-        @* { *@
-        @*     <MessageEmbed Model="Model.Embed"/> *@
-        @* } *@
+        @if (Model.Embed is not null)
+        {
+            <MessageEmbed Model="Model.Embed"/>
+        }
         <div style="white-space: pre-wrap">@Model.Content</div>
     </div>
 </div>

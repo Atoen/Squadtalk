@@ -9,4 +9,6 @@ public class MessageModel
     public DateTimeOffset Timestamp { get; set; }
     
     public bool IsSeparate { get; set; }
+    
+    public EmbedModel? Embed { get; set; }
 }

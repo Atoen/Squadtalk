@@ -2,6 +2,7 @@ using Shared;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
+using Squadtalk.Data;
 using Squadtalk.Extensions;
 using tusdotnet.Interfaces;
 
@@ -24,7 +25,7 @@ public class ImagePreviewGenerator
         return size.Width > MaxPreviewSize.Width || size.Height > MaxPreviewSize.Height;
     }
 
-    public async Task<(string fileId, string filename, Size Size)> CreatePreviewAsync(ITusFile file, CancellationToken cancellationToken)
+    public async Task<ImagePreviewData> CreatePreviewAsync(ITusFile file, CancellationToken cancellationToken)
     {
         await using var fileContent = await file.GetContentAsync(cancellationToken);
         var originalMetadata = await file.GetMetadataAsync(cancellationToken);
@@ -54,8 +55,8 @@ public class ImagePreviewGenerator
         
         var formattedMetadata = TusHelper.FormatMetadata(previewMetadata);
         var fileId = await _tusHelper.CreateFileAsync(stream, fileSize, formattedMetadata, cancellationToken);
-
-        return (fileId, previewName, image.Size);
+        
+        return new ImagePreviewData(fileId, previewName, image.Size);
     }
 
     private Size GetResizedDimensions(Size size)

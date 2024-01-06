@@ -7,6 +7,12 @@ public static class FileSizeConverter
     public const long BytesPerKiloByte = 1000;
     public const long BytesPerMegaByte = 1000 * BytesPerKiloByte;
     public const long BytesPerGigaByte = 1000 * BytesPerMegaByte;
+
+    public static string ConvertToHumanReadableSize(string length)
+    {
+        var parsed = long.Parse(length);
+        return ConvertToHumanReadableSize(parsed);
+    }
     
     public static string ConvertToHumanReadableSize(long length)
     {

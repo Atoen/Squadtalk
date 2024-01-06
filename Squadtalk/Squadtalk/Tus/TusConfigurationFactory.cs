@@ -80,7 +80,7 @@ public static class TusConfigurationFactory
         }
 
         var messageService = httpContext.RequestServices.GetRequiredService<MessageStorageService>();
-        var message = messageService.CreateMessage(user, metadata.GetString(FileData.FileName), channelId)
+        var message = messageService.CreateMessage(user, string.Empty, channelId)
             .WithEmbed(embed);
         
         await messageService.StoreMessageAsync(message);

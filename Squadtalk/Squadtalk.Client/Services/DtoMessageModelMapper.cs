@@ -8,11 +8,22 @@ public class DtoMessageModelMapper : IMessageModelMapper<MessageDto>
 {
     public MessageModel CreateModel(MessageDto dto)
     {
-        return new MessageModel
+        var model = new MessageModel
         {
             Author = dto.Author.Username,
             Timestamp = dto.Timestamp,
-            Content = dto.Content
+            Content = dto.Content,
         };
+
+        if (dto.Embed is { } embed)
+        {
+            model.Embed = new EmbedModel
+            {
+                Type = embed.Type,
+                Data = embed.Data
+            };
+        }
+
+        return model;
     }
 }
