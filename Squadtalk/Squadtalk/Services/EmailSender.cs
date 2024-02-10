@@ -6,6 +6,7 @@ using MimeKit.Text;
 using Polly;
 using Polly.Registry;
 using Polly.Retry;
+using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;
 
@@ -26,11 +27,11 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         _logger = logger;
         _registry = registry;
 
-        _password = configuration["Mail:Password"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Password");
-        _host = configuration["Mail:Host"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Host");
+        _password = configuration.GetString("Mail:Password");
+        _host = configuration.GetString("Mail:Host");
         
-        var senderName = configuration["Mail:Username"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Username");
-        var senderAddress = configuration["Mail:Address"] ?? throw new ArgumentNullException(nameof(configuration), "Mail:Address");
+        var senderName = configuration.GetString("Mail:Username");
+        var senderAddress = configuration.GetString("Mail:Address");
 
         _sender = new MailboxAddress(senderName, senderAddress);
         _port = Convert.ToInt32(configuration["Mail:Port"]);

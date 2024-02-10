@@ -11,11 +11,14 @@ namespace Squadtalk.Services;
 public class ImagePreviewGenerator
 {
     private readonly TusHelper _tusHelper;
+    private readonly ILogger<ImagePreviewGenerator> _logger;
+    
     private readonly PngEncoder _pngEncoder = new();
 
-    public ImagePreviewGenerator(TusHelper tusHelper)
+    public ImagePreviewGenerator(TusHelper tusHelper, ILogger<ImagePreviewGenerator> logger)
     {
         _tusHelper = tusHelper;
+        _logger = logger;
     }
 
     public Size MaxPreviewSize { get; set; } = new(700, 500);
@@ -25,7 +28,25 @@ public class ImagePreviewGenerator
         return size.Width > MaxPreviewSize.Width || size.Height > MaxPreviewSize.Height;
     }
 
-    public async Task<ImagePreviewData> CreatePreviewAsync(ITusFile file, CancellationToken cancellationToken)
+    public async Task<ImagePreviewData?> CreatePreviewAsync(ITusFile file, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await CreatePreviewInternalAsync(file, cancellationToken);
+        }
+        catch (UnknownImageFormatException e)
+        {
+            _logger.LogWarning(e, "Failed to create preview");
+            return null;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to create preview");
+            return null;
+        }
+    }
+
+    private async Task<ImagePreviewData> CreatePreviewInternalAsync(ITusFile file, CancellationToken cancellationToken)
     {
         await using var fileContent = await file.GetContentAsync(cancellationToken);
         var originalMetadata = await file.GetMetadataAsync(cancellationToken);

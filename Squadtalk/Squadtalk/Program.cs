@@ -1,22 +1,18 @@
 using System.Net;
-using Blazored.LocalStorage;
-using MailKit.Net.Smtp;
+using Coravel;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Polly.Registry;
 using RestSharp;
 using tusdotnet;
 using tusdotnet.Helpers;
-using Shared.DTOs;
-using Shared.Services;
 using Squadtalk.Client.Pages;
-using Squadtalk.Client.Services;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
 using Squadtalk.Data;
+using Squadtalk.Extensions;
 using Squadtalk.Hubs;
-using Squadtalk.Services;
+using Squadtalk.Scheduling;
 using Squadtalk.Tus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,35 +51,11 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<SmtpClient>();
-builder.Services.AddSingleton<ResiliencePipelineRegistry<string>>();
-
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
-builder.Services.AddSingleton<ChatConnectionManager<UserDto, string>>();
-builder.Services.AddSingleton<IConnectionKeyAccessor<UserDto, string>, ConnectionKeyAccessor>();
-builder.Services.AddScoped<MessageStorageService>();
-
-builder.Services.AddScoped<IMessageService, ServersideMessagesService>();
-builder.Services.AddScoped<IMessageModelService<Message>, MessageModelService<Message>>();
-builder.Services.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
-
-builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
-builder.Services.AddScoped<ISignalrService, ServersideSignalrService>();
-builder.Services.AddScoped<ITabManager, TabManager>();
-builder.Services.AddScoped<IFileTransferService, FileTransferService>();
-builder.Services.AddScoped<EmbedService>();
-builder.Services.AddScoped<ImagePreviewGenerator>();
-builder.Services.AddScoped<TusHelper>();
+builder.Services.AddServerServices();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
-    options.BaseUrl = new Uri("localhost:1235")
+    options.BaseUrl = new Uri(builder.Configuration.GetString("Rest:BasePath"))
 ));
-
-builder.Services.AddSingleton<TusHelper>();
-
-builder.Services.AddSignalR();
-builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddBlazorBootstrap();
 
 const string corsPolicy = "cors";
 
@@ -99,6 +71,14 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.Services.UseScheduler(scheduler =>
+{
+    scheduler.Schedule<UpdateDnsRecords>()
+        .EveryFifteenMinutes()
+        .RunOnceAtStart()
+        .PreventOverlapping("dns");
+});
 
 app.UseCors(corsPolicy);
 
@@ -123,7 +103,7 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Counter).Assembly);
+    .AddAdditionalAssemblies(typeof(Messages).Assembly);
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

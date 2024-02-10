@@ -1,6 +1,6 @@
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
@@ -15,23 +15,21 @@ namespace Squadtalk.Hubs;
 public class ChatHub : Hub<IChatClient>
 {
     private readonly ChatConnectionManager<UserDto, string> _connectionManager;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<ChatHub> _logger;
     private readonly ApplicationDbContext _dbContext;
 
-    public ChatHub(ChatConnectionManager<UserDto, string> connectionManager, UserManager<ApplicationUser> userManager, 
-        ILogger<ChatHub> logger, ApplicationDbContext dbContext)
+    public ChatHub(ChatConnectionManager<UserDto, string> connectionManager, ILogger<ChatHub> logger, ApplicationDbContext dbContext)
     {
         _connectionManager = connectionManager;
-        _userManager = userManager;
         _logger = logger;
         _dbContext = dbContext;
     }
 
-    private async Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal? principal)
+    private async Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal? principal, [CallerMemberName] string? callerMemberName = null)
     {
         if (principal is not {Identity.IsAuthenticated: true })
         {
+            _logger.LogWarning("{Method}: Unable to get user data", callerMemberName);
             return null;
         }
 
@@ -41,8 +39,13 @@ public class ChatHub : Hub<IChatClient>
             .Include(x => x.Channels)
             .ThenInclude(x => x.Participants)
             .AsSplitQuery()
-            .FirstAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id);
 
+        if (user is null)
+        {
+            _logger.LogWarning("Unable to access user data with id: {Id}", id);
+        }
+        
         return user;
     }
 
@@ -67,12 +70,7 @@ public class ChatHub : Hub<IChatClient>
     public async Task SendMessage(string messageContent, string channelId, MessageStorageService messageStorageService)
     {
         var user = await GetUserAsync(Context.User);
-        
-        if (user is null)
-        {
-            _logger.LogWarning("SendMessage: Unable to get user data");
-            return;
-        }
+        if (user is null) return;
 
         if (channelId != GroupChat.GlobalChatId && !CheckIfUserParticipatesInChannel(user, channelId))
         {
@@ -89,11 +87,7 @@ public class ChatHub : Hub<IChatClient>
     public override async Task OnConnectedAsync()
     {
         var user = await GetUserAsync(Context.User);
-        if (user is null)
-        {
-            _logger.LogWarning("OnConnectedAsync: Unable to get user data");
-            return;
-        }
+        if (user is null) return;
 
         var dto = user.ToDto();
 
@@ -121,16 +115,11 @@ public class ChatHub : Hub<IChatClient>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var user = await GetUserAsync(Context.User);
-        if (user is null)
-        {
-            _logger.LogWarning("OnDisconnectedAsync: Unable to get user data");
-            return;
-        }
+        if (user is null) return;
         
         var dto = user.ToDto();
         
         var allConnectionsClosed = await _connectionManager.Remove(dto, Context.ConnectionId);
-        
         if (!allConnectionsClosed) return;
 
         await Clients.Group(GroupChat.GlobalChatId).UserDisconnected(dto);

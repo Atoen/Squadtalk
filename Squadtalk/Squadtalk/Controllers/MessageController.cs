@@ -32,6 +32,7 @@ public class MessageController : ControllerBase
     private static readonly Func<ApplicationDbContext, string, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, string channelId) => context.Messages
+                .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
                 .Where(m => m.ChannelId == channelId)
                 .Take(MessagePageCount)
@@ -42,6 +43,7 @@ public class MessageController : ControllerBase
         MessagePageByCursorAsync =
             EF.CompileAsyncQuery(
                 (ApplicationDbContext context, string channelId, DateTimeOffset cursor) => context.Messages
+                    .AsNoTracking()
                     .OrderByDescending(m => m.Timestamp)
                     .Where(m => m.ChannelId == channelId)
                     .Where(m => m.Timestamp < cursor)
@@ -66,7 +68,6 @@ public class MessageController : ControllerBase
         {
             _logger.LogWarning("Cannot retrieve user data");
             HttpContext.Response.StatusCode = 500;
-            
             yield break;
         }
         
@@ -137,11 +138,18 @@ public class MessageController : ControllerBase
     
     private static DateTimeOffset CreateCursor(string? timestamp)
     {
-        if (timestamp is null) return default;
+        if (timestamp is null)
+        {
+            return default;
+        }
 
-        Span<byte> buffer = stackalloc byte[timestamp.Length];
+        var length = Math.Min(timestamp.Length, 100);
+        Span<byte> buffer = stackalloc byte[length];
 
-        if (!Convert.TryFromBase64String(timestamp, buffer, out var written)) return default;
+        if (!Convert.TryFromBase64String(timestamp, buffer, out var written))
+        {
+            return default;
+        }
 
         var converted = Encoding.UTF8.GetString(buffer[..written]);
 

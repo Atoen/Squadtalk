@@ -69,7 +69,7 @@ public static class TusConfigurationFactory
         var channelId = metadata.GetString(FileData.ChannelId);
 
         var embedService = httpContext.RequestServices.GetRequiredService<EmbedService>();
-        var embed = await embedService.CreateEmbedAsync(file, cancellationToken);
+        var embed = await embedService.CreateFileEmbedAsync(file, cancellationToken);
 
         var userManager = httpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await userManager.GetUserAsync(httpContext.User);

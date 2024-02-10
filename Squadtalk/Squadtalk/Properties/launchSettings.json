@@ -13,7 +13,6 @@
         "commandName": "Project",
         "dotnetRunMessages": true,
         "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-        "launchUrl": "http://127.0.0.1:1235",
         "environmentVariables": {
           "ASPNETCORE_ENVIRONMENT": "Development"
         }

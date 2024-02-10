@@ -12,12 +12,17 @@ public class EmbedService
 {
     private readonly ImagePreviewGenerator _previewGenerator;
 
-    public EmbedService(ImagePreviewGenerator previewGenerator)
+    private const string ImageMime = "image/";
+    private const string VideoMime = "video/";
+    private readonly string _urlBasePath;
+
+    public EmbedService(ImagePreviewGenerator previewGenerator, IConfiguration configuration)
     {
         _previewGenerator = previewGenerator;
+        _urlBasePath = configuration.GetString("Rest:BasePath");
     }
     
-    public async Task<Embed> CreateEmbedAsync(ITusFile file, CancellationToken cancellationToken)
+    public async Task<Embed> CreateFileEmbedAsync(ITusFile file, CancellationToken cancellationToken)
     {
         var metadata = await file.GetMetadataAsync(cancellationToken);
 
@@ -26,15 +31,14 @@ public class EmbedService
         var contentType = metadata.GetString(FileData.ContentType);
 
         var url = CreateDownloadUrl(file.Id, filename);
-        
-        var embed = CreateEmbed(filename, filesize, url, EmbedType.File);
+        var embed = CreateFileEmbed(filename, filesize, url, EmbedType.File);
 
-        if (contentType.StartsWith("image/"))
+        if (contentType.StartsWith(ImageMime))
         {
-            return await AddImageDataAsync(embed, file, metadata, cancellationToken);
+            await AddImageDataAsync(embed, file, metadata, cancellationToken);
         }
 
-        if (contentType.StartsWith("video/"))
+        else if (contentType.StartsWith(VideoMime))
         {
             
         }
@@ -42,11 +46,9 @@ public class EmbedService
         return embed;
     }
 
-    private async Task<Embed> AddImageDataAsync(Embed embed, ITusFile file, Dictionary<string, Metadata> metadata,
+    private async Task AddImageDataAsync(Embed embed, ITusFile file, Dictionary<string, Metadata> metadata,
         CancellationToken cancellationToken)
     {
-        embed.Type = EmbedType.Image;
-        
         var width = metadata.GetString(FileData.ImageWidth);
         var height = metadata.GetString(FileData.ImageHeight);
 
@@ -60,23 +62,26 @@ public class EmbedService
             Width = int.Parse(width),
             Height = int.Parse(height)
         };
+        
+        embed.Type = EmbedType.Image;
 
-        if (!_previewGenerator.ShouldCreatePreview(imageSize))
-        {
-            return embed;
-        }
+        if (!_previewGenerator.ShouldCreatePreview(imageSize)) return;
         
         var previewData = await _previewGenerator.CreatePreviewAsync(file, cancellationToken);
+        if (previewData is null)
+        {
+            embed.Type = EmbedType.File;
+            return;
+        }
+        
         var (id, name, size) = previewData;
 
         data[FileData.PreviewUrl] = CreateDownloadUrl(id, name);
         data[FileData.ImageWidth] = size.Width.ToString();
         data[FileData.ImageHeight] = size.Height.ToString();
-
-        return embed;
     }
 
-    private Embed CreateEmbed(string filename, string filesize, string url, EmbedType type)
+    private static Embed CreateFileEmbed(string filename, string filesize, string url, EmbedType type)
     {
         return new Embed
         {
@@ -89,11 +94,9 @@ public class EmbedService
             }
         };
     }
-    
-    // private async Task<Embed> CreateImageEmbedAsync(I)
 
     private string CreateDownloadUrl(string fileId, string filename)
     {
-        return $"http://localhost:1235/api/files/{fileId}/{filename}";
+        return $"{_urlBasePath}/api/files/{fileId}/{filename}";
     }
 }
