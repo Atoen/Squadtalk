@@ -1,0 +1,97 @@
+@page "/Canvas"
+@using Squadtalk.Client.Layout
+@using System.Drawing
+@using System.Diagnostics
+
+@implements IDisposable
+@layout CanvasLayout
+
+<h3>Canvas</h3>
+
+<canvas id="canvas-fill" width="600" height="600" style="border: 1px solid black"></canvas>
+
+<button @onclick="ToggleFilling">@_buttonText</button>
+
+@inject IJSRuntime JSRuntime
+@inject ILogger<Canvas> Logger
+
+@code {
+    private const string Start = "Start";
+    private const string Stop = "Stop";
+    
+    private IJSObjectReference _jsModule = default!;
+    private string _buttonText = Start;
+    private bool _filling;
+    
+    private readonly Random _random = new();
+    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(100));
+    private readonly HashSet<Point> _filledCells = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _jsModule = await JSRuntime
+            .InvokeAsync<IJSObjectReference>("import", "../js/CanvasFill.js");
+
+        await _jsModule.InvokeVoidAsync("Init");
+    }
+
+    private void ToggleFilling()
+    {
+        _filling = !_filling;
+        _buttonText = _filling ? Stop : Start;
+
+        _ = FillCellAsync();
+    }
+
+    private async Task FillCellAsync()
+    {
+        while (await _periodicTimer.WaitForNextTickAsync())
+        {
+            var point = _filledCells.Count < 144 ? GetRandomEmptyCell() : GetRandomCell();
+            var color = $"#{_random.Next(0x1000000):X6}";
+
+            await _jsModule.InvokeVoidAsync("FillCell", point.X, point.Y, color);
+            
+            if (!_filling) break;
+        }
+    }
+
+    private Point GetRandomEmptyCell()
+    {
+        var start = Stopwatch.GetTimestamp();
+        
+        var point = new Point();
+        do
+        {
+            point.X = _random.Next(12);
+            point.Y = _random.Next(12);
+        } while (_filledCells.Contains(point));
+
+        var elapsed = Stopwatch.GetElapsedTime(start);
+        Logger.LogInformation("Took {Time} ms", elapsed);
+
+        _filledCells.Add(point);
+        return point;
+    }
+
+    private Point GetRandomCell()
+    {
+        return new Point
+        {
+            X = _random.Next(12),
+            Y = _random.Next(12)
+        };
+    }
+
+    public void Dispose()
+    {
+        if (_jsModule is IDisposable jsModuleDisposable)
+            jsModuleDisposable.Dispose();
+        else
+            _ = _jsModule.DisposeAsync().AsTask();
+        _periodicTimer.Dispose();
+    }
+
+}

@@ -12,7 +12,7 @@ using Squadtalk.Components.Account;
 using Squadtalk.Data;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
-using Squadtalk.Scheduling;
+using Squadtalk.Services.Scheduling;
 using Squadtalk.Tus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,10 +33,10 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    }).AddIdentityCookies();
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+}).AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres")
                        ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
@@ -51,7 +51,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddServerServices();
+builder.Services.AddServerServices(builder.Environment);
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.Configuration.GetString("Rest:BasePath"))
@@ -74,7 +74,7 @@ var app = builder.Build();
 
 app.Services.UseScheduler(scheduler =>
 {
-    scheduler.Schedule<UpdateDnsRecords>()
+    scheduler.Schedule<IDnsRecordUpdater>()
         .EveryFifteenMinutes()
         .RunOnceAtStart()
         .PreventOverlapping("dns");

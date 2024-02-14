@@ -1,16 +1,14 @@
 using System.Net;
-using Coravel.Invocable;
 using Polly;
 using Polly.Registry;
 using Polly.Retry;
 using RestSharp;
 using Squadtalk.Data;
 using Squadtalk.Extensions;
-using Squadtalk.Services;
 
-namespace Squadtalk.Scheduling;
+namespace Squadtalk.Services.Scheduling;
 
-public class UpdateDnsRecords : IInvocable
+public class UpdateDnsRecords : IDnsRecordUpdater
 {
     private readonly IPService _ipService;
     private readonly ResiliencePipelineRegistry<string> _registry;
@@ -67,7 +65,7 @@ public class UpdateDnsRecords : IInvocable
         {
             await pipeline2.ExecuteAsync((address, _) => UpdateRecords(address), ip);
             _lastUpdateWasSuccessful = true;
-            _logger.LogInformation("Successfully updated DNS records");
+            _logger.LogInformation("Successfully updated {Count} DNS records", _records.Count);
         }
         catch (Exception e)
         {

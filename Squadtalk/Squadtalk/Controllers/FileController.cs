@@ -1,5 +1,5 @@
-using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using Shared;
 using Squadtalk.Extensions;
 using Squadtalk.Services;
@@ -42,12 +42,9 @@ public class FileController : ControllerBase
         var filename = metadata.GetString(FileData.FileName);
         var contentType = metadata.GetString(FileData.ContentType);
 
-        var contentDisposition = new ContentDisposition
-        {
-            FileName = filename,
-            Inline = true
-        };
-        
+        var contentDisposition = new ContentDispositionHeaderValue("inline");
+        contentDisposition.SetHttpFileName(filename);
+
         Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
 
         var stream = await file.GetContentAsync(cancellationToken);

@@ -7,17 +7,27 @@ using Shared.DTOs;
 using Shared.Services;
 using Squadtalk.Client.Services;
 using Squadtalk.Data;
-using Squadtalk.Scheduling;
 using Squadtalk.Services;
+using Squadtalk.Services.Scheduling;
 
 namespace Squadtalk.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddServerServices(this IServiceCollection serviceCollection)
+    public static IServiceCollection AddServerServices(this IServiceCollection serviceCollection, IWebHostEnvironment environment)
     {
+        if (environment.IsDevelopment())
+        {
+            serviceCollection.AddSingleton<IDnsRecordUpdater, NoOpDnsUpdate>();
+            serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
+        }
+        else
+        {
+            serviceCollection.AddSingleton<IDnsRecordUpdater, UpdateDnsRecords>();
+            serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
+        }
+        
         serviceCollection.AddTransient<IPService>();
-        serviceCollection.AddSingleton<UpdateDnsRecords>();
         serviceCollection.AddScheduler();
         
         serviceCollection.AddSingleton<TusHelper>();
@@ -27,7 +37,6 @@ public static class ServiceCollectionExtensions
         
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
-        serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
         serviceCollection.AddSingleton<ChatConnectionManager<UserDto, string>>();
         serviceCollection.AddSingleton<IConnectionKeyAccessor<UserDto, string>, ConnectionKeyAccessor>();
         

@@ -91,8 +91,7 @@ public class MessageService : IMessageService
 
         if (state.Cursor != default)
         {
-            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(state.Cursor.ToString()));
-            restRequest.AddUrlSegment("timestamp", encoded);
+            restRequest.AddUrlSegment("timestamp", state.Cursor.ToString().ToBase64(true));
         }
 
         var response = await _restClient.GetAsync<List<MessageDto>>(restRequest, cancellationToken);

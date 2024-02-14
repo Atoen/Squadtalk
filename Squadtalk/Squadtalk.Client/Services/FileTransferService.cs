@@ -36,7 +36,8 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     
     public async Task InitializeAsync()
     {
-        _jsModule ??= await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "../js/FileTransfer.js");
+        _jsModule ??= await _jsRuntime
+            .InvokeAsync<IJSObjectReference>("import", "../js/FileTransfer.js");
 
         await _jsModule.InvokeVoidAsync("initialize", _dotNetObject, "127.0.0.1:1235/Upload");
     }

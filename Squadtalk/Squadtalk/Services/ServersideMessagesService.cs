@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
+using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Data;
@@ -56,12 +57,11 @@ public class ServersideMessagesService : IMessageService
         }
 
         var state = channel.State;
-        
-        var cursorString = state.Cursor == default
-            ? string.Empty
-            : Convert.ToBase64String(Encoding.UTF8.GetBytes(state.Cursor.ToString()));
 
-        var cursor = CreateCursor(cursorString);
+        var cursor = state.Cursor == default
+            ? default
+            : new DateTimeOffset(state.Cursor, TimeSpan.Zero);
+        
         var messages = await GetMessages(cursor, channelId, cancellationToken);
         
         if (messages.Count > 0)
@@ -91,20 +91,5 @@ public class ServersideMessagesService : IMessageService
                 .Include(m => m.Author)
                 .Reverse()
                 .ToListAsync(cancellationToken);
-    }
-    
-    private static DateTimeOffset CreateCursor(string? timestamp)
-    {
-        if (timestamp is null) return default;
-
-        Span<byte> buffer = stackalloc byte[timestamp.Length];
-
-        if (!Convert.TryFromBase64String(timestamp, buffer, out var written)) return default;
-
-        var converted = Encoding.UTF8.GetString(buffer[..written]);
-
-        return long.TryParse(converted, out var ticks)
-            ? new DateTimeOffset(ticks, TimeSpan.Zero)
-            : default;
     }
 }

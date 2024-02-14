@@ -1,4 +1,5 @@
 using System.Text;
+using Shared.Extensions;
 using tusdotnet.Stores;
 
 namespace Squadtalk.Services;
@@ -34,8 +35,7 @@ public class TusHelper
         
         foreach (var (key, value) in metadata)
         {
-            var bytes = Encoding.UTF8.GetBytes(value);
-            var base64 = Convert.ToBase64String(bytes);
+            var base64 = value.ToBase64();
 
             if (builder.Length > 0)
             {

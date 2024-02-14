@@ -1,0 +1,30 @@
+@page "/Canvas/Simulation"
+@using Squadtalk.Client.Layout
+@layout CanvasLayout
+
+<h3>Simulation</h3>
+
+<canvas id="canvas-simulation" width="600" height="600" style="border: 1px solid black"></canvas>
+
+<button @onclick="StartSimulation">Start Simulation</button>
+
+@inject IJSRuntime JSRuntime
+
+@code {
+    private IJSObjectReference _jsModule = default!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _jsModule = await JSRuntime
+            .InvokeAsync<IJSObjectReference>("import", "../js/Simulation.js");
+
+        await _jsModule.InvokeVoidAsync("Init");
+    }
+
+    private async Task StartSimulation()
+    {
+        await _jsModule.InvokeVoidAsync("Start");
+    }
+}

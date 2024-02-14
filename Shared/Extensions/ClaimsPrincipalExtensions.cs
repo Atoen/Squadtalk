@@ -13,8 +13,7 @@ public static class ClaimsPrincipalExtensions
     public static string GetRequiredClaimValue(this ClaimsPrincipal user, string claimType)
     {
         var claim = user.Claims.FirstOrDefault(x => x.Type == claimType);
-
-        if (claim == null) 
+        if (claim is null) 
         {
             throw new Exception("Required Claim not found");
         }

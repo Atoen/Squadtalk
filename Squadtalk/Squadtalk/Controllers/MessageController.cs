@@ -143,15 +143,10 @@ public class MessageController : ControllerBase
             return default;
         }
 
-        var length = Math.Min(timestamp.Length, 100);
-        Span<byte> buffer = stackalloc byte[length];
-
-        if (!Convert.TryFromBase64String(timestamp, buffer, out var written))
+        if (!timestamp.TryFromBase64(out var converted, true))
         {
             return default;
         }
-
-        var converted = Encoding.UTF8.GetString(buffer[..written]);
 
         return long.TryParse(converted, out var ticks)
             ? new DateTimeOffset(ticks, TimeSpan.Zero)

@@ -131,9 +131,12 @@
     {
         if (!firstRender) return;
     
-        _jsModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "../Components/InfiniteScrolling.razor.js");
+        _jsModule = await JsRuntime
+            .InvokeAsync<IJSObjectReference>("import", "../Components/InfiniteScrolling.razor.js");
+        
         _currentComponentReference = DotNetObjectReference.Create(this);
-        _instance = await _jsModule.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
+        _instance = await _jsModule
+            .InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
         
         await _jsModule.InvokeVoidAsync("scrollToMark", 0);
     }

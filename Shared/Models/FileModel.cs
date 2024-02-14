@@ -5,10 +5,10 @@ namespace Shared.Models;
 
 public class FileModel
 {
-    public required string Name;
-    public required string Size;
+    public required string Name { get; init; }
+    public required string Size { get; init; }
 
-    public FileType Type;
+    public FileType Type { get; init; }
 
     public static FileModel Create(string name, long size)
     {
