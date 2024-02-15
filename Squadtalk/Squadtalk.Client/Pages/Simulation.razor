@@ -1,17 +1,38 @@
 @page "/Canvas/Simulation"
 @using Squadtalk.Client.Layout
+@using Squadtalk.Client.Extensions
+
+@implements IAsyncDisposable
 @layout CanvasLayout
 
 <h3>Simulation</h3>
+<p>
+    <canvas id="canvas-simulation" width="600" height="600" style="border: 1px solid black"></canvas>
+</p>
 
-<canvas id="canvas-simulation" width="600" height="600" style="border: 1px solid black"></canvas>
-
-<button @onclick="StartSimulation">Start Simulation</button>
+<p>
+    <Button @onclick="ToggleSimulation" Color="ButtonColor.Success">@_buttonText</Button>
+    <div class="mb-3">
+        <label class="form-label">Delay between steps (ms)</label>
+        <NumberInput TValue="int" @bind-Value="@_amount" Max="500" Min="10" EnableMinMax="true" Step="5"/>
+    </div>
+</p>
 
 @inject IJSRuntime JSRuntime
 
 @code {
+    private const string Start = "Start";
+    private const string Stop = "Stop";
+    
+    private int _amount = 100;
+    private int _lastAmount;
+    
     private IJSObjectReference _jsModule = default!;
+    private string _buttonText = Start;
+    private bool _running;
+    
+    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(100));
+    
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -22,9 +43,33 @@
 
         await _jsModule.InvokeVoidAsync("Init");
     }
-
-    private async Task StartSimulation()
+    
+    private void ToggleSimulation()
     {
-        await _jsModule.InvokeVoidAsync("Start");
+        _running = !_running;
+        _buttonText = _running ? Stop : Start;
+
+        _ = RunAsync();
+    }
+    
+    private async Task RunAsync()
+    {
+        while (await _periodicTimer.WaitForNextTickAsync())
+        {
+            if (!_running) break;
+            await _jsModule.InvokeVoidAsync("Step");
+
+            if (_lastAmount != _amount)
+            {
+                _periodicTimer.Period = TimeSpan.FromMilliseconds(_amount);
+                _lastAmount = _amount;
+            }
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _periodicTimer.Dispose();
+        return _jsModule.TryDisposeAsync();
     }
 }

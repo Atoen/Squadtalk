@@ -13,21 +13,21 @@ public class UpdateDnsRecords : IDnsRecordUpdater
     private readonly IPService _ipService;
     private readonly ResiliencePipelineRegistry<string> _registry;
     private readonly RestClient _restClient;
+    private readonly DnsRecordUpdaterStateManager _stateManager;
     private readonly ILogger<UpdateDnsRecords> _logger;
     
     private readonly string _zoneToken;
     private readonly string _zoneId;
     private readonly List<DnsRecord> _records;
-
-    private IPAddress? _lastIp;
-    private bool _lastUpdateWasSuccessful;
-
+    
     public UpdateDnsRecords(IConfiguration configuration, IPService ipService,
-        ResiliencePipelineRegistry<string> registry, RestClient restClient, ILogger<UpdateDnsRecords> logger)
+        ResiliencePipelineRegistry<string> registry, RestClient restClient,
+        DnsRecordUpdaterStateManager stateManager, ILogger<UpdateDnsRecords> logger)
     {
         _ipService = ipService;
         _registry = registry;
         _restClient = restClient;
+        _stateManager = stateManager;
         _logger = logger;
 
         _zoneToken = configuration.GetString("DDns:Token");
@@ -43,6 +43,8 @@ public class UpdateDnsRecords : IDnsRecordUpdater
         var pipeline1 = GetPipelineIP();
         var ip = await pipeline1.ExecuteAsync((ipService, _) => ipService.GetIPAddressAsync(), _ipService);
 
+        _stateManager.SetIp(ip);
+        
         if (ip is null)
         {
             _logger.LogError("Failed to retrieve IP address");
@@ -50,13 +52,11 @@ public class UpdateDnsRecords : IDnsRecordUpdater
         }
         
         _logger.LogDebug("Successfully retrieved IP address: {IP}", ip);
-        if (_lastUpdateWasSuccessful && ip.Equals(_lastIp))
+        if (!_stateManager.ShouldUpdateRecords)
         {
-            _logger.LogInformation("DNS records are up to date");
+            _logger.LogDebug("DNS records are up to date");
             return;
         }
-
-        _lastIp = ip;
 
         _logger.LogInformation("Updating DNS records...");
         var pipeline2 = GetPipelineCF();
@@ -64,12 +64,12 @@ public class UpdateDnsRecords : IDnsRecordUpdater
         try
         {
             await pipeline2.ExecuteAsync((address, _) => UpdateRecords(address), ip);
-            _lastUpdateWasSuccessful = true;
+            _stateManager.Success();
             _logger.LogInformation("Successfully updated {Count} DNS records", _records.Count);
         }
         catch (Exception e)
         {
-            _lastUpdateWasSuccessful = false;
+            _stateManager.Fail();
             _logger.LogError(e, "Failed to update DNS records");
         }
     }

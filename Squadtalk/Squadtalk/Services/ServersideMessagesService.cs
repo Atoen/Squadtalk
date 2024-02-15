@@ -76,6 +76,7 @@ public class ServersideMessagesService : IMessageService
     {
         return cursor == default
             ? await _dbContext.Messages
+                .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
                 .Where(m => m.ChannelId == channelId)
                 .Take(20)
@@ -84,6 +85,7 @@ public class ServersideMessagesService : IMessageService
                 .ToListAsync(cancellationToken)
             
             : await _dbContext.Messages
+                .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
                 .Where(m => m.ChannelId == channelId)
                 .Where(m => m.Timestamp < cursor)

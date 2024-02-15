@@ -1,5 +1,6 @@
 using System.Net;
 using Coravel;
+using Coravel.Scheduling.Schedule.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -75,10 +76,15 @@ var app = builder.Build();
 app.Services.UseScheduler(scheduler =>
 {
     scheduler.Schedule<IDnsRecordUpdater>()
-        .EveryFifteenMinutes()
+        .EveryFiveSeconds()
         .RunOnceAtStart()
         .PreventOverlapping("dns");
-});
+}).OnError(e =>
+    {
+        var logger = app.Services.GetRequiredService<ILogger<IScheduler>>();
+        logger.LogError(e, "Error while running scheduled task");
+    }
+);
 
 app.UseCors(corsPolicy);
 

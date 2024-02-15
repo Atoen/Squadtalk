@@ -1,9 +1,9 @@
 @page "/Canvas"
 @using Squadtalk.Client.Layout
 @using System.Drawing
-@using System.Diagnostics
+@using Squadtalk.Client.Extensions
 
-@implements IDisposable
+@implements IAsyncDisposable
 @layout CanvasLayout
 
 <h3>Canvas</h3>
@@ -13,7 +13,6 @@
 <button @onclick="ToggleFilling">@_buttonText</button>
 
 @inject IJSRuntime JSRuntime
-@inject ILogger<Canvas> Logger
 
 @code {
     private const string Start = "Start";
@@ -49,28 +48,22 @@
     {
         while (await _periodicTimer.WaitForNextTickAsync())
         {
+            if (!_filling) break;
             var point = _filledCells.Count < 144 ? GetRandomEmptyCell() : GetRandomCell();
             var color = $"#{_random.Next(0x1000000):X6}";
 
             await _jsModule.InvokeVoidAsync("FillCell", point.X, point.Y, color);
-            
-            if (!_filling) break;
         }
     }
 
     private Point GetRandomEmptyCell()
     {
-        var start = Stopwatch.GetTimestamp();
-        
         var point = new Point();
         do
         {
             point.X = _random.Next(12);
             point.Y = _random.Next(12);
         } while (_filledCells.Contains(point));
-
-        var elapsed = Stopwatch.GetElapsedTime(start);
-        Logger.LogInformation("Took {Time} ms", elapsed);
 
         _filledCells.Add(point);
         return point;
@@ -85,13 +78,9 @@
         };
     }
 
-    public void Dispose()
+    public ValueTask DisposeAsync()
     {
-        if (_jsModule is IDisposable jsModuleDisposable)
-            jsModuleDisposable.Dispose();
-        else
-            _ = _jsModule.DisposeAsync().AsTask();
         _periodicTimer.Dispose();
+        return _jsModule.TryDisposeAsync();
     }
-
 }

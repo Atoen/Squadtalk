@@ -26,7 +26,8 @@ public static class ServiceCollectionExtensions
             serviceCollection.AddSingleton<IDnsRecordUpdater, UpdateDnsRecords>();
             serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
         }
-        
+
+        serviceCollection.AddSingleton<DnsRecordUpdaterStateManager>();
         serviceCollection.AddTransient<IPService>();
         serviceCollection.AddScheduler();
         
