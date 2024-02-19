@@ -6,11 +6,14 @@
 @implements IAsyncDisposable
 @layout CanvasLayout
 
-<h3>Canvas</h3>
+<h3>Random Fill</h3>
 
-<canvas id="canvas-fill" width="600" height="600" style="border: 1px solid black"></canvas>
-
-<button @onclick="ToggleFilling">@_buttonText</button>
+<p>
+    <canvas id="canvas-fill" width="600" height="600" style="border: 1px solid black"></canvas>
+</p>
+<p>
+    <Button @onclick="ToggleFilling" Color="ButtonColor.Success">@_buttonText</Button>
+</p>
 
 @inject IJSRuntime JSRuntime
 

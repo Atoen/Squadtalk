@@ -2,32 +2,35 @@ let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 
 const cellSize = 5;
-const beatThreshold = 2;
+let beatThreshold = 3;
 
 let rows: number;
 let columns: number;
 
 let grid: Grid;
 
-type Color = "red" | "yellow" | "green" | "white";
+type Rule = {
+    attacker: string;
+    attacked: string;
+}
 
 class Grid {
     private readonly cells: Cell[][];
-    private readonly colorIndicesCache: Map<Color, number>;
+    private readonly colorIndicesCache: Map<string, number>;
     
     readonly width: number;
     readonly height: number;
+    readonly ruleIndices: Map<number, number[]>;
     
-    readonly colors: Color[];
-    rules: Map<number, number>;
+    colors: string[];
     
-    constructor(width: number, height: number, colors: Color[]) {
+    constructor(width: number, height: number, colors: string[]) {
         this.width = width;
         this.height = height;
         this.colors = colors;
         
-        this.colorIndicesCache = new Map<Color, number>();
-        this.rules = new Map<number, number>();
+        this.colorIndicesCache = new Map<string, number>();
+        this.ruleIndices = new Map<number, number[]>();
         
         this.cells = new Array<Cell[]>(width);        
         
@@ -74,7 +77,7 @@ class Grid {
         return this.cells[x][y];
     }
     
-    GetIndexOfColor(color: Color): number {
+    GetIndexOfColor(color: string): number {
         if (this.colorIndicesCache.has(color)) {
             return this.colorIndicesCache.get(color)!;
         }        
@@ -88,10 +91,15 @@ class Grid {
         
         return -1;
     }
+    
+    ClearRules() {
+        this.ruleIndices.clear();
+        this.colorIndicesCache.clear();
+    }
 }
 
 class Cell {
-    color: Color;
+    color: string;
     x: number;
     y: number;
     
@@ -104,7 +112,7 @@ class Cell {
         this.color = "white";
     }
     
-    SetColor(color: Color): void {
+    SetColor(color: string): void {
         this.color = color;
         this.Draw();
     }
@@ -124,14 +132,63 @@ export function Init() {
 
     rows = Math.floor(canvas.height / cellSize);
     columns = Math.floor(canvas.width / cellSize);
-    
-    grid = new Grid(rows, columns, ["red", "green", "yellow", "white"]);
-    grid.FillCellsWithRandomColors();
+}
 
-    grid.rules.set(0, 1);
-    grid.rules.set(1, 2);
-    grid.rules.set(2, 3);
-    grid.rules.set(3, 0);
+function ArraysContainSameElements<T>(arr1: T[], arr2: T[] | null): boolean {
+    if (!arr2) {
+        return false;
+    }
+
+    const uniqueArr1 = [...new Set(arr1)];
+    const uniqueArr2 = [...new Set(arr2)];
+
+    if (uniqueArr1.length !== uniqueArr2.length) {
+        return false;
+    }
+    
+    const sortedArr1 = uniqueArr1.sort();
+    const sortedArr2 = uniqueArr2.sort();
+    
+    for (let i = 0; i < sortedArr1.length; i++) {
+        if (sortedArr1[i] !== sortedArr2[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+export function SetRules(rules: Rule[]) {
+    const colors = [...new Set(rules.map(x => x.attacker))];
+    const theSame = ArraysContainSameElements(colors, grid?.colors);
+    
+    if (!theSame) {
+        grid = new Grid(rows, columns, colors);
+    }
+    else {
+        grid.ClearRules();
+        grid.colors = colors;
+    }
+    
+    for (const rule of rules) {
+        const attackerIndex = grid.GetIndexOfColor(rule.attacker);
+        const attackedIndex = grid.GetIndexOfColor(rule.attacked);
+        
+        if (grid.ruleIndices.has(attackerIndex)) {
+            grid.ruleIndices.get(attackerIndex).push(attackedIndex);
+        }
+        else {
+            grid.ruleIndices.set(attackerIndex, [attackedIndex]);
+        }
+    }
+    
+    if (!theSame) {
+        grid.FillCellsWithRandomColors();
+    }
+}
+
+export function UpdateThreshold(threshold: number) {
+    beatThreshold = threshold;
 }
 
 function getMaxIndex(numbers: number[], excludeIndex: number): number {
@@ -172,7 +229,8 @@ export function Step() {
             }
             
             const maxIndex = getMaxIndex(neighbourColors, cellColorIndex);
-            if (neighbourColors[maxIndex] >= beatThreshold && grid.rules.get(maxIndex) === cellColorIndex) {
+            if (neighbourColors[maxIndex] >= beatThreshold &&
+                grid.ruleIndices.get(maxIndex).includes(cellColorIndex)) {
                 cellsToChangeColor[maxIndex].push(cell);
             }
         }
