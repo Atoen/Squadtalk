@@ -2,6 +2,7 @@
 @using Squadtalk.Client.Layout
 @using Squadtalk.Client.Extensions
 @using Squadtalk.Client.Data
+@using System.Text.Json
 
 @implements IAsyncDisposable
 @layout CanvasLayout
@@ -22,15 +23,18 @@
         <div class="rule">
             <div class="color-box" style="background: @rule.Attacker"></div>
             <div class="separator">→</div>
-            <div class="color-box me-lg-2" style="background: @rule.Attacked"></div>
+            <div class="color-box" style="background: @rule.Attacked"></div>
             
-            <Button @onclick="() => RemoveRule(rule)" Color="ButtonColor.Danger" Outline="true" Size="Size.ExtraSmall" hidden="@(_rules.Count < 2)">x</Button>
+            <Button Class="mx-2" @onclick="() => RemoveRule(rule)" Color="ButtonColor.Danger" Outline="true" Size="Size.ExtraSmall" hidden="@(_rules.Count < 2)">x</Button>
         </div>
     }
 </div>
 
 <p>
-    <Button @onclick="ToggleSimulation" Color="ButtonColor.Success">@_buttonText</Button>
+    <div class="d-flex flex-row">
+        <Button @onclick="ToggleSimulation" Color="ButtonColor.Success">@_buttonText</Button>
+        <Button Class="mx-2" @onclick="ShareSettings" Color="ButtonColor.Info">Share settings</Button>
+    </div>
     <div class="mt-2">
         <label class="form-label">Delay between steps (ms)</label>
         <NumberInput TValue="int" @bind-Value="@_delayMs" Max="500" Min="10" EnableMinMax="true" Step="5"/>
@@ -43,9 +47,12 @@
 
 
 @inject IJSRuntime JSRuntime
+@inject ILogger<Simulation> Logger
+@inject ToastService ToastService
+@inject NavigationManager NavigationManager
 
 @code {
-    private const string Start = "Start";
+    private const string Start = nameof(Start);
     private const string Stop = "Stop";
     private const string Apply = "Apply";
     
@@ -65,15 +72,65 @@
     
     private Modal _modal = default!;
     private Dictionary<string, object> _parameters = default!;
-    
 
-    private void AddDefaultRules()
+    private readonly JsonSerializerOptions _serializerOptions = new()
     {
-        _rules.AddRange([
+        PropertyNameCaseInsensitive = true
+    };
+    
+    [SupplyParameterFromQuery]
+    public int? Step { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public int? Neighbours { get; set; }
+    
+    [SupplyParameterFromQuery]
+    public string? Rules { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Step is { } step)
+        {
+            _delayMs = Math.Clamp(step, 10, 500);
+        }
+
+        if (Neighbours is { } neighbours)
+        {
+            _threshold = Math.Clamp(neighbours, 1, 8);
+        }
+
+        var rules = GetRules(Rules);
+        _rules.AddRange(rules);
+    }
+
+    private List<Rule> GetRules(string? json)
+    {
+        if (json is null)
+        {
+            return GetDefaultRules();
+        }
+        
+        try
+        {
+            var rules = JsonSerializer.Deserialize<List<Rule>>(json, _serializerOptions);
+            return rules?.Distinct().ToList() is { Count: > 0 } distinctRules
+                ? distinctRules
+                : GetDefaultRules();
+        }
+        catch
+        {
+            return GetDefaultRules();
+        }
+    }
+
+    private List<Rule> GetDefaultRules()
+    {
+        return
+        [
             new Rule(Color.Orange, Color.Yellow),
             new Rule(Color.Yellow, Color.Green),
             new Rule(Color.Green, Color.Orange)
-        ]);
+        ];
     }
 
     private Task CloseModal() => _modal.HideAsync();
@@ -104,8 +161,6 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-
-        AddDefaultRules();
         
         _parameters = new Dictionary<string, object>
         {
@@ -170,5 +225,24 @@
     private Task ShowRuleModal()
     {
         return _modal.ShowAsync<RuleCreatorDialog>("Add New Rule", parameters: _parameters);
+    }
+
+    private async Task ShareSettings()
+    {
+        var rulesJson = JsonSerializer.Serialize(_rules, _serializerOptions);
+        var uri = new Uri(NavigationManager.Uri).GetLeftPart(UriPartial.Path);
+        var link = $"{uri}?Step={_delayMs}&Neighbours={_threshold}&Rules={rulesJson}";
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", link);
+            var toast = new ToastMessage(ToastType.Info, "Share link saved to clipboard");
+            ToastService.Notify(toast);
+        }
+        catch
+        {
+            var errorToast = new ToastMessage(ToastType.Danger, "Failed to save share link to clipboard");
+            ToastService.Notify(errorToast);
+        }
     }
 }

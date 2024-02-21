@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Squadtalk.Client.Data;
 
 public record Rule
@@ -16,19 +18,23 @@ public record Rule
         Attacked = attacked.ToString();
     }
     
+    [JsonConstructor]
     public Rule(string attacker, string attacked)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(attacker);
+        ArgumentException.ThrowIfNullOrWhiteSpace(attacked);
+        
         if (attacker == attacked)
         {
             throw new InvalidOperationException("Attacker cannot be the same as attacked.");
         }
 
-        if (!AvailableColors.Contains(attacker))
+        if (!AvailableColors.Any(x => x.Equals(attacker, StringComparison.InvariantCultureIgnoreCase)))
         {
             throw new InvalidOperationException($"Attacker has invalid color: {attacker}");
         }
         
-        if (!AvailableColors.Contains(attacked))
+        if (!AvailableColors.Any(x => x.Equals(attacked, StringComparison.InvariantCultureIgnoreCase)))
         {
             throw new InvalidOperationException($"Attacked has invalid color: {attacked}");
         }
