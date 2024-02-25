@@ -1,6 +1,7 @@
 using Blazored.LocalStorage;
 using Coravel;
 using MailKit.Net.Smtp;
+using MessagePack;
 using Microsoft.AspNetCore.Identity;
 using Polly.Registry;
 using Shared.DTOs;
@@ -32,7 +33,15 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScheduler();
         
         serviceCollection.AddSingleton<TusHelper>();
-        serviceCollection.AddSignalR();
+        serviceCollection.AddSignalR()
+            .AddMessagePackProtocol(options =>
+            {
+                options.SerializerOptions = MessagePackSerializerOptions.Standard
+                    .WithCompression(MessagePackCompression.Lz4BlockArray)
+                    .WithCompressionMinLength(256)
+                    .WithSecurity(MessagePackSecurity.UntrustedData);
+            });
+        
         serviceCollection.AddBlazoredLocalStorage();
         serviceCollection.AddBlazorBootstrap();
         
@@ -47,6 +56,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
         serviceCollection.AddScoped<ICommunicationManager, CommunicationManager>();
         serviceCollection.AddScoped<ISignalrService, ServersideSignalrService>();
+        serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
         serviceCollection.AddScoped<ITabManager, TabManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
         

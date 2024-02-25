@@ -1,9 +1,7 @@
-using System.Text;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
-using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Data;

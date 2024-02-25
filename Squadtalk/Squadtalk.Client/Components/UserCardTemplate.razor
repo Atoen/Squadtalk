@@ -3,32 +3,38 @@
 @using Squadtalk.Client.Extensions
 @using Shared.Communication
 
-<div class="user-card rounded mx-1" style="@Style"
+<div class="user-card rounded"
      @onclick="ChangeChannel">
     <img src="@Model.AvatarUrl" class="avatar" alt="Avatar" draggable="false" style="@BorderStyle"/>
-    <div class="username px-2">@Model.Username</div>
-    
+    <div class="username">@Model.Username</div>
+    @if (Model.LastMessage is { } message)
+    {
+        <div class="last-message">@message</div>
+        <div class="last-message-time">@Model.LastMessageTimeStamp.ToStringFormat()</div>
+    }
     @if (Channel is { State.UnreadMessages: > 0 })
     {
         <Badge Color="BadgeColor.Danger"
                Position="Position.Absolute"
                Placement="BadgePlacement.TopRight"
                IndicatorType="BadgeIndicatorType.RoundedPill"
-               VisuallyHiddenText="unread messages">@Channel.State.UnreadMessages</Badge>
+               VisuallyHiddenText="unread messages">
+            @Channel.State.UnreadMessages
+        </Badge>
     }
-    
+
 </div>
 
 @inject ICommunicationManager CommunicationManager
 @inject ITabManager TabManager
+@inject NavigationManager NavigationManager
 
 @code {
-    [Parameter]
-    public required UserModel Model { get; set; }
+    [Parameter] public required UserModel Model { get; set; }
 
     private DirectMessageChannel? Channel => Model.OpenChannel;
 
-    private string Style => Model.Selected ? "background: var(--bs-primary); color: white;" : "color: var(--bs-primary)";
+    // private string Style => Model.Selected ? "background: var(--bs-primary); color: white;" : "color: var(--bs-primary)";
     private string BorderStyle => $"border-color: {Model.StatusColor()};";
 
     private async Task ChangeChannel()
@@ -39,5 +45,8 @@
         {
             await TabManager.StopHidingTab(Channel.Id);
         }
+        
+        NavigationManager.NavigateTo($"Chat/{Model.Username}");
     }
+
 }

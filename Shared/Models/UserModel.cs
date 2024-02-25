@@ -16,5 +16,8 @@ public class UserModel : ICommunicationTab
     public bool Selected { get; set; }
     public string Name => Username;
     
+    public string? LastMessage { get; set; }
+    public DateTimeOffset LastMessageTimeStamp { get; set; }
+
     public DirectMessageChannel? OpenChannel { get; set; }
 }

@@ -1,12 +1,28 @@
-@page "/Chat/Friends"
-@using Squadtalk.Client.Layout
+@page "/Chat"
 @using Microsoft.AspNetCore.Authorization
-@layout ChatLayout
+@* @layout ChatLayout *@
 
 @attribute [Authorize]
 
-<h3>Friends</h3>
+<PageTitle>Squadtalk | Chats</PageTitle>
+
+<h3>Chats</h3>
+
+<ChannelSelector>
+    @* <GroupChatTemplate> *@
+    @*     <GroupChatTemplate Model="context"/> *@
+    @* </GroupChatTemplate> *@
+    <UserTemplate>
+        <UserCardTemplate Model="context"/>
+    </UserTemplate>
+</ChannelSelector>
+
+@inject ISignalrService SignalrService
 
 @code {
     
+    protected override Task OnInitializedAsync()
+    {
+        return SignalrService.ConnectAsync();
+    }
 }

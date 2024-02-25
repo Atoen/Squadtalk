@@ -85,7 +85,7 @@ public static class TusConfigurationFactory
         
         await messageService.StoreMessageAsync(message);
 
-        var chatHub = httpContext.RequestServices.GetRequiredService<IHubContext<ChatHub, IChatClient>>();
+        var chatHub = httpContext.RequestServices.GetRequiredService<IHubContext<TextChatHub, ITextChatClient>>();
         await chatHub.Clients.Group(channelId).ReceiveMessage(message.ToDto());
     }
 }

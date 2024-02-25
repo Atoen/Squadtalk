@@ -1,4 +1,5 @@
 @using Shared.Models
+@using Squadtalk.Client.Extensions
 
 <div class="message-container rounded">
     @if (Model.IsSeparate)
@@ -35,39 +36,8 @@
 
     protected override void OnInitialized()
     {
-        _date = TimeStampConverter(Model.Timestamp, DateFormatMode.Default);
-        _longDate = TimeStampConverter(Model.Timestamp, DateFormatMode.Long);
-        _shortDate = TimeStampConverter(Model.Timestamp, DateFormatMode.Short);
-    }
-
-    private static string TimeStampConverter(DateTimeOffset dateTimeOffset, DateFormatMode formatMode)
-    {
-        var format = formatMode == DateFormatMode.Long ? "HH:mm:ss" : "HH:mm";
-        if (formatMode == DateFormatMode.Short)
-        {
-            return dateTimeOffset.ToLocalTime().ToString(format);
-        }
-
-        var localTime = dateTimeOffset.ToLocalTime();
-
-        if (localTime.Date == DateTime.Today)
-        {
-            return $"Today {localTime.ToString(format)}";
-        }
-
-        if (localTime.Date == DateTime.Today.AddDays(-1))
-        {
-            return $"Yesterday {localTime.ToString(format)}";
-        }
-
-        var fullFormat = formatMode == DateFormatMode.Long ? "dd-MM-yyyy HH:mm:ss" : "dd-MM-yyyy HH:mm";
-        return localTime.ToString(fullFormat);
-    }
-
-    private enum DateFormatMode
-    {
-        Default,
-        Short,
-        Long
+        _date = Model.Timestamp.ToStringFormat();
+        _longDate = Model.Timestamp.ToStringFormat(DateFormatMode.Long);
+        _shortDate = Model.Timestamp.ToStringFormat(DateFormatMode.Short);
     }
 }

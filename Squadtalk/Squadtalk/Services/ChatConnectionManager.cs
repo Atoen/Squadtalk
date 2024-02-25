@@ -5,9 +5,8 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
     private readonly IConnectionKeyAccessor<TUser, TKey> _keyAccessor;
     private readonly SemaphoreSlim _semaphore = new(1);
     private readonly Dictionary<TKey, HashSet<string>> _connections = [];
-    private readonly List<TUser> _connectedUsers = [];
 
-    public IReadOnlyCollection<TUser> ConnectedUsers => _connectedUsers;
+    public List<TUser> ConnectedUsers { get; } = [];
 
     public ChatConnectionManager(IConnectionKeyAccessor<TUser, TKey> keyAccessor)
     {
@@ -39,7 +38,7 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
             }
             else
             {
-                _connectedUsers.Add(user);
+                ConnectedUsers.Add(user);
                 _connections[key] = [connectionId];
             }
 
@@ -66,7 +65,7 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
             var isTheOnlyConnection = existingConnections.Count == 1;
             if (isTheOnlyConnection)
             {
-                _connectedUsers.RemoveAll(x => _keyAccessor.GetKey(x).Equals(key));
+                ConnectedUsers.RemoveAll(x => _keyAccessor.GetKey(x).Equals(key));
                 _connections.Remove(key);
             }
             else

@@ -17,6 +17,16 @@
     background: var(--bs-gray-400);
 }
 
+.title-avatar {
+    width: 50px;
+    border-radius: 50%;
+    border: 2px solid black;
+}
+
+.title-username {
+    font-size: 1.2em;
+}
+
 
 
 

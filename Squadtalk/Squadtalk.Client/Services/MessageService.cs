@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Components.Authorization;
 using RestSharp;
 using Shared.DTOs;

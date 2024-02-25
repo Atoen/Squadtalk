@@ -40,7 +40,7 @@
     
     @if (CommunicationManager.CurrentChannel is DirectMessageChannel { Other: { Status: UserStatus.Offline } offlineUser })
     {
-        <div class="hide-channel d-flex">
+        <div class="hide-channel">
             <Button Color="ButtonColor.Warning" Outline="true" Size="Size.Small"
                     @onclick="() => ShowConfirmationAsync(offlineUser)">Hide</Button>
         </div>

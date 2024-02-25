@@ -24,6 +24,7 @@ builder.Services.AddScoped<IMessageModelService<MessageDto>, MessageModelService
 builder.Services.AddScoped<IMessageModelMapper<MessageDto>, DtoMessageModelMapper>();
 builder.Services.AddScoped<ITabManager, TabManager>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
+builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazorBootstrap();

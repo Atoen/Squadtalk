@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -91,7 +90,7 @@ public class MessageController : ControllerBase
     
     [HttpPost("createChannel")]
     public async Task<IActionResult> CreateChannel(List<string> participantsId,
-        [FromServices] IHubContext<ChatHub, IChatClient> hubContext,
+        [FromServices] IHubContext<TextChatHub, ITextChatClient> hubContext,
         [FromServices] ChatConnectionManager<UserDto, string> connectionManager)
     {
         if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)

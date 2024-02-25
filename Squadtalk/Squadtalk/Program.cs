@@ -18,7 +18,13 @@ using Squadtalk.Tus;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseKestrel(options => options.Listen(IPAddress.Loopback, 1235));
+builder.WebHost.UseKestrel(options =>
+{
+    options.Listen(IPAddress.Loopback, 1235, listenOptions =>
+    {
+        listenOptions.UseHttps();
+    });
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -116,10 +122,12 @@ app.MapAdditionalIdentityEndpoints();
 
 app.MapControllers();
 
-app.MapHub<ChatHub>("/chathub", options =>
+app.MapHub<TextChatHub>("/chathub", options =>
 {
     options.AllowStatefulReconnects = true;
 });
+
+app.MapHub<VoiceChatHub>("/voicehub");
 
 app.MapTus("/Upload", TusConfigurationFactory.GetConfiguration);
 

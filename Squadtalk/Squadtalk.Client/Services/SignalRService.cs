@@ -1,3 +1,4 @@
+using MessagePack;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.DTOs;
@@ -10,7 +11,6 @@ namespace Squadtalk.Client.Services;
 public sealed class SignalRService : ISignalrService
 {
     private readonly ILogger<SignalRService> _logger;
-
     private readonly HubConnection _connection;
 
     private bool _handlersRegistered;
@@ -43,6 +43,13 @@ public sealed class SignalRService : ISignalrService
             })
             .WithAutomaticReconnect()
             .WithStatefulReconnect()
+            .AddMessagePackProtocol(options =>
+            {
+                options.SerializerOptions = MessagePackSerializerOptions.Standard
+                    .WithCompression(MessagePackCompression.Lz4BlockArray)
+                    .WithSecurity(MessagePackSecurity.UntrustedData)
+                    .WithCompressionMinLength(256);
+            })
             .Build();
     }
 
