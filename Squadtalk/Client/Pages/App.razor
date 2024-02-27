@@ -1,0 +1,63 @@
+@page "/app"
+@using Squadtalk.Client.Services
+@using UserStatus = Squadtalk.Client.Models.UserStatus
+
+<PageTitle>Squadtalk</PageTitle>
+
+<link rel="stylesheet" href="css/messageTemplate.css"/>
+<link rel="stylesheet" href="css/uploadinfo.css"/>
+
+<div class="background">
+
+    <ChannelsList>
+        <GroupChatTemplate>
+            <ChannelTemplate Model="context"/>
+        </GroupChatTemplate>
+        <UserTemplate>
+            <UserTemplate Model="context"/>
+        </UserTemplate>
+    </ChannelsList>
+    <UserStatus/>
+
+    <div class="chat-area">
+        <div class="message-listbox" id="listbox">
+            <InfiniteScrolling>
+                <ItemTemplate>
+                    <MessageTemplate Model="context"/>
+                </ItemTemplate>
+
+                <LoadingTemplate>
+                    <div>
+                        <span class="oi oi-reload spinner"></span> Loading more items...
+                    </div>
+                </LoadingTemplate>
+            </InfiniteScrolling>
+        </div>
+
+        <TextBox/>
+    </div>
+</div>
+
+<div id="overlay">Drop your file here!</div>
+
+@inject JwtService JwtService
+@inject SignalRService SignalRService
+@inject NavigationManager NavigationManager
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!JwtService.IsTokenSet)
+        {
+            NavigationManager.NavigateTo("");
+            return;
+        }
+
+        var result = await SignalRService.ConnectAsync();
+        Console.WriteLine(result);
+
+        JwtService.UnableToRefreshToken = () => NavigationManager.NavigateTo("/");
+    }
+
+}

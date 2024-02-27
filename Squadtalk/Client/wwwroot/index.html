@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<script src="tus.min.js"></script>
+<script>
+    window.addEventListener("beforeunload", e => {
+        const warning = "";
+        e.returnValue = warning;
+        return warning;
+    });
+</script>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>Squadtalk</title>
+    <base href="/"/>
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/app.css" rel="stylesheet"/>
+    <link href="favicon.png" rel="icon" type="image/png"/>
+    <link href="Squadtalk.Client.styles.css" rel="stylesheet"/>
+    <link href="manifest.json" rel="manifest"/>
+    <link href="icon-512.png" rel="apple-touch-icon" sizes="512x512"/>
+    <link href="icon-192.png" rel="apple-touch-icon" sizes="192x192"/>
+    <link href="https://fonts.googleapis.com/css?family=Audiowide" rel="stylesheet">
+</head>
+
+<body>
+<div id="app">
+    <div class="index-loading">
+        <div class="index-loading-background">
+            <div class="index-loading-title">Squadtalk</div>
+            <div class="index-progress-border">
+                <div class="index-progress-value"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a class="reload" href="">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+<script src="_framework/blazor.webassembly.js"></script>
+<script>navigator.serviceWorker.register('service-worker.js');</script>
+</body>
+
+<style>
+    .index-loading {
+        display: flex;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+        background: rgb(26, 85, 134);
+        background: linear-gradient(0deg, rgba(26, 85, 134, 1) 0%, rgba(111, 0, 163, 1) 100%);
+    }
+
+    .index-loading-background {
+        background: #212121;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 300px;
+    }
+
+    .index-loading-title {
+        background: linear-gradient(to right, #9d00e7, #117bd2);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 40px;
+        font-weight: bold;
+        font-family: "Audiowide", sans-serif;
+        margin-bottom: 10px;
+    }
+
+    .index-progress-border {
+        width: 100%;
+        height: 20px;
+        background: #333333;
+        border-radius: 5px;
+        position: relative;
+    }
+
+    /*noinspection CssUnresolvedCustomProperty*/
+    .index-progress-value {
+        height: 100%;
+        width: var(--blazor-load-percentage, 0%);
+        border-radius: 5px;
+        background-color: royalblue;
+        position: absolute;
+    }
+
+</style>
+</html>

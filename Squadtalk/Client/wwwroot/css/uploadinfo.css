@@ -1,0 +1,76 @@
+﻿.upload-info {
+    background: #323232;
+    border-radius: 10px;
+    color: white;
+    width: min-content;
+    padding: 15px 10px;
+    display: none;
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+.upload-icon {
+    width: 70px;
+    height: 70px;
+    grid-column: 1;
+    grid-row: 1/4;
+    margin-right: 10px;
+}
+
+.upload-filename {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 18px;
+    margin-right: 10px;
+    align-self: center;
+    white-space: nowrap;
+}
+
+.upload-filesize {
+    grid-column: 3;
+    grid-row: 1;
+    font-size: 16px;
+    color: dimgray;
+    align-self: center;
+    white-space: nowrap;
+}
+
+.upload-cancel {
+    margin-left: 5px;
+    grid-column: 5;
+    grid-row: 1/4;
+    align-self: center;
+    width: 40px;
+}
+
+.upload-cancel:hover {
+    color: red;
+}
+
+.upload-cancel:active {
+    color: darkred;
+}
+
+.upload-progress {
+    grid-column: 2/5;
+    grid-row: 2;
+    width: auto;
+    min-width: 150px;
+}
+
+progress, progress::-webkit-progress-value {
+    border-radius: 5px;
+    background: royalblue;
+}
+
+progress::-webkit-progress-bar {
+    border-radius: 6px;
+    background: white;
+}
+
+progress::-moz-progress-bar {
+    border-radius: 20px;
+    background: royalblue;
+}
+
+
