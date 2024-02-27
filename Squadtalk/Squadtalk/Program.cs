@@ -22,7 +22,7 @@ builder.WebHost.UseKestrel(options =>
 {
     options.Listen(IPAddress.Loopback, 1235, listenOptions =>
     {
-        listenOptions.UseHttps();
+        // listenOptions.UseHttps();
     });
 });
 
