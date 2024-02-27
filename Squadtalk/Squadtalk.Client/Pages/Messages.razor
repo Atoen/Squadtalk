@@ -1,0 +1,69 @@
+@page "/Chat/{ChannelName}"
+@using Microsoft.AspNetCore.Authorization
+
+@implements IDisposable
+
+@attribute [Authorize]
+
+<PageTitle>Squadtalk | @ChannelName</PageTitle>
+
+<img alt="@ChannelName Avatar" src="User.png" class="title-avatar"/>
+<span class="title-username">@ChannelName</span>
+
+<div class="d-grid">
+    <div class="chat-container">
+
+        @* <ChannelSelector> *@
+        @*     $1$ <GroupChatTemplate> #1# *@
+        @*     $1$     <GroupChatTemplate Model="context"/> #1# *@
+        @*     $1$ </GroupChatTemplate> #1# *@
+        @*     <UserTemplate> *@
+        @*         <UserCardTemplate Model="context"/> *@
+        @*     </UserTemplate> *@
+        @* </ChannelSelector> *@
+
+        <div class="message-listbox rounded my-1" id="listbox">
+            <InfiniteScrolling>
+                <ItemTemplate>
+                    <MessageTemplate Model="context"/>
+                </ItemTemplate>
+                <LoadingTemplate>
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </LoadingTemplate>
+            </InfiniteScrolling>
+        </div>
+
+        <UploadInfo/>
+
+        <InputBox/>
+    </div>
+</div>
+
+@inject ICommunicationManager CommunicationManager
+@inject ToastService ToastService
+@inject IFileTransferService FileTransferService
+@inject NavigationManager NavigationManager
+
+@code {
+
+    [Parameter] public string? ChannelName { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (CommunicationManager.CurrentChannel.Name != ChannelName)
+        {
+            NavigationManager.NavigateTo("/Chat");
+        }
+    }
+
+    public void Dispose()
+    {
+        if (FileTransferService.UploadChannel is not { } channel) return;
+
+        var toast = new ToastMessage(ToastType.Success, $"Your upload to {channel.Name} is still in progress.");
+        ToastService.Notify(toast);
+    }
+
+}

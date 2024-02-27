@@ -1,0 +1,72 @@
+.message-container {
+    display: grid;
+    grid-template-columns: 45px auto;
+    grid-template-rows: min-content;
+    margin-top: 5px;
+    padding: 0 5px 1px;
+}
+
+.avatar {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    grid-column: 1;
+    grid-row: 2 / 4;
+    border: solid 1px black;
+}
+
+.label {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.date {
+    margin-left: 5px;
+    white-space: nowrap;
+    font-size: 0.8em;
+    align-self: center;
+    position: relative;
+}
+
+.date:hover::after {
+    content: attr(data-date);
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-left: -5px;
+    padding: 0 5px;
+    background: #c7c7c7;
+}
+
+.content-only-date {
+    grid-column: 1;
+    grid-row: 3;
+    display: none;
+    white-space: nowrap;
+    margin-top: 2px;
+    font-size: 0.8em;
+    margin-left: 10px;
+}
+
+.message-container:hover .content-only-date {
+    display: block;
+}
+
+.message-container:hover {
+    background: #c7c7c7
+}
+
+.padding {
+    height: 3px;
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.message-content {
+    grid-column: 2;
+    grid-row: 3;
+    word-break: break-word;
+}

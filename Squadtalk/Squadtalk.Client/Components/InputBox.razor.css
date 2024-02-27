@@ -1,0 +1,107 @@
+.input-box {
+    border: 2px solid rebeccapurple;
+    border-radius: 0.5em;
+    flex-direction: row;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    grid-row: 4;
+    margin-top: 0.25em;
+}
+
+.grow-wrap {
+    display: grid;
+    max-height: 400px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.grow-wrap::after {
+    content: attr(data-replicated-value) " ";
+    white-space: pre-wrap;
+    visibility: hidden;
+    max-height: 400px;
+}
+
+.grow-wrap > textarea {
+    resize: none;
+    border: none;
+    outline: none;
+    overflow: auto;
+    max-height: 400px;
+    background: transparent;
+}
+
+.grow-wrap > textarea::placeholder {
+    /*color: darkgray;*/
+}
+
+.grow-wrap > textarea, .grow-wrap::after {
+    border: none;
+    padding: 0.5rem;
+    font: inherit;
+    grid-row: 1;
+    grid-column: 1;
+    word-break: break-word;
+    min-height: 60px;
+}
+
+.input-separator {
+    height: 100%;
+    width: 1px;
+    background-color: #ccc; /* Adjust the color as needed */
+    position: absolute;
+    left: 50%; /* Position the line in the center */
+    transform: translateX(-50%); /* Adjust the position based on half of the line's width */
+}
+
+.add-button svg path {
+    fill: currentColor;
+}
+
+.add-button {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    color: dimgray;
+    border: none;
+    background: none;
+    transition: color 0.1s ease, transform 0.3s ease;
+    margin: 0 10px 17px;
+
+}
+
+.add-button:hover {
+    color: #9d00e7;
+    transform: rotate(90deg);
+}
+
+.add-button:active {
+    color: #6f00a3;
+}
+
+.send-button svg path {
+    fill: currentColor;
+}
+
+.send-button {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    color: dimgray;
+    border: none;
+    background: none;
+    transition: color 0.1s ease, transform 0.2s ease;
+    margin-right: 5px;
+    margin-bottom: 17px;
+}
+
+.send-button:hover {
+    color: #9d00e7;
+    transform: scale(1.1);
+}
+
+.send-button:active {
+    transform: translate(2px, 0px) scale(1.1);
+    color: #6f00a3;
+}

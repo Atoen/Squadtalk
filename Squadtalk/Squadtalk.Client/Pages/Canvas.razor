@@ -1,0 +1,89 @@
+@page "/Canvas"
+@using Squadtalk.Client.Layout
+@using System.Drawing
+@using Squadtalk.Client.Extensions
+
+@implements IAsyncDisposable
+@layout CanvasLayout
+
+<h3>Random Fill</h3>
+
+<p>
+    <canvas id="canvas-fill" width="600" height="600" style="border: 1px solid black"></canvas>
+</p>
+<p>
+    <Button @onclick="ToggleFilling" Color="ButtonColor.Success">@_buttonText</Button>
+</p>
+
+@inject IJSRuntime JSRuntime
+
+@code {
+    private const string Start = "Start";
+    private const string Stop = "Stop";
+    
+    private IJSObjectReference _jsModule = default!;
+    private string _buttonText = Start;
+    private bool _filling;
+    
+    private readonly Random _random = new();
+    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(100));
+    private readonly HashSet<Point> _filledCells = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _jsModule = await JSRuntime
+            .InvokeAsync<IJSObjectReference>("import", "../js/CanvasFill.js");
+
+        await _jsModule.InvokeVoidAsync("Init");
+    }
+
+    private void ToggleFilling()
+    {
+        _filling = !_filling;
+        _buttonText = _filling ? Stop : Start;
+
+        _ = FillCellAsync();
+    }
+
+    private async Task FillCellAsync()
+    {
+        while (await _periodicTimer.WaitForNextTickAsync())
+        {
+            if (!_filling) break;
+            var point = _filledCells.Count < 144 ? GetRandomEmptyCell() : GetRandomCell();
+            var color = $"#{_random.Next(0x1000000):X6}";
+
+            await _jsModule.InvokeVoidAsync("FillCell", point.X, point.Y, color);
+        }
+    }
+
+    private Point GetRandomEmptyCell()
+    {
+        var point = new Point();
+        do
+        {
+            point.X = _random.Next(12);
+            point.Y = _random.Next(12);
+        } while (_filledCells.Contains(point));
+
+        _filledCells.Add(point);
+        return point;
+    }
+
+    private Point GetRandomCell()
+    {
+        return new Point
+        {
+            X = _random.Next(12),
+            Y = _random.Next(12)
+        };
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _periodicTimer.Dispose();
+        return _jsModule.TryDisposeAsync();
+    }
+}

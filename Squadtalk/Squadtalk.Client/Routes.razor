@@ -1,0 +1,16 @@
+﻿<Router AppAssembly="@typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        
+        <p role="alert">Sorry, there's nothing at this address.</p>
+        <NavLink class="nav-link" href="">Go Back to Main Page</NavLink>
+    </NotFound>
+</Router>

@@ -1,0 +1,32 @@
+.chat-container {
+    display: grid;
+    grid-template-rows: min-content auto min-content min-content;
+    height: calc(100dvh - 136px);
+    margin-top: 0.5em;
+}
+
+@media (min-width: 641px) {
+    .chat-container {
+        height: calc(100dvh - 80px);
+    }
+}
+
+.message-listbox {
+    grid-row: 2;
+    overflow: auto;
+    background: var(--bs-gray-400);
+}
+
+.title-avatar {
+    width: 50px;
+    border-radius: 50%;
+    border: 2px solid black;
+}
+
+.title-username {
+    font-size: 1.2em;
+}
+
+
+
+

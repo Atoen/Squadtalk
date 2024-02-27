@@ -1,0 +1,43 @@
+@using Shared.Models
+@using Squadtalk.Client.Extensions
+
+<div class="message-container rounded">
+    @if (Model.IsSeparate)
+    {
+        <div class="padding"></div>
+        <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
+        <div class="label">
+            <div>@Model.Author</div>
+            <div class="date" data-date="@_longDate">@_date</div>
+        </div>
+    }
+    else
+    {
+        <div class="content-only-date">@_shortDate</div>
+    }
+
+    <div class="message-content">
+        @if (Model.Embed is not null)
+        {
+            <MessageEmbed Model="Model.Embed"/>
+        }
+        <div style="white-space: pre-wrap">@Model.Content</div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public required MessageModel Model { get; set; }
+
+    private string? _date;
+    private string? _longDate;
+    private string? _shortDate;
+
+    protected override void OnInitialized()
+    {
+        _date = Model.Timestamp.ToStringFormat();
+        _longDate = Model.Timestamp.ToStringFormat(DateFormatMode.Long);
+        _shortDate = Model.Timestamp.ToStringFormat(DateFormatMode.Short);
+    }
+}
