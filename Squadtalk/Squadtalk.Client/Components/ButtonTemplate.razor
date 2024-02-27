@@ -1,0 +1,41 @@
+@using Squadtalk.Client.Data
+
+<p>
+    <div class="d-flex flex-row align-items-end">
+        <Button @onclick="ToggleExpand" Color="ButtonColor.Success">@_buttonText</Button>
+        
+        <h5 class="mx-2">@AfterButtonText</h5>
+    </div>
+</p>
+
+@if (_expand)
+{
+    foreach (var link in ListOfLinks)
+    {
+        <p>
+            <a href=@link.Url>@link.DisplayedText</a>
+        </p>
+    }
+}
+
+
+
+
+@code {
+    private const string Expand = "Expand";
+    private const string Collapse = "Collapse";
+    private bool _expand;
+    private string _buttonText = Expand;
+    
+    [Parameter]
+    public required string AfterButtonText { get; set; }
+
+    [Parameter] public List<Link> ListOfLinks { get; set; } = [];
+
+    
+    private void ToggleExpand()
+    {
+        _expand = !_expand;
+        _buttonText = _expand ? Collapse : Expand;
+    }
+}
