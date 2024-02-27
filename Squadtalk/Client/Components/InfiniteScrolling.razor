@@ -1,0 +1,164 @@
+﻿@if (CommunicationManager.CurrentChannelState.ReachedEnd)
+{
+    <div>No more messages in @@@CommunicationManager.CurrentChannel.Name</div>
+}
+
+@if (IsLoading)
+{
+    @LoadingTemplate
+}
+
+@* ReSharper disable once CSharpWarnings::CS8974 *@
+@RenderLastElement
+
+@if (ItemTemplate is not null)
+{
+    foreach (var item in CommunicationManager.CurrentChannelState.Messages)
+    {
+        <div @key="item">
+            @ItemTemplate(item)
+        </div>
+    }
+}
+
+@using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
+@using Microsoft.AspNetCore.Components.Rendering
+@using System.Diagnostics
+@implements IAsyncDisposable
+@inject IJSRuntime JsRuntime
+@inject MessageService MessageService
+@inject CommunicationManager CommunicationManager;
+
+@code {
+
+    private ElementReference _lastItemIndicator;
+    private DotNetObjectReference<InfiniteScrolling>? _currentComponentReference;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _autoScrollModule;
+    private IJSObjectReference? _instance;
+    // private bool _enumerationCompleted;
+
+    private CancellationTokenSource? _loadItemsTokenSource;
+
+    private bool IsLoading => _loadItemsTokenSource != null;
+
+    [Parameter]
+    public RenderFragment<MessageModel>? ItemTemplate { get; set; }
+
+    [Parameter]
+    public RenderFragment? LoadingTemplate { get; set; }
+
+    [Parameter]
+    public string LastItemIndicatorElement { get; set; } = "div";
+
+    protected override void OnInitialized()
+    {
+        MessageService.MessageReceived += UpdateOnMessage;
+        CommunicationManager.ChannelChanged += () =>
+        {
+            StateHasChanged();
+            _ = _instance!.InvokeVoidAsync("onNewItems");
+        };
+    }
+
+    private async Task UpdateOnMessage(Guid channelId)
+    {
+        if (CommunicationManager.CurrentChannel.Id != channelId) return;
+
+        StateHasChanged();
+        await _autoScrollModule!.InvokeVoidAsync("scrollToBottom");
+    }
+
+    [JSInvokable]
+    public async Task LoadMoreItems()
+    {
+        if (_loadItemsTokenSource != null) return;
+
+        var channel = CommunicationManager.CurrentChannel;
+        var channelState = channel.State;
+        var cancellationTokenSource = new CancellationTokenSource();
+        _loadItemsTokenSource = cancellationTokenSource;
+
+        try
+        {
+            var newItems = await MessageService.GetMessagePageAsync(channel.Id);
+            if (!cancellationTokenSource.IsCancellationRequested)
+            {
+                channelState.Messages.InsertRange(0, newItems);
+
+                if (newItems.Count == 0)
+                {
+                    channelState.ReachedEnd = true;
+                }
+                else
+                {
+                    Debug.Assert(_instance != null);
+                    await _instance.InvokeVoidAsync("onNewItems", cancellationTokenSource.Token);
+                }
+            }
+        }
+        catch (OperationCanceledException e) when (e.CancellationToken == cancellationTokenSource.Token)
+        {
+        }
+        finally
+        {
+            _loadItemsTokenSource = null;
+            cancellationTokenSource.Dispose();
+        }
+
+        var scrollPosition = await _autoScrollModule!.InvokeAsync<double>("markScroll", CancellationToken.None);
+        StateHasChanged();
+        await _autoScrollModule!.InvokeVoidAsync("scrollToMark", CancellationToken.None, scrollPosition);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _module = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./infinite-scrolling.js");
+        _currentComponentReference = DotNetObjectReference.Create(this);
+        _instance = await _module.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
+
+        _autoScrollModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/Scroll.js");
+        await _autoScrollModule.InvokeVoidAsync("initialize");
+        await _autoScrollModule!.InvokeVoidAsync("scrollToMark", 0);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_loadItemsTokenSource is not null)
+        {
+            _loadItemsTokenSource.Dispose();
+            _loadItemsTokenSource = null;
+        }
+
+        if (_instance is not null)
+        {
+            await _instance.InvokeVoidAsync("dispose");
+            await _instance.DisposeAsync();
+            _instance = null;
+        }
+
+        await _module.TryDisposeAsync();
+        await _autoScrollModule.TryDisposeAsync();
+
+        _currentComponentReference?.Dispose();
+
+        MessageService.MessageReceived -= UpdateOnMessage;
+    }
+
+    private void RenderLastElement(RenderTreeBuilder builder)
+    {
+        builder.OpenElement(1000, LastItemIndicatorElement);
+        var style = CommunicationManager.CurrentChannelState.ReachedEnd
+            ? "height:0;width:0"
+            : "height:1px;width:1px;flex-shrink:0";
+        
+        builder.AddAttribute(1001, "style", style);
+        builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
+        builder.CloseElement();
+    }
+
+}

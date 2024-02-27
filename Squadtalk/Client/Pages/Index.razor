@@ -1,0 +1,248 @@
+﻿@page "/"
+@using RestSharp
+@using Squadtalk.Client.Models
+@using Squadtalk.Client.Services
+@using Blazored.LocalStorage
+@using System.Text.Json
+@using System.Text
+@using System.Security.Cryptography
+@using System.Net
+
+<PageTitle>Squadtalk</PageTitle>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Audiowide">
+
+<div class="background">
+
+    <div class="menu">
+        <div class="title">Squadtalk</div>
+        <div class="form">
+            @if (_working)
+            {
+                <div class="working">
+                    <div class="loading">Please wait...</div>
+                    <div class="custom-loader"></div>
+                </div>
+            }
+
+            @if (_needToLogIn && _sessionDataPresent)
+            {
+                <p style="color: whitesmoke; margin-bottom: 0;">Your session has expired.</p>
+                <p style="color: whitesmoke;">Please log in again.</p>
+            }
+
+            <EditForm Model="_userCredentials" OnValidSubmit="FormCallback">
+                <DataAnnotationsValidator/>
+
+                <p>
+                    <InputText @bind-Value="_userCredentials.Username" placeholder="Username"/>
+                </p>
+                <p>
+                    <InputText @bind-Value="_userCredentials.Password" placeholder="Password" type="password"/>
+                </p>
+
+                <ValidationSummary/>
+
+                <p style="color: @_color;">@_info</p>
+
+                <p>
+                    <button class="btn btn-primary" type="submit"
+                            @onclick="() => _action = Action.LogIn"
+                            disabled="@_working">
+                        Log In
+                    </button>
+                    <button class="btn btn-primary" type="submit"
+                            @onclick="() => _action = Action.SignUp"
+                            disabled="@_working">
+                        Sign Up
+                    </button>
+                </p>
+                <p style="white-space: nowrap; margin-bottom: 0">
+                    <label>
+                        <span style="margin-right: 15px">Remember me</span>
+                        <input type="checkbox" @bind="_rememberUser" style="width: 25px; height: 25px;"/>
+                    </label>
+                </p>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<style>
+    input {
+        color: whitesmoke;
+        border: none;
+        font-family: Verdana, sans-serif;
+        border-radius: 5px;
+        width: 100%;
+        background: #323232;
+        padding: 5px;
+        margin: 3px 2px 0 2px;
+    }
+    
+    input:focus {
+        outline: none;
+    }
+    
+    ::-ms-reveal {
+        filter: invert(100%);
+    }
+</style>
+
+@inject NavigationManager Navigation
+@inject ILocalStorageService LocalStorageService
+@inject RestClient RestClient
+@inject JwtService JwtService
+
+@code
+{
+    private readonly UserCredentials _userCredentials = new();
+
+    private bool _sessionDataPresent;
+    private bool _needToLogIn;
+
+    private bool _rememberUser;
+    private bool _working;
+
+        private const string RememberUser = "Remember";
+        private const string Username = "Username";
+
+    private string? _info;
+    private string? _color;
+
+    private enum Action
+    {
+        LogIn,
+        SignUp
+    }
+
+    private Action _action;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticated = await TryAuthenticate();
+        _needToLogIn = !authenticated;
+
+        if (authenticated)
+        {
+            Navigation.NavigateTo("app");
+            return;
+        }
+
+        if (await LocalStorageService.ContainKeyAsync(RememberUser))
+        {
+            _rememberUser = await LocalStorageService.GetItemAsync<bool>(RememberUser);
+        }
+
+        if (_rememberUser && await LocalStorageService.ContainKeyAsync(Username))
+        {
+            _userCredentials.Username = await LocalStorageService.GetItemAsync<string>(Username);
+        }
+    }
+
+    private async Task<bool> TryAuthenticate()
+    {
+        _working = true;
+        var success = await AuthenticateUsingToken();
+        _working = false;
+
+        return success;
+    }
+
+    private async Task<bool> AuthenticateUsingToken()
+    {
+        if (!await LocalStorageService.ContainKeyAsync(RememberUser)) return false;
+
+        var remember = await LocalStorageService.GetItemAsync<bool>(RememberUser);
+        if (!remember) return false;
+
+        if (!await LocalStorageService.ContainKeyAsync(Username)) return false;
+
+        _sessionDataPresent = true;
+
+        var success = await OpenSession();
+
+        return success;
+    }
+
+    private async Task<bool> OpenSession()
+    {
+        var request = new RestRequest("api/user/token", Method.Post);
+
+        var response = await RestClient.ExecuteAsync(request);
+        if (!response.IsSuccessStatusCode) return false;
+
+        try
+        {
+            var authToken = JsonSerializer.Deserialize<string>(response.Content!)!;
+            JwtService.SetFirstToken(authToken);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task FormCallback()
+    {
+        _working = true;
+
+        await LocalStorageService.SetItemAsync(RememberUser, _rememberUser);
+
+        if (_rememberUser)
+        {
+            await LocalStorageService.SetItemAsync(Username, _userCredentials.Username);
+        }
+
+        var (endpoint, message) = _action == Action.LogIn
+            ? ("api/user/login", "Logged in successfully")
+            : ("api/user/signup", "Signed up successfully");
+
+        var success = await AuthenticateAsync(endpoint, message);
+        var sessionCreated = await OpenSession();
+
+        if (success && sessionCreated)
+        {
+            Navigation.NavigateTo("app");
+        }
+
+        _working = false;
+    }
+
+    private async Task<bool> AuthenticateAsync(string endpoint, string successMessage, CancellationToken cancellationToken = default)
+    {
+        _color = "white";
+        _info = string.Empty;
+
+        StateHasChanged();
+
+        var request = new RestRequest(endpoint, Method.Post);
+
+        var input = Encoding.UTF8.GetBytes(_userCredentials.Password!);
+        var hash = SHA256.HashData(input);
+
+        var dto = new UserCredentialsDto { Username = _userCredentials.Username!, PasswordHash = Convert.ToBase64String(hash) };
+        request.AddBody(dto);
+
+        var response = await RestClient.ExecuteAsync(request, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            _info = successMessage;
+            return true;
+        }
+
+        _color = "red";
+        _info = response switch
+        {
+        {StatusCode:  HttpStatusCode.Conflict} => $"Username {_userCredentials.Username} is already taken",
+        {StatusCode:  HttpStatusCode.Unauthorized or HttpStatusCode.NotFound} => "Invalid username or password",
+        {StatusCode: 0} => "Unable to connect to the server",
+            _ => $"Server error: {response.StatusCode}"
+            };
+
+        return false;
+    }
+}
