@@ -8,9 +8,9 @@ using Squadtalk.Client.SignalR;
 
 namespace Squadtalk.Client.Services;
 
-public sealed class SignalRService : ISignalrService
+public sealed class SignalrService : ISignalrService
 {
-    private readonly ILogger<SignalRService> _logger;
+    private readonly ILogger<SignalrService> _logger;
     private readonly HubConnection _connection;
 
     private bool _handlersRegistered;
@@ -28,7 +28,7 @@ public sealed class SignalRService : ISignalrService
 
     public string ConnectionStatus { get; private set; } = ISignalrService.Offline;
 
-    public SignalRService(NavigationManager navigationManager, ILogger<SignalRService> logger)
+    public SignalrService(NavigationManager navigationManager, ILogger<SignalrService> logger)
     {
         _logger = logger;
 
@@ -83,18 +83,32 @@ public sealed class SignalRService : ISignalrService
         }
     }
     
-    public async Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken = default)
+    public Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken)
     {
         try
         {
-            await _connection.InvokeAsync("SendMessage", message, channelId, cancellationToken);
+            return _connection.SendAsync("SendMessage", message, channelId, cancellationToken);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to send message");
+            return Task.CompletedTask;
         }
     }
-    
+
+    public Task StartVoiceCallAsync(List<string> invitedIds)
+    {
+        try
+        {
+            return _connection.SendAsync("StartCall", invitedIds);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to start call");
+            return Task.CompletedTask;
+        }
+    }
+
     private void RegisterHandlers()
     {
         _connection.Reconnecting += _ =>
@@ -135,6 +149,18 @@ public sealed class SignalRService : ISignalrService
 
         _connection.On<UserDto>("UserConnected", user =>
             UserConnected.TryInvoke(user));
+        
+        _connection.On<VoiceCallDto>("CallOfferIncoming",
+            async call =>
+            {
+                _logger.LogInformation("Incoming voice call initiated by {User}", call.Initiator.Username);
+                await _connection.InvokeAsync("AcceptCall", call.Id);
+            });
+
+        _connection.On<UserDto, string>("UserJoinedCall", (user, callId) =>
+        {
+            _logger.LogInformation("User {User} joined the call {Id}", user.Username, callId);
+        });
     }
 
     public ValueTask DisposeAsync()

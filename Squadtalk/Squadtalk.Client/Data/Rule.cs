@@ -4,7 +4,10 @@ namespace Squadtalk.Client.Data;
 
 public record Rule
 {
+    [JsonPropertyName("a")]
     public string Attacker { get; }
+    
+    [JsonPropertyName("b")]
     public string Attacked { get; }
     
     public Rule(Color attacker, Color attacked)

@@ -7,13 +7,15 @@ public interface ICommunicationManager
 {
     TextChannel? GetChannel(string channelId);
     
-    TextChannel CurrentChannel { get; }
+    TextChannel? CurrentChannel { get; }
 
-    TextChannelState CurrentChannelState => CurrentChannel.State;
+    TextChannelState? CurrentChannelState => CurrentChannel?.State;
     
     IReadOnlyList<GroupChat> GroupChats { get; }
 
     IReadOnlyList<DirectMessageChannel> DirectMessageChannels { get; }
+    
+    IReadOnlyList<TextChannel> AllChannels { get; }
     
     IReadOnlyList<UserModel> Users { get; }
 
@@ -25,11 +27,11 @@ public interface ICommunicationManager
     
     event Func<Task>? ChannelChangedAsync; 
     
-    Task ChangeChannelAsync(string channelId);
-
-    Task ChangeChannelAsync(TextChannel channel);
-    
     Task OpenOrCreateFakeDirectMessageChannel(UserModel model);
     
     Task CreateRealDirectMessageChannel(TextChannel channel);
+
+    Task OpenChannelAsync(TextChannel channel);
+
+    Task ClearChannelSelectionAsync();
 }

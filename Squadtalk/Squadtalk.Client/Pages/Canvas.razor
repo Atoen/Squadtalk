@@ -18,6 +18,7 @@
 @inject IJSRuntime JSRuntime
 
 @code {
+    
     private const string Start = "Start";
     private const string Stop = "Stop";
     
@@ -34,7 +35,7 @@
         if (!firstRender) return;
 
         _jsModule = await JSRuntime
-            .InvokeAsync<IJSObjectReference>("import", "../js/CanvasFill.js");
+            .InvokeAsync<IJSObjectReference>("import", "../js/CanvasFill.min.js");
 
         await _jsModule.InvokeVoidAsync("Init");
     }

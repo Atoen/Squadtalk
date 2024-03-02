@@ -40,7 +40,6 @@
 @inject IJSRuntime JSRuntime
 @inject ICommunicationManager CommunicationManager
 @inject ISignalrService SignalRService
-@inject ILogger<InputBox> Logger
 @inject IFileTransferService FileTransferService
 
 @code {
@@ -54,8 +53,6 @@
 
     protected override void OnInitialized()
     {
-        Logger.LogInformation("Initialized");
-        
         _placeholder = SignalRService.ConnectionStatus;
         SignalRService.ConnectionStatusChanged += OnSignalRServiceOnConnectionStatusChanged;
         FileTransferService.FileSelected += FileTransferServiceOnFileSelected;
@@ -89,19 +86,19 @@
         return SignalRService.Connected ? string.Empty : DisabledStyle;
     }
 
-    private async Task TextareaCallback(KeyboardEventArgs e)
+    private Task TextareaCallback(KeyboardEventArgs e)
     {
         _preventDefaultOnKeyDown = false;
 
-        if (e is { Key: "Enter", ShiftKey: false })
-        {
-            await SendMessage();
-        }
+        return e is { Key: "Enter", ShiftKey: false } ? SendMessage() : Task.CompletedTask;
     }
     
     private async Task SendMessage()
     {
         _preventDefaultOnKeyDown = true;
+
+        if (CommunicationManager.CurrentChannel is null) return;
+        
         
         if (CommunicationManager.CurrentChannel.IsFake())
         {
@@ -116,10 +113,9 @@
             await FileTransferService.UploadFileAsync(channel);
         }
         
-        Logger.LogInformation("Sending message: {Content} to channel: {Channel}", message, channel.Id);
         if (!string.IsNullOrWhiteSpace(message))
         {
-           await SignalRService.SendMessageAsync(message, channel.Id);
+           await MessageService.SendMessageAsync(message);
         }
     }
 

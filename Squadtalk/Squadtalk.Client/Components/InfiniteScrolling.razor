@@ -5,10 +5,10 @@
 @using Shared.Models
 @using Shared.Services
 
-@if (CommunicationManager.CurrentChannelState.ReachedEnd)
+@if (CommunicationManager.CurrentChannel is {State.ReachedEnd: true} channel)
 {
-    var preposition = CommunicationManager.CurrentChannel is GroupChat ? "in" : "with";
-    <div>No more messages @preposition @CommunicationManager.CurrentChannel.Name</div>
+    var preposition = channel is GroupChat ? "in" : "with";
+    <div>No more messages @preposition @channel.Name</div>
 }
 
 @if (_loading)
@@ -19,7 +19,7 @@
 @* ReSharper disable once CSharpWarnings::CS8974 *@
 @RenderLastElement
 
-@if (ItemTemplate is not null)
+@if (CommunicationManager.CurrentChannelState is not null && ItemTemplate is not null)
 {
     foreach (var item in CommunicationManager.CurrentChannelState.Messages)
     {
@@ -55,8 +55,6 @@
 
     protected override void OnInitialized()
     {
-        Logger.LogInformation("Initialized");
-        
         MessageService.MessageReceived += UpdateOnMessage;
         CommunicationManager.ChannelChangedAsync += ChannelChangedAsync;
     }
@@ -71,7 +69,7 @@
 
     private Task UpdateOnMessage(string channelId)
     {
-        if (CommunicationManager.CurrentChannel.Id != channelId)
+        if (channelId != CommunicationManager.CurrentChannel?.Id)
         {
             return Task.CompletedTask;
         }
@@ -84,13 +82,13 @@
     public async Task LoadMoreItems()
     {
         if (_loading) return;
-
+        if (CommunicationManager.CurrentChannel is not { } channel) return;
+        
         _loading = true;
-
-        var channel = CommunicationManager.CurrentChannel;
+        
         var channelState = channel.State;
 
-        if (!channelState.ReachedEnd && !_changedChannel)
+        if (channelState is {ReachedEnd: false} && !_changedChannel)
         {
             StateHasChanged();
             
@@ -160,7 +158,7 @@
     private void RenderLastElement(RenderTreeBuilder builder)
     {
         builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = CommunicationManager.CurrentChannelState.ReachedEnd
+        var style = CommunicationManager.CurrentChannelState is { ReachedEnd: true }
             ? "height:0;width:0"
             : "height:1px;width:1px;flex-shrink:0";
         

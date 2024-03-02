@@ -14,8 +14,6 @@
     </div>
 }
 
-<Modal @ref="_modal" />
-
 @switch (Model.Type)
 {
     case EmbedType.File:
@@ -82,9 +80,7 @@
 
 @code {
     
-    private Modal _modal = default!;
-    
-    [Parameter]
+    [Parameter, EditorRequired]
     public required EmbedModel Model { get; set; }
     
     private string _imageDisplay = "none";

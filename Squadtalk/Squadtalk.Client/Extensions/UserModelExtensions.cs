@@ -16,9 +16,9 @@ public static class UserModelExtensions
     
     public static string StatusColor(this UserModel model) => model.Status switch
     {
-        UserStatus.Online => "#2ECC71",
-        UserStatus.Away => "#FFD700",
-        UserStatus.DoNotDisturb => "#FF6666",
+        UserStatus.Online => "forestgreen",
+        UserStatus.Away => "darkorange",
+        UserStatus.DoNotDisturb => "firebrick",
         UserStatus.Offline => "gray",
         _ => throw new ArgumentOutOfRangeException(nameof(model))
     };

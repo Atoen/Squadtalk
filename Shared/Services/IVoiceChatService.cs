@@ -6,7 +6,13 @@ public interface IVoiceChatService : IAsyncDisposable
     
     Task ConnectAsync();
 
-    Task StartStreamAsync<T>(IAsyncEnumerable<T> stream, CancellationToken cancellationToken);
+    Task StartStreamAsync();
 
-    IAsyncEnumerable<int> GetStream();
+    Task StopStreamAsync();
+
+    Task<double> MeasurePingAsync();
+    
+    event Action<byte[]>? PacketReceived;
+
+    Task StartVoiceCallAsync(List<string> invitedIds);
 }

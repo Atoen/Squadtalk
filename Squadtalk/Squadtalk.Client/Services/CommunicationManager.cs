@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using RestSharp;
 using Shared.Communication;
@@ -7,6 +8,7 @@ using Shared.Enums;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
+using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
@@ -16,8 +18,7 @@ public class CommunicationManager : ICommunicationManager
     private readonly RestClient _restClient;
     private readonly ISignalrService _signalrService;
     private readonly ILogger<CommunicationManager> _logger;
-
-    private TextChannel _currentChannel = GroupChat.GlobalChat;
+    private readonly NavigationManager _navigationManager;
 
     private readonly List<TextChannel> _allChannels = [];
     private readonly List<UserModel> _users = [];
@@ -28,13 +29,16 @@ public class CommunicationManager : ICommunicationManager
     public IReadOnlyList<TextChannel> AllChannels => _allChannels;
     public IReadOnlyList<GroupChat> GroupChats => _groupChats;
     public IReadOnlyList<DirectMessageChannel> DirectMessageChannels => _directMessageChannels;
+    
+    private string? _userId;
 
     public CommunicationManager(AuthenticationStateProvider authenticationStateProvider, RestClient restClient,
-        ISignalrService signalrService, ILogger<CommunicationManager> logger)
+        ISignalrService signalrService, ILogger<CommunicationManager> logger, NavigationManager navigationManager)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _restClient = restClient;
         _signalrService = signalrService;
+        _navigationManager = navigationManager;
         _logger = logger;
 
         _signalrService.UserConnected += userDto => UserConnected(userDto, false);
@@ -49,7 +53,7 @@ public class CommunicationManager : ICommunicationManager
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync; 
 
-    public TextChannel CurrentChannel => _currentChannel;
+    public TextChannel? CurrentChannel { get; private set; }
 
     public TextChannel? GetChannel(string id)
     {
@@ -58,44 +62,13 @@ public class CommunicationManager : ICommunicationManager
             : AllChannels.FirstOrDefault(x => x.Id == id);
     }
 
-    public Task ChangeChannelAsync(string channelId)
+    public async Task OpenChannelAsync(TextChannel channel)
     {
-        if (CurrentChannel.Id == channelId)
-        {
-            return Task.CompletedTask;
-        }
-
-        if (channelId == GroupChat.GlobalChatId)
-        {
-            return ChangeChannelAsync(GroupChat.GlobalChat);
-        }
-
-        var selectedChannel = GetChannel(channelId);
-        if (selectedChannel is null)
-        {
-            _logger.LogWarning("Cannot find channel with id {Id}", channelId);
-            return Task.CompletedTask;
-        }
-
-        return ChangeChannelAsync(selectedChannel);
+        await ChangeChannelAsync(channel);
+        _navigationManager.NavigateTo("Messages/Chat");
     }
 
-    public Task ChangeChannelAsync(TextChannel channel)
-    {
-        if (_currentChannel == channel)
-        {
-            return Task.CompletedTask;
-        }
-
-        _currentChannel.Selected = false;
-        
-        _currentChannel = channel;
-        _currentChannel.Selected = true;
-        _currentChannel.State.UnreadMessages = 0;
-        
-        ChannelChanged?.Invoke();
-        return ChannelChangedAsync.TryInvoke();
-    }
+    public Task ClearChannelSelectionAsync() => ChangeChannelAsync(null);
 
     public async Task OpenOrCreateFakeDirectMessageChannel(UserModel model)
     {
@@ -107,11 +80,11 @@ public class CommunicationManager : ICommunicationManager
         var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == model.Id);
         if (openDirectMessageChannelWithUser is not null)
         {
-            await ChangeChannelAsync(openDirectMessageChannelWithUser);
+            await OpenChannelAsync(openDirectMessageChannelWithUser);
             return;
         }
         
-        await ChangeChannelAsync(DirectMessageChannel.CreateFakeChannel(model));
+        await OpenChannelAsync(DirectMessageChannel.CreateFakeChannel(model));
     }
 
     public async Task CreateRealDirectMessageChannel(TextChannel channel)
@@ -128,6 +101,23 @@ public class CommunicationManager : ICommunicationManager
         {
             await ChangeChannelAsync(openedChannel);
         }
+    }
+    
+    private Task ChangeChannelAsync(TextChannel? channel)
+    {
+        if (CurrentChannel == channel)
+        {
+            return Task.CompletedTask;
+        }
+        
+        CurrentChannel = channel;
+        if (CurrentChannel is not null)
+        {
+            CurrentChannel.State.UnreadMessages = 0;
+        }
+        
+        ChannelChanged?.Invoke();
+        return ChannelChangedAsync.TryInvoke();
     }
 
     private async Task<string?> OpenNewChannel(List<string> participants)
@@ -173,30 +163,27 @@ public class CommunicationManager : ICommunicationManager
 
     private async Task AddedToTextChannel(ChannelDto dto)
     {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        await AddChannel(dto, authenticationState, false);
-        
+        await AddChannel(dto, false);
         await StateChangedAsync.TryInvoke();
     }
 
     private async Task TextChannelsReceived(IEnumerable<ChannelDto> dtos)
     {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        
         foreach (var channelDto in dtos)
         {
-             await AddChannel(channelDto, authenticationState, true);
+             await AddChannel(channelDto, true);
         }
 
         StateChanged?.Invoke();
         await StateChangedAsync.TryInvoke();
     }
     
-    private async Task AddChannel(ChannelDto channelDto, AuthenticationState authenticationState, bool bulk)
+    private async Task AddChannel(ChannelDto channelDto, bool bulk)
     {
         if (_allChannels.Exists(x => x.Id == channelDto.Id)) return;
+        _userId ??= await GetUserIdAsync();
         
-        var model = CreateChannelModel(channelDto, authenticationState);
+        var model = CreateChannelModel(channelDto, _userId);
         if (!bulk)
         {
             model.State.ReachedEnd = true;
@@ -225,7 +212,7 @@ public class CommunicationManager : ICommunicationManager
 
     private Task CheckIfNeedToUpgradeCurrentFakeChannelToReal(DirectMessageChannel openedDirectMessageChannel)
     {
-        if (_currentChannel is DirectMessageChannel { Id: DirectMessageChannel.FakeChannelId } currentFakeDm &&
+        if (CurrentChannel is DirectMessageChannel { Id: DirectMessageChannel.FakeChannelId } currentFakeDm &&
             currentFakeDm.Other.Id == openedDirectMessageChannel.Other.Id)
         {
             return ChangeChannelAsync(openedDirectMessageChannel);
@@ -234,29 +221,19 @@ public class CommunicationManager : ICommunicationManager
         return Task.CompletedTask;
     }
     
-    private TextChannel CreateChannelModel(ChannelDto channelDto, AuthenticationState authenticationState)
+    private TextChannel CreateChannelModel(ChannelDto channelDto, string userId)
     {
-        var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        var lastMessageIsByCurrentUser = channelDto.LastMessage?.Author.Id == userId;
         
         _logger.LogInformation("Creating model");
+
+        var others = channelDto.Participants.Where(x => x.Id != userId).ToList();
         
-        var others = channelDto.Participants.Where(x => x.Id != id).ToList();
-        if (others.Count > 1)
-        {
-            return new GroupChat(channelDto.Id)
-            {
-                Others = others.Select(GetOrCreateUserModel).ToList()
-            };
-        }
+        TextChannel channel = others.Count > 1
+            ? new GroupChat(channelDto.Id) { Others = others.Select(GetOrCreateUserModel).ToList() }
+            : new DirectMessageChannel(GetOrCreateUserModel(others[0]), channelDto.Id);
 
-        var other = others[0];
-        var user = GetOrCreateUserModel(other);
-        
-        var channel = new DirectMessageChannel(user, channelDto.Id);
-
-        user.OpenChannel = channel;
-
-        return channel;
+        return channel.WithLastMessage(channelDto.LastMessage, lastMessageIsByCurrentUser);
     }
 
     private async Task ReceivedConnectedUsers(IEnumerable<UserDto> users)
@@ -273,11 +250,9 @@ public class CommunicationManager : ICommunicationManager
 
     private async Task UserConnected(UserDto userDto, bool bulkAdd)
     {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        if (userDto.Id == authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier))
-        {
-            return;
-        }
+        _userId ??= await GetUserIdAsync();
+        
+        if (userDto.Id == _userId) return;
         
         var model = GetOrCreateUserModel(userDto);
         model.Status = UserStatus.Online;
@@ -291,8 +266,9 @@ public class CommunicationManager : ICommunicationManager
 
     private async Task UserDisconnected(UserDto userDto)
     {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        if (userDto.Id == authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier)) return;
+        _userId ??= await GetUserIdAsync();
+        
+        if (userDto.Id == _userId) return;
 
         var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == userDto.Id);
         if (openDirectMessageChannelWithUser is null)
@@ -306,5 +282,11 @@ public class CommunicationManager : ICommunicationManager
 
         StateChanged?.Invoke();
         await StateChangedAsync.TryInvoke();
+    }
+
+    private async ValueTask<string> GetUserIdAsync()
+    {
+        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        return authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
     }
 }

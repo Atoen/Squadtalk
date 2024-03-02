@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Communication;
 using Squadtalk.Data;
+using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;
 
@@ -26,13 +28,22 @@ public class MessageStorageService
     {
         await _dbContext.Messages.AddAsync(message);
 
+        if (message.ChannelId != GroupChat.GlobalChatId)
+        {
+            var channel = await _dbContext.Channels
+                .AsTracking()
+                .FirstOrDefaultAsync(x => x.Id == message.ChannelId);
+            
+            channel?.WithLastMessage(message);
+        }
+        
         try
         {
             await _dbContext.SaveChangesAsync();
         }
         catch (DbUpdateException e)
         {
-            _logger.LogError(e, "Failed to store message with id: {Id}", message.Id);
+            _logger.LogError(e, "1 Failed to store message with id: {Id}", message.Id);
         }
     }
 }

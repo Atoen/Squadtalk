@@ -49,7 +49,7 @@
 
 @code {
     
-    [Parameter]
+    [Parameter, EditorRequired]
     public required FileModel File { get; set; }
 
     private Task RemoveSelectedFile()

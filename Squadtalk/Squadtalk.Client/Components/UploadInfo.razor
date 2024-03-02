@@ -7,7 +7,7 @@
         <UploadQueue />
     }
     
-    @if (CommunicationManager.CurrentChannel.Id != FileTransferService.UploadChannel?.Id)
+    @if (CommunicationManager.CurrentChannel?.Id != FileTransferService.UploadChannel?.Id)
     {
         <div class="mx-1">@FileTransferService.UploadChannel?.Name</div>
     }

@@ -1,0 +1,51 @@
+@page "/Users"
+@using Squadtalk.Client.Layout
+@using Microsoft.AspNetCore.Authorization
+@using Squadtalk.Client.Extensions
+
+@attribute [Authorize]
+@implements IDisposable
+@layout ChatLayout
+
+<PageTitle>Squadtalk | Users</PageTitle>
+
+@foreach (var user in CommunicationManager.Users)
+{
+    <div class="user-card rounded" @onclick="() => OpenChannel(user)">
+        <img alt="@user.Username avatar" src="User.png" class="avatar" />
+        <div class="username">@user.Username</div>
+        <div class="status" style="color: @user.StatusColor()">@user.StatusString()</div>
+    </div>
+}
+
+@inject ICommunicationManager CommunicationManager
+@inject ISignalrService SignalrService
+@inject IChatVisibilityManager ChatVisibilityManager
+
+@code {
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await CommunicationManager.ClearChannelSelectionAsync();
+        await SignalrService.ConnectAsync();
+
+        CommunicationManager.StateChanged += StateHasChanged;
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            return ChatVisibilityManager.UpdateListAsync();
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private Task OpenChannel(UserModel userModel)
+    {
+        return CommunicationManager.OpenOrCreateFakeDirectMessageChannel(userModel);
+    }
+
+    public void Dispose() => CommunicationManager.StateChanged -= StateHasChanged;
+}

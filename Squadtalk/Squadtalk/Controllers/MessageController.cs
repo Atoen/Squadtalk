@@ -59,21 +59,19 @@ public class MessageController : ControllerBase
                 .FirstOrDefault(x => x.Id == userId));
 
     [HttpGet("{channelId}/{timestamp?}")]
-    public async IAsyncEnumerable<MessageDto> GetMessages(string channelId, string? timestamp)
+    public async Task<IActionResult> GetMessages(string channelId, string? timestamp)
     {
         var userId = HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
         var user = await UserWithChannelsByIdAsync(_dbContext, userId);
         if (user is null)
         {
             _logger.LogWarning("Cannot retrieve user data");
-            HttpContext.Response.StatusCode = 500;
-            yield break;
+            return Problem("Cannot retrieve user data");
         }
         
         if (channelId != GroupChat.GlobalChatId && !user.Channels.Exists(x=> x.Id == channelId))
         {
-            HttpContext.Response.StatusCode = 401;
-            yield break;
+            return Unauthorized();
         }
 
         var cursor = CreateCursor(timestamp);
@@ -81,45 +79,25 @@ public class MessageController : ControllerBase
         var messages = cursor == default
             ? MessageFirstPageAsync(_dbContext, channelId)
             : MessagePageByCursorAsync(_dbContext, channelId, cursor);
-        
-        await foreach (var message in messages)
-        {
-            yield return message.ToDto();
-        }
+
+        return Ok(messages);
     }
     
     [HttpPost("createChannel")]
     public async Task<IActionResult> CreateChannel(List<string> participantsId,
-        [FromServices] IHubContext<TextChatHub, ITextChatClient> hubContext,
+        [FromServices] IHubContext<ChatHub, IChatClient> hubContext,
         [FromServices] ChatConnectionManager<UserDto, string> connectionManager)
     {
-        if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
+        var channel = await CreateChannel(participantsId);
+        if (channel is null)
         {
             return BadRequest();
         }
-
-        var participants = await _dbContext.Users
-            .Where(x => participantsId.Contains(x.Id))
-            .ToListAsync();
-
-        if (participants.Count != participantsId.Count)
-        {
-            return BadRequest();
-        }
-
-        var channel = new Channel
-        {
-            Id = Guid.NewGuid().ToString(),
-            Participants = participants
-        };
-
-        await _dbContext.Channels.AddAsync(channel);
-        await _dbContext.SaveChangesAsync();
 
         var dto = new ChannelDto
         {
             Id = channel.Id,
-            Participants = participants.Select(x => x.ToDto()).ToList()
+            Participants = channel.Participants.Select(x => x.ToDto()).ToList()
         };
         
         foreach (var userDto in dto.Participants)
@@ -133,6 +111,34 @@ public class MessageController : ControllerBase
         }
 
         return Ok(dto.Id);
+    }
+
+    private async Task<Channel?> CreateChannel(List<string> participantsId)
+    {
+        if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
+        {
+            return null;
+        }
+
+        var participants = await _dbContext.Users
+            .Where(x => participantsId.Contains(x.Id))
+            .ToListAsync();
+
+        if (participants.Count != participantsId.Count)
+        {
+            return null;
+        }
+
+        var channel = new Channel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Participants = participants,
+        };
+
+        await _dbContext.Channels.AddAsync(channel);
+        await _dbContext.SaveChangesAsync();
+
+        return channel;
     }
     
     private static DateTimeOffset CreateCursor(string? timestamp)

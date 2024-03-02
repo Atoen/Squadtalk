@@ -1,25 +1,25 @@
-.user-card {
+.text-chat {
     height: 75px;
     display: grid;
     justify-content: start;
     align-items: center;
-    flex-shrink: 0;
-    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
     cursor: pointer;
     position: relative;
-    border: 1px solid;
-    margin: 4px 0;
     padding: 5px;
-    max-width: 100%;
     grid-template-rows: auto auto;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: auto auto auto 1fr;
+    margin-right: 20px;
+    margin-top: 12px;
+    background: var(--bs-primary);
+    width: 300px;
+    max-width: calc(100% - 11px);
 }
 
 .avatar {
     width: 50px;
     border: 4px solid;
     border-radius: 50%;
-    margin-right: 5px;
+    margin-right: 0.5em;
     grid-column: 1;
     grid-row: 1 / 3;
 }
@@ -30,13 +30,9 @@
     font-size: 1.2em;
     font-weight: bold;
     max-width: 100%;
-    color: var(--bs-primary);
+    color: white;
     grid-column: 2 / 5;
     grid-row: 1;
-}
-
-.connection-status {
-    align-self: start;
 }
 
 .last-message {
@@ -46,12 +42,38 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-right: 5px;
     align-self: start;
 }
 
 .last-message-time {
-    grid-column: 3;
+    grid-column: 4;
     grid-row: 2;
     align-self: start;
+}
+
+.separator {
+    grid-row: 2;
+    grid-column: 3;
+    align-self: start;
+    padding: 0 2px;
+}
+
+.hide-chat {
+    grid-row: 1/ 3;
+    width: 1.5em;
+    border: none;
+    background: none;
+    grid-column: 5;
+    color: black;
+    transition: color 0.15s, opacity 0.1s;
+    opacity: 0;
+}
+
+.hide-chat:active, .hide-chat:hover {
+    color: var(--bs-danger);
+}
+
+.text-chat:hover .hide-chat,
+.text-chat:active .hide-chat {
+    opacity: 1;
 }

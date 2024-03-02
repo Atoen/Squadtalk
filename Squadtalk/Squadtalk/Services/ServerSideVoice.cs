@@ -15,13 +15,24 @@ public class ServerSideVoice : IVoiceChatService
         return Task.CompletedTask;
     }
 
-    public Task StartStreamAsync<T>(IAsyncEnumerable<T> stream, CancellationToken cancellationToken)
+    public Task StartStreamAsync()
     {
-        return Task.CompletedTask;
+        throw new InvalidOperationException();
     }
 
-    public IAsyncEnumerable<int> GetStream()
+    public Task StopStreamAsync()
     {
-        throw new NotImplementedException();
+        throw new InvalidOperationException();
+    }
+
+    public Task<double> MeasurePingAsync()
+    {
+        throw new InvalidOperationException();
+    }
+
+    public event Action<byte[]>? PacketReceived;
+    public Task StartVoiceCallAsync(List<string> invitedIds)
+    {
+        throw new InvalidOperationException();
     }
 }

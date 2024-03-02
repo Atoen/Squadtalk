@@ -17,14 +17,13 @@ builder.Services.AddSingleton(_ => new RestClient(options =>
 ));
 
 builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
-builder.Services.AddScoped<ISignalrService, SignalRService>();
+builder.Services.AddScoped<ISignalrService, SignalrService>();
 
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IMessageModelService<MessageDto>, MessageModelService<MessageDto>>();
 builder.Services.AddScoped<IMessageModelMapper<MessageDto>, DtoMessageModelMapper>();
-builder.Services.AddScoped<ITabManager, TabManager>();
+builder.Services.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
-builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazorBootstrap();

@@ -1,10 +1,10 @@
-using Shared.DTOs;
+using Squadtalk.Data;
 
 namespace Squadtalk.Services;
 
-public class ConnectionKeyAccessor : IConnectionKeyAccessor<UserDto, string>
+public class ConnectionKeyAccessor : IConnectionKeyAccessor<ApplicationUser, string>
 {
-    public string GetKey(UserDto user)
+    public string GetKey(ApplicationUser user)
     {
         return user.Id;
     }

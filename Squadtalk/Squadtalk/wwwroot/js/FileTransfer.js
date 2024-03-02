@@ -1,5 +1,4 @@
 // noinspection JSUnusedGlobalSymbols
-
 "use strict"
 
 let uploadEndpoint = null;

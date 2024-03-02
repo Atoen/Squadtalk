@@ -1,0 +1,57 @@
+.chat-container {
+    display: grid;
+    grid-template-rows: min-content auto min-content min-content;
+    height: calc(100dvh - 136px);
+    margin-top: 0.5em;
+}
+
+@media (min-width: 641px) {
+    .chat-container {
+        height: calc(100dvh - 80px);
+    }
+}
+
+.message-listbox {
+    grid-row: 2;
+    overflow: auto;
+    background: var(--bs-gray-400);
+}
+
+.header {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+}
+
+.avatar {
+    width: 50px;
+    border-radius: 50%;
+    border: 2px solid black;
+    margin-right: 10px;
+    grid-column: 1;
+}
+
+.channel-name {
+    font-size: 1.2em;
+    grid-column: 2;
+    align-self: center;
+}
+
+.call-icon {
+    width: 50px;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: end;
+    transition: color 0.1s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.call-icon:hover, .call-icon:active {
+    color: var(--bs-primary);
+    transform: scale(1.1) rotate(10deg);
+}
+
+
+
+
+

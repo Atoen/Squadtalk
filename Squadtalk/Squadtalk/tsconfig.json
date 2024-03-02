@@ -4,6 +4,8 @@
     "noImplicitAny": false,
     "noEmitOnError": true,
     "removeComments": false,
+    "alwaysStrict": true,
+    "incremental": true,
     "sourceMap": true,
     "target": "ESNext",
     "outDir": "wwwroot/js"

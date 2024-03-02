@@ -47,7 +47,6 @@
 
 
 @inject IJSRuntime JSRuntime
-@inject ILogger<Simulation> Logger
 @inject ToastService ToastService
 @inject NavigationManager NavigationManager
 
@@ -169,7 +168,7 @@
         };
         
         _jsModule = await JSRuntime
-            .InvokeAsync<IJSObjectReference>("import", "../js/Simulation.js");
+            .InvokeAsync<IJSObjectReference>("import", "../js/Simulation.min.js");
 
         await _jsModule.InvokeVoidAsync("Init");
         await _jsModule.InvokeVoidAsync("SetRules", _rules);

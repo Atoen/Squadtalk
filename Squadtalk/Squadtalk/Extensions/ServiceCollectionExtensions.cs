@@ -4,7 +4,6 @@ using MailKit.Net.Smtp;
 using MessagePack;
 using Microsoft.AspNetCore.Identity;
 using Polly.Registry;
-using Shared.DTOs;
 using Shared.Services;
 using Squadtalk.Client.Services;
 using Squadtalk.Data;
@@ -47,8 +46,9 @@ public static class ServiceCollectionExtensions
         
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
-        serviceCollection.AddSingleton<ChatConnectionManager<UserDto, string>>();
-        serviceCollection.AddSingleton<IConnectionKeyAccessor<UserDto, string>, ConnectionKeyAccessor>();
+        serviceCollection.AddSingleton<ChatConnectionManager<ApplicationUser, string>>();
+        serviceCollection.AddSingleton<IConnectionKeyAccessor<ApplicationUser, string>, ConnectionKeyAccessor>();
+        serviceCollection.AddSingleton<VoiceCallManager>();
         
         serviceCollection.AddScoped<MessageStorageService>();
         serviceCollection.AddScoped<IMessageService, ServersideMessagesService>();
@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ICommunicationManager, CommunicationManager>();
         serviceCollection.AddScoped<ISignalrService, ServersideSignalrService>();
         serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
-        serviceCollection.AddScoped<ITabManager, TabManager>();
+        serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
         
         serviceCollection.AddScoped<EmbedService>();

@@ -5,12 +5,9 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-shrink: 0;
-    margin-bottom: 4px;
     cursor: pointer;
-    position: relative;
-    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
-    border: 1px solid;
+    background: var(--bs-primary);
+    color: white;
 }
 
 svg path {
@@ -29,8 +26,6 @@ svg path {
 }
 
 .communication-tabs {
-    display: flex;
-    flex-direction: column;
     overflow-y: auto;
     max-width: 100%;
 }

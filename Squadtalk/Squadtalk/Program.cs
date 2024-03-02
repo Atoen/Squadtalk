@@ -20,10 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Loopback, 1235, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
+    options.Listen(IPAddress.Loopback, 1235);
 });
 
 // Add services to the container.
@@ -115,19 +112,17 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Messages).Assembly);
+    .AddAdditionalAssemblies(typeof(Chat).Assembly);
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
 app.MapControllers();
 
-app.MapHub<TextChatHub>("/chathub", options =>
+app.MapHub<ChatHub>("/chathub", options =>
 {
     options.AllowStatefulReconnects = true;
 });
-
-app.MapHub<VoiceChatHub>("/voicehub");
 
 app.MapTus("/Upload", TusConfigurationFactory.GetConfiguration);
 

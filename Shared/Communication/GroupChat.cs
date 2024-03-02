@@ -6,12 +6,7 @@ public class GroupChat(string id) : TextChannel(id)
 {
     public const string GlobalChatId = "global";
 
-    public static readonly GroupChat GlobalChat = new(GlobalChatId)
-    {
-        _name = "Global",
-        Others = [],
-        Selected = true
-    };
+    public static readonly GroupChat GlobalChat = new(GlobalChatId) { _name = "Global", Others = [] };
 
     private string? _name;
 

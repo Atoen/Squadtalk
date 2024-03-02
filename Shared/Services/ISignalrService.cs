@@ -31,4 +31,6 @@ public interface ISignalrService : IAsyncDisposable
     Task ConnectAsync();
     
     Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken = default);
+
+    Task StartVoiceCallAsync(List<string> invitedIds);
 }

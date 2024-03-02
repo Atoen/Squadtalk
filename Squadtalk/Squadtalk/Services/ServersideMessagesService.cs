@@ -70,6 +70,11 @@ public class ServersideMessagesService : IMessageService
         return _modelService.CreateModelPage(messages, state);
     }
 
+    public Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+    {
+        throw new InvalidOperationException();
+    }
+
     private async Task<List<Message>> GetMessages(DateTimeOffset cursor, string channelId, CancellationToken cancellationToken)
     {
         return cursor == default

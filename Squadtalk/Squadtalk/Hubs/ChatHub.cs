@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
@@ -12,22 +13,40 @@ using Squadtalk.Services;
 namespace Squadtalk.Hubs;
 
 [Authorize]
-public class TextChatHub : Hub<ITextChatClient>
+public partial class ChatHub : Hub<IChatClient>
 {
-    private readonly ChatConnectionManager<UserDto, string> _connectionManager;
-    private readonly ILogger<TextChatHub> _logger;
+    private readonly ChatConnectionManager<ApplicationUser, string> _connectionManager;
+    private readonly ILogger<ChatHub> _logger;
     private readonly ApplicationDbContext _dbContext;
+    private readonly VoiceCallManager _voiceCallManager;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public TextChatHub(ChatConnectionManager<UserDto, string> connectionManager, ILogger<TextChatHub> logger, ApplicationDbContext dbContext)
+    public ChatHub(ChatConnectionManager<ApplicationUser, string> connectionManager,
+        ILogger<ChatHub> logger,
+        ApplicationDbContext dbContext,
+        VoiceCallManager voiceCallManager,
+        UserManager<ApplicationUser> userManager)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _dbContext = dbContext;
+        _voiceCallManager = voiceCallManager;
+        _userManager = userManager;
     }
 
-    private async Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal? principal, [CallerMemberName] string? callerMemberName = null)
+    private IVoiceChatClient VoiceClient(string connectionId) => Clients.Client(connectionId);
+    private ITextChatClient TextClient(string connectionId) => Clients.Client(connectionId);
+    
+    private IVoiceChatClient VoiceGroup(string groupName) => Clients.Group(groupName);
+    private ITextChatClient TextGroup(string groupName) => Clients.Group(groupName);
+    
+    private IVoiceChatClient VoiceCaller => Clients.Caller;
+    private ITextChatClient TextCaller => Clients.Caller;
+    
+    private async Task<ApplicationUser?> GetUserWithChannelsAsync(ClaimsPrincipal? principal, [CallerMemberName] string? 
+        callerMemberName = null)
     {
-        if (principal is not {Identity.IsAuthenticated: true })
+        if (principal is not { Identity.IsAuthenticated: true })
         {
             _logger.LogWarning("{Method}: Unable to get user data", callerMemberName);
             return null;
@@ -69,7 +88,7 @@ public class TextChatHub : Hub<ITextChatClient>
 
     public async Task SendMessage(string messageContent, string channelId, MessageStorageService messageStorageService)
     {
-        var user = await GetUserAsync(Context.User);
+        var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
 
         if (channelId != GroupChat.GlobalChatId && !CheckIfUserParticipatesInChannel(user, channelId))
@@ -86,12 +105,12 @@ public class TextChatHub : Hub<ITextChatClient>
 
     public override async Task OnConnectedAsync()
     {
-        var user = await GetUserAsync(Context.User);
+        var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
 
         var dto = user.ToDto();
 
-        var isUniqueConnection = await _connectionManager.Add(dto, Context.ConnectionId);
+        var isUniqueConnection = await _connectionManager.Add(user, Context.ConnectionId);
 
         if (isUniqueConnection)
         {
@@ -103,7 +122,7 @@ public class TextChatHub : Hub<ITextChatClient>
         var channelDtos = user.Channels.Select(x => x.ToDto()).ToList();
         
         await Clients.Caller.GetChannels(channelDtos);
-        await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers);
+        await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList());
 
         if (user.Channels is not { Count: > 0 })
         {
@@ -115,12 +134,12 @@ public class TextChatHub : Hub<ITextChatClient>
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = await GetUserAsync(Context.User);
+        var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
         
         var dto = user.ToDto();
         
-        var allConnectionsClosed = await _connectionManager.Remove(dto, Context.ConnectionId);
+        var allConnectionsClosed = await _connectionManager.Remove(user, Context.ConnectionId);
         if (!allConnectionsClosed) return;
 
         await Clients.Group(GroupChat.GlobalChatId).UserDisconnected(dto);

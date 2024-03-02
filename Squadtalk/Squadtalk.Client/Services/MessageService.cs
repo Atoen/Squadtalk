@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using RestSharp;
+using Shared.Communication;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
+using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
@@ -16,6 +18,8 @@ public class MessageService : IMessageService
     private readonly IMessageModelService<MessageDto> _modelService;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly ICommunicationManager _communicationManager;
+    
+    private string? _userId;
     
     public event Func<string, Task>? MessageReceived;
     
@@ -39,8 +43,6 @@ public class MessageService : IMessageService
 
     private async Task HandleIncomingMessage(MessageDto messageDto)
     {
-        _logger.LogInformation("{Author}: {Content}", messageDto.Author.Username, messageDto.Content);
-        
         var channel = _communicationManager.GetChannel(messageDto.ChannelId);
         if (channel is null)
         {
@@ -48,19 +50,9 @@ public class MessageService : IMessageService
             return;
         }
 
-        var state = channel.State;
-
-        if (_communicationManager.CurrentChannel != channel)
-        {
-            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-            var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
-
-            if (messageDto.Author.Id != id)
-            {
-                state.UnreadMessages++;
-            }
-        }
+        await UpdateChannelMessageState(channel, messageDto);
         
+        var state = channel.State;
         var message = _modelService.CreateModel(messageDto, state, false);
 
         state.Messages.Add(message);
@@ -72,6 +64,36 @@ public class MessageService : IMessageService
         }
 
         await MessageReceived.TryInvoke(messageDto.ChannelId);
+    }
+
+    public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
+    {
+        if (_communicationManager.CurrentChannel is not { Id: { } id })
+        {
+            return;
+        }
+
+        await _signalrService.SendMessageAsync(message, id, cancellationToken);
+
+        _communicationManager.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
+    }
+
+    private async Task UpdateChannelMessageState(TextChannel textChannel, MessageDto messageDto)
+    {
+        if (_userId is null)
+        {
+            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            _userId = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        }
+
+        var messageByCurrentUser = messageDto.Author.Id == _userId;
+
+        if (_communicationManager.CurrentChannel != textChannel && !messageByCurrentUser)
+        {
+            textChannel.State.UnreadMessages++;
+        }
+
+        textChannel.SetLastMessage(messageDto, messageByCurrentUser);
     }
     
     public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)

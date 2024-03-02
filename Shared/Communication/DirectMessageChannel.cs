@@ -11,10 +11,4 @@ public class DirectMessageChannel(UserModel other, string id) : TextChannel(id)
     public UserModel Other { get; } = other;
 
     public override string Name => Other.Username;
-
-    public override bool Selected
-    {
-        get => Other.Selected;
-        set => Other.Selected = value;
-    }
 }

@@ -33,5 +33,10 @@ public sealed class ServersideSignalrService : ISignalrService
         throw new InvalidOperationException();
     }
 
+    public Task StartVoiceCallAsync(List<string> invitedIds)
+    {
+        throw new InvalidOperationException();
+    }
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
