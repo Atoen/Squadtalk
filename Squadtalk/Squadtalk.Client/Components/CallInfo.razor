@@ -1,0 +1,36 @@
+@using Shared.DTOs
+<div class="info rounded">
+    <div class="grid">
+
+        @* <div class="call-user"> *@
+        @*     <img src="User.png" alt="avatar" class="avatar" /> *@
+        @*     <div class="call-username">@Model.Initiator.Username</div> *@
+        @* </div> *@
+
+        <div class="invited">
+            @foreach (var user in Model.Connected)
+            {
+                <div class="connecting">
+                    <div class="call-user">
+                        <img src="User.png" alt="avatar" class="avatar" />
+                        <div class="call-username">@user.Username</div>
+                    </div>
+                    
+                    @* @if (!Model.Connected.Contains(user)) *@
+                    @* { *@
+                    @*     <div class="spinner"> *@
+                    @*         <Spinner Type="SpinnerType.Dots" Color="SpinnerColor.Primary"/> *@
+                    @*     </div> *@
+                    @* } *@
+                </div>
+            }
+        </div>
+        
+    </div>
+</div>
+
+@code { 
+    
+    [Parameter, EditorRequired] public required VoiceCallModel Model { get; set; }
+
+}

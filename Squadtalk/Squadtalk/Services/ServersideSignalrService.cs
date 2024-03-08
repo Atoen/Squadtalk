@@ -1,3 +1,4 @@
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Services;
@@ -15,6 +16,33 @@ public sealed class ServersideSignalrService : ISignalrService
     public event Func<string, Task>? ConnectionStatusChanged;
     public event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
     public event Func<ChannelDto, Task>? AddedToTextChannel;
+    
+    public event Func<UserDto, CallOfferId, Task>? IncomingCall;
+    public event Func<CallOfferId, Task>? CallAccepted;
+    public event Func<CallOfferId, Task>? CallDeclined;
+    public event Func<CallId, Task>? CallEnded;
+    public event Func<string, Task>? CallFailed;
+    public event Func<List<UserDto>, CallId, Task>? GetCallUsers;
+    
+    public Task<CallOfferId?> StartVoiceCallAsync(UserId id)
+    {
+        throw new InvalidOperationException();
+    }
+
+    public Task EndCallAsync(CallId id)
+    {
+        throw new InvalidOperationException();
+    }
+
+    public Task AcceptCallAsync(CallOfferId id)
+    {
+        throw new InvalidOperationException();
+    }
+
+    public Task DeclineCallAsync(CallOfferId id)
+    {
+        throw new InvalidOperationException();
+    }
 
 #pragma warning restore CS0067
     
@@ -29,11 +57,6 @@ public sealed class ServersideSignalrService : ISignalrService
     }
 
     public Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken = default)
-    {
-        throw new InvalidOperationException();
-    }
-
-    public Task StartVoiceCallAsync(List<string> invitedIds)
     {
         throw new InvalidOperationException();
     }

@@ -1,14 +1,19 @@
+using Shared.Data;
 using Shared.DTOs;
 
 namespace Squadtalk.Hubs;
 
 public interface IVoiceChatClient
 {
-    Task CallOfferIncoming(VoiceCallDto voiceCallDto);
+    Task IncomingCall(UserDto caller, CallOfferId id);
 
-    Task UserJoinedCall(UserDto userDto, string callId);
+    Task CallAccepted(CallOfferId id);
 
-    Task CallFailed(string? reason);
+    Task CallDeclined(CallOfferId id);
     
-    Task ReceivePacket(VoicePacketDto voicePacketDto);
+    Task CallEnded(CallId id);
+
+    Task CallFailed(string reason);
+
+    Task GetCallUsers(List<UserDto> users, CallId id);
 }

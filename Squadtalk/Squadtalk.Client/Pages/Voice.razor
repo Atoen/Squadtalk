@@ -1,63 +1,63 @@
-@page "/Voice"
-@using Microsoft.AspNetCore.Authorization
-
-<h3>Voice</h3>
-
-@attribute [Authorize]
-@implements IDisposable
-
-<Button @onclick="ToggleStream" Color="ButtonColor.Primary">@_buttonText</Button>
-
-<p>Ping @(_pingMs.ToString("f0")) ms</p>
-
-
-@inject IVoiceChatService VoiceChatService
-
-@code {
-    
-    private const string Start = "Start";
-    private const string Stop = "Stop";
-
-    private double _pingMs;
-    
-    private string _buttonText = Start;
-    private bool _streaming;
-
-    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(500));
-    
-    protected override Task OnInitializedAsync()
-    {
-        return VoiceChatService.ConnectAsync();
-    }
-
-    private async Task MeasurePingAsync()
-    {
-        while (await _periodicTimer.WaitForNextTickAsync())
-        {
-            if (!_streaming) break;
-            
-            _pingMs = await VoiceChatService.MeasurePingAsync();
-            StateHasChanged();
-        }
-    }
-
-    private Task ToggleStream()
-    {
-        _streaming = !_streaming;
-        _ = MeasurePingAsync();
-        
-        if (_streaming)
-        {
-            _buttonText = Stop;
-            return VoiceChatService.StartStreamAsync();
-        }
-
-        _buttonText = Start;
-        return VoiceChatService.StopStreamAsync();
-    }
-
-    public void Dispose()
-    {
-        _periodicTimer.Dispose();
-    }
-}
+@* @page "/Voice" *@
+@* @using Microsoft.AspNetCore.Authorization *@
+@* *@
+@* <h3>Voice</h3> *@
+@* *@
+@* @attribute [Authorize] *@
+@* @implements IDisposable *@
+@* *@
+@* <Button @onclick="ToggleStream" Color="ButtonColor.Primary">@_buttonText</Button> *@
+@* *@
+@* <p>Ping @(_pingMs.ToString("f0")) ms</p> *@
+@* *@
+@* *@
+@* @inject IVoiceChatService VoiceChatService *@
+@* *@
+@* @code { *@
+@*      *@
+@*     private const string Start = "Start"; *@
+@*     private const string Stop = "Stop"; *@
+@* *@
+@*     private double _pingMs; *@
+@*      *@
+@*     private string _buttonText = Start; *@
+@*     private bool _streaming; *@
+@* *@
+@*     private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(500)); *@
+@*      *@
+@*     protected override Task OnInitializedAsync() *@
+@*     { *@
+@*         return VoiceChatService.ConnectAsync(); *@
+@*     } *@
+@* *@
+@*     private async Task MeasurePingAsync() *@
+@*     { *@
+@*         while (await _periodicTimer.WaitForNextTickAsync()) *@
+@*         { *@
+@*             if (!_streaming) break; *@
+@*              *@
+@*             _pingMs = await VoiceChatService.MeasurePingAsync(); *@
+@*             StateHasChanged(); *@
+@*         } *@
+@*     } *@
+@* *@
+@*     private Task ToggleStream() *@
+@*     { *@
+@*         _streaming = !_streaming; *@
+@*         _ = MeasurePingAsync(); *@
+@*          *@
+@*         if (_streaming) *@
+@*         { *@
+@*             _buttonText = Stop; *@
+@*             return VoiceChatService.StartStreamAsync(); *@
+@*         } *@
+@* *@
+@*         _buttonText = Start; *@
+@*         return VoiceChatService.StopStreamAsync(); *@
+@*     } *@
+@* *@
+@*     public void Dispose() *@
+@*     { *@
+@*         _periodicTimer.Dispose(); *@
+@*     } *@
+@* } *@

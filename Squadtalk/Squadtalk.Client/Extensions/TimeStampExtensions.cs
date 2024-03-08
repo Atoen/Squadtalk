@@ -1,40 +1,41 @@
+using System.Globalization;
+
 namespace Squadtalk.Client.Extensions;
 
 using static DateFormatMode;
 
 public static class TimeStampExtensions
 {
-    private const string ShortFormat = "HH:mm";
-    private const string DefaultFormat = "HH:mm:ss";
-    private const string LongFormat = "dd-MM-yyyy HH:mm";
-    private const string FullFormat = "dd-MM-yyyy HH:mm:ss";
-    private const string WeekDayFormat = "dddd HH:mm";
-    private const string MonthFormat = "m";
-    private const string YearFormat = "d MMM yyyy";
+    private const string HourMinute = "HH:mm";
+    private const string HourMinuteSecond = "HH:mm:ss";
+    private const string DateHourMinute = "dd-MM-yyyy HH:mm";
+    private const string DateHourMinuteSecond = "dd-MM-yyyy HH:mm:ss";
+    private const string DayHourMinute = "dddd HH:mm";
+    private const string Day = "m";
+    private const string YearDay = "d MMMM yyyy";
     
     public static string ToStringFormat(this DateTimeOffset dateTimeOffset, DateFormatMode formatMode = Default)
     {
         var localTimestamp = dateTimeOffset.ToLocalTime();
         var date = localTimestamp.Date;
         
-        
         return formatMode switch
         {
-            Short => localTimestamp.ToString(ShortFormat),
+            Short => localTimestamp.ToString(HourMinute),
             
-            Default when date == DateTime.Today => $"Today {localTimestamp.ToString(ShortFormat)}",
-            Default when date == DateTime.Today.AddDays(-1) => $"Yesterday {localTimestamp.ToString(ShortFormat)}",
-            Default => localTimestamp.ToString(LongFormat),
+            Default when date == DateTime.Today => $"Today {localTimestamp.ToString(HourMinute)}",
+            Default when date == DateTime.Today.AddDays(-1) => $"Yesterday {localTimestamp.ToString(HourMinute)}",
+            Default => localTimestamp.ToString(DateHourMinute),
             
-            Long when date == DateTime.Today => $"Today {localTimestamp.ToString(DefaultFormat)}",
-            Long when date == DateTime.Today.AddDays(-1) => $"Yesterday {localTimestamp.ToString(DefaultFormat)}",
+            Long when date == DateTime.Today => $"Today {localTimestamp.ToString(HourMinuteSecond)}",
+            Long when date == DateTime.Today.AddDays(-1) => $"Yesterday {localTimestamp.ToString(HourMinuteSecond)}",
             
-            ChannelStatus when date == DateTime.Today => localTimestamp.ToString(ShortFormat),
-            ChannelStatus when DateTime.Today - date < TimeSpan.FromDays(7) => localTimestamp.ToString(WeekDayFormat),
-            ChannelStatus when date.Year == DateTime.Today.Year => localTimestamp.ToString(MonthFormat),
-            ChannelStatus => localTimestamp.ToString(YearFormat),
+            ChannelStatus when date == DateTime.Today => localTimestamp.ToString(HourMinute),
+            ChannelStatus when DateTime.Today - date < TimeSpan.FromDays(7) => localTimestamp.ToString(DayHourMinute, CultureInfo.InvariantCulture),
+            ChannelStatus when date.Year == DateTime.Today.Year => localTimestamp.ToString(Day, CultureInfo.InvariantCulture),
+            ChannelStatus => localTimestamp.ToString(YearDay, CultureInfo.InvariantCulture),
             
-            _ => localTimestamp.ToString(FullFormat)
+            _ => localTimestamp.ToString(DateHourMinuteSecond)
         };
     }
 }

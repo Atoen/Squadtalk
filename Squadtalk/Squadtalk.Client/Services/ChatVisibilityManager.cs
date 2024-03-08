@@ -6,7 +6,7 @@ namespace Squadtalk.Client.Services;
 
 public class ChatVisibilityManager : IChatVisibilityManager
 {
-    private readonly ICommunicationManager _communicationManager;
+    private readonly ITextChatService _textChatService;
     private readonly ILocalStorageService _localStorageService;
     private readonly IMessageService _messageService;
     
@@ -21,15 +21,15 @@ public class ChatVisibilityManager : IChatVisibilityManager
 
     private bool _initialized;
 
-    public ChatVisibilityManager(ICommunicationManager communicationManager,
+    public ChatVisibilityManager(ITextChatService textChatService,
         ILocalStorageService localStorageService, IMessageService messageService)
     {
-        _communicationManager = communicationManager;
+        _textChatService = textChatService;
         _localStorageService = localStorageService;
         _messageService = messageService;
 
         _messageService.MessageReceived += MessageReceived;
-        _communicationManager.StateChangedAsync += UpdateListAsync;
+        _textChatService.StateChangedAsync += UpdateListAsync;
     }
 
     public async Task UpdateListAsync()
@@ -39,7 +39,7 @@ public class ChatVisibilityManager : IChatVisibilityManager
             await Initialize();
         }
         
-        var updatedChannels = _communicationManager.AllChannels.Where(x => !_hiddenChannels.Contains(x.Id));
+        var updatedChannels = _textChatService.AllChannels.Where(x => !_hiddenChannels.Contains(x.Id));
         _visibleChannels.Clear();
         _visibleChannels.AddRange(updatedChannels);
         

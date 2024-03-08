@@ -37,7 +37,6 @@
 
   <ItemGroup>
     <Compile Remove="Extensions\MessageExtensions.cs" />
-    <Compile Remove="Services\VoiceChatService.cs" />
   </ItemGroup>
 
 </Project>

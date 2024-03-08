@@ -2,15 +2,15 @@ using Shared.Models;
 
 namespace Shared.Communication;
 
-public class GroupChat(string id) : TextChannel(id)
+public class GroupChat(string id, IEnumerable<UserModel> others) : TextChannel(id)
 {
     public const string GlobalChatId = "global";
 
-    public static readonly GroupChat GlobalChat = new(GlobalChatId) { _name = "Global", Others = [] };
+    public static readonly GroupChat GlobalChat = new(GlobalChatId, []) { _name = "Global"};
 
     private string? _name;
 
-    public required List<UserModel> Others { get; init; }
+    public List<UserModel> Others { get; } = others.ToList();
 
     public override string Name => _name ??= string.Join(", ", Others.Select(x => x.Username));
 }

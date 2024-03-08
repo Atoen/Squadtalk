@@ -3,7 +3,7 @@ using Shared.Models;
 
 namespace Shared.Services;
 
-public interface ICommunicationManager
+public interface ITextChatService
 {
     TextChannel? GetChannel(string channelId);
     

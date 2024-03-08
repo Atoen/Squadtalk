@@ -5,7 +5,7 @@
 @using Shared.Models
 @using Shared.Services
 
-@if (CommunicationManager.CurrentChannel is {State.ReachedEnd: true} channel)
+@if (TextChatService.CurrentChannel is {State.ReachedEnd: true} channel)
 {
     var preposition = channel is GroupChat ? "in" : "with";
     <div>No more messages @preposition @channel.Name</div>
@@ -19,9 +19,9 @@
 @* ReSharper disable once CSharpWarnings::CS8974 *@
 @RenderLastElement
 
-@if (CommunicationManager.CurrentChannelState is not null && ItemTemplate is not null)
+@if (TextChatService.CurrentChannelState is not null && ItemTemplate is not null)
 {
-    foreach (var item in CommunicationManager.CurrentChannelState.Messages)
+    foreach (var item in TextChatService.CurrentChannelState.Messages)
     {
         @ItemTemplate(item)
     }
@@ -30,7 +30,7 @@
 @implements IAsyncDisposable
 
 @inject IJSRuntime JsRuntime
-@inject ICommunicationManager CommunicationManager
+@inject ITextChatService TextChatService
 @inject IMessageService MessageService
 @inject ILogger<InfiniteScrolling> Logger
 
@@ -56,7 +56,7 @@
     protected override void OnInitialized()
     {
         MessageService.MessageReceived += UpdateOnMessage;
-        CommunicationManager.ChannelChangedAsync += ChannelChangedAsync;
+        TextChatService.ChannelChangedAsync += ChannelChangedAsync;
     }
 
     private async Task ChannelChangedAsync()
@@ -69,7 +69,7 @@
 
     private Task UpdateOnMessage(string channelId)
     {
-        if (channelId != CommunicationManager.CurrentChannel?.Id)
+        if (channelId != TextChatService.CurrentChannel?.Id)
         {
             return Task.CompletedTask;
         }
@@ -82,7 +82,7 @@
     public async Task LoadMoreItems()
     {
         if (_loading) return;
-        if (CommunicationManager.CurrentChannel is not { } channel) return;
+        if (TextChatService.CurrentChannel is not { } channel) return;
         
         _loading = true;
         
@@ -152,13 +152,13 @@
         _currentComponentReference?.Dispose();
 
         MessageService.MessageReceived -= UpdateOnMessage;
-        CommunicationManager.ChannelChangedAsync -= ChannelChangedAsync;
+        TextChatService.ChannelChangedAsync -= ChannelChangedAsync;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
     {
         builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = CommunicationManager.CurrentChannelState is { ReachedEnd: true }
+        var style = TextChatService.CurrentChannelState is { ReachedEnd: true }
             ? "height:0;width:0"
             : "height:1px;width:1px;flex-shrink:0";
         

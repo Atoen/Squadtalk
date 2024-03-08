@@ -14,26 +14,26 @@ public class ServersideMessagesService : IMessageService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly ILogger<ServersideMessagesService> _logger;
-    private readonly ICommunicationManager _communicationManager;
+    private readonly ITextChatService _textChatService;
     private readonly IMessageModelService<Message> _modelService;
 
     public event Func<string, Task>? MessageReceived;
 
     public ServersideMessagesService(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, 
         AuthenticationStateProvider authenticationStateProvider, ILogger<ServersideMessagesService> logger,
-        ICommunicationManager communicationManager, IMessageModelService<Message> modelService)
+        ITextChatService textChatService, IMessageModelService<Message> modelService)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _authenticationStateProvider = authenticationStateProvider;
         _logger = logger;
-        _communicationManager = communicationManager;
+        _textChatService = textChatService;
         _modelService = modelService;
     }
     
     public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)
     {
-        var channel = _communicationManager.GetChannel(channelId);
+        var channel = _textChatService.GetChannel(channelId);
         
         if (channel is null or { State.ReachedEnd: true })
         {

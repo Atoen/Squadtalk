@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Extensions;
 using Squadtalk.Data;
@@ -18,20 +19,20 @@ public partial class ChatHub : Hub<IChatClient>
     private readonly ChatConnectionManager<ApplicationUser, string> _connectionManager;
     private readonly ILogger<ChatHub> _logger;
     private readonly ApplicationDbContext _dbContext;
-    private readonly VoiceCallManager _voiceCallManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly VoiceCallManager _voiceCallManager;
 
     public ChatHub(ChatConnectionManager<ApplicationUser, string> connectionManager,
         ILogger<ChatHub> logger,
         ApplicationDbContext dbContext,
-        VoiceCallManager voiceCallManager,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        VoiceCallManager voiceCallManager)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _dbContext = dbContext;
-        _voiceCallManager = voiceCallManager;
         _userManager = userManager;
+        _voiceCallManager = voiceCallManager;
     }
 
     private IVoiceChatClient VoiceClient(string connectionId) => Clients.Client(connectionId);
@@ -43,8 +44,8 @@ public partial class ChatHub : Hub<IChatClient>
     private IVoiceChatClient VoiceCaller => Clients.Caller;
     private ITextChatClient TextCaller => Clients.Caller;
     
-    private async Task<ApplicationUser?> GetUserWithChannelsAsync(ClaimsPrincipal? principal, [CallerMemberName] string? 
-        callerMemberName = null)
+    private async Task<ApplicationUser?> GetUserWithChannelsAsync(ClaimsPrincipal? principal,
+        [CallerMemberName] string? callerMemberName = null)
     {
         if (principal is not { Identity.IsAuthenticated: true })
         {
@@ -68,7 +69,7 @@ public partial class ChatHub : Hub<IChatClient>
         return user;
     }
 
-    private bool CheckIfUserParticipatesInChannel(ApplicationUser user, string channelId)
+    private bool UserParticipatesInChannel(ApplicationUser user, string channelId)
     {
         return user.Channels.Exists(x => x.Id == channelId);
     }
@@ -79,7 +80,7 @@ public partial class ChatHub : Hub<IChatClient>
         {
             if (isUniqueUserConnection)
             {
-                await Clients.Group(channel.Id).UserConnected(user);
+                await TextGroup(channel.Id).UserConnected(user);
             }
             
             await Groups.AddToGroupAsync(Context.ConnectionId, channel.Id);
@@ -91,7 +92,7 @@ public partial class ChatHub : Hub<IChatClient>
         var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
 
-        if (channelId != GroupChat.GlobalChatId && !CheckIfUserParticipatesInChannel(user, channelId))
+        if (channelId != GroupChat.GlobalChatId && !UserParticipatesInChannel(user, channelId))
         {
             return;
         }
@@ -100,7 +101,7 @@ public partial class ChatHub : Hub<IChatClient>
         await messageStorageService.StoreMessageAsync(message);
 
         var dto = message.ToDto();
-        await Clients.Group(channelId).ReceiveMessage(dto);
+        await TextGroup(channelId).ReceiveMessage(dto);
     }
 
     public override async Task OnConnectedAsync()
@@ -111,18 +112,17 @@ public partial class ChatHub : Hub<IChatClient>
         var dto = user.ToDto();
 
         var isUniqueConnection = await _connectionManager.Add(user, Context.ConnectionId);
-
         if (isUniqueConnection)
         {
-            await Clients.Group(GroupChat.GlobalChatId).UserConnected(dto);
+            await TextGroup(GroupChat.GlobalChatId).UserConnected(dto);
         }
         
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupChat.GlobalChatId);
         
         var channelDtos = user.Channels.Select(x => x.ToDto()).ToList();
         
-        await Clients.Caller.GetChannels(channelDtos);
-        await Clients.Caller.GetConnectedUsers(_connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList());
+        await TextCaller.GetChannels(channelDtos);
+        await TextCaller.GetConnectedUsers(_connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList());
 
         if (user.Channels is not { Count: > 0 })
         {
@@ -137,12 +137,14 @@ public partial class ChatHub : Hub<IChatClient>
         var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
         
+        await EndCall();
+
         var dto = user.ToDto();
         
         var allConnectionsClosed = await _connectionManager.Remove(user, Context.ConnectionId);
         if (!allConnectionsClosed) return;
 
-        await Clients.Group(GroupChat.GlobalChatId).UserDisconnected(dto);
+        await TextGroup(GroupChat.GlobalChatId).UserDisconnected(dto);
         if (user.Channels is not { Count: > 0 })
         {
             return;
@@ -150,7 +152,7 @@ public partial class ChatHub : Hub<IChatClient>
 
         foreach (var channel in user.Channels)
         {
-            await Clients.Group(channel.Id).UserDisconnected(dto);
+            await TextGroup(channel.Id).UserDisconnected(dto);
         }
     }
 }

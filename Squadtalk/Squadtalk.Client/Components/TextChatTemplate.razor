@@ -30,7 +30,7 @@
     </button>
 </div>
 
-@inject ICommunicationManager CommunicationManager
+@inject ITextChatService TextChatService
 @inject IChatVisibilityManager ChatVisibilityManager
 @inject NavigationManager NavigationManager
 
@@ -43,7 +43,7 @@
     
     private string BorderStyle => $"border-color: {User.StatusColor()};";
     
-    private Task OpenChat() => CommunicationManager.OpenChannelAsync(Model);
+    private Task OpenChat() => TextChatService.OpenChannelAsync(Model);
 
     private Task Hide() => HideCallback.InvokeAsync(Model);
 }
