@@ -54,7 +54,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IMessageService, ServersideMessagesService>();
         serviceCollection.AddScoped<IMessageModelService<Message>, MessageModelService<Message>>();
         serviceCollection.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
-        serviceCollection.AddScoped<ICommunicationManager, CommunicationManager>();
+        serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<ISignalrService, ServersideSignalrService>();
         serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
         serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Shared.Data;
 using Squadtalk.Data;
 
 namespace Squadtalk.Hubs;
@@ -9,86 +10,84 @@ public partial class ChatHub
 {
     public bool MeasurePing() => true;
 
-    public async Task StartCall(List<string> invitedIds)
+    public async Task<CallOfferId?> StartCall(UserId id)
     {
-        var result = await CreateVoiceCall(invitedIds);
-        if (result is not { voiceCall: { } call })
+        if (await _userManager.GetUserAsync(Context.User!) is not { } callingUser)
         {
-            _logger.LogError("Error: {Error}", result.error);
-            await VoiceCaller.CallFailed(result.error);
-            return;
+            await VoiceCaller.CallFailed("Failed to create voice call");
+            return null;
         }
 
-        await _voiceCallManager.AddCallAsync(call);
+        var targetUser = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == id.Value);
 
-        var invitedUsersConnectionIds = _voiceCallManager.GetInvitedUsersConnectionIds(call).ToList();
-        
-        _logger.LogInformation("Sending call invitation to {User} ({Connections} connections)", call.Invited[0], 
-            invitedUsersConnectionIds.Count);
-
-        foreach (var connectionId in invitedUsersConnectionIds)
+        if (targetUser is null)
         {
-            await VoiceClient(connectionId).CallOfferIncoming(call.ToDto());
-        }   
+            await VoiceCaller.CallFailed("Unable to call the user");
+            return null;
+        }
+
+        var caller = new VoiceUser(callingUser, (SignalrConnectionId) Context.ConnectionId);
+        var offer = new VoiceCallOffer(caller, targetUser, CallOfferId.New);
+        _voiceCallManager.AddCallOffer(offer);
+
+        var dto = callingUser.ToDto();
+        foreach (var connection in _connectionManager.GetUserConnections(targetUser))
+        {
+            await VoiceClient(connection).IncomingCall(dto, offer.Id);
+        }
+
+        return offer.Id;
     }
 
-    public async Task AcceptCall(string callId)
+    public async Task AcceptCall(CallOfferId id)
     {
-        var user = await _userManager.GetUserAsync(Context.User!);
-        if (user is null)
-        {
-            _logger.LogError("małe oro");
-            return;
-        }
+        if (_voiceCallManager.GetVoiceCallOffer(id) is not { } offer) return;
+        if (await _userManager.GetUserAsync(Context.User!) is not { } acceptingUser) return;
 
-        var call = _voiceCallManager.GetVoiceCall(callId);
-        if (call is null) return;
+        var callee = new VoiceUser(acceptingUser, (SignalrConnectionId) Context.ConnectionId);
+        var call = new VoiceCall { Users = [offer.Caller, callee], Id = new CallId(id.Value) };
 
-        var connectionsInCall = _voiceCallManager.GetConnectionsInVoiceCall(call);
-        
-        var added = await _voiceCallManager.AddUserToCallAsync(user, callId);
-        if (!added) return;
-        
-        foreach (var connection in connectionsInCall)
+        _voiceCallManager.RemoveCallOffer(offer.Id);
+        _voiceCallManager.AddCall(call);
+
+        await VoiceClient(offer.Caller.ConnectionId).CallAccepted(id);
+
+        var callUsers = call.Users.Select(x => x.User.ToDto()).ToList();
+        foreach (var (_, connectionId) in call.Users)
         {
-            await VoiceClient(connection).UserJoinedCall(user.ToDto(), callId);
+            await VoiceClient(connectionId).GetCallUsers(callUsers, call.Id);
+            await Groups.AddToGroupAsync(connectionId, call.GroupName);
         }
+    }
+
+    public async Task DeclineCall(CallOfferId id)
+    {
+        if (_voiceCallManager.GetVoiceCallOffer(id) is not { } offer) return;
+        if (await _userManager.GetUserAsync(Context.User!) is null) return;
+
+        _voiceCallManager.RemoveCallOffer(offer.Id);
+
+        await VoiceClient(offer.Caller.ConnectionId).CallDeclined(id);
     }
     
-    private async Task<(VoiceCall? voiceCall, string? error)> CreateVoiceCall(List<string> invitedIds)
+    public async Task EndCall(CallId? id = null)
     {
-        static (VoiceCall?, string?) Error(string message) => (null, message);
-        static (VoiceCall?, string?) Success(VoiceCall voiceCall) => (voiceCall, null);
-
-        var invitedCount = invitedIds.Count;
-        if (invitedCount < 1 || invitedIds.Distinct().Count() != invitedCount)
+        var call = id is null
+            ? _voiceCallManager.GetCall((SignalrConnectionId) Context.ConnectionId)
+            : _voiceCallManager.GetCall(id);
+        
+        if (call is null) return;
+        if (await _userManager.GetUserAsync(Context.User!) is not { } user) return;
+        
+        _voiceCallManager.RemoveCallOffersFromUser(user);
+        foreach (var (_, connectionId) in call.Users.Where(x => x.ConnectionId != Context.ConnectionId))
         {
-            return Error("Invalid list of invited users");
+            await VoiceClient(connectionId).CallEnded(call.Id);
+            await Groups.RemoveFromGroupAsync(connectionId, call.GroupName);
         }
-
-        var invited = await _dbContext.Users
-            .Where(x => invitedIds.Contains(x.Id))
-            .ToListAsync();
-
-        if (invited.Count != invitedCount)
-        {
-            return Error("Failed to create call");
-        }
-
-        var initiator = await _userManager.GetUserAsync(Context.User!);
-        if (initiator is null)
-        {
-            return Error("Caller is not present in the call");
-        }
-
-        var call = new VoiceCall
-        {
-            Id = Guid.NewGuid().ToString(),
-            Initiator = initiator,
-            Invited = invited,
-            ConnectedUsers = [new VoiceCall.Participant(initiator, Context.ConnectionId)]
-        };
-
-        return Success(call);
+        
+        _voiceCallManager.RemoveCall(call);
     }
 }

@@ -1,6 +1,8 @@
+using System.Runtime.CompilerServices;
 using MessagePack;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Services;
@@ -22,6 +24,13 @@ public sealed class SignalrService : ISignalrService
     public event Func<UserDto, Task>? UserConnected;
     public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
     public event Func<MessageDto, Task>? MessageReceived;
+    
+    public event Func<UserDto, CallOfferId, Task>? IncomingCall;
+    public event Func<CallOfferId, Task>? CallAccepted;
+    public event Func<CallOfferId, Task>? CallDeclined;
+    public event Func<CallId, Task>? CallEnded;
+    public event Func<string, Task>? CallFailed;
+    public event Func<List<UserDto>, CallId, Task>? GetCallUsers;
 
     private bool _connectionStared;
     public bool Connected { get; private set; }
@@ -82,31 +91,30 @@ public sealed class SignalrService : ISignalrService
             _logger.LogError("Failed to connect to chat hub");
         }
     }
-    
-    public Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken)
+
+    Task ISignalrTextService.SendMessageAsync(string message, string channelId, CancellationToken cancellationToken)
     {
-        try
-        {
-            return _connection.SendAsync("SendMessage", message, channelId, cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to send message");
-            return Task.CompletedTask;
-        }
+        return SendAsync("SendMessage", message, channelId, cancellationToken);
     }
 
-    public Task StartVoiceCallAsync(List<string> invitedIds)
+    Task<CallOfferId?> ISignalrVoiceService.StartVoiceCallAsync(UserId id)
     {
-        try
-        {
-            return _connection.SendAsync("StartCall", invitedIds);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to start call");
-            return Task.CompletedTask;
-        }
+        return InvokeAsync<CallOfferId?, UserId>("StartCall", id);
+    }
+    
+    Task ISignalrVoiceService.EndCallAsync(CallId id)
+    {
+        return SendAsync("EndCall", id);
+    }
+
+    Task ISignalrVoiceService.AcceptCallAsync(CallOfferId id)
+    {
+        return SendAsync("AcceptCall", id);
+    }
+
+    Task ISignalrVoiceService.DeclineCallAsync(CallOfferId id)
+    {
+        return SendAsync("DeclineCall", id);
     }
 
     private void RegisterHandlers()
@@ -150,17 +158,67 @@ public sealed class SignalrService : ISignalrService
         _connection.On<UserDto>("UserConnected", user =>
             UserConnected.TryInvoke(user));
         
-        _connection.On<VoiceCallDto>("CallOfferIncoming",
-            async call =>
-            {
-                _logger.LogInformation("Incoming voice call initiated by {User}", call.Initiator.Username);
-                await _connection.InvokeAsync("AcceptCall", call.Id);
-            });
+        
+        _connection.On<UserDto, CallOfferId>("IncomingCall", (caller, offerId) =>
+            IncomingCall.TryInvoke(caller, offerId));
 
-        _connection.On<UserDto, string>("UserJoinedCall", (user, callId) =>
+        _connection.On<CallOfferId>("CallAccepted", offerId =>
+            CallAccepted.TryInvoke(offerId));
+        
+        _connection.On<CallOfferId>("CallDeclined", offerId =>
+            CallDeclined.TryInvoke(offerId));
+        
+        _connection.On<CallId>("CallEnded", callId =>
+            CallEnded.TryInvoke(callId));
+        
+        _connection.On<string>("CallFailed", reason =>
+            CallFailed.TryInvoke(reason));
+
+        _connection.On<List<UserDto>, CallId>("GetCallUsers", (users, callId) =>
+            GetCallUsers.TryInvoke(users, callId));
+    }
+    
+    private async Task<TResult?> InvokeAsync<TResult, TArg>(string methodName, TArg arg,
+        CancellationToken cancellationToken = default,
+        [CallerMemberName] string? callerName = null)
+    {
+        try
         {
-            _logger.LogInformation("User {User} joined the call {Id}", user.Username, callId);
-        });
+            return await _connection.InvokeCoreAsync<TResult>(methodName, [arg], cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
+            return default;
+        }
+    }
+    
+    private Task SendAsync<T>(string methodName, T arg, CancellationToken cancellationToken = default,
+        [CallerMemberName] string? callerName = null)
+    {
+        try
+        {
+            return _connection.SendAsync(methodName, arg, cancellationToken: cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
+            return Task.CompletedTask;
+        }
+    }
+    
+    private Task SendAsync<T1, T2>(string methodName, T1 arg1, T2 arg2, CancellationToken cancellationToken = default, 
+        [CallerMemberName] string? callerName = null)
+    {
+        try
+        {
+            return _connection.SendAsync(methodName, arg1, arg2, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
+            return Task.CompletedTask;
+        }
     }
 
     public ValueTask DisposeAsync()

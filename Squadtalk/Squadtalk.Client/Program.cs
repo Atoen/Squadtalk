@@ -16,7 +16,7 @@ builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress)
 ));
 
-builder.Services.AddScoped<ICommunicationManager, CommunicationManager>();
+builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<ISignalrService, SignalrService>();
 
 builder.Services.AddScoped<IMessageService, MessageService>();
@@ -24,6 +24,7 @@ builder.Services.AddScoped<IMessageModelService<MessageDto>, MessageModelService
 builder.Services.AddScoped<IMessageModelMapper<MessageDto>, DtoMessageModelMapper>();
 builder.Services.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
+builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazorBootstrap();

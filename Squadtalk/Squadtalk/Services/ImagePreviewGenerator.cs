@@ -68,7 +68,7 @@ public class ImagePreviewGenerator
         var previewMetadata = new Dictionary<string, string>
         {
             { FileData.FileName,  previewName},
-            { FileData.FileSize, stream.Position.ToString() },
+            { FileData.FileSize, fileSize.ToString() },
             { FileData.ContentType, "image/png" },
             { FileData.ImageWidth, image.Width.ToString() },
             { FileData.ImageHeight, image.Height.ToString() }

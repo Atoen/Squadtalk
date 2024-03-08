@@ -51,6 +51,22 @@
     transform: scale(1.1) rotate(10deg);
 }
 
+.end-call-icon {
+    width: 50px;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    align-self: end;
+    transition: color 0.1s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.end-call-icon:hover, .end-call-icon:active {
+    color: var(--bs-danger);
+    transform: translate(0, 2px);
+}
+
+
 
 
 

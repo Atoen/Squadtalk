@@ -1,3 +1,5 @@
+using Shared.Data;
+using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Services;
@@ -9,30 +11,28 @@ public class ServerSideVoice : IVoiceChatService
         return ValueTask.CompletedTask;
     }
 
-    public bool Connected { get; }
-    public Task ConnectAsync()
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task StartStreamAsync()
+    public event Action? StateHasChanged;
+    
+    public Task StartCallAsync(UserModel invited)
     {
         throw new InvalidOperationException();
     }
 
-    public Task StopStreamAsync()
+    public Task EndCallAsync(CallId id)
     {
         throw new InvalidOperationException();
     }
 
-    public Task<double> MeasurePingAsync()
+    public Task AcceptCallAsync(CallOfferId id)
     {
         throw new InvalidOperationException();
     }
 
-    public event Action<byte[]>? PacketReceived;
-    public Task StartVoiceCallAsync(List<string> invitedIds)
+    public Task DeclineCallAsync(CallOfferId id)
     {
         throw new InvalidOperationException();
     }
+
+    public VoiceCallModel? CurrentVoiceCall { get; }
+    public event Func<UserModel, CallOfferId, Task>? CallOfferIncoming;
 }

@@ -12,28 +12,27 @@ using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
-public class CommunicationManager : ICommunicationManager
+public class TextChatService : ITextChatService
 {
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly RestClient _restClient;
     private readonly ISignalrService _signalrService;
-    private readonly ILogger<CommunicationManager> _logger;
+    private readonly ILogger<TextChatService> _logger;
     private readonly NavigationManager _navigationManager;
 
     private readonly List<TextChannel> _allChannels = [];
-    private readonly List<UserModel> _users = [];
     private readonly List<GroupChat> _groupChats = [];
     private readonly List<DirectMessageChannel> _directMessageChannels = [];
 
-    public IReadOnlyList<UserModel> Users => _users;
+    public IReadOnlyList<UserModel> Users => UserModel.Models;
     public IReadOnlyList<TextChannel> AllChannels => _allChannels;
     public IReadOnlyList<GroupChat> GroupChats => _groupChats;
     public IReadOnlyList<DirectMessageChannel> DirectMessageChannels => _directMessageChannels;
-    
+
     private string? _userId;
 
-    public CommunicationManager(AuthenticationStateProvider authenticationStateProvider, RestClient restClient,
-        ISignalrService signalrService, ILogger<CommunicationManager> logger, NavigationManager navigationManager)
+    public TextChatService(AuthenticationStateProvider authenticationStateProvider, RestClient restClient,
+        ISignalrService signalrService, ILogger<TextChatService> logger, NavigationManager navigationManager)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _restClient = restClient;
@@ -51,7 +50,7 @@ public class CommunicationManager : ICommunicationManager
     public event Action? StateChanged;
     public event Func<Task>? StateChangedAsync;
     public event Action? ChannelChanged;
-    public event Func<Task>? ChannelChangedAsync; 
+    public event Func<Task>? ChannelChangedAsync;
 
     public TextChannel? CurrentChannel { get; private set; }
 
@@ -74,16 +73,16 @@ public class CommunicationManager : ICommunicationManager
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
         var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
-        
+
         if (id == model.Id) return;
-        
+
         var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == model.Id);
         if (openDirectMessageChannelWithUser is not null)
         {
             await OpenChannelAsync(openDirectMessageChannelWithUser);
             return;
         }
-        
+
         await OpenChannelAsync(DirectMessageChannel.CreateFakeChannel(model));
     }
 
@@ -93,7 +92,7 @@ public class CommunicationManager : ICommunicationManager
         var userId = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
 
         var otherUserId = ((DirectMessageChannel) channel).Other.Id;
-        var participants = new List<string> {userId, otherUserId};
+        var participants = new List<string> { userId, otherUserId };
 
         var channelId = await OpenNewChannel(participants);
 
@@ -102,20 +101,20 @@ public class CommunicationManager : ICommunicationManager
             await ChangeChannelAsync(openedChannel);
         }
     }
-    
+
     private Task ChangeChannelAsync(TextChannel? channel)
     {
         if (CurrentChannel == channel)
         {
             return Task.CompletedTask;
         }
-        
+
         CurrentChannel = channel;
         if (CurrentChannel is not null)
         {
             CurrentChannel.State.UnreadMessages = 0;
         }
-        
+
         ChannelChanged?.Invoke();
         return ChannelChangedAsync.TryInvoke();
     }
@@ -138,29 +137,6 @@ public class CommunicationManager : ICommunicationManager
         }
     }
 
-    private UserModel GetOrCreateUserModel(UserDto userDto)
-    {
-        var existingModel = _users.FirstOrDefault(x => x.Id == userDto.Id);
-
-        if (existingModel is not null)
-        {
-            return existingModel;
-        }
-        
-        var newModel = new UserModel
-        {
-            Username = userDto.Username,
-            Id = userDto.Id,
-            Status = UserStatus.Offline,
-            Color = "black",
-            AvatarUrl = "user.png"
-        };
-        
-        _users.Add(newModel);
-
-        return newModel;
-    }
-
     private async Task AddedToTextChannel(ChannelDto dto)
     {
         await AddChannel(dto, false);
@@ -171,24 +147,24 @@ public class CommunicationManager : ICommunicationManager
     {
         foreach (var channelDto in dtos)
         {
-             await AddChannel(channelDto, true);
+            await AddChannel(channelDto, true);
         }
 
         StateChanged?.Invoke();
         await StateChangedAsync.TryInvoke();
     }
-    
+
     private async Task AddChannel(ChannelDto channelDto, bool bulk)
     {
         if (_allChannels.Exists(x => x.Id == channelDto.Id)) return;
         _userId ??= await GetUserIdAsync();
-        
+
         var model = CreateChannelModel(channelDto, _userId);
         if (!bulk)
         {
             model.State.ReachedEnd = true;
         }
-        
+
         _allChannels.Add(model);
 
         if (model is GroupChat groupChat)
@@ -217,21 +193,24 @@ public class CommunicationManager : ICommunicationManager
         {
             return ChangeChannelAsync(openedDirectMessageChannel);
         }
-        
+
         return Task.CompletedTask;
     }
-    
+
     private TextChannel CreateChannelModel(ChannelDto channelDto, string userId)
     {
         var lastMessageIsByCurrentUser = channelDto.LastMessage?.Author.Id == userId;
-        
+
         _logger.LogInformation("Creating model");
 
-        var others = channelDto.Participants.Where(x => x.Id != userId).ToList();
-        
-        TextChannel channel = others.Count > 1
-            ? new GroupChat(channelDto.Id) { Others = others.Select(GetOrCreateUserModel).ToList() }
-            : new DirectMessageChannel(GetOrCreateUserModel(others[0]), channelDto.Id);
+        var othersInChannel = channelDto.Participants.Where(x => x.Id != userId).ToList();
+
+        TextChannel channel = othersInChannel switch
+        {
+            [var other] => new DirectMessageChannel(UserModel.GetOrCreate(other), channelDto.Id),
+            { Count: > 1 } => new GroupChat(channelDto.Id, othersInChannel.Select(UserModel.GetOrCreate)),
+            _ => throw new InvalidOperationException()
+        };
 
         return channel.WithLastMessage(channelDto.LastMessage, lastMessageIsByCurrentUser);
     }
@@ -251,10 +230,10 @@ public class CommunicationManager : ICommunicationManager
     private async Task UserConnected(UserDto userDto, bool bulkAdd)
     {
         _userId ??= await GetUserIdAsync();
-        
+
         if (userDto.Id == _userId) return;
-        
-        var model = GetOrCreateUserModel(userDto);
+
+        var model = UserModel.GetOrCreate(userDto);
         model.Status = UserStatus.Online;
 
         if (!bulkAdd)
@@ -267,17 +246,17 @@ public class CommunicationManager : ICommunicationManager
     private async Task UserDisconnected(UserDto userDto)
     {
         _userId ??= await GetUserIdAsync();
-        
+
         if (userDto.Id == _userId) return;
 
         var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == userDto.Id);
         if (openDirectMessageChannelWithUser is null)
         {
-            _users.RemoveAll(x => x.Id == userDto.Id);
+            UserModel.Models.RemoveAll(x => x.Id == userDto.Id);
         }
         else
         {
-            _users.First(x => x.Id == userDto.Id).Status = UserStatus.Offline;
+            UserModel.Models.First(x => x.Id == userDto.Id).Status = UserStatus.Offline;
         }
 
         StateChanged?.Invoke();

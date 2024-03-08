@@ -62,15 +62,4 @@ public static class Mappers
             Data = embed.Data
         };
     }
-
-    public static VoiceCallDto ToDto(this VoiceCall voiceCall)
-    {
-        return new VoiceCallDto
-        {
-            Id = voiceCall.Id,
-            Initiator = voiceCall.Initiator.ToDto(),
-            Invited = voiceCall.Invited.Select(x => x.ToDto()).ToList(),
-            ConnectedIds = voiceCall.ConnectedUsers.Select(x => x.User.ToDto().Id).ToList()
-        };
-    }
 }

@@ -6,7 +6,6 @@ using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
-using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
@@ -17,21 +16,21 @@ public class MessageService : IMessageService
     private readonly ISignalrService _signalrService;
     private readonly IMessageModelService<MessageDto> _modelService;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly ICommunicationManager _communicationManager;
+    private readonly ITextChatService _textChatService;
     
     private string? _userId;
     
     public event Func<string, Task>? MessageReceived;
     
     public MessageService(
-        ICommunicationManager communicationManager,
+        ITextChatService textChatService,
         RestClient restClient,
         ISignalrService signalrService,
         IMessageModelService<MessageDto> modelService,
         AuthenticationStateProvider authenticationStateProvider,
         ILogger<MessageService> logger)
     {
-        _communicationManager = communicationManager;
+        _textChatService = textChatService;
         _restClient = restClient;
         _signalrService = signalrService;
         _modelService = modelService;
@@ -43,7 +42,7 @@ public class MessageService : IMessageService
 
     private async Task HandleIncomingMessage(MessageDto messageDto)
     {
-        var channel = _communicationManager.GetChannel(messageDto.ChannelId);
+        var channel = _textChatService.GetChannel(messageDto.ChannelId);
         if (channel is null)
         {
             _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
@@ -68,14 +67,14 @@ public class MessageService : IMessageService
 
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (_communicationManager.CurrentChannel is not { Id: { } id })
+        if (_textChatService.CurrentChannel is not { Id: { } id })
         {
             return;
         }
 
         await _signalrService.SendMessageAsync(message, id, cancellationToken);
 
-        _communicationManager.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
+        _textChatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
     }
 
     private async Task UpdateChannelMessageState(TextChannel textChannel, MessageDto messageDto)
@@ -88,7 +87,7 @@ public class MessageService : IMessageService
 
         var messageByCurrentUser = messageDto.Author.Id == _userId;
 
-        if (_communicationManager.CurrentChannel != textChannel && !messageByCurrentUser)
+        if (_textChatService.CurrentChannel != textChannel && !messageByCurrentUser)
         {
             textChannel.State.UnreadMessages++;
         }
@@ -98,7 +97,7 @@ public class MessageService : IMessageService
     
     public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)
     {
-        var channel = _communicationManager.GetChannel(channelId);
+        var channel = _textChatService.GetChannel(channelId);
 
         if (channel is null or { State.ReachedEnd: true })
         {
