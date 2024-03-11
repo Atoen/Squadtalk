@@ -31,6 +31,7 @@ public sealed class SignalrService : ISignalrService
     public event Func<CallId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
     public event Func<List<UserDto>, CallId, Task>? GetCallUsers;
+    public event Func<VoicePacketDto, Task>? GetVoicePacket;
 
     private bool _connectionStared;
     public bool Connected { get; private set; }
@@ -116,6 +117,11 @@ public sealed class SignalrService : ISignalrService
     {
         return SendAsync("DeclineCall", id);
     }
+    
+    Task ISignalrVoiceService.StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken)
+    {
+        return SendAsync("StartStream", callId, stream, cancellationToken);
+    }
 
     private void RegisterHandlers()
     {
@@ -176,6 +182,9 @@ public sealed class SignalrService : ISignalrService
 
         _connection.On<List<UserDto>, CallId>("GetCallUsers", (users, callId) =>
             GetCallUsers.TryInvoke(users, callId));
+
+        _connection.On<VoicePacketDto>("GetVoicePacket", packet => 
+            GetVoicePacket.TryInvoke(packet));
     }
     
     private async Task<TResult?> InvokeAsync<TResult, TArg>(string methodName, TArg arg,

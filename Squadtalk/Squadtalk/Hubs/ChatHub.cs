@@ -39,8 +39,8 @@ public partial class ChatHub : Hub<IChatClient>
     private ITextChatClient TextClient(string connectionId) => Clients.Client(connectionId);
     
     private IVoiceChatClient VoiceGroup(string groupName) => Clients.Group(groupName);
+    private IVoiceChatClient OtherInVoiceGroup(string groupName) => Clients.OthersInGroup(groupName);
     private ITextChatClient TextGroup(string groupName) => Clients.Group(groupName);
-    
     private IVoiceChatClient VoiceCaller => Clients.Caller;
     private ITextChatClient TextCaller => Clients.Caller;
     

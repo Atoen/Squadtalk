@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Shared.Data;
+using Shared.DTOs;
 using Squadtalk.Data;
 
 namespace Squadtalk.Hubs;
@@ -82,12 +83,41 @@ public partial class ChatHub
         if (await _userManager.GetUserAsync(Context.User!) is not { } user) return;
         
         _voiceCallManager.RemoveCallOffersFromUser(user);
-        foreach (var (_, connectionId) in call.Users.Where(x => x.ConnectionId != Context.ConnectionId))
+        foreach (var (_, connectionId) in call.Users.Where(x => x.ConnectionId.Value != Context.ConnectionId))
         {
             await VoiceClient(connectionId).CallEnded(call.Id);
             await Groups.RemoveFromGroupAsync(connectionId, call.GroupName);
         }
         
         _voiceCallManager.RemoveCall(call);
+    }
+
+    public async Task StartStream(CallId id, IAsyncEnumerable<byte[]> stream)
+    {
+        if (_voiceCallManager.GetCall(id) is not { } call) return;
+        if (await _userManager.GetUserAsync(Context.User!) is not { } user) return;
+
+        _logger.LogInformation("Stream started from {User}", user.UserName);
+
+        var userId = new UserId(user.Id);
+
+        try
+        {
+            await foreach (var packet in stream)
+            {
+                if (call.Users.Count < 2)
+                {
+                    _logger.LogInformation("Stream ended");
+                    return;
+                }
+
+                await OtherInVoiceGroup(call.GroupName)
+                    .GetVoicePacket(new VoicePacketDto(userId, packet));
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Stream ended");
+        }
     }
 }

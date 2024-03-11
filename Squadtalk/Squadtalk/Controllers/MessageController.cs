@@ -86,7 +86,7 @@ public class MessageController : ControllerBase
     [HttpPost("createChannel")]
     public async Task<IActionResult> CreateChannel(List<string> participantsId,
         [FromServices] IHubContext<ChatHub, IChatClient> hubContext,
-        [FromServices] ChatConnectionManager<UserDto, string> connectionManager)
+        [FromServices] ChatConnectionManager<ApplicationUser, string> connectionManager)
     {
         var channel = await CreateChannel(participantsId);
         if (channel is null)
@@ -100,9 +100,9 @@ public class MessageController : ControllerBase
             Participants = channel.Participants.Select(x => x.ToDto()).ToList()
         };
         
-        foreach (var userDto in dto.Participants)
+        foreach (var user in channel.Participants)
         {
-            var userConnections = connectionManager.GetUserConnections(userDto);
+            var userConnections = connectionManager.GetUserConnections(user);
             foreach (var connection in userConnections)
             {
                 await hubContext.Groups.AddToGroupAsync(connection, channel.Id);

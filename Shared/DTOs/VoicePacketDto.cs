@@ -1,11 +1,7 @@
 using MessagePack;
+using Shared.Data;
 
 namespace Shared.DTOs;
 
 [MessagePackObject]
-public class VoicePacketDto
-{
-    [Key(0)] public string Sender { get; init; } = default!;
-    
-    [Key(1)] public byte[] Data { get; init; } = default!;
-}
+public record VoicePacketDto([property: Key(0)] UserId Id, [property: Key(1)] byte[] Data);

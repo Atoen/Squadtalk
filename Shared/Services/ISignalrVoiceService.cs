@@ -11,6 +11,7 @@ public interface ISignalrVoiceService
     event Func<CallId, Task>? CallEnded;
     event Func<string, Task>? CallFailed;
     event Func<List<UserDto>, CallId, Task>? GetCallUsers;
+    event Func<VoicePacketDto, Task>? GetVoicePacket;
     
     Task<CallOfferId?> StartVoiceCallAsync(UserId id);
 
@@ -19,4 +20,6 @@ public interface ISignalrVoiceService
     Task AcceptCallAsync(CallOfferId id);
     
     Task DeclineCallAsync(CallOfferId id);
+
+    Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken);
 }

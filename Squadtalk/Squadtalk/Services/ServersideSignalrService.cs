@@ -23,7 +23,8 @@ public sealed class ServersideSignalrService : ISignalrService
     public event Func<CallId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
     public event Func<List<UserDto>, CallId, Task>? GetCallUsers;
-    
+    public event Func<VoicePacketDto, Task>? GetVoicePacket;
+
     public Task<CallOfferId?> StartVoiceCallAsync(UserId id)
     {
         throw new InvalidOperationException();
@@ -40,6 +41,11 @@ public sealed class ServersideSignalrService : ISignalrService
     }
 
     public Task DeclineCallAsync(CallOfferId id)
+    {
+        throw new InvalidOperationException();
+    }
+
+    public Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken)
     {
         throw new InvalidOperationException();
     }

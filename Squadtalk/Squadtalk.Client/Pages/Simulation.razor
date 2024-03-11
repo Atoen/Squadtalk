@@ -171,7 +171,7 @@
             .InvokeAsync<IJSObjectReference>("import", "../js/Simulation.min.js");
 
         await _jsModule.InvokeVoidAsync("Init");
-        await _jsModule.InvokeVoidAsync("SetRules", _rules);
+        await _jsModule.InvokeVoidAsync("SetRules", _rules, true);
     }
     
     private async Task ToggleSimulation()
@@ -229,8 +229,10 @@
     private async Task ShareSettings()
     {
         var rulesJson = JsonSerializer.Serialize(_rules, _serializerOptions);
+        var encoded = Uri.EscapeDataString(rulesJson);
         var uri = new Uri(NavigationManager.Uri).GetLeftPart(UriPartial.Path);
-        var link = $"{uri}?Step={_delayMs}&Neighbours={_threshold}&Rules={rulesJson}";
+        
+        var link = $"{uri}?Step={_delayMs}&Neighbours={_threshold}&Rules={encoded}";
 
         try
         {

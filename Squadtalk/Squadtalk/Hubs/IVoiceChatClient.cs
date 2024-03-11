@@ -16,4 +16,6 @@ public interface IVoiceChatClient
     Task CallFailed(string reason);
 
     Task GetCallUsers(List<UserDto> users, CallId id);
+
+    Task GetVoicePacket(VoicePacketDto packet);
 }
