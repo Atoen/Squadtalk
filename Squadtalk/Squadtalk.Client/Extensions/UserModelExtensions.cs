@@ -16,7 +16,7 @@ public static class UserModelExtensions
     
     public static string StatusColor(this UserModel model) => model.Status switch
     {
-        UserStatus.Online => "forestgreen",
+        UserStatus.Online => "limegreen",
         UserStatus.Away => "darkorange",
         UserStatus.DoNotDisturb => "firebrick",
         UserStatus.Offline => "gray",
