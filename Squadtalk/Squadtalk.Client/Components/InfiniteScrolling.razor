@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Rendering
 @using System.Diagnostics
 @using Shared.Communication
+@using Shared.Data
 @using Shared.Models
 @using Shared.Services
 
@@ -67,9 +68,9 @@
         await _instance!.InvokeVoidAsync("onNewItems");
     }
 
-    private Task UpdateOnMessage(string channelId)
+    private Task UpdateOnMessage(ChannelId id)
     {
-        if (channelId != TextChatService.CurrentChannel?.Id)
+        if (id != TextChatService.CurrentChannel?.Id)
         {
             return Task.CompletedTask;
         }

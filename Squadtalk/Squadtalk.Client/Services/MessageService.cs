@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using RestSharp;
 using Shared.Communication;
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
@@ -20,7 +21,7 @@ public class MessageService : IMessageService
     
     private string? _userId;
     
-    public event Func<string, Task>? MessageReceived;
+    public event Func<ChannelId, Task>? MessageReceived;
     
     public MessageService(
         ITextChatService textChatService,
@@ -95,9 +96,9 @@ public class MessageService : IMessageService
         textChannel.SetLastMessage(messageDto, messageByCurrentUser);
     }
     
-    public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)
+    public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
-        var channel = _textChatService.GetChannel(channelId);
+        var channel = _textChatService.GetChannel(id);
 
         if (channel is null or { State.ReachedEnd: true })
         {
@@ -105,7 +106,7 @@ public class MessageService : IMessageService
         }
         
         var restRequest = new RestRequest("api/message/{channel}/{timestamp}")
-            .AddUrlSegment("channel", channelId);
+            .AddUrlSegment("channel", id);
 
         var state = channel.State;
 

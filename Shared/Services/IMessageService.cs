@@ -1,12 +1,13 @@
+using Shared.Data;
 using Shared.Models;
 
 namespace Shared.Services;
 
 public interface IMessageService
 {
-    event Func<string, Task>? MessageReceived;
+    event Func<ChannelId, Task>? MessageReceived;
 
-    Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken);
+    Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken);
 
     Task SendMessageAsync(string message, CancellationToken cancellationToken = default);
 }

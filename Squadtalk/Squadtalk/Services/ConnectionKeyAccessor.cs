@@ -1,10 +1,11 @@
+using Shared.Data;
 using Squadtalk.Data;
 
 namespace Squadtalk.Services;
 
-public class ConnectionKeyAccessor : IConnectionKeyAccessor<ApplicationUser, string>
+public class ConnectionKeyAccessor : IConnectionKeyAccessor<ApplicationUser, UserId>
 {
-    public string GetKey(ApplicationUser user)
+    public UserId GetKey(ApplicationUser user)
     {
         return user.Id;
     }

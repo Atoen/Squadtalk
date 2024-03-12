@@ -1,4 +1,5 @@
 using MessagePack;
+using Shared.Data;
 
 namespace Shared.DTOs;
 
@@ -9,7 +10,7 @@ public class MessageDto
 
     [Key(1)] public string Content { get; set; } = default!;
 
-    [Key(2)] public string ChannelId { get; set; } = default!;
+    [Key(2)] public ChannelId ChannelId { get; set; } = default!;
 
     [Key(3)] public DateTimeOffset Timestamp { get; set; }
 

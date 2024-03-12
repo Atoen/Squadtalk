@@ -93,9 +93,9 @@ public sealed class SignalrService : ISignalrService
         }
     }
 
-    Task ISignalrTextService.SendMessageAsync(string message, string channelId, CancellationToken cancellationToken)
+    Task ISignalrTextService.SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken)
     {
-        return SendAsync("SendMessage", message, channelId, cancellationToken);
+        return SendAsync("SendMessage", message, id, cancellationToken);
     }
 
     Task<CallOfferId?> ISignalrVoiceService.StartVoiceCallAsync(UserId id)
@@ -188,8 +188,7 @@ public sealed class SignalrService : ISignalrService
     }
     
     private async Task<TResult?> InvokeAsync<TResult, TArg>(string methodName, TArg arg,
-        CancellationToken cancellationToken = default,
-        [CallerMemberName] string? callerName = null)
+        CancellationToken cancellationToken = default, [CallerMemberName] string? callerName = null)
     {
         try
         {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
+using Shared.Data;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Data;
@@ -17,7 +18,7 @@ public class ServersideMessagesService : IMessageService
     private readonly ITextChatService _textChatService;
     private readonly IMessageModelService<Message> _modelService;
 
-    public event Func<string, Task>? MessageReceived;
+    public event Func<ChannelId, Task>? MessageReceived;
 
     public ServersideMessagesService(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, 
         AuthenticationStateProvider authenticationStateProvider, ILogger<ServersideMessagesService> logger,
@@ -31,9 +32,9 @@ public class ServersideMessagesService : IMessageService
         _modelService = modelService;
     }
     
-    public async Task<IList<MessageModel>> GetMessagePageAsync(string channelId, CancellationToken cancellationToken)
+    public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
-        var channel = _textChatService.GetChannel(channelId);
+        var channel = _textChatService.GetChannel(id);
         
         if (channel is null or { State.ReachedEnd: true })
         {
@@ -49,7 +50,7 @@ public class ServersideMessagesService : IMessageService
             return ArraySegment<MessageModel>.Empty;
         }
 
-        if (channelId != GroupChat.GlobalChatId && !user.Channels.Exists(x => x.Id == channelId))
+        if (id != GroupChat.GlobalChatId && !user.Channels.Exists(x => x.Id == id))
         {
             return ArraySegment<MessageModel>.Empty;
         }
@@ -60,7 +61,7 @@ public class ServersideMessagesService : IMessageService
             ? default
             : new DateTimeOffset(state.Cursor, TimeSpan.Zero);
         
-        var messages = await GetMessages(cursor, channelId, cancellationToken);
+        var messages = await GetMessages(cursor, id, cancellationToken);
         
         if (messages.Count > 0)
         {
@@ -75,13 +76,14 @@ public class ServersideMessagesService : IMessageService
         throw new InvalidOperationException();
     }
 
-    private async Task<List<Message>> GetMessages(DateTimeOffset cursor, string channelId, CancellationToken cancellationToken)
+    private async Task<List<Message>> GetMessages(DateTimeOffset cursor, ChannelId id, CancellationToken 
+            cancellationToken)
     {
         return cursor == default
             ? await _dbContext.Messages
                 .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
-                .Where(m => m.ChannelId == channelId)
+                .Where(m => m.ChannelId == id)
                 .Take(20)
                 .Include(m => m.Author)
                 .Reverse()
@@ -90,7 +92,7 @@ public class ServersideMessagesService : IMessageService
             : await _dbContext.Messages
                 .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
-                .Where(m => m.ChannelId == channelId)
+                .Where(m => m.ChannelId == id)
                 .Where(m => m.Timestamp < cursor)
                 .Take(20)
                 .Include(m => m.Author)

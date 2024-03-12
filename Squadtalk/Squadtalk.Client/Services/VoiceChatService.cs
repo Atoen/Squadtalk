@@ -67,7 +67,7 @@ public sealed class VoiceChatService : IVoiceChatService
     {
         await _jsModule!.InvokeVoidAsync("StartRecorder");
         
-        await _signalrVoiceService.StreamDataAsync((CallId) CurrentVoiceCall!.Id, _voiceDataQueue,
+        await _signalrVoiceService.StreamDataAsync(CurrentVoiceCall!.Id, _voiceDataQueue,
             _cancellationTokenSource.Token);
     }
 
@@ -76,7 +76,7 @@ public sealed class VoiceChatService : IVoiceChatService
         var voiceCallModel = new VoiceCallModel
         {
             Connected = users.Select(UserModel.GetOrCreate).ToList(),
-            Id = id.Value
+            Id = id
         };
 
         CurrentVoiceCall = voiceCallModel;
@@ -125,7 +125,7 @@ public sealed class VoiceChatService : IVoiceChatService
     public async Task StartCallAsync(UserModel callee)
     {
         await InitializeModuleAsync();
-        var callOfferId = await _signalrVoiceService.StartVoiceCallAsync((UserId) callee.Id);
+        var callOfferId = await _signalrVoiceService.StartVoiceCallAsync(callee.Id);
         if (callOfferId is null)
         {
             _logger.LogError("Call offer id is null");

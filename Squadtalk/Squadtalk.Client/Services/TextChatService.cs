@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using RestSharp;
 using Shared.Communication;
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Enums;
 using Shared.Extensions;
@@ -29,7 +30,7 @@ public class TextChatService : ITextChatService
     public IReadOnlyList<GroupChat> GroupChats => _groupChats;
     public IReadOnlyList<DirectMessageChannel> DirectMessageChannels => _directMessageChannels;
 
-    private string? _userId;
+    private UserId? _userId;
 
     public TextChatService(AuthenticationStateProvider authenticationStateProvider, RestClient restClient,
         ISignalrService signalrService, ILogger<TextChatService> logger, NavigationManager navigationManager)
@@ -54,7 +55,7 @@ public class TextChatService : ITextChatService
 
     public TextChannel? CurrentChannel { get; private set; }
 
-    public TextChannel? GetChannel(string id)
+    public TextChannel? GetChannel(ChannelId id)
     {
         return id == GroupChat.GlobalChatId
             ? GroupChat.GlobalChat
@@ -88,11 +89,10 @@ public class TextChatService : ITextChatService
 
     public async Task CreateRealDirectMessageChannel(TextChannel channel)
     {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var userId = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        _userId ??= await GetUserIdAsync();
 
         var otherUserId = ((DirectMessageChannel) channel).Other.Id;
-        var participants = new List<string> { userId, otherUserId };
+        var participants = new List<UserId> { _userId, otherUserId };
 
         var channelId = await OpenNewChannel(participants);
 
@@ -119,20 +119,19 @@ public class TextChatService : ITextChatService
         return ChannelChangedAsync.TryInvoke();
     }
 
-    private async Task<string?> OpenNewChannel(List<string> participants)
+    private async Task<ChannelId?> OpenNewChannel(List<UserId> participants)
     {
         var request = new RestRequest("api/message/createChannel")
             .AddBody(participants);
 
         try
         {
-            var createdChannelId = await _restClient.PostAsync<string>(request);
+            var createdChannelId = await _restClient.PostAsync<ChannelId>(request);
             return createdChannelId;
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error while sending create channel request");
-
             return null;
         }
     }
@@ -188,7 +187,7 @@ public class TextChatService : ITextChatService
 
     private Task CheckIfNeedToUpgradeCurrentFakeChannelToReal(DirectMessageChannel openedDirectMessageChannel)
     {
-        if (CurrentChannel is DirectMessageChannel { Id: DirectMessageChannel.FakeChannelId } currentFakeDm &&
+        if (CurrentChannel is DirectMessageChannel { Id.Value: DirectMessageChannel.FakeChannelIdValue } currentFakeDm &&
             currentFakeDm.Other.Id == openedDirectMessageChannel.Other.Id)
         {
             return ChangeChannelAsync(openedDirectMessageChannel);
@@ -197,18 +196,18 @@ public class TextChatService : ITextChatService
         return Task.CompletedTask;
     }
 
-    private TextChannel CreateChannelModel(ChannelDto channelDto, string userId)
+    private TextChannel CreateChannelModel(ChannelDto channelDto, UserId id)
     {
-        var lastMessageIsByCurrentUser = channelDto.LastMessage?.Author.Id == userId;
+        var lastMessageIsByCurrentUser = channelDto.LastMessage?.Author.Id == id;
 
         _logger.LogInformation("Creating model");
 
-        var othersInChannel = channelDto.Participants.Where(x => x.Id != userId).ToList();
+        var othersInChannel = channelDto.Participants.Where(x => x.Id != id).ToList();
 
         TextChannel channel = othersInChannel switch
         {
             [var other] => new DirectMessageChannel(UserModel.GetOrCreate(other), channelDto.Id),
-            { Count: > 1 } => new GroupChat(channelDto.Id, othersInChannel.Select(UserModel.GetOrCreate)),
+            { Count: > 1 } => new GroupChat(othersInChannel.Select(UserModel.GetOrCreate), channelDto.Id),
             _ => throw new InvalidOperationException()
         };
 
@@ -263,9 +262,10 @@ public class TextChatService : ITextChatService
         await StateChangedAsync.TryInvoke();
     }
 
-    private async ValueTask<string> GetUserIdAsync()
+    private async ValueTask<UserId> GetUserIdAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        return authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        var claimValue = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        return new UserId(claimValue);
     }
 }

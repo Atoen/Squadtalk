@@ -24,6 +24,13 @@ public record UserId(string Value) : IdRecord(Value)
 {
     public static explicit operator UserId(string id) => new(id);
     public static UserId New => new(Guid.NewGuid().ToString("N"));
+    public override string ToString() => Value;
+}
+
+public record ChannelId(string Value) : IdRecord(Value)
+{
+    public static explicit operator ChannelId(string id) => new(id);
+    public static ChannelId New => new(Guid.NewGuid().ToString("N"));
 }
 
 public record CallId(string Value) : IdRecord(Value)

@@ -1,16 +1,17 @@
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Enums;
 
 namespace Shared.Communication;
 
-public abstract class TextChannel(string id)
+public abstract class TextChannel(ChannelId id)
 {
     public abstract string Name { get; }
     
-    public string? LastMessage { get; set; }
-    public DateTimeOffset LastMessageTimeStamp { get; set; }
+    public string? LastMessage { get; private set; }
+    public DateTimeOffset LastMessageTimeStamp { get; private set; }
     
-    public string Id { get; } = id;
+    public ChannelId Id { get; } = id;
     
     public TextChannelState State { get; } = new();
 
@@ -29,8 +30,7 @@ public abstract class TextChannel(string id)
             { Type: EmbedType.Video } => "Sent video",
             _ => message.Content
         };
-        
-        LastMessageTimeStamp = message.Timestamp;
-        LastMessage = byCurrentUser ? $"You: {contentToDisplay}" : contentToDisplay;
+
+        SetLastMessage(contentToDisplay, message.Timestamp, byCurrentUser);
     }
 }

@@ -1,5 +1,6 @@
 using Blazored.LocalStorage;
 using Shared.Communication;
+using Shared.Data;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;
@@ -63,22 +64,22 @@ public class ChatVisibilityManager : IChatVisibilityManager
         await UpdateListAsync();
     }
 
-    private Task MessageReceived(string channelId)
+    private Task MessageReceived(ChannelId id)
     {
         StateChanged?.Invoke();
         
-        return StopHidingChannel(channelId);
+        return StopHidingChannel(id);
     }
 
-    public Task StopHidingChannel(string channelId)
+    public Task StopHidingChannel(ChannelId id)
     {
-        var removed = _hiddenChannels.Remove(channelId);
+        var removed = _hiddenChannels.Remove(id);
         return removed ? UpdateLocalStorage() : Task.CompletedTask;
     }
 
-    public Task HideChannel(string channelId)
+    public Task HideChannel(ChannelId id)
     {
-        var added = _hiddenChannels.Add(channelId);
+        var added = _hiddenChannels.Add(id);
         return added ? UpdateLocalStorage() : Task.CompletedTask;
     }
 }

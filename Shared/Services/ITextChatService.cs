@@ -1,11 +1,12 @@
 using Shared.Communication;
+using Shared.Data;
 using Shared.Models;
 
 namespace Shared.Services;
 
 public interface ITextChatService
 {
-    TextChannel? GetChannel(string channelId);
+    TextChannel? GetChannel(ChannelId id);
     
     TextChannel? CurrentChannel { get; }
 

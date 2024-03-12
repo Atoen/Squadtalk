@@ -1,3 +1,4 @@
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Enums;
 
@@ -10,7 +11,7 @@ public class UserModel
     public string Color { get; set; } = default!;
     public string AvatarUrl { get; set; } = default!;
 
-    public string Id { get; set; } = default!;
+    public UserId Id { get; set; } = default!;
     public UserStatus Status { get; set; }
 
     public static readonly List<UserModel> Models = [];

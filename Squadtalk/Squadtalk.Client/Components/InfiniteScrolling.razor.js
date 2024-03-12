@@ -2,13 +2,13 @@
 
 let listbox;
 
+const resizeObserver = new ResizeObserver(() => scrollToMark(scrollPositionFromBottom));
 export function initialize(lastIndicator, instance)
 {
     listbox = document.getElementById("listbox");
 
-    listbox.addEventListener("scroll", () => {
-        scrollPositionFromBottom = markScroll();
-    });
+    listbox.addEventListener("scroll", () => scrollPositionFromBottom = markScroll());
+    resizeObserver.observe(document.getElementById("textBox"));
     
     const options = {
         root: findClosestScrollContainer(lastIndicator),
@@ -89,6 +89,4 @@ export function scrollToMark(scrollPositionFromBottom) {
 
 let scrollPositionFromBottom = 0;
 
-window.addEventListener("resize", () => {
-   scrollToMark(scrollPositionFromBottom);
-});
+window.addEventListener("resize", () =>  scrollToMark(scrollPositionFromBottom));

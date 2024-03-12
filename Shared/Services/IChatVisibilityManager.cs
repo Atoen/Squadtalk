@@ -1,4 +1,5 @@
 using Shared.Communication;
+using Shared.Data;
 
 namespace Shared.Services;
 
@@ -8,9 +9,9 @@ public interface IChatVisibilityManager
     
     IReadOnlyList<TextChannel> VisibleChannels { get; }
 
-    Task StopHidingChannel(string channelId);
+    Task StopHidingChannel(ChannelId id);
 
-    Task HideChannel(string channelId);
+    Task HideChannel(ChannelId id);
 
     Task UpdateListAsync();
 }

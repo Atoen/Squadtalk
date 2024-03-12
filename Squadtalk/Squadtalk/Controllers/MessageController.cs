@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
+using Shared.Data;
 using Shared.DTOs;
 using Shared.Extensions;
 using Squadtalk.Data;
@@ -28,40 +29,40 @@ public class MessageController : ControllerBase
     
     private const int MessagePageCount = 20;
 
-    private static readonly Func<ApplicationDbContext, string, IAsyncEnumerable<Message>> MessageFirstPageAsync =
+    private static readonly Func<ApplicationDbContext, ChannelId, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, string channelId) => context.Messages
+            (ApplicationDbContext context, ChannelId id) => context.Messages
                 .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
-                .Where(m => m.ChannelId == channelId)
+                .Where(m => m.ChannelId == id)
                 .Take(MessagePageCount)
                 .Include(m => m.Author)
                 .Reverse());
 
-    private static readonly Func<ApplicationDbContext, string, DateTimeOffset, IAsyncEnumerable<Message>>
+    private static readonly Func<ApplicationDbContext, ChannelId, DateTimeOffset, IAsyncEnumerable<Message>>
         MessagePageByCursorAsync =
             EF.CompileAsyncQuery(
-                (ApplicationDbContext context, string channelId, DateTimeOffset cursor) => context.Messages
+                (ApplicationDbContext context, ChannelId id, DateTimeOffset cursor) => context.Messages
                     .AsNoTracking()
                     .OrderByDescending(m => m.Timestamp)
-                    .Where(m => m.ChannelId == channelId)
+                    .Where(m => m.ChannelId == id)
                     .Where(m => m.Timestamp < cursor)
                     .Take(MessagePageCount)
                     .Include(m => m.Author)
                     .Reverse());
 
-    private static readonly Func<ApplicationDbContext, string, Task<ApplicationUser?>> UserWithChannelsByIdAsync =
+    private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserWithChannelsByIdAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, string userId) => context.Users
+            (ApplicationDbContext context, UserId id) => context.Users
                 .Include(x => x.Channels)
                 .ThenInclude(x => x.Participants)
                 .AsSplitQuery()
-                .FirstOrDefault(x => x.Id == userId));
+                .FirstOrDefault(x => x.Id == id));
 
     [HttpGet("{channelId}/{timestamp?}")]
-    public async Task<IActionResult> GetMessages(string channelId, string? timestamp)
+    public async Task<IActionResult> GetMessages(ChannelId channelId, string? timestamp)
     {
-        var userId = HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        var userId = (UserId) HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
         var user = await UserWithChannelsByIdAsync(_dbContext, userId);
         if (user is null)
         {
@@ -84,9 +85,9 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("createChannel")]
-    public async Task<IActionResult> CreateChannel(List<string> participantsId,
+    public async Task<IActionResult> CreateChannel(List<UserId> participantsId,
         [FromServices] IHubContext<ChatHub, IChatClient> hubContext,
-        [FromServices] ChatConnectionManager<ApplicationUser, string> connectionManager)
+        [FromServices] ChatConnectionManager<ApplicationUser, UserId> connectionManager)
     {
         var channel = await CreateChannel(participantsId);
         if (channel is null)
@@ -113,7 +114,7 @@ public class MessageController : ControllerBase
         return Ok(dto.Id);
     }
 
-    private async Task<Channel?> CreateChannel(List<string> participantsId)
+    private async Task<Channel?> CreateChannel(List<UserId> participantsId)
     {
         if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
         {
@@ -131,7 +132,7 @@ public class MessageController : ControllerBase
 
         var channel = new Channel
         {
-            Id = Guid.NewGuid().ToString(),
+            Id = ChannelId.New,
             Participants = participants,
         };
 

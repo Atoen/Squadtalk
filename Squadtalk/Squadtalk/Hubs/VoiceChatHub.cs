@@ -21,7 +21,7 @@ public partial class ChatHub
 
         var targetUser = await _dbContext.Users
             .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == id.Value);
+            .SingleOrDefaultAsync(x => x.Id == id);
 
         if (targetUser is null)
         {
@@ -48,7 +48,7 @@ public partial class ChatHub
         if (await _userManager.GetUserAsync(Context.User!) is not { } acceptingUser) return;
 
         var callee = new VoiceUser(acceptingUser, (SignalrConnectionId) Context.ConnectionId);
-        var call = new VoiceCall { Users = [offer.Caller, callee], Id = new CallId(id.Value) };
+        var call = new VoiceCall { Users = [offer.Caller, callee], Id = new CallId(id) };
 
         _voiceCallManager.RemoveCallOffer(offer.Id);
         _voiceCallManager.AddCall(call);
@@ -83,7 +83,7 @@ public partial class ChatHub
         if (await _userManager.GetUserAsync(Context.User!) is not { } user) return;
         
         _voiceCallManager.RemoveCallOffersFromUser(user);
-        foreach (var (_, connectionId) in call.Users.Where(x => x.ConnectionId.Value != Context.ConnectionId))
+        foreach (var (_, connectionId) in call.Users.Where(x => x.ConnectionId != Context.ConnectionId))
         {
             await VoiceClient(connectionId).CallEnded(call.Id);
             await Groups.RemoveFromGroupAsync(connectionId, call.GroupName);
@@ -111,8 +111,7 @@ public partial class ChatHub
                     return;
                 }
 
-                await OtherInVoiceGroup(call.GroupName)
-                    .GetVoicePacket(new VoicePacketDto(userId, packet));
+                await OthersInVoiceGroup(call.GroupName).GetVoicePacket(new VoicePacketDto(userId, packet));
             }
         }
         catch (OperationCanceledException)

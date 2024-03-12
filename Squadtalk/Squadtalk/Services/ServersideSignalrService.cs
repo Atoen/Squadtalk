@@ -16,7 +16,6 @@ public sealed class ServersideSignalrService : ISignalrService
     public event Func<string, Task>? ConnectionStatusChanged;
     public event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
     public event Func<ChannelDto, Task>? AddedToTextChannel;
-    
     public event Func<UserDto, CallOfferId, Task>? IncomingCall;
     public event Func<CallOfferId, Task>? CallAccepted;
     public event Func<CallOfferId, Task>? CallDeclined;
@@ -62,7 +61,7 @@ public sealed class ServersideSignalrService : ISignalrService
         return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
     }
 
-    public Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken = default)
+    public Task SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken = default)
     {
         throw new InvalidOperationException();
     }

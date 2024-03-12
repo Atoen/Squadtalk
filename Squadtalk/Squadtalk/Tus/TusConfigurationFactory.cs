@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Shared;
+using Shared.Data;
 using Squadtalk.Data;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
@@ -74,13 +75,10 @@ public static class TusConfigurationFactory
         var userManager = httpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await userManager.GetUserAsync(httpContext.User);
 
-        if (user is null)
-        {
-            return;
-        }
+        if (user is null) return;
 
         var messageService = httpContext.RequestServices.GetRequiredService<MessageStorageService>();
-        var message = messageService.CreateMessage(user, string.Empty, channelId)
+        var message = messageService.CreateMessage(user, string.Empty, (ChannelId) channelId)
             .WithEmbed(embed);
         
         await messageService.StoreMessageAsync(message);

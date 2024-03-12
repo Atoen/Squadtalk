@@ -1,3 +1,4 @@
+using Shared.Data;
 using Shared.DTOs;
 
 namespace Shared.Services;
@@ -12,7 +13,7 @@ public interface ISignalrTextService
     event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
     event Func<ChannelDto, Task>? AddedToTextChannel; 
     
-    Task SendMessageAsync(string message, string channelId, CancellationToken cancellationToken = default);
+    Task SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken = default);
     
     
 }

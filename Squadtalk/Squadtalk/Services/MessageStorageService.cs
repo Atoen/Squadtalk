@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
+using Shared.Data;
 using Squadtalk.Data;
 using Squadtalk.Extensions;
 
@@ -16,11 +17,11 @@ public class MessageStorageService
         _logger = logger;
     }
 
-    public Message CreateMessage(ApplicationUser author, string content, string channelId) => new()
+    public Message CreateMessage(ApplicationUser author, string content, ChannelId id) => new()
     {
         Author = author,
         Content = content,
-        ChannelId = channelId,
+        ChannelId = id,
         Timestamp = DateTimeOffset.Now
     };
     

@@ -4,6 +4,7 @@ using MailKit.Net.Smtp;
 using MessagePack;
 using Microsoft.AspNetCore.Identity;
 using Polly.Registry;
+using Shared.Data;
 using Shared.Services;
 using Squadtalk.Client.Services;
 using Squadtalk.Data;
@@ -46,8 +47,8 @@ public static class ServiceCollectionExtensions
         
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
-        serviceCollection.AddSingleton<ChatConnectionManager<ApplicationUser, string>>();
-        serviceCollection.AddSingleton<IConnectionKeyAccessor<ApplicationUser, string>, ConnectionKeyAccessor>();
+        serviceCollection.AddSingleton<ChatConnectionManager<ApplicationUser, UserId>>();
+        serviceCollection.AddSingleton<IConnectionKeyAccessor<ApplicationUser, UserId>, ConnectionKeyAccessor>();
         serviceCollection.AddSingleton<VoiceCallManager>();
         
         serviceCollection.AddScoped<MessageStorageService>();
