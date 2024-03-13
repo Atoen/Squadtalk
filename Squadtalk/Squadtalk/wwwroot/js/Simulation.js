@@ -100,6 +100,7 @@ export function Init() {
     ctx = canvas.getContext("2d");
     rows = Math.floor(canvas.height / cellSize);
     columns = Math.floor(canvas.width / cellSize);
+    console.log(`Rows: ${rows}, Columns: ${columns}`);
 }
 function ArraysContainSameElements(arr1, arr2) {
     if (!arr2) {
@@ -120,7 +121,7 @@ function ArraysContainSameElements(arr1, arr2) {
     return true;
 }
 export function SetRules(rules, forceUpdate = false) {
-    const colors = [...new Set(rules.map(x => x.attacker))];
+    const colors = [...new Set(rules.map(x => x.a))];
     const theSame = ArraysContainSameElements(colors, grid?.colors);
     if (!theSame || forceUpdate) {
         grid = new Grid(rows, columns, colors);
@@ -131,8 +132,8 @@ export function SetRules(rules, forceUpdate = false) {
         grid.colors = colors;
     }
     for (const rule of rules) {
-        const attackerIndex = grid.GetIndexOfColor(rule.attacker);
-        const attackedIndex = grid.GetIndexOfColor(rule.attacked);
+        const attackerIndex = grid.GetIndexOfColor(rule.a);
+        const attackedIndex = grid.GetIndexOfColor(rule.b);
         if (grid.ruleIndices.has(attackerIndex)) {
             grid.ruleIndices.get(attackerIndex).push(attackedIndex);
         }

@@ -16,10 +16,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="8.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="8.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.3" />
     <PackageReference Include="RestSharp" Version="110.2.0" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="8.0.0" />
   </ItemGroup>

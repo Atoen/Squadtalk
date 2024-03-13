@@ -8,7 +8,8 @@
     "incremental": true,
     "sourceMap": true,
     "target": "ESNext",
-    "outDir": "wwwroot/js"
+    "outDir": "wwwroot/js",
+    "newLine": "crlf"
   },
   "include": [
     "Scripts/**/*"

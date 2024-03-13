@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using MessagePack;
 
 namespace Shared.Data;
@@ -20,6 +21,7 @@ public record SignalrConnectionId(string Value) : IdRecord(Value)
     public static SignalrConnectionId New => new(Guid.NewGuid().ToString("N"));
 }
 
+[TypeConverter(typeof(UserIdConverter))]
 public record UserId(string Value) : IdRecord(Value)
 {
     public static explicit operator UserId(string id) => new(id);

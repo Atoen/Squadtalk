@@ -49,6 +49,7 @@
 @inject IJSRuntime JSRuntime
 @inject ToastService ToastService
 @inject NavigationManager NavigationManager
+@inject ILogger<Simulation> Logger
 
 @code {
     private const string Start = nameof(Start);
@@ -166,11 +167,8 @@
             { "CancelCallback", EventCallback.Factory.Create(this, CloseModal) },
             { "AddRuleCallback", EventCallback.Factory.Create<Rule>(this, AddRule) }
         };
-        
-        _jsModule = await JSRuntime
-            .InvokeAsync<IJSObjectReference>("import", "../js/Simulation.min.js");
 
-        await _jsModule.InvokeVoidAsync("Init");
+        _jsModule = await JSRuntime.ImportAndInitModuleAsync("../js/Simulation.min.js");
         await _jsModule.InvokeVoidAsync("SetRules", _rules, true);
     }
     

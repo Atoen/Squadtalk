@@ -10,8 +10,8 @@ let columns: number;
 let grid: Grid;
 
 type Rule = {
-    attacker: string;
-    attacked: string;
+    a: string;
+    b: string;
 }
 
 class Grid {
@@ -132,6 +132,8 @@ export function Init() {
 
     rows = Math.floor(canvas.height / cellSize);
     columns = Math.floor(canvas.width / cellSize);
+    
+    console.log(`Rows: ${rows}, Columns: ${columns}`);
 }
 
 function ArraysContainSameElements<T>(arr1: T[], arr2: T[] | null): boolean {
@@ -159,7 +161,7 @@ function ArraysContainSameElements<T>(arr1: T[], arr2: T[] | null): boolean {
 }
 
 export function SetRules(rules: Rule[], forceUpdate: boolean = false) {
-    const colors = [...new Set(rules.map(x => x.attacker))];
+    const colors = [...new Set(rules.map(x => x.a))];
     const theSame = ArraysContainSameElements(colors, grid?.colors);
 
     if (!theSame || forceUpdate) {
@@ -172,8 +174,8 @@ export function SetRules(rules: Rule[], forceUpdate: boolean = false) {
     }
 
     for (const rule of rules) {
-        const attackerIndex = grid.GetIndexOfColor(rule.attacker);
-        const attackedIndex = grid.GetIndexOfColor(rule.attacked);
+        const attackerIndex = grid.GetIndexOfColor(rule.a);
+        const attackedIndex = grid.GetIndexOfColor(rule.b);
 
         if (grid.ruleIndices.has(attackerIndex)) {
             grid.ruleIndices.get(attackerIndex).push(attackedIndex);
