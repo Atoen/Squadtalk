@@ -53,7 +53,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         SelectedFile = null;
         UploadChannel = channel;
 
-        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", channel.Id, channel.Name).AsTask();
+        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", channel.Id.Value, channel.Name).AsTask();
     }
 
     public Task CancelUploadAsync()

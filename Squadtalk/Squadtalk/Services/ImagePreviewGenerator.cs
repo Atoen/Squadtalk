@@ -46,7 +46,7 @@ public class ImagePreviewGenerator
         }
     }
 
-    private async Task<ImagePreviewData> CreatePreviewInternalAsync(ITusFile file, CancellationToken cancellationToken)
+    private async Task<ImagePreviewData?> CreatePreviewInternalAsync(ITusFile file, CancellationToken cancellationToken)
     {
         await using var fileContent = await file.GetContentAsync(cancellationToken);
         var originalMetadata = await file.GetMetadataAsync(cancellationToken);
@@ -76,8 +76,10 @@ public class ImagePreviewGenerator
         
         var formattedMetadata = TusHelper.FormatMetadata(previewMetadata);
         var fileId = await _tusHelper.CreateFileAsync(stream, fileSize, formattedMetadata, cancellationToken);
-        
-        return new ImagePreviewData(fileId, previewName, image.Size);
+
+        return fileId is not null 
+            ? new ImagePreviewData(fileId, previewName, image.Size) 
+            : null;
     }
 
     private Size GetResizedDimensions(Size size)

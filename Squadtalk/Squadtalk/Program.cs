@@ -20,10 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Loopback, 1235, listenOptions =>
-    {
-        // listenOptions.UseHttps();
-    });
+    options.Listen(IPAddress.Loopback, 1235);
 });
 
 // Add services to the container.

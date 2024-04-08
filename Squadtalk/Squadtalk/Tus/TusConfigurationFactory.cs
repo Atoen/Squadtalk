@@ -32,6 +32,8 @@ public static class TusConfigurationFactory
         return Task.FromResult(config);
     }
 
+    private static readonly string[] RequiredMetadataKeys = [FileData.ChannelId, FileData.FileName, FileData.ContentType];
+
     private static Task OnAuthorizeAsync(AuthorizeContext authorizeContext)
     {
         if (authorizeContext.HttpContext.User.Identity is not { IsAuthenticated: true })
@@ -44,18 +46,19 @@ public static class TusConfigurationFactory
 
     private static Task OnBeforeCreateAsync(BeforeCreateContext beforeCreateContext)
     {
-        CheckMetadata(beforeCreateContext, FileData.ChannelId);
-        CheckMetadata(beforeCreateContext, FileData.FileName);
-        CheckMetadata(beforeCreateContext, FileData.ContentType);
-
+        CheckMetadata(beforeCreateContext, RequiredMetadataKeys);
+        
         return Task.CompletedTask;
     }
 
-    private static void CheckMetadata(BeforeCreateContext context, string metadataKey)
+    private static void CheckMetadata(BeforeCreateContext context, params string[] metadataKeys)
     {
-        if (!context.Metadata.TryGetValue(metadataKey, out var metadata) || metadata.HasEmptyValue)
+        foreach (var key in metadataKeys)
         {
-            context.FailRequest($"'{metadataKey}' metadata must be specified. ");
+            if (!context.Metadata.TryGetValue(key, out var metadata) || metadata.HasEmptyValue)
+            {
+                context.FailRequest($"'{key}' metadata must be specified. ");
+            }
         }
     }
     

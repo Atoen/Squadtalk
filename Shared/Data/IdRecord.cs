@@ -1,16 +1,22 @@
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using MessagePack;
 
 namespace Shared.Data;
 
 [MessagePackObject]
-public abstract record IdRecord(string Value)
+public abstract record IdRecord
 {
+    [JsonConstructor]
+    protected IdRecord(string value)
+    {
+        Value = !string.IsNullOrWhiteSpace(value)
+            ? value
+            : throw new ArgumentException("Value must be non-empty", nameof(value));
+    }
+
     [Key(0)]
-    public string Value { get; } =
-        !string.IsNullOrWhiteSpace(Value)
-            ? Value
-            : throw new ArgumentException("Value must be non-empty", nameof(Value));
+    public string Value { get; }
     
     public static implicit operator string(IdRecord id) => id.Value;
 }
@@ -29,10 +35,12 @@ public record UserId(string Value) : IdRecord(Value)
     public override string ToString() => Value;
 }
 
+[TypeConverter(typeof(ChannelIdConverter))]
 public record ChannelId(string Value) : IdRecord(Value)
 {
     public static explicit operator ChannelId(string id) => new(id);
     public static ChannelId New => new(Guid.NewGuid().ToString("N"));
+    public override string ToString() => Value;
 }
 
 public record CallId(string Value) : IdRecord(Value)

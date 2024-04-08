@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Shared.Extensions;
@@ -46,7 +47,7 @@ public static class StringExtensions
         return text;
     }
     
-    public static bool TryFromBase64(this string encoded, out string text, bool urlEncoded = false)
+    public static bool TryFromBase64(this string encoded, [NotNullWhen(true)] out string? text, bool urlEncoded = false)
     {
         ArgumentNullException.ThrowIfNull(encoded);
 
@@ -65,7 +66,7 @@ public static class StringExtensions
         
         var valid = Convert.TryFromBase64String(encoded, bytes, out var length);
 
-        text = valid ? Encoding.UTF8.GetString(bytes[..length]) : string.Empty;
+        text = valid ? Encoding.UTF8.GetString(bytes[..length]) : null;
 
         return valid;
     }

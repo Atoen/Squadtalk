@@ -12,7 +12,7 @@ public class MessageModelService<T>(IMessageModelMapper<T> mapper) : IMessageMod
     {
         if (inputPage.Count == 0)
         {
-            return ArraySegment<MessageModel>.Empty;
+            return Array.Empty<MessageModel>();
         }
 
         var page = new MessageModel[inputPage.Count];

@@ -1,32 +1,41 @@
 using System.Text;
 using Shared.Extensions;
+using Squadtalk.Extensions;
 using tusdotnet.Stores;
 
 namespace Squadtalk.Services;
 
 public class TusHelper
 {
+    private readonly ILogger<TusHelper> _logger;
     public string StorePath { get; }
 
     public TusDiskStore DiskStore { get; }
         
-    public TusHelper(IConfiguration configuration)
+    public TusHelper(IConfiguration configuration, ILogger<TusHelper> logger)
     {
-        var path = configuration["Tus:Path"];
-        ArgumentException.ThrowIfNullOrEmpty(path);
+        _logger = logger;
 
-        StorePath = path;
-        DiskStore = new TusDiskStore(path);
+        StorePath = configuration.GetString("Tus:Path");
+        DiskStore = new TusDiskStore(StorePath);
     }
 
-    public async Task<string> CreateFileAsync(Stream stream, long fileSize, string metadata, CancellationToken cancellationToken)
+    public async Task<string?> CreateFileAsync(Stream stream, long fileSize, string metadata, CancellationToken cancellationToken)
     {
-        var fileId = await DiskStore.CreateFileAsync(fileSize, metadata, cancellationToken);
+        try
+        {
+            var fileId = await DiskStore.CreateFileAsync(fileSize, metadata, cancellationToken);
 
-        await DiskStore.SetUploadLengthAsync(fileId, fileSize, cancellationToken);
-        await DiskStore.AppendDataAsync(fileId, stream, cancellationToken);
+            await DiskStore.SetUploadLengthAsync(fileId, fileSize, cancellationToken);
+            await DiskStore.AppendDataAsync(fileId, stream, cancellationToken);
 
-        return fileId;
+            return fileId;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to create file");
+            return null;
+        }
     }
 
     public static string FormatMetadata(Dictionary<string, string> metadata)

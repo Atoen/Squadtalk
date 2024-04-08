@@ -96,7 +96,7 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e,"Failed to send email to {Address}", address);
+            _logger.LogWarning(e, "Failed to send email to {Address}", address);
         }
     }
 

@@ -68,10 +68,7 @@ public class MessageService : IMessageService
 
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (_textChatService.CurrentChannel is not { Id: { } id })
-        {
-            return;
-        }
+        if (_textChatService.CurrentChannel is not { Id: { } id }) return;
 
         await _signalrService.SendMessageAsync(message, id, cancellationToken);
 
@@ -99,29 +96,28 @@ public class MessageService : IMessageService
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
         var channel = _textChatService.GetChannel(id);
-
         if (channel is null or { State.ReachedEnd: true })
         {
-            return ArraySegment<MessageModel>.Empty;
+            return Array.Empty<MessageModel>();
         }
         
         var restRequest = new RestRequest("api/message/{channel}/{timestamp}")
             .AddUrlSegment("channel", id);
 
         var state = channel.State;
-
         if (state.Cursor != default)
         {
             restRequest.AddUrlSegment("timestamp", state.Cursor.ToString().ToBase64(true));
         }
 
         var response = await _restClient.GetAsync<List<MessageDto>>(restRequest, cancellationToken);
-
-        if (response!.Count > 0)
+        if (response is not { Count: > 0 })
         {
-            state.Cursor = response[0].Timestamp.UtcTicks;
+            return Array.Empty<MessageModel>();
         }
 
+        state.Cursor = response[0].Timestamp.UtcTicks;
+        
         return _modelService.CreateModelPage(response, state);
     }
 }
