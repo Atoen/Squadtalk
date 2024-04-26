@@ -93,9 +93,9 @@ public sealed class SignalrService : ISignalrService
         }
     }
 
-    Task ISignalrTextService.SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken)
+    Task ISignalrTextService.SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken)
     {
-        return SendAsync("SendMessage", message, id, cancellationToken);
+        return SendAsync("SendMessage", message, channelId, cancellationToken);
     }
 
     Task<CallOfferId?> ISignalrVoiceService.StartVoiceCallAsync(UserId id)

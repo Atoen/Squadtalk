@@ -13,7 +13,7 @@ public interface ISignalrTextService
     event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
     event Func<ChannelDto, Task>? AddedToTextChannel; 
     
-    Task SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken = default);
+    Task SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken = default);
     
     
 }

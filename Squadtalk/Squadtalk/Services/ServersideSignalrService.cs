@@ -131,9 +131,29 @@ public sealed class ServersideSignalrService : ISignalrService
         }
     }
 
-    public Task SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken = default)
+    public async Task SendMessageAsync(string messageContent, ChannelId channelId, CancellationToken cancellationToken = default)
     {
-        throw new InvalidOperationException();
+        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var id = new UserId(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        
+        var user = await _dbContext.Users
+            .AsSplitQuery()
+            .Include(x => x.Channels)
+            .ThenInclude(x => x.Participants)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        
+        ArgumentNullException.ThrowIfNull(user);
+
+        if (channelId != GroupChat.GlobalChatId && !user.Channels.Exists(x => x.Id == channelId))
+        {
+            return;
+        }
+        
+        var message = _messageStorageService.CreateMessage(user, messageContent, channelId);
+        await _messageStorageService.StoreMessageAsync(message);
+        
+        var dto = message.ToDto();
+        await _hubContext.Clients.Group(channelId).ReceiveMessage(dto);
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
