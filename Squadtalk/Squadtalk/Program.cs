@@ -2,6 +2,7 @@ using System.Net;
 using Coravel;
 using Coravel.Scheduling.Schedule.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
@@ -13,6 +14,7 @@ using Squadtalk.Components.Account;
 using Squadtalk.Data;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
+using Squadtalk.Services;
 using Squadtalk.Services.Scheduling;
 using Squadtalk.Tus;
 
@@ -56,6 +58,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddServerServices(builder.Environment);
+builder.Services.AddScoped<IMyCircuit, MyCircuit>();
+builder.Services.AddScoped<CircuitHandler, MyCircuitHandler>();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.Configuration.GetString("Rest:BasePath"))

@@ -1,12 +1,28 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Shared.Communication;
 using Shared.Data;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Services;
+using Squadtalk.Data;
+using Squadtalk.Hubs;
 
 namespace Squadtalk.Services;
 
 public sealed class ServersideSignalrService : ISignalrService
 {
+    private readonly ChatConnectionManager<ApplicationUser, UserId> _connectionManager;
+    private readonly ILogger<ServersideSignalrService> _logger;
+    private readonly IHubContext<ChatHub, IChatClient> _hubContext;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly IMyCircuit _myCircuit;
+    private readonly MessageStorageService _messageStorageService;
+
 #pragma warning disable CS0067
 
     public event Func<MessageDto, Task>? MessageReceived;
@@ -23,6 +39,31 @@ public sealed class ServersideSignalrService : ISignalrService
     public event Func<string, Task>? CallFailed;
     public event Func<List<UserDto>, CallId, Task>? GetCallUsers;
     public event Func<VoicePacketDto, Task>? GetVoicePacket;
+
+    public ServersideSignalrService(
+        ChatConnectionManager<ApplicationUser, UserId> connectionManager,
+        ILogger<ServersideSignalrService> logger,
+        IHubContext<ChatHub, IChatClient> hubContext,
+        ApplicationDbContext dbContext,
+        AuthenticationStateProvider authenticationStateProvider,
+        IMyCircuit myCircuit,
+        NavigationManager navigationManager,
+        MessageStorageService messageStorageService)
+    {
+        _connectionManager = connectionManager;
+        _logger = logger;
+        _hubContext = hubContext;
+        _dbContext = dbContext;
+        _authenticationStateProvider = authenticationStateProvider;
+
+        if (myCircuit.CurrentCircuit is not { Id.Length: > 0 })
+        {
+            navigationManager.NavigateTo("");
+        }
+        
+        _myCircuit = myCircuit;
+        _messageStorageService = messageStorageService;
+    }
 
     public Task<CallOfferId?> StartVoiceCallAsync(UserId id)
     {
@@ -53,12 +94,41 @@ public sealed class ServersideSignalrService : ISignalrService
     
     public string ConnectionStatus { get; private set; } = ISignalrService.Offline;
 
-    public bool Connected => false;
+    public bool Connected => true;
 
-    public Task ConnectAsync()
+    public async Task ConnectAsync()
     {
-        ConnectionStatus = ISignalrService.Connecting;
-        return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+        ConnectionStatus = ISignalrService.Online;
+        await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+        
+        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var id = new UserId(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        
+        var user = await _dbContext.Users
+            .AsSplitQuery()
+            .Include(x => x.Channels)
+            .ThenInclude(x => x.Participants)
+            .SingleOrDefaultAsync(x => x.Id == id);
+
+        ArgumentNullException.ThrowIfNull(user);
+        var dto = user.ToDto();
+
+        var isUniqueConnection = await _connectionManager.Add(user, _myCircuit.CurrentCircuit.Id);
+        if (isUniqueConnection)
+        {
+            await _hubContext.Clients.Groups(GroupChat.GlobalChatId).UserConnected(dto);
+        }
+        
+        if (user.Channels is not { Count: > 0 }) return;
+        var channelDtos = user.Channels.Select(x => x.ToDto());
+
+        await TextChannelsReceived.TryInvoke(channelDtos);
+        await ConnectedUsersReceived.TryInvoke(_connectionManager.ConnectedUsers.Select(x => x.ToDto()));
+        
+        foreach (var channel in user.Channels.Where(_ => isUniqueConnection))
+        {
+            await _hubContext.Clients.Groups(channel.Id).UserConnected(dto);
+        }
     }
 
     public Task SendMessageAsync(string message, ChannelId id, CancellationToken cancellationToken = default)

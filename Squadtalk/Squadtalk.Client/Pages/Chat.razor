@@ -125,7 +125,7 @@
 
     private Task EndVoiceCall(VoiceCallModel callModel)
     {
-        return VoiceChatService.EndCallAsync((CallId) callModel.Id);
+        return VoiceChatService.EndCallAsync(callModel.Id);
     }
     
     public void Dispose()
