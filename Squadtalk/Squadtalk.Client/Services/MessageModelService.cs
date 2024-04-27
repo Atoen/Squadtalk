@@ -1,14 +1,15 @@
 using Shared.Communication;
+using Shared.Data;
 using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class MessageModelService<T>(IMessageModelMapper<T> mapper) : IMessageModelService<T>
+public class MessageModelService : IMessageModelService
 {
     public TimeSpan MessageSeparationTimespan { get; } = TimeSpan.FromMinutes(5);
 
-    public IList<MessageModel> CreateModelPage(IList<T> inputPage, TextChannelState channelState)
+    public IList<MessageModel> CreateModelPage(IList<IChatMessage> inputPage, TextChannelState channelState)
     {
         if (inputPage.Count == 0)
         {
@@ -43,9 +44,22 @@ public class MessageModelService<T>(IMessageModelMapper<T> mapper) : IMessageMod
         return page;
     }
 
-    public MessageModel CreateModel(T message, TextChannelState channelState, bool isFromPage)
+    public MessageModel CreateModel(IChatMessage message, TextChannelState channelState, bool isFromPage)
     {
-        var model = mapper.CreateModel(message);
+        var model = new MessageModel
+        {
+            Author = message.Author.Username,
+            Timestamp = message.Timestamp,
+            Content = message.Content,
+            Embed = message.Embed is { } embed
+                ? new EmbedModel
+                {
+                    Type = embed.Type,
+                    Data = embed.Data
+                }
+                : null
+        };
+        
         var previousMessage = isFromPage
             ? channelState.LastPageMessageReceived
             : channelState.LastMessageReceived;

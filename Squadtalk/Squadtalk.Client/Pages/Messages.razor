@@ -9,7 +9,7 @@
 
 <ChannelSelector />
 
-@inject ISignalrService SignalrService
+@inject ICommunicationService CommunicationService
 @inject ITextChatService TextChatService
 
 @code {
@@ -17,6 +17,6 @@
     protected override async Task OnInitializedAsync()
     {
         await TextChatService.ClearChannelSelectionAsync();
-        await SignalrService.ConnectAsync();
+        await CommunicationService.ConnectAsync();
     }
 }

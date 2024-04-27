@@ -14,11 +14,11 @@ public class ChatVisibilityManager : IChatVisibilityManager
     private const string HiddenChats = "hiddenChats";
     
     private HashSet<string> _hiddenChannels = [];
-    private readonly List<TextChannel> _visibleChannels = [];
+    private readonly List<TextChannelModel> _visibleChannels = [];
 
     public event Action? StateChanged;
     
-    public IReadOnlyList<TextChannel> VisibleChannels => _visibleChannels;
+    public IReadOnlyList<TextChannelModel> VisibleChannels => _visibleChannels;
 
     private bool _initialized;
 

@@ -52,11 +52,13 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<VoiceCallManager>();
         
         serviceCollection.AddScoped<MessageStorageService>();
-        serviceCollection.AddScoped<IMessageService, ServersideMessagesService>();
-        serviceCollection.AddScoped<IMessageModelService<Message>, MessageModelService<Message>>();
-        serviceCollection.AddScoped<IMessageModelMapper<Message>, MessageModelMapper>();
-        serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<ISignalrService, ServersideSignalrService>();
+        serviceCollection.AddScoped<IMessageService, MessageService>();
+        serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
+        serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
+        serviceCollection.AddScoped<ICreateTextChannelRequestHandler, LocalChannelCreator>();
+        
+        serviceCollection.AddScoped<ITextChatService, TextChatService>(); ;
+        serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
         serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
         serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();

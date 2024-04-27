@@ -4,7 +4,7 @@ using Shared.Data;
 namespace Shared.DTOs;
 
 [MessagePackObject]
-public class MessageDto
+public class MessageDto : IChatMessage
 {
     [Key(0)] public UserDto Author { get; set; } = default!;
 
@@ -15,4 +15,10 @@ public class MessageDto
     [Key(3)] public DateTimeOffset Timestamp { get; set; }
 
     [Key(4)] public EmbedDto? Embed { get; set; }
+    
+    [IgnoreMember]
+    IChatUser IChatMessage.Author => Author;
+    
+    [IgnoreMember]
+    IMessageEmbed? IChatMessage.Embed => Embed;
 }

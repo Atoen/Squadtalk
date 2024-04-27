@@ -1,13 +1,14 @@
 using Shared.Communication;
+using Shared.Data;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public interface IMessageModelService<TMessage>
+public interface IMessageModelService
 {
     TimeSpan MessageSeparationTimespan { get; }
     
-    IList<MessageModel> CreateModelPage(IList<TMessage> inputPage, TextChannelState channelState);
+    IList<MessageModel> CreateModelPage(IList<IChatMessage> inputPage, TextChannelState channelState);
 
-    MessageModel CreateModel(TMessage message, TextChannelState channelState, bool isFromPage);
+    MessageModel CreateModel(IChatMessage message, TextChannelState channelState, bool isFromPage);
 }

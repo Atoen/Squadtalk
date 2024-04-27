@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Data;
 using Shared.Enums;
 
 namespace Squadtalk.Data;
 
 [Owned]
-public class Embed
+public class Embed : IMessageEmbed
 {
     public EmbedType Type { get; set; }
     public Dictionary<string, string> Data { get; set; } = new();

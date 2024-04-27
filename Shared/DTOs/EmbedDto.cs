@@ -1,10 +1,11 @@
 using MessagePack;
+using Shared.Data;
 using Shared.Enums;
 
 namespace Shared.DTOs;
 
 [MessagePackObject]
-public class EmbedDto
+public class EmbedDto : IMessageEmbed
 {
     [Key(0)] public EmbedType Type { get; set; }
 

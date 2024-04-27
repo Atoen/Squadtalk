@@ -1,9 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
-using RestSharp;
 using Shared.Communication;
 using Shared.Data;
-using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
@@ -12,11 +10,11 @@ namespace Squadtalk.Client.Services;
 
 public class MessageService : IMessageService
 {
-    private readonly RestClient _restClient;
     private readonly ILogger<MessageService> _logger;
-    private readonly ISignalrService _signalrService;
-    private readonly IMessageModelService<MessageDto> _modelService;
+    private readonly IMessageModelService _modelService;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly IMessagePageProvider _messagePageProvider;
+    private readonly ICommunicationService _communicationService;
     private readonly ITextChatService _textChatService;
     
     private string? _userId;
@@ -25,23 +23,23 @@ public class MessageService : IMessageService
     
     public MessageService(
         ITextChatService textChatService,
-        RestClient restClient,
-        ISignalrService signalrService,
-        IMessageModelService<MessageDto> modelService,
+        IMessageModelService modelService,
         AuthenticationStateProvider authenticationStateProvider,
+        IMessagePageProvider messagePageProvider,
+        ICommunicationService communicationService,
         ILogger<MessageService> logger)
     {
         _textChatService = textChatService;
-        _restClient = restClient;
-        _signalrService = signalrService;
         _modelService = modelService;
         _authenticationStateProvider = authenticationStateProvider;
+        _messagePageProvider = messagePageProvider;
+        _communicationService = communicationService;
         _logger = logger;
 
-        _signalrService.MessageReceived += HandleIncomingMessage;
+        _communicationService.MessageReceived += HandleIncomingMessage;
     }
 
-    private async Task HandleIncomingMessage(MessageDto messageDto)
+    private async Task HandleIncomingMessage(IChatMessage messageDto)
     {
         var channel = _textChatService.GetChannel(messageDto.ChannelId);
         if (channel is null)
@@ -70,12 +68,12 @@ public class MessageService : IMessageService
     {
         if (_textChatService.CurrentChannel is not { Id: { } id }) return;
 
-        await _signalrService.SendMessageAsync(message, id, cancellationToken);
+        await _communicationService.SendMessageAsync(message, id, cancellationToken);
 
         _textChatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
     }
 
-    private async Task UpdateChannelMessageState(TextChannel textChannel, MessageDto messageDto)
+    private async Task UpdateChannelMessageState(TextChannelModel textChannelModel, IChatMessage message)
     {
         if (_userId is null)
         {
@@ -83,14 +81,14 @@ public class MessageService : IMessageService
             _userId = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
         }
 
-        var messageByCurrentUser = messageDto.Author.Id == _userId;
+        var messageByCurrentUser = message.Author.Id == _userId;
 
-        if (_textChatService.CurrentChannel != textChannel && !messageByCurrentUser)
+        if (_textChatService.CurrentChannel != textChannelModel && !messageByCurrentUser)
         {
-            textChannel.State.UnreadMessages++;
+            textChannelModel.State.UnreadMessages++;
         }
 
-        textChannel.SetLastMessage(messageDto, messageByCurrentUser);
+        textChannelModel.SetLastMessage(message, messageByCurrentUser);
     }
     
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
@@ -100,24 +98,17 @@ public class MessageService : IMessageService
         {
             return Array.Empty<MessageModel>();
         }
-        
-        var restRequest = new RestRequest("api/message/{channel}/{timestamp}")
-            .AddUrlSegment("channel", id);
 
-        var state = channel.State;
-        if (state.Cursor != default)
-        {
-            restRequest.AddUrlSegment("timestamp", state.Cursor.ToString().ToBase64(true));
-        }
+        var channelState = channel.State;
+        var cursor = new MessageCursor(channelState.Cursor);
+        var page = await _messagePageProvider.GetPageAsync(id, cursor, cancellationToken);
 
-        var response = await _restClient.GetAsync<List<MessageDto>>(restRequest, cancellationToken);
-        if (response is not { Count: > 0 })
+        if (page.Count == 0)
         {
             return Array.Empty<MessageModel>();
         }
 
-        state.Cursor = response[0].Timestamp.UtcTicks;
-        
-        return _modelService.CreateModelPage(response, state);
+        channelState.Cursor = page[0].Timestamp.UtcTicks;
+        return _modelService.CreateModelPage(page, channelState);
     }
 }

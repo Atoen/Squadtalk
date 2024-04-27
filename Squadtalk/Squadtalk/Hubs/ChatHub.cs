@@ -92,7 +92,7 @@ public partial class ChatHub : Hub<IChatClient>
         var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
 
-        if (id != GroupChat.GlobalChatId && !UserParticipatesInChannel(user, id))
+        if (id != GroupChatModel.GlobalChatId && !UserParticipatesInChannel(user, id))
         {
             return;
         }
@@ -114,10 +114,10 @@ public partial class ChatHub : Hub<IChatClient>
         var isUniqueConnection = await _connectionManager.Add(user, Context.ConnectionId);
         if (isUniqueConnection)
         {
-            await TextGroup(GroupChat.GlobalChatId).UserConnected(dto);
+            await TextGroup(GroupChatModel.GlobalChatId).UserConnected(dto);
         }
         
-        await Groups.AddToGroupAsync(Context.ConnectionId, GroupChat.GlobalChatId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupChatModel.GlobalChatId);
         
         var channelDtos = user.Channels.Select(x => x.ToDto()).ToList();
         
@@ -141,7 +141,7 @@ public partial class ChatHub : Hub<IChatClient>
         var allConnectionsClosed = await _connectionManager.Remove(user, Context.ConnectionId);
         if (!allConnectionsClosed) return;
 
-        await TextGroup(GroupChat.GlobalChatId).UserDisconnected(dto);
+        await TextGroup(GroupChatModel.GlobalChatId).UserDisconnected(dto);
         if (user.Channels is not { Count: > 0 }) return;
 
         foreach (var channel in user.Channels)

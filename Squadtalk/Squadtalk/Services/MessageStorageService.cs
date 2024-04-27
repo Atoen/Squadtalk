@@ -29,7 +29,7 @@ public class MessageStorageService
     {
         await _dbContext.Messages.AddAsync(message);
 
-        if (message.ChannelId != GroupChat.GlobalChatId)
+        if (message.ChannelId != GroupChatModel.GlobalChatId)
         {
             var channel = await _dbContext.Channels
                 .AsTracking()

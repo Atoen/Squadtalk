@@ -2,7 +2,7 @@ using Shared.Data;
 
 namespace Squadtalk.Data;
 
-public class Message
+public class Message : IChatMessage
 {
     public uint Id { get; set; }
 
@@ -15,4 +15,8 @@ public class Message
     public string Content { get; set; } = string.Empty;
     
     public Embed? Embed { get; set; }
+    
+    IChatUser IChatMessage.Author => Author;
+    
+    IMessageEmbed? IChatMessage.Embed => Embed;
 }

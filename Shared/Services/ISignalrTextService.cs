@@ -14,6 +14,4 @@ public interface ISignalrTextService
     event Func<ChannelDto, Task>? AddedToTextChannel; 
     
     Task SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken = default);
-    
-    
 }

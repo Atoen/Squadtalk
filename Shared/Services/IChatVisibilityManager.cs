@@ -7,7 +7,7 @@ public interface IChatVisibilityManager
 {
     event Action? StateChanged;
     
-    IReadOnlyList<TextChannel> VisibleChannels { get; }
+    IReadOnlyList<TextChannelModel> VisibleChannels { get; }
 
     Task StopHidingChannel(ChannelId id);
 

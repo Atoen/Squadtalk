@@ -19,7 +19,7 @@
 }
 
 @inject ITextChatService TextChatService
-@inject ISignalrService SignalrService
+@inject ICommunicationService CommunicationService
 @inject IChatVisibilityManager ChatVisibilityManager
 
 @code {
@@ -27,7 +27,7 @@
     protected override async Task OnInitializedAsync()
     {
         await TextChatService.ClearChannelSelectionAsync();
-        await SignalrService.ConnectAsync();
+        await CommunicationService.ConnectAsync();
 
         TextChatService.StateChanged += StateHasChanged;
     }

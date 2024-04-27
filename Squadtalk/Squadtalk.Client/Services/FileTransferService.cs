@@ -17,13 +17,13 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     
     public event Action<FileModel>? FileSelected;
     public event Action? SelectionCleared;
-    public event Action<FileModel, TextChannel>? UploadStarted;
+    public event Action<FileModel, TextChannelModel>? UploadStarted;
     public event Action? StateChanged;
 
     public int SelectedCount { get; private set; }
     public FileModel? SelectedFile { get; private set; }
     public FileModel? CurrentlyUploadedFile { get; private set; }
-    public TextChannel? UploadChannel { get; private set; }
+    public TextChannelModel? UploadChannel { get; private set; }
     public List<FileModel> UploadQueue { get; } = [];
 
     public FileTransferService(IJSRuntime jsRuntime, ILogger<FileTransferService> logger, ToastService toastService)
@@ -42,7 +42,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         await _jsModule.InvokeVoidAsync("initialize", _dotNetObject, "127.0.0.1:1235/Upload");
     }
 
-    public Task UploadFileAsync(TextChannel channel)
+    public Task UploadFileAsync(TextChannelModel channelModel)
     {
         if (SelectedFile is null)
         {
@@ -51,9 +51,9 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         }
 
         SelectedFile = null;
-        UploadChannel = channel;
+        UploadChannel = channelModel;
 
-        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", channel.Id.Value, channel.Name).AsTask();
+        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", channelModel.Id.Value, channelModel.Name).AsTask();
     }
 
     public Task CancelUploadAsync()
@@ -122,7 +122,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     public void UploadStartedCallback(string filename, long filesize)
     {
         CurrentlyUploadedFile = FileModel.Create(filename, filesize);
-        UploadStarted?.Invoke(CurrentlyUploadedFile, GroupChat.GlobalChat);
+        UploadStarted?.Invoke(CurrentlyUploadedFile, GroupChatModel.GlobalChat);
     }
 
     [JSInvokable]

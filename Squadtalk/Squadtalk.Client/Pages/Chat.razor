@@ -80,7 +80,7 @@
     };
     
     private string? ChannelName => TextChatService.CurrentChannel?.Name;
-    private bool IsGlobalChat => TextChatService.CurrentChannel == GroupChat.GlobalChat;
+    private bool IsGlobalChat => TextChatService.CurrentChannel == GroupChatModel.GlobalChat;
     
     protected override void OnInitialized()
     {
@@ -119,7 +119,7 @@
         //     _ => null
         // };
 
-        var other = ((DirectMessageChannel) TextChatService.CurrentChannel!).Other;
+        var other = ((DirectMessageChannelModel) TextChatService.CurrentChannel!).Other;
         return VoiceChatService.StartCallAsync(other);
     }
 

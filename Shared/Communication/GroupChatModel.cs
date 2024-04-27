@@ -3,12 +3,12 @@ using Shared.Models;
 
 namespace Shared.Communication;
 
-public class GroupChat(IEnumerable<UserModel> others, ChannelId id) : TextChannel(id)
+public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id) : TextChannelModel(id)
 {
     public const string GlobalChanelIdValue = "global";
     public static readonly ChannelId GlobalChatId = new(GlobalChanelIdValue);
 
-    public static readonly GroupChat GlobalChat = new([], GlobalChatId) { _name = "Global"};
+    public static readonly GroupChatModel GlobalChat = new([], GlobalChatId) { _name = "Global"};
 
     public List<UserModel> Others { get; } = others.ToList();
     

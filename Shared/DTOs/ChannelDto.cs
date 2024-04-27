@@ -4,11 +4,17 @@ using Shared.Data;
 namespace Shared.DTOs;
 
 [MessagePackObject]
-public class ChannelDto
+public class ChannelDto : IChatChannel
 {
     [Key(0)] public ChannelId Id { get; set; } = default!;
 
     [Key(1)] public List<UserDto> Participants { get; set; } = default!;
 
     [Key(2)] public MessageDto? LastMessage { get; set; }
+
+    [IgnoreMember]
+    IEnumerable<IChatUser> IChatChannel.Participants => Participants;
+    
+    [IgnoreMember]
+    IChatMessage? IChatChannel.LastMessage => LastMessage;
 }

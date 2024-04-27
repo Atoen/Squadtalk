@@ -54,7 +54,7 @@
         </div>
         break;
     case EmbedType.Image:
-        @if (!_imageLoaded)
+        if (!_imageLoaded)
         {
             <div class="image-parent" style="max-width: @Model[FileData.ImageWidth]px; height: @Model[FileData.ImageHeight]px;">
                 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="image-placeholder">

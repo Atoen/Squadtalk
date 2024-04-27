@@ -35,7 +35,7 @@
     private HttpContext HttpContext { get; set; } = default!;
     
     private bool IsOnAccountManagePage => HttpContext.Request.Path.StartsWithSegments("/Account");
-    private bool ClientRequestedServerSide => HttpContext.Request.Host.Host.StartsWith("server") || true;
+    private bool ClientRequestedServerSide => HttpContext.Request.Host.Host.StartsWith("server");
 
     private IComponentRenderMode? RenderModeForPage => (IsOnAccountManagePage, ClientRequestedServerSide) switch
     {

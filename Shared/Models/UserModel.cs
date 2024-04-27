@@ -1,5 +1,4 @@
 using Shared.Data;
-using Shared.DTOs;
 using Shared.Enums;
 
 namespace Shared.Models;
@@ -16,17 +15,17 @@ public class UserModel
 
     public static readonly List<UserModel> Models = [];
 
-    public static UserModel GetOrCreate(UserDto dto)
+    public static UserModel GetOrCreate(IChatUser user)
     {
-        if (Models.FirstOrDefault(x => x.Id == dto.Id) is { } model)
+        if (Models.FirstOrDefault(x => x.Id == user.Id) is { } model)
         {
             return model;
         }
         
         var newModel = new UserModel
         {
-            Username = dto.Username,
-            Id = dto.Id,
+            Username = user.Username,
+            Id = user.Id,
             Status = UserStatus.Offline,
             Color = "black",
             AvatarUrl = "user.png"

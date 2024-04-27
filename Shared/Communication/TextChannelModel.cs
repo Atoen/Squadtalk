@@ -1,10 +1,9 @@
 using Shared.Data;
-using Shared.DTOs;
 using Shared.Enums;
 
 namespace Shared.Communication;
 
-public abstract class TextChannel(ChannelId id)
+public abstract class TextChannelModel(ChannelId id)
 {
     public abstract string Name { get; }
     
@@ -21,7 +20,7 @@ public abstract class TextChannel(ChannelId id)
         LastMessage = byCurrentUser ? $"You: {message}" : message;
     }
     
-    public void SetLastMessage(MessageDto message, bool byCurrentUser)
+    public void SetLastMessage(IChatMessage message, bool byCurrentUser)
     {
         var contentToDisplay = message.Embed switch
         {

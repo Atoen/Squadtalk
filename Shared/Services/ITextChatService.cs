@@ -6,17 +6,17 @@ namespace Shared.Services;
 
 public interface ITextChatService
 {
-    TextChannel? GetChannel(ChannelId id);
+    TextChannelModel? GetChannel(ChannelId id);
     
-    TextChannel? CurrentChannel { get; }
+    TextChannelModel? CurrentChannel { get; }
 
     TextChannelState? CurrentChannelState => CurrentChannel?.State;
     
-    IReadOnlyList<GroupChat> GroupChats { get; }
+    IReadOnlyList<GroupChatModel> GroupChats { get; }
 
-    IReadOnlyList<DirectMessageChannel> DirectMessageChannels { get; }
+    IReadOnlyList<DirectMessageChannelModel> DirectMessageChannels { get; }
     
-    IReadOnlyList<TextChannel> AllChannels { get; }
+    IReadOnlyList<TextChannelModel> AllChannels { get; }
     
     IReadOnlyList<UserModel> Users { get; }
 
@@ -30,9 +30,9 @@ public interface ITextChatService
     
     Task OpenOrCreateFakeDirectMessageChannel(UserModel model);
     
-    Task CreateRealDirectMessageChannel(TextChannel channel);
+    Task CreateRealDirectMessageChannel(TextChannelModel channelModel);
 
-    Task OpenChannelAsync(TextChannel channel);
+    Task OpenChannelAsync(TextChannelModel channelModel);
 
     Task ClearChannelSelectionAsync();
 }

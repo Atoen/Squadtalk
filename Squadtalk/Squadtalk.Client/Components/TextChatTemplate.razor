@@ -12,14 +12,11 @@
         <div class="last-message-time">@Model.LastMessageTimeStamp.ToStringFormat(DateFormatMode.ChannelStatus)</div>
     }
     
-    @if (Model is { State.UnreadMessages: > 0 })
+    @if (Model.State is { UnreadMessages: > 0 and var unread })
     {
-        <Badge Color="BadgeColor.Danger"
-               Position="Position.Absolute"
-               Placement="BadgePlacement.TopRight"
-               IndicatorType="BadgeIndicatorType.RoundedPill"
-               VisuallyHiddenText="unread messages">
-            @(Model.State.UnreadMessages)
+        <Badge Color="BadgeColor.Danger" Position="Position.Absolute" Placement="BadgePlacement.TopRight"
+               IndicatorType="BadgeIndicatorType.RoundedPill" VisuallyHiddenText="unread messages">
+            @unread
         </Badge>
     }
     
@@ -36,8 +33,8 @@
 
 @code {
     
-    [Parameter, EditorRequired] public EventCallback<DirectMessageChannel> HideCallback { get; set; }
-    [Parameter, EditorRequired] public required DirectMessageChannel Model { get; set; }
+    [Parameter, EditorRequired] public EventCallback<DirectMessageChannelModel> HideCallback { get; set; }
+    [Parameter, EditorRequired] public required DirectMessageChannelModel Model { get; set; }
 
     private UserModel User => Model.Other;
     

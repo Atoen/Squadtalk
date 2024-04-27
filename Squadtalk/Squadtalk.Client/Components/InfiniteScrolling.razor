@@ -5,7 +5,7 @@
 
 @if (TextChatService.CurrentChannel is {State.ReachedEnd: true} channel)
 {
-    var preposition = channel is GroupChat ? "in" : "with";
+    var preposition = channel is GroupChatModel ? "in" : "with";
     <div>No more messages @preposition @channel.Name</div>
 }
 

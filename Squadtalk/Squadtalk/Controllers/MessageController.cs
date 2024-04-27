@@ -1,15 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
 using Shared.Data;
-using Shared.DTOs;
 using Shared.Extensions;
+using Shared.Services;
 using Squadtalk.Data;
-using Squadtalk.Hubs;
-using Squadtalk.Services;
 
 namespace Squadtalk.Controllers;
 
@@ -19,11 +16,16 @@ namespace Squadtalk.Controllers;
 public class MessageController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly ICreateTextChannelRequestHandler _createTextChannelRequestHandler;
     private readonly ILogger<MessageController> _logger;
 
-    public MessageController(ApplicationDbContext dbContext, ILogger<MessageController> logger)
+    public MessageController(
+        ApplicationDbContext dbContext,
+        ICreateTextChannelRequestHandler createTextChannelRequestHandler,
+        ILogger<MessageController> logger)
     {
         _dbContext = dbContext;
+        _createTextChannelRequestHandler = createTextChannelRequestHandler;
         _logger = logger;
     }
     
@@ -70,13 +72,12 @@ public class MessageController : ControllerBase
             return Problem("Cannot retrieve user data");
         }
         
-        if (channelId != GroupChat.GlobalChatId && !user.Channels.Exists(x=> x.Id == channelId))
+        if (channelId != GroupChatModel.GlobalChatId && !user.Channels.Exists(x=> x.Id == channelId))
         {
             return Unauthorized();
         }
 
         var cursor = CreateCursor(timestamp);
-        
         var messages = cursor == default
             ? MessageFirstPageAsync(_dbContext, channelId)
             : MessagePageByCursorAsync(_dbContext, channelId, cursor);
@@ -85,61 +86,13 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("createChannel")]
-    public async Task<IActionResult> CreateChannel(List<UserId> participantsId,
-        [FromServices] IHubContext<ChatHub, IChatClient> hubContext,
-        [FromServices] ChatConnectionManager<ApplicationUser, UserId> connectionManager)
+    public async Task<IActionResult> CreateChannel(List<UserId> participantsId)
     {
-        var channel = await CreateChannel(participantsId);
-        if (channel is null)
-        {
-            return BadRequest();
-        }
-
-        var dto = new ChannelDto
-        {
-            Id = channel.Id,
-            Participants = channel.Participants.Select(x => x.ToDto()).ToList()
-        };
+        var channelId = await _createTextChannelRequestHandler.CreateTextChannelAsync(participantsId);
         
-        foreach (var user in channel.Participants)
-        {
-            var userConnections = connectionManager.GetUserConnections(user);
-            foreach (var connection in userConnections)
-            {
-                await hubContext.Groups.AddToGroupAsync(connection, channel.Id);
-                await hubContext.Clients.Client(connection).AddedToChannel(dto);
-            }
-        }
-
-        return Ok(dto.Id);
-    }
-
-    private async Task<Channel?> CreateChannel(List<UserId> participantsId)
-    {
-        if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
-        {
-            return null;
-        }
-
-        var participants = await _dbContext.Users
-            .Where(x => participantsId.Contains(x.Id))
-            .ToListAsync();
-
-        if (participants.Count != participantsId.Count)
-        {
-            return null;
-        }
-
-        var channel = new Channel
-        {
-            Id = ChannelId.New,
-            Participants = participants,
-        };
-
-        await _dbContext.Channels.AddAsync(channel);
-        await _dbContext.SaveChangesAsync();
-
-        return channel;
+        return channelId is null
+            ? BadRequest()
+            : Ok(channelId);
     }
     
     private static DateTimeOffset CreateCursor(string? timestamp)
