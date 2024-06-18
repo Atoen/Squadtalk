@@ -8,6 +8,8 @@ public interface ITextChatService
 {
     TextChannelModel? GetChannel(ChannelId id);
     
+    GroupChatModel GlobalChat { get; }
+    
     TextChannelModel? CurrentChannel { get; }
 
     TextChannelState? CurrentChannelState => CurrentChannel?.State;

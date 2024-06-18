@@ -11,12 +11,12 @@ namespace Squadtalk.Services;
 public class LocalChannelCreator : ICreateTextChannelRequestHandler
 {
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
-    private readonly ChatConnectionManager<ApplicationUser, UserId> _connectionManager;
+    private readonly ChatConnectionManager _connectionManager;
     private readonly ApplicationDbContext _dbContext;
 
     public LocalChannelCreator(
         IHubContext<ChatHub, IChatClient> hubContext,
-        ChatConnectionManager<ApplicationUser, UserId> connectionManager,
+        ChatConnectionManager connectionManager,
         ApplicationDbContext dbContext)
     {
         _hubContext = hubContext;

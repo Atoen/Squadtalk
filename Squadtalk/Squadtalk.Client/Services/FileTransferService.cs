@@ -10,6 +10,7 @@ namespace Squadtalk.Client.Services;
 public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
+    // private readonly ITextChatService _textChatService;
     private readonly ILogger<FileTransferService> _logger;
     private readonly ToastService _toastService;
     private readonly DotNetObjectReference<FileTransferService> _dotNetObject;
@@ -26,9 +27,13 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     public TextChannelModel? UploadChannel { get; private set; }
     public List<FileModel> UploadQueue { get; } = [];
 
-    public FileTransferService(IJSRuntime jsRuntime, ILogger<FileTransferService> logger, ToastService toastService)
+    public FileTransferService(IJSRuntime jsRuntime,
+        // ITextChatService textChatService,
+        ILogger<FileTransferService> logger,
+        ToastService toastService)
     {
         _jsRuntime = jsRuntime;
+        // _textChatService = textChatService;
         _logger = logger;
         _toastService = toastService;
         _dotNetObject = DotNetObjectReference.Create(this);
@@ -122,7 +127,10 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     public void UploadStartedCallback(string filename, long filesize)
     {
         CurrentlyUploadedFile = FileModel.Create(filename, filesize);
-        UploadStarted?.Invoke(CurrentlyUploadedFile, GroupChatModel.GlobalChat);
+        
+        ArgumentNullException.ThrowIfNull(UploadChannel);
+        
+        UploadStarted?.Invoke(CurrentlyUploadedFile, UploadChannel);
     }
 
     [JSInvokable]

@@ -12,10 +12,10 @@
             @onkeydown="TextareaCallback"
             @onkeydown:preventDefault="@_preventDefaultOnKeyDown"
             id="textBox"
-            disabled="@(!SignalRService.Connected)">
+            disabled="@(!CommunicationService.Connected)">
         </textarea>
     </div>
-
+    
     <label class="add-button" for="file-picker">
         <svg id="Layer_1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1">
             <path d="m12 0a12 12 0 1 0 12 12 12.013 12.013 0 0 0 -12-12zm0 22a10 10 0 1 1 10-10 10.011 10.011 0 0 1 -10 10zm5-10a1 1 0 0 1 -1 1h-3v3a1 1 0 0 1 -2 0v-3h-3a1 1 0 0 1 0-2h3v-3a1 1 0 0 1 2 0v3h3a1 1 0 0 1 1 1z"/>
@@ -36,13 +36,14 @@
 @inject IMessageService MessageService
 @inject IJSRuntime JSRuntime
 @inject ITextChatService TextChatService
-@inject ISignalrService SignalRService
+@inject ICommunicationService CommunicationService
 @inject IFileTransferService FileTransferService
 
 @code {
     private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";
     private const string DefaultPlaceholder = "Type message";
-    
+
+    private string? _userInput;
     private string? _placeholder;
     private bool _preventDefaultOnKeyDown;
     
@@ -50,8 +51,8 @@
 
     protected override void OnInitialized()
     {
-        _placeholder = SignalRService.ConnectionStatus;
-        SignalRService.ConnectionStatusChanged += OnSignalRServiceOnConnectionStatusChanged;
+        _placeholder = CommunicationService.ConnectionStatus;
+        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
         FileTransferService.FileSelected += FileTransferServiceOnFileSelected;
         FileTransferService.SelectionCleared += FileTransferServiceOnSelectionCleared;
     }
@@ -60,9 +61,9 @@
 
     private void FileTransferServiceOnFileSelected(FileModel file) => StateHasChanged();
 
-    private Task OnSignalRServiceOnConnectionStatusChanged(string status)
+    private Task ConnectionStatusChanged(string status)
     {
-        _placeholder = SignalRService.Connected ? DefaultPlaceholder : status;
+        _placeholder = CommunicationService.Connected ? DefaultPlaceholder : status;
         StateHasChanged();
 
         return Task.CompletedTask;
@@ -80,7 +81,7 @@
     
     private string GetStyle()
     {
-        return SignalRService.Connected ? string.Empty : DisabledStyle;
+        return CommunicationService.Connected ? string.Empty : DisabledStyle;
     }
 
     private Task TextareaCallback(KeyboardEventArgs e)
@@ -96,13 +97,12 @@
 
         if (TextChatService.CurrentChannel is null) return;
         
-        
         if (TextChatService.CurrentChannel.IsFake())
         {
             await TextChatService.CreateRealDirectMessageChannel(TextChatService.CurrentChannel);
         }
 
-        var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
+        // var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
         var channel = TextChatService.CurrentChannel;
 
         if (FileTransferService.IsFileAvailable)
@@ -110,15 +110,15 @@
             await FileTransferService.UploadFileAsync(channel);
         }
         
-        if (!string.IsNullOrWhiteSpace(message))
+        if (!string.IsNullOrWhiteSpace(_userInput))
         {
-           await MessageService.SendMessageAsync(message);
+           await MessageService.SendMessageAsync(_userInput);
         }
     }
 
     public ValueTask DisposeAsync()
     {
-        SignalRService.ConnectionStatusChanged -= OnSignalRServiceOnConnectionStatusChanged;
+        CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
         FileTransferService.FileSelected -= FileTransferServiceOnFileSelected;
         FileTransferService.SelectionCleared -= FileTransferServiceOnSelectionCleared;
         

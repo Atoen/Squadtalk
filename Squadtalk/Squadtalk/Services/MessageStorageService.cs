@@ -9,11 +9,16 @@ namespace Squadtalk.Services;
 public class MessageStorageService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly LocalMessageNotificationService _notificationService;
     private readonly ILogger<MessageStorageService> _logger;
 
-    public MessageStorageService(ApplicationDbContext dbContext, ILogger<MessageStorageService> logger)
+    public MessageStorageService(
+        ApplicationDbContext dbContext,
+        LocalMessageNotificationService notificationService,
+        ILogger<MessageStorageService> logger)
     {
         _dbContext = dbContext;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -41,6 +46,7 @@ public class MessageStorageService
         try
         {
             await _dbContext.SaveChangesAsync();
+            await _notificationService.NotifyAboutMessageAsync(message);
         }
         catch (DbUpdateException e)
         {

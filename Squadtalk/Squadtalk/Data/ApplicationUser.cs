@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Shared.Data;
 
@@ -12,7 +11,6 @@ public class ApplicationUser : IdentityUser<UserId>, IChatUser
 
     [PersonalData]
     public List<ApplicationUser> Friends { get; set; }
-
-    [JsonIgnore]
-    public string Username => UserName!;
+    
+    string IChatUser.Username => UserName!;
 }

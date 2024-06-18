@@ -47,9 +47,9 @@ public static class ServiceCollectionExtensions
         
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
-        serviceCollection.AddSingleton<ChatConnectionManager<ApplicationUser, UserId>>();
-        serviceCollection.AddSingleton<IConnectionKeyAccessor<ApplicationUser, UserId>, ConnectionKeyAccessor>();
+        serviceCollection.AddSingleton<ChatConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
+        serviceCollection.AddSingleton<LocalMessageNotificationService>();
         
         serviceCollection.AddScoped<MessageStorageService>();
         serviceCollection.AddScoped<IMessageService, MessageService>();
@@ -57,7 +57,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
         serviceCollection.AddScoped<ICreateTextChannelRequestHandler, LocalChannelCreator>();
         
-        serviceCollection.AddScoped<ITextChatService, TextChatService>(); ;
+        serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
         serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
         serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();

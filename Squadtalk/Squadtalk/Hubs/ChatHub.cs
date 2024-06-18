@@ -16,13 +16,13 @@ namespace Squadtalk.Hubs;
 [Authorize]
 public partial class ChatHub : Hub<IChatClient>
 {
-    private readonly ChatConnectionManager<ApplicationUser, UserId> _connectionManager;
+    private readonly ChatConnectionManager _connectionManager;
     private readonly ILogger<ChatHub> _logger;
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly VoiceCallManager _voiceCallManager;
 
-    public ChatHub(ChatConnectionManager<ApplicationUser, UserId> connectionManager,
+    public ChatHub(ChatConnectionManager connectionManager,
         ILogger<ChatHub> logger,
         ApplicationDbContext dbContext,
         UserManager<ApplicationUser> userManager,

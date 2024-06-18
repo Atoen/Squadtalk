@@ -55,14 +55,16 @@ public class TextChatService : ITextChatService
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
 
+    public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
     public TextChannelModel? CurrentChannel { get; private set; }
 
     public TextChannelModel? GetChannel(ChannelId id)
     {
         return id == GroupChatModel.GlobalChatId
-            ? GroupChatModel.GlobalChat
+            ? GlobalChat
             : AllChannels.FirstOrDefault(x => x.Id == id);
     }
+
 
     public async Task OpenChannelAsync(TextChannelModel channelModel)
     {

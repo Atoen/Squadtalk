@@ -1,6 +1,7 @@
 @page "/Messages/Chat"
 @using Microsoft.AspNetCore.Authorization
 @using Shared.Communication
+@using Squadtalk.Client.Extensions
 @using Shared.Data
 
 @implements IDisposable
@@ -80,7 +81,7 @@
     };
     
     private string? ChannelName => TextChatService.CurrentChannel?.Name;
-    private bool IsGlobalChat => TextChatService.CurrentChannel == GroupChatModel.GlobalChat;
+    private bool IsGlobalChat => TextChatService.CurrentChannel.IsGlobal();
     
     protected override void OnInitialized()
     {

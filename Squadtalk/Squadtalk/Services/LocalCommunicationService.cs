@@ -18,21 +18,54 @@ public class LocalCommunicationService : ICommunicationService
     private readonly ApplicationDbContext _dbContext;
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
     private readonly MessageStorageService _messageStorageService;
+    private readonly ChatConnectionManager _connectionManager;
+    private readonly LocalMessageNotificationService _notificationService;
 
     public LocalCommunicationService(
         AuthenticationStateProvider authenticationStateProvider,
         ApplicationDbContext dbContext,
         IHubContext<ChatHub, IChatClient> hubContext,
-        MessageStorageService messageStorageService)
+        MessageStorageService messageStorageService,
+        ChatConnectionManager connectionManager,
+        LocalMessageNotificationService notificationService)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _dbContext = dbContext;
         _hubContext = hubContext;
         _messageStorageService = messageStorageService;
+        _connectionManager = connectionManager;
+        _notificationService = notificationService;
+        
+        _notificationService.MessageSent += NotificationServiceOnMessageSent;
     }
 
+    public event Func<IChatMessage, Task>? MessageReceived;
+    public event Func<IChatUser, Task>? UserConnected;
+    public event Func<IChatUser, Task>? UserDisconnected;
+    public event Func<IEnumerable<IChatUser>, Task>? ConnectedUsersReceived;
+    public event Func<string, Task>? ConnectionStatusChanged;
+    public event Func<IEnumerable<IChatChannel>, Task>? TextChannelsReceived;
+    public event Func<IChatChannel, Task>? AddedToTextChannel;
+    public event Func<IChatUser, CallOfferId, Task>? IncomingCall;
+    public event Func<CallOfferId, Task>? CallAccepted;
+    public event Func<CallOfferId, Task>? CallDeclined;
+    public event Func<CallId, Task>? CallEnded;
+    public event Func<string, Task>? CallFailed;
+    public event Func<IEnumerable<IChatUser>, CallId, Task>? GetCallUsers;
     public event Func<VoicePacketDto, Task>? GetVoicePacket;
-    public Task ConnectAsync() => Task.CompletedTask;
+
+    public string ConnectionStatus => ICommunicationService.Online;
+    public bool Connected => true;
+    
+    private Task NotificationServiceOnMessageSent(Message message)
+    {
+        return MessageReceived.TryInvoke(message);
+    }
+
+    public Task ConnectAsync()
+    {
+        return Task.CompletedTask;
+    }
 
     public async Task SendMessageAsync(string content, ChannelId channelId, CancellationToken cancellationToken)
     {
@@ -83,18 +116,4 @@ public class LocalCommunicationService : ICommunicationService
     {
         throw new NotImplementedException();
     }
-
-    public event Func<IChatMessage, Task>? MessageReceived;
-    public event Func<IChatUser, Task>? UserConnected;
-    public event Func<IChatUser, Task>? UserDisconnected;
-    public event Func<IEnumerable<IChatUser>, Task>? ConnectedUsersReceived;
-    public event Func<string, Task>? ConnectionStatusChanged;
-    public event Func<IEnumerable<IChatChannel>, Task>? TextChannelsReceived;
-    public event Func<IChatChannel, Task>? AddedToTextChannel;
-    public event Func<IChatUser, CallOfferId, Task>? IncomingCall;
-    public event Func<CallOfferId, Task>? CallAccepted;
-    public event Func<CallOfferId, Task>? CallDeclined;
-    public event Func<CallId, Task>? CallEnded;
-    public event Func<string, Task>? CallFailed;
-    public event Func<IEnumerable<IChatUser>, CallId, Task>? GetCallUsers;
 }

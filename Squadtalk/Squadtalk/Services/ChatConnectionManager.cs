@@ -1,22 +1,18 @@
+using Shared.Data;
+using Squadtalk.Data;
+
 namespace Squadtalk.Services;
 
-public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey : IEquatable<TKey>
+public class ChatConnectionManager
 {
-    private readonly IConnectionKeyAccessor<TUser, TKey> _keyAccessor;
     private readonly SemaphoreSlim _semaphore = new(1);
-    private readonly Dictionary<TKey, HashSet<string>> _connections = [];
+    private readonly Dictionary<UserId, HashSet<string>> _connections = [];
 
-    public List<TUser> ConnectedUsers { get; } = [];
+    public List<ApplicationUser> ConnectedUsers { get; } = [];
 
-    public ChatConnectionManager(IConnectionKeyAccessor<TUser, TKey> keyAccessor)
+    public IEnumerable<string> GetUserConnections(ApplicationUser user)
     {
-        _keyAccessor = keyAccessor;
-    }
-
-    public IEnumerable<string> GetUserConnections(TUser user)
-    {
-        var key = _keyAccessor.GetKey(user);
-        if (_connections.TryGetValue(key, out var connections))
+        if (_connections.TryGetValue(user.Id, out var connections))
         {
             return connections;
         }
@@ -24,14 +20,14 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
         return Enumerable.Empty<string>();
     }
 
-    public async Task<bool> Add(TUser user, string connectionId)
+    public async Task<bool> Add(ApplicationUser user, string connectionId)
     {
         await _semaphore.WaitAsync();
 
         try
         {
-            var key = _keyAccessor.GetKey(user);
-            var alreadyConnected = _connections.TryGetValue(key, out var existingConnections);
+            var id = user.Id;
+            var alreadyConnected = _connections.TryGetValue(id, out var existingConnections);
             if (alreadyConnected)
             {
                 existingConnections!.Add(connectionId);
@@ -39,7 +35,7 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
             else
             {
                 ConnectedUsers.Add(user);
-                _connections[key] = [connectionId];
+                _connections[id] = [connectionId];
             }
 
             return !alreadyConnected;
@@ -50,14 +46,14 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
         }
     }
     
-    public async Task<bool> Remove(TUser user, string connectionId)
+    public async Task<bool> Remove(ApplicationUser user, string connectionId)
     {
         await _semaphore.WaitAsync();
 
         try
         {
-            var key = _keyAccessor.GetKey(user);
-            if (!_connections.TryGetValue(key, out var existingConnections) || existingConnections.Count == 0)
+            var id = user.Id;
+            if (!_connections.TryGetValue(id, out var existingConnections) || existingConnections.Count == 0)
             {
                 return false;
             }
@@ -65,8 +61,8 @@ public class ChatConnectionManager<TUser, TKey> where TUser : notnull where TKey
             var isTheOnlyConnection = existingConnections.Count == 1;
             if (isTheOnlyConnection)
             {
-                ConnectedUsers.RemoveAll(x => _keyAccessor.GetKey(x).Equals(key));
-                _connections.Remove(key);
+                ConnectedUsers.RemoveAll(x => x.Id == id);
+                _connections.Remove(id);
             }
             else
             {

@@ -22,6 +22,16 @@ public interface ICommunicationService
     event Func<IEnumerable<IChatUser>, CallId, Task>? GetCallUsers;
     event Func<VoicePacketDto, Task>? GetVoicePacket;
     
+    const string Online = "Online";
+    const string Connecting = "Connecting";
+    const string Reconnecting = "Reconnecting";
+    const string Disconnected = "Disconnected";
+    const string Offline = "Offline";
+    
+    string ConnectionStatus { get; }
+    
+    bool Connected { get; }
+    
     Task ConnectAsync();
     
     Task SendMessageAsync(string content, ChannelId channelId, CancellationToken cancellationToken);

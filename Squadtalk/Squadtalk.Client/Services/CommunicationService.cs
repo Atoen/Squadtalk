@@ -13,6 +13,9 @@ public class CommunicationService : ICommunicationService
         _signalrService = signalrService;
     }
 
+    public string ConnectionStatus => _signalrService.ConnectionStatus;
+    public bool Connected => _signalrService.Connected;
+
     public Task ConnectAsync()
     {
         return _signalrService.ConnectAsync();

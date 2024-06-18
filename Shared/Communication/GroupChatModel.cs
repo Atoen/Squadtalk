@@ -6,10 +6,10 @@ namespace Shared.Communication;
 public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id) : TextChannelModel(id)
 {
     public const string GlobalChanelIdValue = "global";
+    
     public static readonly ChannelId GlobalChatId = new(GlobalChanelIdValue);
-
-    public static readonly GroupChatModel GlobalChat = new([], GlobalChatId) { _name = "Global"};
-
+    public static GroupChatModel CreateGlobalChat() => new([], GlobalChatId) { _name = "Global" };
+    
     public List<UserModel> Others { get; } = others.ToList();
     
     private string? _name;
