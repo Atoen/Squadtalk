@@ -47,5 +47,4 @@ public record Rule
     }
 
     public static string[] AvailableColors { get; } = Enum.GetNames(typeof(Color));
-
 }

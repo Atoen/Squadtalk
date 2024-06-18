@@ -1,0 +1,61 @@
+@page "/WebRTC"
+
+@using Shared
+@using Squadtalk.Client.Extensions
+@implements IAsyncDisposable
+
+<h3>WebRTC</h3>
+
+<Button Color="ButtonColor.Primary" @onclick="ToggleShareScreen">@ShareButtonText</Button>
+<div class="video-container my-2" id="video-container">
+    <video class="video-frame" id="local-video" muted autoplay></video>
+</div>
+
+@inject IJSRuntime JSRuntime
+@inject ILogger<WebRTC> Logger
+
+@code {
+
+    private IJSObjectReference _jsModule = default!;
+    private DotNetObjectReference<WebRTC> _dotNetObjectReference = default!;
+
+    private string ShareButtonText => _sharingScreen ? "Stop Sharing" : "Share Screen";
+    private bool _sharingScreen;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _dotNetObjectReference = DotNetObjectReference.Create(this);
+        _jsModule = await JSRuntime.ImportAndInitModuleAsync2(JSModules.WebRTC, _dotNetObjectReference);
+    }
+
+    private async Task ToggleShareScreen()
+    {
+        if (_sharingScreen)
+        {
+            _sharingScreen = false;
+            await _jsModule.InvokeVoidAsync("Stop");
+        }
+        else
+        {
+            await _jsModule.InvokeVoidAsync("Start");
+            _sharingScreen = true;
+        }
+    }
+    
+    [JSInvokable]
+    public void OnShareStopped()
+    {
+        Logger.LogInformation("Share stopped");
+        
+        _sharingScreen = false;
+        StateHasChanged();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _dotNetObjectReference.Dispose();
+        return _jsModule.TryDisposeAsync();
+    }
+}

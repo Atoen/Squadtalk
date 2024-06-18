@@ -1,0 +1,14 @@
+.video-container {
+    display: none;
+    background-color: black;
+    border-radius: 8px;
+}
+
+.video-frame {
+    width: calc(100% - 8px);
+    max-width: calc(100% - 8px);
+    max-height: calc(100vh - 300px);
+    height: 100%;
+    padding: 8px 0 0 8px;
+    min-height: 500px;
+}
