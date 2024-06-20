@@ -8,7 +8,7 @@
 
 <Button Color="ButtonColor.Primary" @onclick="ToggleShareScreen">@ShareButtonText</Button>
 <div class="video-container my-2" id="video-container">
-    <video class="video-frame" id="local-video" muted autoplay></video>
+    <video class="video-frame" id="local-video" autoplay></video>
 </div>
 
 @inject IJSRuntime JSRuntime
@@ -36,12 +36,14 @@
         {
             _sharingScreen = false;
             await _jsModule.InvokeVoidAsync("Stop");
+            
+            return;
         }
-        else
-        {
-            await _jsModule.InvokeVoidAsync("Start");
-            _sharingScreen = true;
-        }
+
+        var stared = await _jsModule.InvokeAsync<bool>("Start");
+        if (!stared) return;
+            
+        _sharingScreen = true;
     }
     
     [JSInvokable]
@@ -53,9 +55,23 @@
         StateHasChanged();
     }
 
-    public ValueTask DisposeAsync()
+    [JSInvokable]
+    public void OnIceCandidate()
     {
+        Logger.LogInformation("Ice Candidate");
+    }
+    
+    [JSInvokable]
+    public void OnSetLocalDescription()
+    {
+        Logger.LogInformation("Set Local Description");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _jsModule.InvokeVoidAsync("Stop");
+        await _jsModule.TryDisposeAsync();
+        
         _dotNetObjectReference.Dispose();
-        return _jsModule.TryDisposeAsync();
     }
 }

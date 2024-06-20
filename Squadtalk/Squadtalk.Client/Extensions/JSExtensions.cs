@@ -61,8 +61,8 @@ public static class JSExtensions
     private static IEnumerable<string> GetPathsToTry(string moduleName)
     {
         yield return $"../Components/{moduleName}.razor.js";
-        yield return $"../js/{moduleName}.js";
         yield return $"../js/{moduleName}.min.js";
+        yield return $"../js/{moduleName}.js";
     }
 
 }

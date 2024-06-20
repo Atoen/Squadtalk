@@ -8,7 +8,11 @@ let mediaStream: MediaStream
 let videoElement: HTMLVideoElement
 let videoFrame: HTMLElement
 
-export function Init(object: DotnetObject) {
+
+// @ts-ignore
+console.log(adapter.browserDetails);
+
+export async function Init(object: DotnetObject) {
     if (!object) {
         throw new Error("dotnet object is undefined")
     }
@@ -16,7 +20,9 @@ export function Init(object: DotnetObject) {
     dotnetObject = object;
 }
 
-export async function Start() {
+export async function Start(): Promise<boolean> {
+    createPeerConnection();
+    
     const displayMediaOptions = {
         video: {
             displaySurface: "window"
@@ -25,11 +31,9 @@ export async function Start() {
             echoCancellation: true,
             noiseSuppression: true,
             sampleRate: 44100,
-            suppressLocalAudioPlayback: true
         },
         surfaceSwitching: "include",
-        selfBrowserSurface: "exclude",
-        systemAudio: "exclude"
+        selfBrowserSurface: "exclude"
     };
 
     try {
@@ -49,9 +53,13 @@ export async function Start() {
                 await dotnetObject.invokeMethodAsync("OnShareStopped");
             };
         });
+        
     } catch (e) {
         console.log("Error occured", e);
+        return false
     }
+    
+    return true
 }
 
 export function Stop() {
@@ -67,4 +75,24 @@ export function Stop() {
     }
 }
 
+let rtcConnection: RTCPeerConnection;
 
+function createPeerConnection() {
+    rtcConnection = new RTCPeerConnection();
+    
+    rtcConnection.onicecandidate = async e => {
+        if (e.candidate) {
+            await dotnetObject.invokeMethodAsync("OnIceCandidate", e.candidate);
+        }
+    }
+    
+    rtcConnection.ontrack = async e => {
+        videoElement.srcObject = e.streams[0];
+    }
+    
+    rtcConnection.onnegotiationneeded = async e => {
+        const offer = await rtcConnection.createOffer();
+        await rtcConnection.setLocalDescription(offer);
+        await dotnetObject.invokeMethodAsync("OnSetLocalDescription", rtcConnection.localDescription);
+    }
+}
