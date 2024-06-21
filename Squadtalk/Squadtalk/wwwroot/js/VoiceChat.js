@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-// @ts-ignore
 Howler.autoUnlock = false;
 const mediaRecorders = [];
 let recorder;
@@ -54,9 +52,6 @@ export async function Init(object) {
 const GetNewIndex = (index) => index === 0 ? 1 : 0;
 export function PlayAudio(data) {
     try {
-        // const audio = new Audio(data);
-        // await audio.play();
-        // @ts-ignore
         const sound = new Howl({
             src: [data],
             format: ["webm"]

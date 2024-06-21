@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using Shared;
 
 namespace Squadtalk.Client.Extensions;
 
@@ -7,6 +8,22 @@ public static class JSExtensions
     public static ValueTask TryDisposeAsync(this IJSObjectReference? jsObjectReference)
     {
         return jsObjectReference?.DisposeAsync() ?? ValueTask.CompletedTask;
+    }
+
+    public static ValueTask TryInvokeVoidAsync(
+        this IJSObjectReference? jsObjectReference,
+        string identifier,
+        params object?[]? args)
+    {
+        return jsObjectReference?.InvokeVoidAsync(identifier, args) ?? ValueTask.CompletedTask;
+    }
+
+    public static ValueTask<T> TryInvokeAsync<T>(
+        this IJSObjectReference? jsObjectReference,
+        string identifier,
+        params object?[]? args)
+    {
+        return jsObjectReference?.InvokeAsync<T>(identifier, args) ?? default;
     }
 
     public static async Task<IJSObjectReference> ImportAndInitModuleAsync(
@@ -20,12 +37,12 @@ public static class JSExtensions
         return module;
     }
 
-    public static async Task<IJSObjectReference> ImportAndInitModuleAsync2(
+    public static async Task<IJSObjectReference> ImportAndInitModuleAsync(
         this IJSRuntime jsRuntime,
-        string moduleName,
+        JsModule jsModule,
         params object?[]? args)
     {
-        foreach (var path in GetPathsToTry(moduleName))
+        foreach (var path in GetPathsToTry(jsModule))
         {
             var module = await TryImportModuleAsync(jsRuntime, path, args);
             if (module is not null)
@@ -34,7 +51,7 @@ public static class JSExtensions
             }
         }
 
-        throw new InvalidOperationException($"Unable to load module {moduleName}");
+        throw new InvalidOperationException($"Unable to load module {jsModule.Name}");
     }
 
     public static async Task<IJSObjectReference?> TryImportModuleAsync(
@@ -57,12 +74,29 @@ public static class JSExtensions
             return null;
         }
     }
-    
-    private static IEnumerable<string> GetPathsToTry(string moduleName)
-    {
-        yield return $"../Components/{moduleName}.razor.js";
-        yield return $"../js/{moduleName}.min.js";
-        yield return $"../js/{moduleName}.js";
-    }
 
+    private static IEnumerable<string> GetPathsToTry(JsModule jsModule)
+    {
+        switch (jsModule.Location)
+        {
+            case JsModuleLocation.Collocated:
+                yield return $"../Components/{jsModule.Name}.razor.js";
+                break;
+            
+            case JsModuleLocation.ScriptsFolder:
+                yield return $"../js/{jsModule.Name}.js";
+                break;
+            
+            case JsModuleLocation.ScriptsFolderMinified:
+                yield return $"../js/{jsModule.Name}.min.js";
+                break;
+            
+            case JsModuleLocation.Unspecified:
+            default:
+                yield return $"../Components/{jsModule.Name}.razor.js";
+                yield return $"../js/{jsModule.Name}.min.js";
+                yield return $"../js/{jsModule.Name}.js";
+                break;
+        }
+    }
 }
