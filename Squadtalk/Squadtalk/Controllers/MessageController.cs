@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Extensions;
 using Shared.Services;
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Controllers;
 

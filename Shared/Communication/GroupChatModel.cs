@@ -1,9 +1,9 @@
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Models;
 
 namespace Shared.Communication;
 
-public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id) : TextChannelModel(id)
+public class GroupChatModel(IEnumerable<UserModel> others, ChannelId Id) : TextChannelModel(Id)
 {
     public const string GlobalChanelIdValue = "global";
     

@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Services;
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Hubs;
 
 namespace Squadtalk.Services;

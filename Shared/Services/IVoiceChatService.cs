@@ -1,4 +1,4 @@
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Models;
 
 namespace Shared.Services;

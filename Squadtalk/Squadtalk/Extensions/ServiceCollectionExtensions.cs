@@ -4,10 +4,9 @@ using MailKit.Net.Smtp;
 using MessagePack;
 using Microsoft.AspNetCore.Identity;
 using Polly.Registry;
-using Shared.Data;
 using Shared.Services;
 using Squadtalk.Client.Services;
-using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Services;
 using Squadtalk.Services.Scheduling;
 
@@ -52,6 +51,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<LocalMessageNotificationService>();
         
         serviceCollection.AddScoped<MessageStorageService>();
+        serviceCollection.AddScoped<FileStorageService>();
         serviceCollection.AddScoped<IMessageService, MessageService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();

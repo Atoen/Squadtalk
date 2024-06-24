@@ -1,4 +1,5 @@
 using Shared;
+using Shared.Data.TypedIds;
 using Shared.Enums;
 using SixLabors.ImageSharp;
 using Squadtalk.Data;
@@ -22,7 +23,7 @@ public class EmbedService
         _urlBasePath = configuration.GetString("Rest:BasePath");
     }
     
-    public async Task<Embed> CreateFileEmbedAsync(ITusFile file, CancellationToken cancellationToken)
+    public async Task<Embed> CreateFileEmbedAsync(ITusFile file, ChannelId channelId, CancellationToken cancellationToken)
     {
         var metadata = await file.GetMetadataAsync(cancellationToken);
 
@@ -30,12 +31,12 @@ public class EmbedService
         var filesize = metadata.GetString(FileData.FileSize);
         var contentType = metadata.GetString(FileData.ContentType);
 
-        var url = CreateDownloadUrl(file.Id, filename);
+        var url = CreateDownloadUrl(channelId, file.Id, filename);
         var embed = CreateFileEmbed(filename, filesize, url, EmbedType.File);
 
         if (contentType.StartsWith(ImageMime))
         {
-            await AddImageDataAsync(embed, file, metadata, cancellationToken);
+            await AddImageDataAsync(embed, file, channelId, metadata, cancellationToken);
         }
 
         else if (contentType.StartsWith(VideoMime))
@@ -46,7 +47,7 @@ public class EmbedService
         return embed;
     }
 
-    private async Task AddImageDataAsync(Embed embed, ITusFile file, Dictionary<string, Metadata> metadata,
+    private async Task AddImageDataAsync(Embed embed, ITusFile file, ChannelId channelId, Dictionary<string, Metadata> metadata,
         CancellationToken cancellationToken)
     {
         var width = metadata.GetString(FileData.ImageWidth);
@@ -76,7 +77,7 @@ public class EmbedService
         
         var (id, name, size) = previewData;
 
-        data[FileData.PreviewUrl] = CreateDownloadUrl(id, name);
+        data[FileData.PreviewUrl] = CreateDownloadUrl(channelId,  id, name);
         data[FileData.ImageWidth] = size.Width.ToString();
         data[FileData.ImageHeight] = size.Height.ToString();
     }
@@ -95,8 +96,8 @@ public class EmbedService
         };
     }
 
-    private string CreateDownloadUrl(string fileId, string filename)
+    private string CreateDownloadUrl(ChannelId channelId, string fileId, string filename)
     {
-        return $"{_urlBasePath}/api/files/{fileId}/{filename}";
+        return $"{_urlBasePath}/api/files/{channelId.Value}/{fileId}/{filename}";
     }
 }

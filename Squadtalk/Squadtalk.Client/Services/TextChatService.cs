@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Communication;
 using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Extensions;
 using Shared.Models;

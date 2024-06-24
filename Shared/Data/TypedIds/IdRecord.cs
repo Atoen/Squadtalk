@@ -1,8 +1,9 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using MessagePack;
+using Shared.Data.TypedIds.TypeConverters;
 
-namespace Shared.Data;
+namespace Shared.Data.TypedIds;
 
 [MessagePackObject]
 public abstract record IdRecord

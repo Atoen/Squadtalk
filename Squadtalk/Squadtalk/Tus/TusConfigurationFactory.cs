@@ -2,8 +2,9 @@ using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Shared;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
 using Squadtalk.Services;
@@ -69,19 +70,20 @@ public static class TusConfigurationFactory
 
         var file = await fileCompleteContext.GetFileAsync();
         var metadata = await file.GetMetadataAsync(cancellationToken);
+        var channelId = (ChannelId) metadata.GetString(FileData.ChannelId);
 
-        var channelId = metadata.GetString(FileData.ChannelId);
-
-        var embedService = httpContext.RequestServices.GetRequiredService<EmbedService>();
-        var embed = await embedService.CreateFileEmbedAsync(file, cancellationToken);
+        var fileService = httpContext.RequestServices.GetRequiredService<FileStorageService>();
+        await fileService.StoreFileAsync(file, channelId);
 
         var userManager = httpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await userManager.GetUserAsync(httpContext.User);
-
         if (user is null) return;
-
+        
+        var embedService = httpContext.RequestServices.GetRequiredService<EmbedService>();
+        var embed = await embedService.CreateFileEmbedAsync(file, channelId, cancellationToken);
+        
         var messageService = httpContext.RequestServices.GetRequiredService<MessageStorageService>();
-        var message = messageService.CreateMessage(user, string.Empty, (ChannelId) channelId)
+        var message = messageService.CreateMessage(user, string.Empty, channelId)
             .WithEmbed(embed);
         
         await messageService.StoreMessageAsync(message);

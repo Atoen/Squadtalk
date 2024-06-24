@@ -1,4 +1,4 @@
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 
 namespace Squadtalk.Hubs;

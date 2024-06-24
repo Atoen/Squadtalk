@@ -1,6 +1,6 @@
 using Blazored.LocalStorage;
 using Shared.Communication;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;

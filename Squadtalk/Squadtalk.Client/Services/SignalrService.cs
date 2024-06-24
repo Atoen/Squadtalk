@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using MessagePack;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Services;

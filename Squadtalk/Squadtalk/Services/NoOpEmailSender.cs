@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Services;
 

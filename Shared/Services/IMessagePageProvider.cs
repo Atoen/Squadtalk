@@ -1,4 +1,5 @@
 using Shared.Data;
+using Shared.Data.TypedIds;
 
 namespace Shared.Services;
 

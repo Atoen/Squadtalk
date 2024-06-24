@@ -1,10 +1,7 @@
 // noinspection JSUnusedGlobalSymbols
 
-// @ts-ignore
-Howler.autoUnlock = false;
 
 const mediaRecorders: MediaRecorder[] = [];
-let recorder;
 
 let dotnetObject: DotnetObject
 let audioChunks: Blob[] = [];

@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;
@@ -50,7 +51,7 @@ public class MessageStorageService
         }
         catch (DbUpdateException e)
         {
-            _logger.LogError(e, "1 Failed to store message with id: {Id}", message.Id);
+            _logger.LogError(e, "Failed to store message");
         }
     }
 }

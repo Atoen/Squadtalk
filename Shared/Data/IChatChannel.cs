@@ -1,3 +1,5 @@
+using Shared.Data.TypedIds;
+
 namespace Shared.Data;
 
 public interface IChatChannel

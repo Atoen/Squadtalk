@@ -1,6 +1,7 @@
 using Shared.Data;
+using Shared.Data.TypedIds;
 
-namespace Squadtalk.Data;
+namespace Squadtalk.Data.Entities;
 
 public class Message : IChatMessage
 {

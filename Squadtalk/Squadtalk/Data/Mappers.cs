@@ -1,4 +1,5 @@
 using Shared.DTOs;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Data;
 

@@ -1,4 +1,5 @@
 using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Services;
 

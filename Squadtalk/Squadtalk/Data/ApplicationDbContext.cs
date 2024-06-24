@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Shared.Data;
+using Shared.Data.TypedIds;
+using Squadtalk.Data.Entities;
+using Squadtalk.Data.TypedIds;
 
 
 namespace Squadtalk.Data;
@@ -17,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Message> Messages { get; set; } = default!;
 
     public DbSet<Channel> Channels { get; set; } = default!;
+
+    public DbSet<DbFile> Files { get; set; } = default!;
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -29,6 +33,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         var channelConverter = new ValueConverter<ChannelId, string>(
             x => x.Value,
             x => new ChannelId(x));
+
+        builder.Entity<DbFile>()
+            .Property(x => x.ChannelId)
+            .HasConversion(id => id.Value, value => new NewChannelId(value));
+
+        builder.Entity<DbFile>()
+            .Property(x => x.TusId)
+            .HasConversion(id => id.Value, value => new TusFileId(value));
         
         builder.Entity<ApplicationUser>()
             .Property(x => x.Id)

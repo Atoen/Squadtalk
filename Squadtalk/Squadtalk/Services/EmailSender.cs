@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using MimeKit;
-using Squadtalk.Data;
 using MailKit.Net.Smtp;
 using MimeKit.Text;
 using Polly;
 using Polly.Registry;
 using Polly.Retry;
+using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;

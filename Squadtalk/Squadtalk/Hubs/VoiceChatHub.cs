@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Squadtalk.Data;
 

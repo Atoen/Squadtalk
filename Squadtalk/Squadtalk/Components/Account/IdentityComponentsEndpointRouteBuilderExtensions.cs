@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Squadtalk.Components.Account.Pages;
 using Squadtalk.Components.Account.Pages.Manage;
-using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Components.Account;
 

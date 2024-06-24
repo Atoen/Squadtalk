@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Communication;
 using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;

@@ -1,5 +1,5 @@
 using Microsoft.JSInterop;
-using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;

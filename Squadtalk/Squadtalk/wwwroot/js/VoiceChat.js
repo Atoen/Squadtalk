@@ -1,6 +1,4 @@
-Howler.autoUnlock = false;
 const mediaRecorders = [];
-let recorder;
 let dotnetObject;
 let audioChunks = [];
 const time = 200;

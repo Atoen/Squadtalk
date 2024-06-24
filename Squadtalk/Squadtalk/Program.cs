@@ -12,6 +12,7 @@ using Squadtalk.Client.Pages;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
 using Squadtalk.Services;

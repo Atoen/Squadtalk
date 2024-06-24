@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Squadtalk.Client;
-using Squadtalk.Data;
 using System.Diagnostics;
 using System.Security.Claims;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Components.Account;
 

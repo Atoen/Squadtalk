@@ -1,4 +1,5 @@
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Extensions;
 

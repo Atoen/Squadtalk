@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.Globalization;
 
-namespace Shared.Data;
+namespace Shared.Data.TypedIds.TypeConverters;
 
-public class ChannelIdConverter : TypeConverter
+public class UserIdConverter : TypeConverter
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
     {
@@ -19,7 +19,7 @@ public class ChannelIdConverter : TypeConverter
     {
         if (value is string str)
         {
-            return new ChannelId(str);
+            return new UserId(str);
         }
             
         return base.ConvertFrom(context, culture, value);
@@ -27,7 +27,7 @@ public class ChannelIdConverter : TypeConverter
 
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
     {
-        if (destinationType == typeof(string) && value is ChannelId id)
+        if (destinationType == typeof(string) && value is UserId id)
         {
             return id.Value;
         }

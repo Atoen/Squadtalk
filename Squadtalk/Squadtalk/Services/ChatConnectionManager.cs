@@ -1,5 +1,5 @@
-using Shared.Data;
-using Squadtalk.Data;
+using Shared.Data.TypedIds;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Services;
 

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Components.Account;
 
