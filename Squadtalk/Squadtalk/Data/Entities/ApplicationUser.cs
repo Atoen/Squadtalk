@@ -8,10 +8,10 @@ namespace Squadtalk.Data.Entities;
 public class ApplicationUser : IdentityUser<UserId>, IChatUser
 {
     [PersonalData]
-    public List<Channel> Channels { get; set; }
+    public List<Channel> Channels { get; set; } = default!;
 
     [PersonalData]
-    public List<ApplicationUser> Friends { get; set; }
+    public List<ApplicationUser> Friends { get; set; } = default!;
     
     string IChatUser.Username => UserName!;
 }

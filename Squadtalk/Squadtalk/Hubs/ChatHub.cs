@@ -54,13 +54,14 @@ public partial class ChatHub : Hub<IChatClient>
             return null;
         }
         
-        var id = new UserId(principal.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        var id = Guid.Parse(principal.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        var userId = new UserId(id);
         
         var user = await _dbContext.Users
             .AsSplitQuery()
             .Include(x => x.Channels)
             .ThenInclude(x => x.Participants)
-            .SingleOrDefaultAsync(x => x.Id == id);
+            .SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user is null)
         {

@@ -65,7 +65,8 @@ public class MessageController : ControllerBase
     [HttpGet("{channelId}/{timestamp?}")]
     public async Task<IActionResult> GetMessages(ChannelId channelId, string? timestamp)
     {
-        var userId = (UserId) HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        var userId = UserId.Parse(HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        
         var user = await UserWithChannelsByIdAsync(_dbContext, userId);
         if (user is null)
         {
@@ -91,7 +92,7 @@ public class MessageController : ControllerBase
     {
         var channelId = await _createTextChannelRequestHandler.CreateTextChannelAsync(participantsId);
         
-        return channelId is null
+        return channelId == default
             ? BadRequest()
             : Ok(channelId);
     }

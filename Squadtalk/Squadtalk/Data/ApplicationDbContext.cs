@@ -26,7 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     {
         base.OnModelCreating(builder);
 
-        var userConverter = new ValueConverter<UserId, string>(
+        var userConverter = new ValueConverter<UserId, Guid>(
             x => x.Value,
             x => new UserId(x));
 
@@ -36,7 +36,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
         builder.Entity<DbFile>()
             .Property(x => x.ChannelId)
-            .HasConversion(id => id.Value, value => new NewChannelId(value));
+            .HasConversion(id => id.Value, value => new ChannelId(value));
 
         builder.Entity<DbFile>()
             .Property(x => x.TusId)
@@ -48,6 +48,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         
         builder.Entity<ApplicationUser>()
             .Property(x => x.Id)
+            .HasConversion(x => x.Value, value => new UserId(value))
             .ValueGeneratedOnAdd();
         
         builder.Entity<IdentityRole<UserId>>()
@@ -79,6 +80,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<ApplicationUser>()
             .Navigation(x => x.Channels)
             .AutoInclude(false);
-
     }
 }

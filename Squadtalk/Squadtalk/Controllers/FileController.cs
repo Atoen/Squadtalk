@@ -25,15 +25,15 @@ public class FileController : ControllerBase
         _dbContext = dbContext;
     }
 
-    private static readonly Func<ApplicationDbContext, NewChannelId, TusFileId, Task<DbFile?>> FileByChannelPathAsync =
+    private static readonly Func<ApplicationDbContext, ChannelId, TusFileId, Task<DbFile?>> FileByChannelPathAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, NewChannelId channelId, TusFileId fileId) => context.Files
+            (ApplicationDbContext context, ChannelId channelId, TusFileId fileId) => context.Files
                 .AsNoTracking()
                 .Where(x => x.ChannelId == channelId)
                 .SingleOrDefault(x => x.TusId == fileId));
 
     [HttpGet("{channelId}/{fileId}/{**slug}")]
-    public async Task<IActionResult> DownloadFile(NewChannelId channelId, TusFileId fileId)
+    public async Task<IActionResult> DownloadFile(ChannelId channelId, TusFileId fileId)
     {
         var cancellationToken = HttpContext.RequestAborted;
 

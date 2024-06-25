@@ -5,9 +5,9 @@ namespace Squadtalk.Data.Entities;
 
 public class Channel
 {
-    public ChannelId Id { get; set; }
+    public ChannelId Id { get; set; } = default!;
     
-    public List<ApplicationUser> Participants { get; set; }
+    public List<ApplicationUser> Participants { get; set; } = default!;
     
     public Message? LastMessage { get; set; }
     

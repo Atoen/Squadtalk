@@ -8,7 +8,7 @@ namespace Squadtalk.Services;
 
 public class LocalMessagePageProvider(ApplicationDbContext dbContext) : IMessagePageProvider
 {
-    public async Task<List<IChatMessage>> GetPageAsync(ChannelId channelId, MessageCursor cursor, CancellationToken cancellationToken)
+    public async Task<List<IChatMessage>> GetPageAsync(ChannelId channelId, TextChannelCursor cursor, CancellationToken cancellationToken)
     {
         var dateCursor = cursor == default
             ? default

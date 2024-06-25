@@ -68,10 +68,10 @@ public class LocalChannelCreator : ICreateTextChannelRequestHandler
         {
             return null;
         }
-
+        
         var channel = new Channel
         {
-            Id = ChannelId.New,
+            Id = ChannelId.New(),
             Participants = participants,
         };
 

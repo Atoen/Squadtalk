@@ -29,7 +29,7 @@ public partial class ChatHub
             return null;
         }
 
-        var caller = new VoiceUser(callingUser, (SignalrConnectionId) Context.ConnectionId);
+        var caller = new VoiceUser(callingUser, (SignalRConnectionId) Context.ConnectionId);
         var offer = new VoiceCallOffer(caller, targetUser, CallOfferId.New);
         _voiceCallManager.AddCallOffer(offer);
 
@@ -47,7 +47,7 @@ public partial class ChatHub
         if (_voiceCallManager.GetVoiceCallOffer(id) is not { } offer) return;
         if (await _userManager.GetUserAsync(Context.User!) is not { } acceptingUser) return;
 
-        var callee = new VoiceUser(acceptingUser, (SignalrConnectionId) Context.ConnectionId);
+        var callee = new VoiceUser(acceptingUser, (SignalRConnectionId) Context.ConnectionId);
         var call = new VoiceCall { Users = [offer.Caller, callee], Id = new CallId(id) };
 
         _voiceCallManager.RemoveCallOffer(offer.Id);
@@ -76,7 +76,7 @@ public partial class ChatHub
     public async Task EndCall(CallId? id = null)
     {
         var call = id is null
-            ? _voiceCallManager.GetCall((SignalrConnectionId) Context.ConnectionId)
+            ? _voiceCallManager.GetCall((SignalRConnectionId) Context.ConnectionId)
             : _voiceCallManager.GetCall(id);
         
         if (call is null) return;
@@ -98,9 +98,7 @@ public partial class ChatHub
         if (await _userManager.GetUserAsync(Context.User!) is not { } user) return;
 
         _logger.LogInformation("Stream started from {User}", user.UserName);
-
-        var userId = new UserId(user.Id);
-
+        
         try
         {
             await foreach (var packet in stream)
@@ -111,7 +109,7 @@ public partial class ChatHub
                     return;
                 }
 
-                await OthersInVoiceGroup(call.GroupName).GetVoicePacket(new VoicePacketDto(userId, packet));
+                await OthersInVoiceGroup(call.GroupName).GetVoicePacket(new VoicePacketDto(user.Id, packet));
             }
         }
         catch (OperationCanceledException)

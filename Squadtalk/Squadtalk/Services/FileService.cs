@@ -22,7 +22,7 @@ public class FileStorageService
     {
         var file = new DbFile
         {
-            ChannelId = new NewChannelId(Guid.Parse(channelId.Value)),
+            ChannelId = channelId,
             TusId = new TusFileId(tusFile.Id)
         };
 

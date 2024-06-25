@@ -18,7 +18,7 @@ public class MessageService : IMessageService
     private readonly ICommunicationService _communicationService;
     private readonly ITextChatService _textChatService;
     
-    private string? _userId;
+    private UserId? _userId;
     
     public event Func<ChannelId, Task>? MessageReceived;
     
@@ -59,7 +59,7 @@ public class MessageService : IMessageService
 
         if (state.Cursor == default)
         {
-            state.Cursor = DateTimeOffset.UtcNow.UtcTicks;
+            state.Cursor = new TextChannelCursor(DateTimeOffset.UtcNow.UtcTicks);
         }
 
         await MessageReceived.TryInvoke(messageDto.ChannelId);
@@ -67,9 +67,9 @@ public class MessageService : IMessageService
 
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (_textChatService.CurrentChannel is not { Id: { } id }) return;
+        if (_textChatService.CurrentChannel is not { Id: var channelId }) return;
 
-        await _communicationService.SendMessageAsync(message, id, cancellationToken);
+        await _communicationService.SendMessageAsync(message, channelId, cancellationToken);
 
         _textChatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
     }
@@ -79,7 +79,7 @@ public class MessageService : IMessageService
         if (_userId is null)
         {
             var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-            _userId = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+            _userId = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
         }
 
         var messageByCurrentUser = message.Author.Id == _userId;
@@ -101,15 +101,15 @@ public class MessageService : IMessageService
         }
 
         var channelState = channel.State;
-        var cursor = new MessageCursor(channelState.Cursor);
-        var page = await _messagePageProvider.GetPageAsync(id, cursor, cancellationToken);
+        // var cursor = new TextChannelCursor(channelState.Cursor);
+        var page = await _messagePageProvider.GetPageAsync(id, channelState.Cursor, cancellationToken);
 
         if (page.Count == 0)
         {
             return Array.Empty<MessageModel>();
         }
 
-        channelState.Cursor = page[0].Timestamp.UtcTicks;
+        channelState.Cursor = new TextChannelCursor(page[0].Timestamp.UtcTicks);
         return _modelService.CreateModelPage(page, channelState);
     }
 }

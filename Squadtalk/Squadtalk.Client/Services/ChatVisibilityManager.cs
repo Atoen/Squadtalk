@@ -13,7 +13,7 @@ public class ChatVisibilityManager : IChatVisibilityManager
     
     private const string HiddenChats = "hiddenChats";
     
-    private HashSet<string> _hiddenChannels = [];
+    private HashSet<ChannelId> _hiddenChannels = [];
     private readonly List<TextChannelModel> _visibleChannels = [];
 
     public event Action? StateChanged;
@@ -51,7 +51,7 @@ public class ChatVisibilityManager : IChatVisibilityManager
     {
         if (await _localStorageService.ContainKeyAsync(HiddenChats))
         {
-            _hiddenChannels = await _localStorageService.GetItemAsync<HashSet<string>>(HiddenChats) ?? [];
+            _hiddenChannels = await _localStorageService.GetItemAsync<HashSet<ChannelId>>(HiddenChats) ?? [];
         }
 
         _initialized = true;

@@ -47,7 +47,7 @@ public class MessageStorageService
         try
         {
             await _dbContext.SaveChangesAsync();
-            await _notificationService.NotifyAboutMessageAsync(message);
+            // await _notificationService.NotifyAboutMessageAsync(message);
         }
         catch (DbUpdateException e)
         {

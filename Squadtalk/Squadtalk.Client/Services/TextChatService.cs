@@ -77,10 +77,12 @@ public class TextChatService : ITextChatService
 
     public async Task OpenOrCreateFakeDirectMessageChannel(UserModel model)
     {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        // var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        // // var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
+        // var id = Guid.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        // var userId = new NewUserId(id);
 
-        if (id == model.Id) return;
+        if (_userId == model.Id) return;
 
         var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == model.Id);
         if (openDirectMessageChannelWithUser is not null)
@@ -97,11 +99,11 @@ public class TextChatService : ITextChatService
         _userId ??= await GetUserIdAsync();
 
         var otherUserId = ((DirectMessageChannelModel) channelModel).Other.Id;
-        var participants = new List<UserId> { _userId, otherUserId };
+        var participants = new List<UserId> { (UserId) _userId, otherUserId };
 
         var channelId = await OpenNewChannel(participants);
 
-        if (channelId is not null && GetChannel(channelId) is { } openedChannel)
+        if (channelId != default && GetChannel(channelId) is { } openedChannel)
         {
             await ChangeChannelAsync(openedChannel);
         }
@@ -124,7 +126,7 @@ public class TextChatService : ITextChatService
         return ChannelChangedAsync.TryInvoke();
     }
 
-    private Task<ChannelId?> OpenNewChannel(List<UserId> participants)
+    private Task<ChannelId> OpenNewChannel(List<UserId> participants)
     {
         return _createTextChannelRequestHandler.CreateTextChannelAsync(participants);
     }
@@ -151,7 +153,7 @@ public class TextChatService : ITextChatService
         if (_allChannels.Exists(x => x.Id == channel.Id)) return;
         _userId ??= await GetUserIdAsync();
 
-        var model = CreateChannelModel(channel, _userId);
+        var model = CreateChannelModel(channel, (UserId) _userId);
         if (!bulk)
         {
             model.State.ReachedEnd = true;
@@ -180,8 +182,8 @@ public class TextChatService : ITextChatService
 
     private Task CheckIfNeedToUpgradeCurrentFakeChannelToReal(DirectMessageChannelModel openedDirectMessageChannelModel)
     {
-        if (CurrentChannel is DirectMessageChannelModel { Id.Value: DirectMessageChannelModel.FakeChannelIdValue } currentFakeDm &&
-            currentFakeDm.Other.Id == openedDirectMessageChannelModel.Other.Id)
+        if (CurrentChannel is DirectMessageChannelModel dm && dm.IsFake() &&
+            dm.Other.Id == openedDirectMessageChannelModel.Other.Id)
         {
             return ChangeChannelAsync(openedDirectMessageChannelModel);
         }
@@ -258,7 +260,6 @@ public class TextChatService : ITextChatService
     private async ValueTask<UserId> GetUserIdAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var claimValue = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
-        return new UserId(claimValue);
+        return UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
     }
 }

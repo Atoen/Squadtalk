@@ -102,7 +102,7 @@
             await TextChatService.CreateRealDirectMessageChannel(TextChatService.CurrentChannel);
         }
 
-        // var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
+        var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
         var channel = TextChatService.CurrentChannel;
 
         if (FileTransferService.IsFileAvailable)
@@ -110,9 +110,9 @@
             await FileTransferService.UploadFileAsync(channel);
         }
         
-        if (!string.IsNullOrWhiteSpace(_userInput))
+        if (!string.IsNullOrWhiteSpace(message))
         {
-           await MessageService.SendMessageAsync(_userInput);
+           await MessageService.SendMessageAsync(message);
         }
     }
 

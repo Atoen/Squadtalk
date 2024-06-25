@@ -12,11 +12,11 @@ public class HttpMessagePageProvider(RestClient client, ILogger<HttpMessagePageP
     private readonly List<IChatMessage> _empty = [];
     
     public async Task<List<IChatMessage>> GetPageAsync(
-        ChannelId channelId, MessageCursor cursor, CancellationToken cancellationToken)
+        ChannelId channelId, TextChannelCursor cursor, CancellationToken cancellationToken)
     {
         var resource = cursor == default
-            ? $"api/message/{channelId.Value}"
-            : $"api/message/{channelId.Value}/{cursor.Value}";
+            ? $"api/message/{channelId}"
+            : $"api/message/{channelId}/{cursor}";
 
         var request = new RestRequest(resource);
 

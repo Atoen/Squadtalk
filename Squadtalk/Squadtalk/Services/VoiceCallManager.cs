@@ -9,7 +9,7 @@ public class VoiceCallManager
     private readonly List<VoiceCall> _activeVoiceCalls = [];
     private readonly List<VoiceCallOffer> _callOffers = [];
 
-    public VoiceCall? GetCall(SignalrConnectionId connectionId)
+    public VoiceCall? GetCall(SignalRConnectionId connectionId)
     {
         var call = _activeVoiceCalls.FirstOrDefault(x =>
             x.Users.FirstOrDefault(y => y.ConnectionId == connectionId) is not null);

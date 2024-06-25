@@ -9,5 +9,5 @@ public class DbFile
 
     public TusFileId TusId { get; set; } = default!;
 
-    public NewChannelId ChannelId { get; set; }
+    public ChannelId ChannelId { get; set; } = default!;
 }

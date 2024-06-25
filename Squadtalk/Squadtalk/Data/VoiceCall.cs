@@ -11,6 +11,6 @@ public class VoiceCall
     public string GroupName => Id.Value;
 }
 
-public record VoiceUser(ApplicationUser User, SignalrConnectionId ConnectionId);
+public record VoiceUser(ApplicationUser User, SignalRConnectionId ConnectionId);
 
 public record VoiceCallOffer(VoiceUser Caller, ApplicationUser Callee, CallOfferId Id);

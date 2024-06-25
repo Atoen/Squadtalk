@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.Globalization;
 
-namespace Shared.Data.TypedIds.TypeConverters;
+namespace Shared.Data.TypedIds;
 
-public class StringIdConverter<T> : TypeConverter where T : IIdRecord<T, string>
+public class StringIdConverter<T> : TypeConverter where T : class, IStringIdRecord<T>
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
     {
@@ -17,30 +17,24 @@ public class StringIdConverter<T> : TypeConverter where T : IIdRecord<T, string>
     
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
-        if (value is string val)
-        {
-            return T.Create(val);
-        }
-            
-        return base.ConvertFrom(context, culture, value);
+        return value is string val
+            ? T.From(val)
+            : base.ConvertFrom(context, culture, value);
     }
 
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
     {
-        if (destinationType == typeof(string) && value is T id)
-        {
-            return id.Value;
-        }
-            
-        return base.ConvertTo(context, culture, value, destinationType);
+        return destinationType == typeof(string) && value is T id
+            ? id.Value
+            : base.ConvertTo(context, culture, value, destinationType);
     }
 }
 
-public class GuidIdConverter<T> : TypeConverter where T : IIdRecord<T, Guid>
+public class GuidIdConverter<T> : TypeConverter where T : struct, IGuidIdRecord<T>
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
     {
-        return sourceType == typeof(Guid) || sourceType == typeof(string) 
+        return sourceType == typeof(Guid) || sourceType == typeof(string)
                                           || base.CanConvertFrom(context, sourceType);
     }
     
@@ -54,20 +48,19 @@ public class GuidIdConverter<T> : TypeConverter where T : IIdRecord<T, Guid>
     {
         return value switch
         {
-            Guid guid => T.Create(guid),
-            string str when Guid.TryParse(str, out var guid) => T.Create(guid),
+            Guid guid => T.From(guid),
+            string str when T.TryParse(str, out var idRecord) => idRecord,
             _ => base.ConvertFrom(context, culture, value)
         };
     }
 
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
     {
-        if (value is T id)
+        return value switch
         {
-            if (destinationType == typeof(Guid)) return id.Value;
-            if (destinationType == typeof(string)) return id.Value.ToString();
-        }
-            
-        return base.ConvertTo(context, culture, value, destinationType);
+            T id when destinationType == typeof(Guid) => id.Value,
+            T id when destinationType == typeof(string) => id.Value.ToString(),
+            _ => base.ConvertTo(context, culture, value, destinationType)
+        };
     }
 }

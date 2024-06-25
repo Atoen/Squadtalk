@@ -72,13 +72,14 @@ public class LocalCommunicationService : ICommunicationService
     public async Task SendMessageAsync(string content, ChannelId channelId, CancellationToken cancellationToken)
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var id = new UserId(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        var id = Guid.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        var userId = new UserId(id);
         
         var user = await _dbContext.Users
             .AsSplitQuery()
             .Include(x => x.Channels)
             .ThenInclude(x => x.Participants)
-            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
         
         ArgumentNullException.ThrowIfNull(user);
         

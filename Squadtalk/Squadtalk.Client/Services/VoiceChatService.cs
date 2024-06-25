@@ -50,7 +50,7 @@ public sealed class VoiceChatService : IVoiceChatService
     private async Task GetVoicePacket(VoicePacketDto packet)
     {
         var base64String = Convert.ToBase64String(packet.Data);
-        var speaker = CurrentVoiceCall?.Connected.FirstOrDefault(x => x.Id == packet.Id.Value);
+        var speaker = CurrentVoiceCall?.Connected.FirstOrDefault(x => x.Id == packet.Id);
         _logger.LogInformation("{User} is speaking", speaker?.Username);
         
         try
