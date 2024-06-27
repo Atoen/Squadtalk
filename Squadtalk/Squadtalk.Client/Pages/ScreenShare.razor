@@ -6,16 +6,26 @@
 
 <h3>WebRTC</h3>
 
-<Button Color="ButtonColor.Primary" @onclick="ToggleShareScreen">@ShareButtonText</Button>
-<div class="video-container my-2" id="video-container">
-    <video class="video-frame" id="local-video" autoplay></video>
-</div>
+<p>
+    <Button Color="ButtonColor.Primary" @onclick="ToggleShareScreen">@ShareButtonText</Button>
+    <div class="video-container my-2" id="video-container">
+        <video class="video-frame" id="local-video" autoplay></video>
+    </div>
+</p>
+
+<p>
+    <label>
+        Token:
+        <InputText class="my-2 form-control" @bind-Value="_token"></InputText>
+    </label>
+</p>
 
 @inject IJSRuntime JSRuntime
 @inject ILogger<ScreenShare> Logger
 
 @code {
 
+    private string _token = string.Empty;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<ScreenShare>? _dotNetObjectReference;
 
@@ -40,31 +50,10 @@
             return;
         }
 
-        var stared = await _jsModule.TryInvokeAsync<bool>("Start");
+        var stared = await _jsModule.TryInvokeAsync<bool>("Start", _token);
         if (!stared) return;
             
         _sharingScreen = true;
-    }
-    
-    [JSInvokable]
-    public void OnShareStopped()
-    {
-        Logger.LogInformation("Share stopped");
-        
-        _sharingScreen = false;
-        StateHasChanged();
-    }
-
-    [JSInvokable]
-    public void OnIceCandidate()
-    {
-        Logger.LogInformation("Ice Candidate");
-    }
-    
-    [JSInvokable]
-    public void OnSetLocalDescription()
-    {
-        Logger.LogInformation("Set Local Description");
     }
 
     public async ValueTask DisposeAsync()

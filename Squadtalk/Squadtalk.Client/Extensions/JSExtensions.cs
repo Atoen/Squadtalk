@@ -42,7 +42,7 @@ public static class JSExtensions
         JsModule jsModule,
         params object?[]? args)
     {
-        foreach (var path in GetPathsToTry(jsModule))
+        foreach (var path in JsModule.GetPathsToTry(jsModule))
         {
             var module = await TryImportModuleAsync(jsRuntime, path, args);
             if (module is not null)
@@ -72,31 +72,6 @@ public static class JSExtensions
         {
             Console.WriteLine($"Failed to load module {path}");
             return null;
-        }
-    }
-
-    private static IEnumerable<string> GetPathsToTry(JsModule jsModule)
-    {
-        switch (jsModule.Location)
-        {
-            case JsModuleLocation.Collocated:
-                yield return $"../Components/{jsModule.Name}.razor.js";
-                break;
-            
-            case JsModuleLocation.ScriptsFolder:
-                yield return $"../js/{jsModule.Name}.js";
-                break;
-            
-            case JsModuleLocation.ScriptsFolderMinified:
-                yield return $"../js/{jsModule.Name}.min.js";
-                break;
-            
-            case JsModuleLocation.Unspecified:
-            default:
-                yield return $"../Components/{jsModule.Name}.razor.js";
-                yield return $"../js/{jsModule.Name}.min.js";
-                yield return $"../js/{jsModule.Name}.js";
-                break;
         }
     }
 }
