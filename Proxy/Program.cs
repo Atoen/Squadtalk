@@ -1,15 +1,10 @@
 using System.Net;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Any, 500, listenOptions =>
-    {
-        listenOptions.UseHttps();
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-    });
+    options.Listen(IPAddress.Loopback, 1230);
 });
 
 builder.Services.AddReverseProxy()
