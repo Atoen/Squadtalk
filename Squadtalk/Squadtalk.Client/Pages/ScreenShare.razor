@@ -6,24 +6,38 @@
 
 <h3>WebRTC</h3>
 
-<p>
-    <Button Color="ButtonColor.Primary" @onclick="ToggleShareScreen">@ShareButtonText</Button>
-    <div class="video-container my-2" id="video-container">
-        <video class="video-frame" id="local-video" autoplay></video>
-    </div>
-</p>
+<Button class="my-2" Color="ButtonColor.Primary" @onclick="ToggleShareScreen">@ShareButtonText</Button>
 
-<p>
-    <label>
-        Token:
-        <InputText class="my-2 form-control" @bind-Value="_token"></InputText>
-    </label>
-</p>
+<Button class="my-2" Color="ButtonColor.Primary" @onclick="GenerateTokenAsync" disabled="@InvalidTokenData">Generate Token</Button>
+
+<div class="my-2">
+    <label for="username-input" class="form-label">Username</label>
+    <div class="col-md-6">
+        <InputText id="username-input" @bind-Value="_username" class="form-control" Placeholder="Enter username"></InputText>
+    </div>
+</div>
+
+<div class="my-2">
+    <label for="room-input" class="form-label">Room</label>
+    <div class="col-md-6">
+        <InputText id="room-input" @bind-Value="_roomName" class="form-control" Placeholder="Enter room name"></InputText>
+    </div>
+</div>
+
+<div class="video-container my-2" id="video-container">
+    <video class="video-frame" id="local-video" autoplay></video>
+</div>
 
 @inject IJSRuntime JSRuntime
-@inject ILogger<ScreenShare> Logger
+@inject ToastService ToastService
+@inject ILiveKitService LiveKitService
 
 @code {
+
+    private string _username = string.Empty;
+    private string _roomName = string.Empty;
+
+    private bool InvalidTokenData => string.IsNullOrEmpty(_username) || string.IsNullOrEmpty(_roomName);
 
     private string _token = string.Empty;
     private IJSObjectReference? _jsModule;
@@ -31,7 +45,7 @@
 
     private string ShareButtonText => _sharingScreen ? "Stop Sharing" : "Share Screen";
     private bool _sharingScreen;
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -40,19 +54,30 @@
         _jsModule = await JSRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference);
     }
 
+    private async Task GenerateTokenAsync()
+    {
+        var token = await LiveKitService.CreateRoomTokenAsync(_username, _roomName);
+
+        var toastMessage = token is null
+            ? new ToastMessage(ToastType.Warning, IconName.Key, "Failed to create token", "Failed to create token")
+            : new ToastMessage(ToastType.Success, IconName.Key, "Token created", token.Token);
+
+        ToastService.Notify(toastMessage);
+    }
+
     private async Task ToggleShareScreen()
     {
         if (_sharingScreen)
         {
             _sharingScreen = false;
             await _jsModule.TryInvokeVoidAsync("Stop");
-            
+
             return;
         }
 
         var stared = await _jsModule.TryInvokeAsync<bool>("Start", _token);
         if (!stared) return;
-            
+
         _sharingScreen = true;
     }
 
@@ -60,7 +85,7 @@
     {
         await _jsModule.TryInvokeVoidAsync("Stop");
         await _jsModule.TryDisposeAsync();
-        
+
         _dotNetObjectReference?.Dispose();
     }
 }

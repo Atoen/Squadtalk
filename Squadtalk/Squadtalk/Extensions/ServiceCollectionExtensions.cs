@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
         serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
+        serviceCollection.AddScoped<ILiveKitService, LocalLiveKitService>();
         
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();

@@ -44,8 +44,7 @@ public static class JSExtensions
     {
         foreach (var path in JsModule.GetPathsToTry(jsModule))
         {
-            var module = await TryImportModuleAsync(jsRuntime, path, args);
-            if (module is not null)
+            if (await TryImportModuleAsync(jsRuntime, path, args) is { } module)
             {
                 return module;
             }

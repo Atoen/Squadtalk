@@ -1,5 +1,4 @@
 // noinspection JSUnusedGlobalSymbols
-// @ts-nocheck
 
 interface DotnetObject {
     invokeMethodAsync(identifier: string, ...args: any): Promise<void>
@@ -14,17 +13,9 @@ const room = new LivekitClient.Room({
 
 const url = "ws://127.0.0.1:1230/jajo";
 
-let token: string;
-
-room
-    .on(LivekitClient.RoomEvent.TrackSubscribed, handleTrackSubscribed)
-    .on(LivekitClient.RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-    .on(LivekitClient.RoomEvent.ActiveSpeakersChanged, handleActiveSpeakerChange)
-    .on(LivekitClient.RoomEvent.Disconnected, handleDisconnect)
-    .on(LivekitClient.RoomEvent.LocalTrackUnpublished, handleLocalTrackUnpublished);
+let roomToken: string;
 
 let dotnetObject: DotnetObject
-let mediaStream: MediaStream
 let videoElement: HTMLVideoElement
 let videoFrame: HTMLElement
 
@@ -38,58 +29,25 @@ export async function Init(object: DotnetObject) {
     videoElement = document.getElementById("local-video") as HTMLVideoElement;
 }
 
-function handleTrackSubscribed(
-    track: RemoteTrack,
-    publication: RemoteTrackPublication,
-    participant: RemoteParticipant,
-) {
-    if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
-        // attach it to a new HTMLVideoElement or HTMLAudioElement
-        const element = track.attach();
-        videoFrame.appendChild(element);
+export async function Start(token: string): Promise<boolean> {
+    roomToken = token;
+
+    try {
+        await room.prepareConnection(url, roomToken);
+        await room.connect('ws://127.0.0.1:1230/jajo', roomToken);
+
+        const participant = room.localParticipant;
+        await participant.setScreenShareEnabled(true);
+
+        return true;
+    } catch {
+        return false;
     }
 }
 
-function handleTrackUnsubscribed(
-    track: RemoteTrack,
-    publication: RemoteTrackPublication,
-    participant: RemoteParticipant,
-) {
-    // remove tracks from all attached elements
-    track.detach();
-}
-
-function handleLocalTrackUnpublished(
-    publication: LocalTrackPublication,
-    participant: LocalParticipant,
-) {
-
-    publication.track.detach();
-}
-
-function handleActiveSpeakerChange(speakers: Participant[]) {
-
-}
-
-function handleDisconnect() {
-    console.log('disconnected from room');
-}
-
-export async function Start(token: string): Promise<boolean> {
-
-
-    token2 = token;
-
-    await room.prepareConnection(url, token2);
-    await room.connect('ws://127.0.0.1:1230/jajo', token2);
-
-    const participant = room.localParticipant;
-    await participant.setScreenShareEnabled(true);
-
-    return true;
-}
-
 export async function Stop() {
-    const participant = room.localParticipant;
+    const participant = room?.localParticipant;
+    if (!participant) return;
+
     await participant.setScreenShareEnabled(false);
 }
