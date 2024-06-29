@@ -84,7 +84,7 @@ var app = builder.Build();
 app.Services.UseScheduler(scheduler =>
 {
     scheduler.Schedule<IDnsRecordUpdater>()
-        .EveryFiveSeconds()
+        .EveryFifteenMinutes()
         .RunOnceAtStart()
         .PreventOverlapping("dns");
 }).OnError(e =>

@@ -4,7 +4,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Loopback, 1230);
+    options.Listen(IPAddress.Any, 1230, listenOptions =>
+    {
+        listenOptions.UseHttps();
+    } );
 });
 
 builder.Services.AddReverseProxy()
