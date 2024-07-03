@@ -1,0 +1,110 @@
+<div class="call-participant">
+    <audio id="@AudioId"></audio>
+    <audio id="@ScreenShareAudioId"></audio>
+    <div class="video-preview my-2" id="@CameraContainerId" @onclick="ShowCamera">
+        <video class="video-frame-preview" id="@CameraId"></video>
+    </div>
+    <div class="video-preview my-2" id="@VideoContainerId" @onclick="ShowScreenShare">
+        <video class="video-frame-preview" id="@VideoId"></video>
+    </div>
+
+    @if (Model is { CameraOn: false, ScreenShareOn: false })
+    {
+        <img class="avatar" style="@AvatarBorderStyle" src="user.png" alt="Avatar" draggable="false"/>
+    }
+
+    <div class="username">@Model.Username</div>
+    <div class="status">
+
+        @if (Model.Remote)
+        {
+            <Dropdown Size="Size.Small">
+                <DropdownToggleButton><Icon Name="@VolumeIcon" Size="IconSize.x5"/></DropdownToggleButton>
+                <DropdownMenu>
+                    <div class="d-flex px-2">
+                        <RangeInput TValue="int" Min="0" Max="100"
+                                    ValueExpression="() => _volume"
+                                    ValueChanged="VolumeChanged"
+                                    Value="_volume"/>
+                        <Badge Color="BadgeColor.Primary" Class="ms-2" VisuallyHiddenText="Volume">@_volume%</Badge>
+                    </div>
+                </DropdownMenu>
+            </Dropdown>
+        }
+
+        <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" Size="IconSize.x5"/>
+        <Icon Name="MicrophoneIcon" Color="MicrophoneColor"/>
+
+        <div class="camera-screen-share">
+            @if (Model.CameraOn)
+            {
+                <Button @onclick="ShowCamera"><Icon Name="IconName.CameraVideoFill" Size="IconSize.x5"/></Button>
+            }
+            @if (Model.ScreenShareOn)
+            {
+                <Button @onclick="ShowScreenShare"><Icon Name="IconName.DisplayFill" Size="IconSize.x5"/></Button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter, EditorRequired] public CallParticipantModel Model { get; set; } = default!;
+    [Parameter, EditorRequired] public EventCallback<VideoStream> OnShow { get; set; }
+    [Parameter, EditorRequired] public EventCallback<int> OnVolumeChanged { get; set; }
+
+    private Task VolumeChanged(int value)
+    {
+        _volume = value;
+        return OnVolumeChanged.InvokeAsync(value);
+    }
+
+    private Task ShowCamera() => OnShow.InvokeAsync(VideoStream.Camera);
+
+    private Task ShowScreenShare() => OnShow.InvokeAsync(VideoStream.ScreenShare);
+
+    private int _volume = 80;
+
+    private string? _audioId;
+    private string? _screenShareAudioId;
+    private string? _cameraId;
+    private string? _videoId;
+    private string? _cameraContainerId;
+    private string? _videoContainerId;
+
+    private string AudioId => _audioId ??= $"audio-{Model.Sid}";
+    private string ScreenShareAudioId => _screenShareAudioId ??= $"screen-audio-{Model.Sid}";
+    private string CameraId => _cameraId ??= $"camera-{Model.Sid}";
+    private string VideoId => _videoId ??= $"video-{Model.Sid}";
+    private string CameraContainerId => _cameraContainerId ??= $"camera-container-{Model.Sid}";
+    private string VideoContainerId => _videoContainerId ??= $"video-container-{Model.Sid}";
+
+    private string AvatarBorderStyle => Model.IsSpeaking ? "border-color: limegreen;" : string.Empty;
+
+    private IconName VolumeIcon => _volume switch
+    {
+        0 => IconName.VolumeMuteFill,
+        < 20 => IconName.VolumeOffFill,
+        < 80 => IconName.VolumeDownFill,
+        _ => IconName.VolumeUpFill
+    };
+
+    private IconName ConnectionQualityIcon => Model.ConnectionQuality switch
+    {
+        ConnectionQuality.Excellent => IconName.Wifi,
+        ConnectionQuality.Good => IconName.Wifi2,
+        ConnectionQuality.Poor => IconName.Wifi1,
+        _ => IconName.WifiOff
+    };
+
+    private IconColor ConnectionQualityColor => Model.ConnectionQuality switch
+    {
+        ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
+        ConnectionQuality.Poor => IconColor.Warning,
+        _ => IconColor.Danger
+    };
+
+    private IconName MicrophoneIcon => Model.MicrophoneOn ? IconName.MicFill : IconName.MicMuteFill;
+    private IconColor MicrophoneColor => Model.MicrophoneOn ? IconColor.Secondary : IconColor.Danger;
+}

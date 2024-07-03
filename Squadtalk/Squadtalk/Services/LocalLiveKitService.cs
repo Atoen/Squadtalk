@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
+using Shared.Extensions;
 using Shared.Services;
 using Squadtalk.Extensions;
 
@@ -11,12 +13,16 @@ namespace Squadtalk.Services;
 
 public class LocalLiveKitService : ILiveKitService
 {
-    private readonly string _apiKey;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<LocalLiveKitService> _logger;
 
+    private readonly string _apiKey;
     private readonly SigningCredentials _signingCredentials;
 
-    public LocalLiveKitService(IConfiguration configuration)
+    public LocalLiveKitService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<LocalLiveKitService> logger)
     {
+        _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
         _apiKey = configuration.GetString("LiveKit:ApiKey");
 
         var apiSecret = configuration.GetString("LiveKit:ApiSecret");
@@ -24,13 +30,21 @@ public class LocalLiveKitService : ILiveKitService
         _signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
     }
 
-    public Task<RoomTokenDto?> CreateRoomTokenAsync(string username, string roomName)
+    public Task<RoomTokenDto?> CreateRoomTokenAsync(ChannelId channelId)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
+        var user = _httpContextAccessor.HttpContext?.User;
+        var username = user?.GetClaimValue(ClaimTypes.Name);
 
+        _logger.LogCritical("Username: {Username}", username);
+
+        if (string.IsNullOrEmpty(username))
+        {
+            return Task.FromResult<RoomTokenDto?>(null);
+        }
+
+        var tokenHandler = new JwtSecurityTokenHandler();
         var now = DateTime.UtcNow;
-        var expires = now.AddHours(60);
-        var videoClaim = JsonSerializer.Serialize(new { room = roomName, roomJoin = true });
+        var videoClaim = JsonSerializer.Serialize(new { room = channelId.Value, roomJoin = true });
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -40,7 +54,6 @@ public class LocalLiveKitService : ILiveKitService
                 new Claim(JwtRegisteredClaimNames.Sub, username),
                 new Claim("video", videoClaim, JsonClaimValueTypes.Json)
             }),
-            Expires = expires,
             NotBefore = now,
             SigningCredentials = _signingCredentials
         };

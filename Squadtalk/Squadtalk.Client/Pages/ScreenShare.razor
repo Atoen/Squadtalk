@@ -1,7 +1,9 @@
 @page "/ScreenShare"
 
 @using Shared
+@using Shared.DTOs
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Services
 @implements IAsyncDisposable
 
 <h3>WebRTC</h3>
@@ -17,13 +19,18 @@
         <Button Color="@MicrophoneButtonColor" @onclick="ToggleMicrophone"><Icon Name="@MicrophoneIconName"/></Button>
         @if (_microphoneEnabled)
         {
-            <MediaDeviceSelector Devices="_microphones" ButtonText="Select microphone" DeviceSelected="MicrophoneSelected"/>
+            <MediaDeviceSelector Devices="_microphones" ButtonText="Select microphone" DeviceSelected="MicrophoneSelected">
+                <NoDevices>No Mics</NoDevices>
+            </MediaDeviceSelector>
         }
 
         <Button Color="@CameraButtonColor" @onclick="ToggleCamera"><Icon Name="@CameraIconName"/></Button>
         @if (_cameraEnabled)
         {
-            <MediaDeviceSelector Devices="_cameras" ButtonText="Select camera" DeviceSelected="CameraSelected"/>
+            <MediaDeviceSelector Devices="_cameras" ButtonText="Select camera" DeviceSelected="CameraSelected">
+                <NoDevices>No cameras</NoDevices>
+            </MediaDeviceSelector>
+            <Button @onclick="SwapCamera"><Icon Name="IconName.ArrowRepeat" /></Button>
         }
 
         <Button Color="@ScreenShareButtonColor" @onclick="ToggleScreenShare"><Icon Name="@ScreenShareIconName"/></Button>
@@ -44,25 +51,26 @@
     </div>
 </div>
 
-<h2>Local</h2>
-
-<div class="video-container my-2" id="local-video-container">
-    <video class="video-frame" id="local-video" autoplay></video>
+<div class="participants">
+    @foreach (var participant in _participants.Values)
+    {
+        <CallParticipant OnShow="video => ShowVideo(participant, video)"
+                         OnVolumeChanged="volume => ChangeVolume(participant, volume)"
+                         Model="participant"/>
+    }
 </div>
 
-<h2>Remote</h2>
-
-<div class="video-container my-2" id="remote-video-container">
-    <video class="video-frame" id="remote-video" autoplay></video>
-</div>
+ <div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
+     <video class="video-frame" id="maximized-video" autoplay></video>
+ </div>
 
 @inject IJSRuntime JSRuntime
 @inject ToastService ToastService
 @inject ILiveKitService LiveKitService
-@inject NavigationManager NavigationManager
 @inject ILogger<ScreenShare> Logger
 
 @code {
+    private readonly Dictionary<string, CallParticipantModel> _participants = new();
 
     private bool _microphoneEnabled = true;
     private bool _cameraEnabled;
@@ -91,6 +99,16 @@
 
     private string JoinButtonText => _joined ? "Leave room" : "Join room";
     private bool _joined;
+
+    private async Task ChangeVolume(CallParticipantModel participantModel, int volume) =>
+        await _jsModule.TryInvokeVoidAsync("ChangeVolume", participantModel.Username, volume);
+
+    private async Task SwapCamera() => await _jsModule.TryInvokeVoidAsync("SwapCamera");
+
+    private async Task ShowVideo(CallParticipantModel participantModel, VideoStream video) =>
+        await _jsModule.TryInvokeVoidAsync("ShowVideo", participantModel.Username, video);
+
+    private async Task MinimizeVideo() => await _jsModule.TryInvokeVoidAsync("MinimizeVideo");
 
     private void MicrophoneSelected(MediaDeviceModel microphone)
     {
@@ -125,12 +143,13 @@
         if (!firstRender) return;
 
         _dotNetObjectReference = DotNetObjectReference.Create(this);
-        _jsModule = await JSRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference, $"{NavigationManager.BaseUri}jajo");
+        _jsModule = await JSRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference,
+            "wss://192.168.1.134:1230/jajo");
     }
 
     private async Task GenerateTokenAsync()
     {
-        var token = await LiveKitService.CreateRoomTokenAsync(_username, _roomName);
+        var token = (RoomTokenDto) null!;
 
         _token = token?.Token ?? string.Empty;
 
@@ -147,6 +166,7 @@
         {
             _joined = false;
             await _jsModule.TryInvokeVoidAsync("Stop");
+            _participants.Clear();
 
             return;
         }
@@ -155,13 +175,6 @@
         if (!stared) return;
 
         _joined = true;
-    }
-
-    [JSInvokable]
-    public void OnLocalTrackUnpublished()
-    {
-        _joined = false;
-        StateHasChanged();
     }
 
     [JSInvokable]
@@ -179,9 +192,46 @@
     }
 
     [JSInvokable]
+    public void OnDisconnected(DisconnectReason reason)
+    {
+        Logger.LogInformation("Disconnected. Reason: {Reason}", reason);
+        _joined = false;
+        _participants.Clear();
+
+        if (reason is not DisconnectReason.ClientInitiated)
+        {
+            var toast = new ToastMessage(ToastType.Warning, "Disconnected", reason.ToString());
+            ToastService.Notify(toast);
+        }
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
     public void OnError(string error)
     {
         ToastService.Notify(new ToastMessage(ToastType.Warning, error));
+    }
+
+    [JSInvokable]
+    public void OnDisplayParticipant(CallParticipantModel participantModel)
+    {
+        _participants[participantModel.Sid] = participantModel;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnParticipantConnected(CallParticipantModel participantModel)
+    {
+        _participants[participantModel.Sid] = participantModel;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnParticipantDisconnected(CallParticipantModel participantModel)
+    {
+        _participants.Remove(participantModel.Sid);
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()

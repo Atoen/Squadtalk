@@ -1,0 +1,71 @@
+<div class="d-flex gap-1">
+    <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered">
+        <DropdownActionButton Color="MicrophoneButtonColor" @onclick="NewVoiceChatService.ToggleMicrophoneAsync">
+            <Icon Name="MicrophoneIconName" Size="IconSize.x5"/>
+        </DropdownActionButton>
+        <DropdownToggleButton Color="MicrophoneButtonColor"/>
+        <DropdownMenu>
+            @foreach (var microphone in NewVoiceChatService.Microphones)
+            {
+                <DropdownItem @onclick="() => NewVoiceChatService.SelectMicrophoneAsync(microphone)" Type="ButtonType.Button">
+                    @if (microphone == _selectedMicrophone)
+                    {
+                        <div class="d-flex flex-row">
+                            <div class="device-label">@microphone.Label</div>
+                            <Icon Name="IconName.CheckLg" Color="IconColor.Success"/>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="device-label">@microphone.Label</div>
+                    }
+                </DropdownItem>
+            }
+        </DropdownMenu>
+    </Dropdown>
+
+    <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered">
+        <DropdownActionButton Color="CameraButtonColor" @onclick="NewVoiceChatService.ToggleCameraAsync">
+            <Icon Name="CameraIconName" Size="IconSize.x5"/>
+        </DropdownActionButton>
+        <DropdownToggleButton Color="CameraButtonColor"/>
+        <DropdownMenu>
+            @foreach (var camera in NewVoiceChatService.Cameras)
+            {
+                <DropdownItem @onclick="() => NewVoiceChatService.SelectMicrophoneAsync(camera)" Type="ButtonType.Button">
+                    @if (camera == _selectedCamera)
+                    {
+                        <div class="d-flex flex-row">
+                            <div class="device-label">@camera.Label</div>
+                            <Icon Name="IconName.CheckLg" Color="IconColor.Success"/>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="device-label">@camera.Label</div>
+                    }
+                </DropdownItem>
+            }
+        </DropdownMenu>
+    </Dropdown>
+
+    <Button Color="ScreenShareButtonColor" @onclick="NewVoiceChatService.ToggleScreenShareAsync">
+        <Icon Name="ScreenShareIconName" Size="IconSize.x5"/>
+    </Button>
+</div>
+
+@inject INewVoiceChatService NewVoiceChatService
+
+@code {
+
+    private MediaDeviceModel? _selectedMicrophone;
+    private MediaDeviceModel? _selectedCamera;
+
+    private ButtonColor MicrophoneButtonColor => NewVoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    private ButtonColor CameraButtonColor => NewVoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    private ButtonColor ScreenShareButtonColor => NewVoiceChatService.ScreenShareEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+
+    private IconName MicrophoneIconName => NewVoiceChatService.MicrophoneEnabled ? IconName.MicFill : IconName.MicMuteFill;
+    private IconName CameraIconName => NewVoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
+    private IconName ScreenShareIconName => NewVoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
+}

@@ -30,7 +30,7 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="dotnet8@localhost" uuid="14519261-838e-4aaa-bd98-c8e89827f1c5">
+    <data-source source="LOCAL" name="dotnet8@localhost" uuid="98b57a6d-b307-42d9-9d0a-518267867c72">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>

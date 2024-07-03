@@ -1,4 +1,5 @@
 using RestSharp;
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Services;
 
@@ -15,13 +16,12 @@ public class LiveKitService : ILiveKitService
         _logger = logger;
     }
 
-    public async Task<RoomTokenDto?> CreateRoomTokenAsync(string username, string roomName)
+    public async Task<RoomTokenDto?> CreateRoomTokenAsync(ChannelId channelId)
     {
         var request = new RestRequest("/api/LiveKit/CreateRoomToken", Method.Post)
             .AddBody(new CreateRoomRequestDto
             {
-                Username = username,
-                RoomName = roomName
+                ChannelId = channelId
             });
 
         try

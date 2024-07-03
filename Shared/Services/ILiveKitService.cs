@@ -1,8 +1,9 @@
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 
 namespace Shared.Services;
 
 public interface ILiveKitService
 {
-    Task<RoomTokenDto?> CreateRoomTokenAsync(string username, string roomName);
+    Task<RoomTokenDto?> CreateRoomTokenAsync(ChannelId channelId);
 }

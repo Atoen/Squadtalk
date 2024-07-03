@@ -11,7 +11,7 @@ public class LiveKitController(ILiveKitService liveKitService) : ControllerBase
     [HttpPost("CreateRoomToken")]
     public async Task<IActionResult> CreateRoomToken(CreateRoomRequestDto request)
     {
-        var token = await liveKitService.CreateRoomTokenAsync(request.Username, request.RoomName);
+        var token = await liveKitService.CreateRoomTokenAsync(request.ChannelId);
 
         return token is null ? Problem() : Ok(token);
     }
