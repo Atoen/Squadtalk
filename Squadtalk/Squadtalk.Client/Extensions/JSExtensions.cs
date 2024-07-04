@@ -1,5 +1,7 @@
+using FluentResults;
 using Microsoft.JSInterop;
 using Shared;
+using Shared.Results;
 
 namespace Squadtalk.Client.Extensions;
 
@@ -8,6 +10,48 @@ public static class JSExtensions
     public static ValueTask TryDisposeAsync(this IJSObjectReference? jsObjectReference)
     {
         return jsObjectReference?.DisposeAsync() ?? ValueTask.CompletedTask;
+    }
+
+    public static async ValueTask<Result> TryInvokeVoidAsync2(
+        this IJSObjectReference? jsObjectReference,
+        string identifier,
+        params object?[]? args)
+    {
+        if (jsObjectReference is null)
+        {
+            return Result.Fail(new JsModuleNotLoadedError(identifier));
+        }
+
+        try
+        {
+            await jsObjectReference.InvokeVoidAsync(identifier, args);
+            return Result.Ok();
+        }
+        catch (Exception e)
+        {
+            return Result.Fail(new JsInvocationError(identifier, e));
+        }
+    }
+
+    public static async ValueTask<Result<T>> TryInvokeAsync2<T>(
+        this IJSObjectReference? jsObjectReference,
+        string identifier,
+        params object?[]? args)
+    {
+        if (jsObjectReference is null)
+        {
+            return Result.Fail<T>(new JsModuleNotLoadedError(identifier));
+        }
+
+        try
+        {
+            var result = await jsObjectReference.InvokeAsync<T>(identifier, args);
+            return Result.Ok(result);
+        }
+        catch (Exception e)
+        {
+            return Result.Fail<T>(new JsInvocationError(identifier, e));
+        }
     }
 
     public static ValueTask TryInvokeVoidAsync(

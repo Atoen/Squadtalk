@@ -1,6 +1,6 @@
 @page "/Messages/Chat"
+
 @using Microsoft.AspNetCore.Authorization
-@using Shared.Communication
 @using Squadtalk.Client.Extensions
 @using Shared.Data.TypedIds
 
@@ -32,27 +32,37 @@
         @*     </svg> *@
         @* } *@
 
-        if (NewVoiceChatService.Joined || true)
+        if (!NewVoiceChatService.JoinedRoom)
         {
-        }
-        else
-        {
-            <Tooltip Title="Call user" @onclick="StartVoiceCall">
-                <Icon Name="IconName.TelephoneOutboundFill"/>
+            <Tooltip Title="Call user">
+                <Button @onclick="StartVoiceCall">
+                    <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x3"/>
+                </Button>
             </Tooltip>
         }
-
     }
     <span class="channel-name">@ChannelName</span>
 </div>
 
 <div class="chat-container">
-    @if (VoiceChatService.CurrentVoiceCall is { } call)
+    @* @if (VoiceChatService.CurrentVoiceCall is { } call) *@
+    @* { *@
+    @*     <CallInfo Model="call"/> *@
+    @* } *@
+
+    <div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
+        <video class="video-frame" id="maximized-video" autoplay></video>
+    </div>
+
+    @if (NewVoiceChatService.JoinedRoom)
     {
-        <CallInfo Model="call"/>
-    }
-    @if (true)
-    {
+        <div class="participants">
+            @foreach (var participant in NewVoiceChatService.Participants)
+            {
+                <CallParticipant Model="participant"/>
+            }
+        </div>
+
         <MediaDevicesStatus/>
     }
     <div class="message-listbox rounded my-1" id="listbox">
@@ -107,7 +117,16 @@
         
         VoiceChatService.CallOfferIncoming += ShowCallPopup;
         VoiceChatService.StateHasChanged += StateHasChanged;
+        NewVoiceChatService.OnDisplayParticipant += NewVoiceChatServiceOnOnDisplayParticipant;
+        NewVoiceChatService.OnConnected += StateHasChanged;
+        NewVoiceChatService.OnDisconnected += NewVoiceChatServiceOnOnDisconnected;
     }
+
+    private void NewVoiceChatServiceOnOnDisconnected(DisconnectReason obj) => StateHasChanged();
+
+    private void NewVoiceChatServiceOnOnDisplayParticipant(object? obj = null) => StateHasChanged();
+
+    private Task MinimizeVideo() => NewVoiceChatService.MinimizeVideoAsync();
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
@@ -147,7 +166,7 @@
             return;
         }
 
-        await NewVoiceChatService.JoinAsync(channelId);
+        await NewVoiceChatService.JoinCallAsync(channelId);
     }
 
     private Task EndVoiceCall(VoiceCallModel callModel)
@@ -159,7 +178,10 @@
     {
         VoiceChatService.CallOfferIncoming -= ShowCallPopup;
         VoiceChatService.StateHasChanged -= StateHasChanged;
-        
+        NewVoiceChatService.OnDisplayParticipant -= NewVoiceChatServiceOnOnDisplayParticipant;
+        NewVoiceChatService.OnConnected -= StateHasChanged;
+        NewVoiceChatService.OnDisconnected -= NewVoiceChatServiceOnOnDisconnected;
+
         if (FileTransferService.UploadChannel is not { } channel) return;
 
         var toast = new ToastMessage(ToastType.Success, $"Your upload to {channel.Name} is still in progress.");

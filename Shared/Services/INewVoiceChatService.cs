@@ -5,7 +5,7 @@ namespace Shared.Services;
 
 public interface INewVoiceChatService
 {
-    bool Joined { get; }
+    bool JoinedRoom { get; }
 
     bool MicrophoneEnabled { get; }
 
@@ -14,11 +14,17 @@ public interface INewVoiceChatService
     bool ScreenShareEnabled { get; }
 
     IEnumerable<CallParticipantModel> Participants { get; }
+
     IEnumerable<MediaDeviceModel> Microphones { get; }
+
     IEnumerable<MediaDeviceModel> Cameras { get; }
 
+    bool MicrophoneAvailable { get; }
+
+    bool CameraAvailable { get; }
+
     event Action? OnConnected;
-    event Func<DisconnectReason, Task>? OnDisconnectedAsync;
+    event Action<DisconnectReason>? OnDisconnected;
     event Action<MediaDeviceModel[]>? OnMicrophoneListUpdated;
     event Action<MediaDeviceModel[]>? OnCameraListUpdated;
     event Action<string>? OnError;
@@ -28,9 +34,9 @@ public interface INewVoiceChatService
 
     Task InitializeAsync();
 
-    Task JoinAsync(ChannelId channelId);
+    Task JoinCallAsync(ChannelId channelId);
 
-    Task LeaveAsync();
+    Task LeaveCallAsync();
 
     Task ChangeVolumeAsync(CallParticipantModel participant, int volume, AudioSource audioSource = AudioSource.Microphone);
 
@@ -61,4 +67,10 @@ public enum VideoSource
 {
     Camera,
     ScreenShare
+}
+
+public enum InputDevice
+{
+    Microphone,
+    Camera
 }

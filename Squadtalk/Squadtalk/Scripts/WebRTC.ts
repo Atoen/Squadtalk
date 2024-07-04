@@ -82,10 +82,17 @@ export async function Start(token: string): Promise<boolean> {
     try {
         await room.connect(serverAddress, roomToken);
         await room.localParticipant.setMicrophoneEnabled(true);
+
         const microphones = await Room.getLocalDevices("audioinput");
         await dotnetObject.invokeMethodAsync("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
+
+        const cameras = await Room.getLocalDevices("videoinput", false);
+        await dotnetObject.invokeMethodAsync("CamerasUpdatedCallback", mapMediaDevices(cameras));
+
+
         await displayParticipant(room.localParticipant);
         bitrateInterval = setInterval(displayBitrate, 1000);
+
         const participant = room.localParticipant;
         participant
             .on(ParticipantEvent.TrackMuted, (pub: lk.TrackPublication) => displayParticipant(participant))
@@ -199,6 +206,13 @@ export function ChangeVolume(participantIdentity: string, volume: number, screen
     if (participant instanceof lk.RemoteParticipant) {
         const source = screenShare ? Source.ScreenShareAudio : Source.Microphone;
         participant.setVolume(volume / 100, source);
+    }
+}
+
+export async function ChangeDevice(kind: number, id: string) {
+    const mediaDeviceKind: MediaDeviceKind = kind === 0 ? "audioinput" : "videoinput";
+    if (room) {
+        await room.switchActiveDevice(mediaDeviceKind, id);
     }
 }
 

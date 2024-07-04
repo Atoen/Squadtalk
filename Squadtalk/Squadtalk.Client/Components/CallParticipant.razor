@@ -48,23 +48,23 @@
     </div>
 </div>
 
+@inject INewVoiceChatService NewVoiceChatService
+
 @code {
 
     [Parameter, EditorRequired] public CallParticipantModel Model { get; set; } = default!;
-    [Parameter, EditorRequired] public EventCallback<VideoStream> OnShow { get; set; }
-    [Parameter, EditorRequired] public EventCallback<int> OnVolumeChanged { get; set; }
 
     private Task VolumeChanged(int value)
     {
         _volume = value;
-        return OnVolumeChanged.InvokeAsync(value);
+        return NewVoiceChatService.ChangeVolumeAsync(Model, value);
     }
 
-    private Task ShowCamera() => OnShow.InvokeAsync(VideoStream.Camera);
+    private Task ShowCamera() => NewVoiceChatService.ShowVideoAsync(Model, VideoSource.Camera);
 
-    private Task ShowScreenShare() => OnShow.InvokeAsync(VideoStream.ScreenShare);
+    private Task ShowScreenShare() => NewVoiceChatService.ShowVideoAsync(Model, VideoSource.ScreenShare);
 
-    private int _volume = 80;
+    private int _volume = 100;
 
     private string? _audioId;
     private string? _screenShareAudioId;
@@ -95,14 +95,16 @@
         ConnectionQuality.Excellent => IconName.Wifi,
         ConnectionQuality.Good => IconName.Wifi2,
         ConnectionQuality.Poor => IconName.Wifi1,
-        _ => IconName.WifiOff
+        ConnectionQuality.Unknown => IconName.Broadcast,
+        _ => IconName.WifiOff,
     };
 
     private IconColor ConnectionQualityColor => Model.ConnectionQuality switch
     {
         ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
         ConnectionQuality.Poor => IconColor.Warning,
-        _ => IconColor.Danger
+        ConnectionQuality.Unknown => IconColor.Primary,
+        _ => IconColor.Danger,
     };
 
     private IconName MicrophoneIcon => Model.MicrophoneOn ? IconName.MicFill : IconName.MicMuteFill;

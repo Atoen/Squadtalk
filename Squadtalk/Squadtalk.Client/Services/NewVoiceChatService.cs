@@ -1,4 +1,5 @@
 using BlazorBootstrap;
+using FluentResults;
 using Microsoft.JSInterop;
 using Shared;
 using Shared.Data.TypedIds;
@@ -32,10 +33,17 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
         _dotNetObjectReference = DotNetObjectReference.Create(this);
     }
 
-    public bool Joined { get; private set; }
-    public bool MicrophoneEnabled { get; private set; }
+    public bool JoinedRoom { get; private set; }
+
+    public bool MicrophoneEnabled { get; private set; } = true;
+
     public bool CameraEnabled { get; private set; }
+
     public bool ScreenShareEnabled { get; private set; }
+
+    public bool MicrophoneAvailable => _microphones.Count > 0;
+
+    public bool CameraAvailable => _cameras.Count > 0;
 
     public IEnumerable<CallParticipantModel> Participants => _participants.Values;
     public IEnumerable<MediaDeviceModel> Microphones => _microphones;
@@ -46,7 +54,7 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     private readonly List<MediaDeviceModel> _cameras = [];
 
     public event Action? OnConnected;
-    public event Func<DisconnectReason, Task>? OnDisconnectedAsync;
+    public event Action<DisconnectReason>? OnDisconnected;
     public event Action<MediaDeviceModel[]>? OnMicrophoneListUpdated;
     public event Action<MediaDeviceModel[]>? OnCameraListUpdated;
     public event Action<string>? OnError;
@@ -60,9 +68,9 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
             "wss://192.168.1.134:1230/jajo");
     }
 
-    public async Task JoinAsync(ChannelId channelId)
+    public async Task JoinCallAsync(ChannelId channelId)
     {
-        if (Joined) return;
+        if (JoinedRoom) return;
 
         var token = await _liveKitService.CreateRoomTokenAsync(channelId);
         if (token is null)
@@ -71,72 +79,119 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
             return;
         }
 
-        var success = await _jsModule.TryInvokeAsync<bool>("Start", token.Token);
-        if (!success)
+        var result = await _jsModule.TryInvokeAsync2<bool>("Start", token.Token);
+        if (result.IsFailed)
         {
-            OnError?.Invoke("Unable to join room");
+            DisplayErrors(result, "Unable to connect to room");
             return;
         }
 
-        Joined = true;
+        var joined = result.Value;
+        if (!joined)
+        {
+            var toast = new ToastMessage(ToastType.Danger, "Unable to connect to room");
+            _toastService.Notify(toast);
+            return;
+        }
+
+        JoinedRoom = true;
         OnConnected?.Invoke();
     }
 
-    public async Task LeaveAsync()
+    public async Task LeaveCallAsync()
     {
-        await _jsModule.TryInvokeVoidAsync("Stop");
-        Joined = false;
+        var result = await _jsModule.TryInvokeVoidAsync2("Stop");
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while disconnecting from room");
+        }
+
+        JoinedRoom = false;
         _participants.Clear();
     }
 
     public async Task ChangeVolumeAsync(CallParticipantModel participant, int volume, AudioSource audioSource = AudioSource.Microphone)
     {
-        await _jsModule.TryInvokeVoidAsync("ChangeVolume", participant.Username, volume);
+        var result = await _jsModule.TryInvokeVoidAsync2("ChangeVolume", participant.Username, volume);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while changing volume");
+        }
     }
 
     public async Task SwapCameraAsync()
     {
-        await _jsModule.TryInvokeVoidAsync("SwapCamera");
+        var result = await _jsModule.TryInvokeVoidAsync2("SwapCamera");
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while swapping camera");
+        }
     }
 
     public async Task ShowVideoAsync(CallParticipantModel participant, VideoSource videoSource)
     {
-        await _jsModule.TryInvokeVoidAsync("ShowVideo", participant.Username, videoSource);
+        var result = await _jsModule.TryInvokeVoidAsync2("ShowVideo", participant.Username, videoSource);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while showing video");
+        }
     }
 
     public async Task MinimizeVideoAsync()
     {
-        await _jsModule.TryInvokeVoidAsync("MinimizeVideo");
+        var result = await _jsModule.TryInvokeVoidAsync2("MinimizeVideo");
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while minimizing video");
+        }
     }
 
-    public Task SelectMicrophoneAsync(MediaDeviceModel microphone)
+    public async Task SelectMicrophoneAsync(MediaDeviceModel microphone)
     {
-        _logger.LogInformation("Selected microphone {Microphone}", microphone.Label);
-        return Task.CompletedTask;
+        var result = await _jsModule.TryInvokeVoidAsync2("ChangeDevice", InputDevice.Microphone, microphone.Id);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while selecting microphone");
+        }
     }
 
-    public Task SelectCameraAsync(MediaDeviceModel camera)
+    public async Task SelectCameraAsync(MediaDeviceModel camera)
     {
-        _logger.LogInformation("Selected camera {Camera}", camera.Label);
-        return Task.CompletedTask;
+        var result = await _jsModule.TryInvokeVoidAsync2("ChangeDevice", InputDevice.Camera, camera.Id);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while selecting camera");
+        }
     }
 
     public async Task ToggleMicrophoneAsync()
     {
         MicrophoneEnabled = !MicrophoneEnabled;
-        await _jsModule.TryInvokeVoidAsync("SetMicrophoneEnabled", MicrophoneEnabled);
+        var result = await _jsModule.TryInvokeVoidAsync2("SetMicrophoneEnabled", MicrophoneEnabled);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while toggling microphone");
+        }
     }
 
     public async Task ToggleCameraAsync()
     {
-        CameraEnabled = !ScreenShareEnabled;
-        await _jsModule.TryInvokeVoidAsync("SetCameraEnabled", CameraEnabled);
+        CameraEnabled = !CameraEnabled;
+        var result = await _jsModule.TryInvokeVoidAsync2("SetCameraEnabled", CameraEnabled);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while toggling camera");
+        }
     }
 
     public async Task ToggleScreenShareAsync()
     {
         ScreenShareEnabled = !ScreenShareEnabled;
-        await _jsModule.TryInvokeVoidAsync("SetScreenShareEnabled", ScreenShareEnabled);
+        var result = await _jsModule.TryInvokeVoidAsync2("SetScreenShareEnabled", ScreenShareEnabled);
+        if (result.IsFailed)
+        {
+            DisplayErrors(result, "Error while toggling screen share");
+        }
     }
 
     [JSInvokable]
@@ -144,6 +199,7 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     {
         _microphones.Clear();
         _microphones.AddRange(microphones);
+        OnMicrophoneListUpdated?.Invoke(microphones);
     }
 
     [JSInvokable]
@@ -151,14 +207,16 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     {
         _cameras.Clear();
         _cameras.AddRange(cameras);
+        OnCameraListUpdated?.Invoke(cameras);
     }
 
     [JSInvokable]
     public void DisconnectedCallback(DisconnectReason reason)
     {
-        Joined = false;
+        JoinedRoom = false;
         _participants.Clear();
 
+        OnDisconnected?.Invoke(reason);
         if (reason is DisconnectReason.ClientInitiated) return;
 
         var toast = new ToastMessage(ToastType.Warning, "Disconnected", reason.ToString());
@@ -169,6 +227,7 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     public void ErrorCallback(string error)
     {
         _toastService.Notify(new ToastMessage(ToastType.Warning, error));
+        OnError?.Invoke(error);
     }
 
     [JSInvokable]
@@ -190,6 +249,22 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     {
         _participants.Remove(participant.Sid);
         OnParticipantDisconnected?.Invoke(participant);
+    }
+
+    private void DisplayErrors(
+        ResultBase result,
+        string message,
+        ToastType toastType = ToastType.Danger,
+        bool autoHide = false)
+    {
+        var errors = string.Join(", ", result.Errors);
+        var toast = new ToastMessage
+        {
+            Type = toastType,
+            AutoHide = autoHide,
+            Message = $"{message}: {errors}"
+        };
+        _toastService.Notify(toast);
     }
 
     public async ValueTask DisposeAsync()

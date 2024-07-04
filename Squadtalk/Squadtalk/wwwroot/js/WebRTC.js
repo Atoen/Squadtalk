@@ -62,6 +62,8 @@ export async function Start(token) {
         await room.localParticipant.setMicrophoneEnabled(true);
         const microphones = await Room.getLocalDevices("audioinput");
         await dotnetObject.invokeMethodAsync("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
+        const cameras = await Room.getLocalDevices("videoinput", false);
+        await dotnetObject.invokeMethodAsync("CamerasUpdatedCallback", mapMediaDevices(cameras));
         await displayParticipant(room.localParticipant);
         bitrateInterval = setInterval(displayBitrate, 1000);
         const participant = room.localParticipant;
@@ -160,6 +162,12 @@ export function ChangeVolume(participantIdentity, volume, screenShare) {
     if (participant instanceof lk.RemoteParticipant) {
         const source = screenShare ? Source.ScreenShareAudio : Source.Microphone;
         participant.setVolume(volume / 100, source);
+    }
+}
+export async function ChangeDevice(kind, id) {
+    const mediaDeviceKind = kind === 0 ? "audioinput" : "videoinput";
+    if (room) {
+        await room.switchActiveDevice(mediaDeviceKind, id);
     }
 }
 function getPublication(participantIdentity, source) {

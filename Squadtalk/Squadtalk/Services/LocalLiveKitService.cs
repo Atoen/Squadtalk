@@ -35,10 +35,9 @@ public class LocalLiveKitService : ILiveKitService
         var user = _httpContextAccessor.HttpContext?.User;
         var username = user?.GetClaimValue(ClaimTypes.Name);
 
-        _logger.LogCritical("Username: {Username}", username);
-
         if (string.IsNullOrEmpty(username))
         {
+            _logger.LogWarning("Missing username claim required for creating room token");
             return Task.FromResult<RoomTokenDto?>(null);
         }
 

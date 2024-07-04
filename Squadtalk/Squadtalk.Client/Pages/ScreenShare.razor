@@ -3,7 +3,6 @@
 @using Shared
 @using Shared.DTOs
 @using Squadtalk.Client.Extensions
-@using Squadtalk.Client.Services
 @implements IAsyncDisposable
 
 <h3>WebRTC</h3>
@@ -60,9 +59,9 @@
     }
 </div>
 
- <div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
-     <video class="video-frame" id="maximized-video" autoplay></video>
- </div>
+<div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
+    <video class="video-frame" id="maximized-video" autoplay></video>
+</div>
 
 @inject IJSRuntime JSRuntime
 @inject ToastService ToastService

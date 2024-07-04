@@ -1,6 +1,6 @@
 .chat-container {
     display: grid;
-    grid-template-rows: min-content auto min-content min-content;
+    grid-template-rows: min-content min-content auto min-content min-content;
     height: calc(100dvh - 136px);
     margin-top: 0.5em;
 }
@@ -12,14 +12,14 @@
 }
 
 .message-listbox {
-    grid-row: 2;
+    grid-row: 3;
     overflow: auto;
     background: var(--bs-gray-400);
 }
 
 .header {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: min-content min-content min-content;
 }
 
 .avatar {
@@ -33,6 +33,7 @@
 .channel-name {
     font-size: 1.2em;
     grid-column: 2;
+    grid-row: 1;
     align-self: center;
 }
 
@@ -64,6 +65,29 @@
 .end-call-icon:hover, .end-call-icon:active {
     color: var(--bs-danger);
     transform: translate(0, 2px);
+}
+
+.video-container {
+    display: none;
+    background-color: black;
+    border-radius: 8px;
+}
+
+.video-frame {
+    width: calc(100% - 8px);
+    max-width: calc(100% - 8px);
+    max-height: calc(100vh - 300px);
+    height: 100%;
+    padding: 8px 0 0 8px;
+    min-height: 500px;
+}
+
+.participants {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px; /* Adjust the gap between items as needed */
+    padding: 16px; /* Optional: padding around the grid */
 }
 
 
