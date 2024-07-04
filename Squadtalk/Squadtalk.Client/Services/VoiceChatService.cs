@@ -124,15 +124,15 @@ public sealed class VoiceChatService : IVoiceChatService
 
     public async Task StartCallAsync(UserModel callee)
     {
-        await InitializeModuleAsync();
-        var callOfferId = await _signalrVoiceService.StartVoiceCallAsync(callee.Id);
-        if (callOfferId is null)
-        {
-            _logger.LogError("Call offer id is null");
-            return;
-        }
-        
-        _logger.LogInformation("Call offer id: {Id}", callOfferId);
+        // await InitializeModuleAsync();
+        // var callOfferId = await _signalrVoiceService.StartVoiceCallAsync(callee.Id);
+        // if (callOfferId is null)
+        // {
+        //     _logger.LogError("Call offer id is null");
+        //     return;
+        // }
+        //
+        // _logger.LogInformation("Call offer id: {Id}", callOfferId);
     }
 
     public async Task EndCallAsync(CallId id)

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
@@ -11,7 +12,7 @@ public partial class ChatHub
 {
     public bool MeasurePing() => true;
 
-    public async Task<CallOfferId?> StartCall(UserId id)
+    public async Task<CallOfferId?> StartCall(ChannelId channelId)
     {
         if (await _userManager.GetUserAsync(Context.User!) is not { } callingUser)
         {
@@ -19,24 +20,32 @@ public partial class ChatHub
             return null;
         }
 
-        var targetUser = await _dbContext.Users
+        var callChannel = await _dbContext.Channels
             .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == id);
+            .Include(x => x.Participants)
+            .SingleOrDefaultAsync(x => x.Id == channelId);
 
-        if (targetUser is null)
+        if (callChannel is not {Participants: { Count: > 1 } callParticipants})
         {
-            await VoiceCaller.CallFailed("Unable to call the user");
+            await VoiceCaller.CallFailed("Unable start the call");
             return null;
         }
 
+        var usersToNotify = callParticipants.Where(x => x.Id != callingUser.Id)
+            .ToImmutableList();
+
         var caller = new VoiceUser(callingUser, (SignalRConnectionId) Context.ConnectionId);
-        var offer = new VoiceCallOffer(caller, targetUser, CallOfferId.New);
+        var offer = new VoiceCallOffer(caller, usersToNotify, channelId, CallOfferId.New);
         _voiceCallManager.AddCallOffer(offer);
 
-        var dto = callingUser.ToDto();
-        foreach (var connection in _connectionManager.GetUserConnections(targetUser))
+        var callerDto = callingUser.ToDto();
+
+        var connections = usersToNotify
+            .SelectMany(x => _connectionManager.GetUserConnections(x));
+
+        foreach (var connection in connections)
         {
-            await VoiceClient(connection).IncomingCall(dto, offer.Id);
+            await VoiceClient(connection).IncomingCall(callerDto, offer.Id);
         }
 
         return offer.Id;
@@ -48,7 +57,7 @@ public partial class ChatHub
         if (await _userManager.GetUserAsync(Context.User!) is not { } acceptingUser) return;
 
         var callee = new VoiceUser(acceptingUser, (SignalRConnectionId) Context.ConnectionId);
-        var call = new VoiceCall { Users = [offer.Caller, callee], Id = new CallId(id) };
+        var call = new VoiceCall { Users = [offer.Caller, callee], Id = CallId.New, ChannelId = offer.ChannelId };
 
         _voiceCallManager.RemoveCallOffer(offer.Id);
         _voiceCallManager.AddCall(call);
@@ -73,9 +82,9 @@ public partial class ChatHub
         await VoiceClient(offer.Caller.ConnectionId).CallDeclined(id);
     }
     
-    public async Task EndCall(CallId? id = null)
+    public async Task EndCall(CallId id = default)
     {
-        var call = id is null
+        var call = id == default
             ? _voiceCallManager.GetCall((SignalRConnectionId) Context.ConnectionId)
             : _voiceCallManager.GetCall(id);
         

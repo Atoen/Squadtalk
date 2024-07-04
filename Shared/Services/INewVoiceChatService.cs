@@ -29,10 +29,17 @@ public interface INewVoiceChatService
     event Action<MediaDeviceModel[]>? OnCameraListUpdated;
     event Action<string>? OnError;
     event Action<CallParticipantModel>? OnParticipantConnected;
-    event Action<CallParticipantModel>? OnDisplayParticipant;
+    event Action<CallParticipantModel>? OnParticipantUpdated;
     event Action<CallParticipantModel>? OnParticipantDisconnected;
+    event Func<UserModel, CallOfferId, Task>? CallOfferIncoming;
 
     Task InitializeAsync();
+
+    Task StartCallAsync(ChannelId channelId);
+
+    Task AcceptCallAsync(CallOfferId id);
+
+    Task DeclineCallAsync(CallOfferId id);
 
     Task JoinCallAsync(ChannelId channelId);
 

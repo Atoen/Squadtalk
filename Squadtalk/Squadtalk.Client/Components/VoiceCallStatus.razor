@@ -1,0 +1,46 @@
+@implements IDisposable
+
+<div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
+    <video class="video-frame" id="maximized-video" autoplay></video>
+</div>
+
+@if (NewVoiceChatService.JoinedRoom)
+{
+    <div class="participants">
+        @foreach (var participant in NewVoiceChatService.Participants)
+        {
+            <CallParticipant Model="participant"/>
+        }
+    </div>
+
+    <MediaDevicesStatus/>
+}
+
+@inject INewVoiceChatService NewVoiceChatService
+
+@code {
+
+    private Task MinimizeVideo() => NewVoiceChatService.MinimizeVideoAsync();
+
+    protected override void OnInitialized()
+    {
+        NewVoiceChatService.OnParticipantUpdated += ParticipantUpdated;
+        NewVoiceChatService.OnConnected += StateHasChanged;
+        NewVoiceChatService.OnDisconnected += Disconnected;
+        NewVoiceChatService.OnParticipantConnected += ParticipantUpdated;
+        NewVoiceChatService.OnParticipantDisconnected += ParticipantUpdated;
+    }
+
+    private void Disconnected(DisconnectReason _) => StateHasChanged();
+
+    private void ParticipantUpdated(CallParticipantModel _) => StateHasChanged();
+
+    public void Dispose()
+    {
+        NewVoiceChatService.OnParticipantUpdated -= ParticipantUpdated;
+        NewVoiceChatService.OnConnected -= StateHasChanged;
+        NewVoiceChatService.OnDisconnected -= Disconnected;
+        NewVoiceChatService.OnParticipantConnected -= ParticipantUpdated;
+        NewVoiceChatService.OnParticipantDisconnected -= ParticipantUpdated;
+    }
+}

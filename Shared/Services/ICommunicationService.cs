@@ -37,13 +37,13 @@ public interface ICommunicationService
     
     Task SendMessageAsync(string content, ChannelId channelId, CancellationToken cancellationToken);
 
-    Task<CallOfferId?> StartVoiceCallAsync(UserId id);
+    Task<CallOfferId?> StartVoiceCallAsync(ChannelId channelId);
 
-    Task EndCallAsync(CallId id);
+    Task EndCallAsync(CallId callId);
 
-    Task AcceptCallAsync(CallOfferId id);
+    Task AcceptCallAsync(CallOfferId callOfferId);
     
-    Task DeclineCallAsync(CallOfferId id);
+    Task DeclineCallAsync(CallOfferId callOfferId);
 
     Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken);
 }

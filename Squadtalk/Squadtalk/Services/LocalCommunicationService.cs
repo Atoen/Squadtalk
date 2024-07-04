@@ -95,22 +95,22 @@ public class LocalCommunicationService : ICommunicationService
         await _hubContext.Clients.Group(channelId).ReceiveMessage(dto);
     }
 
-    public Task<CallOfferId?> StartVoiceCallAsync(UserId id)
+    public Task<CallOfferId?> StartVoiceCallAsync(ChannelId id)
     {
         throw new NotImplementedException();
     }
 
-    public Task EndCallAsync(CallId id)
+    public Task EndCallAsync(CallId callId)
     {
         throw new NotImplementedException();
     }
 
-    public Task AcceptCallAsync(CallOfferId id)
+    public Task AcceptCallAsync(CallOfferId callOfferId)
     {
         throw new NotImplementedException();
     }
 
-    public Task DeclineCallAsync(CallOfferId id)
+    public Task DeclineCallAsync(CallOfferId callOfferId)
     {
         throw new NotImplementedException();
     }

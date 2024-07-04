@@ -2,7 +2,9 @@ using BlazorBootstrap;
 using FluentResults;
 using Microsoft.JSInterop;
 using Shared;
+using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Extensions;
@@ -14,6 +16,7 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     private readonly IJSRuntime _jsRuntime;
     private readonly ToastService _toastService;
     private readonly ILiveKitService _liveKitService;
+    private readonly ICommunicationService _communicationService;
     private readonly ILogger<NewVoiceChatService> _logger;
 
     private IJSObjectReference? _jsModule;
@@ -23,14 +26,19 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
         IJSRuntime jsRuntime,
         ToastService toastService,
         ILiveKitService liveKitService,
+        ICommunicationService communicationService,
         ILogger<NewVoiceChatService> logger)
     {
         _jsRuntime = jsRuntime;
         _toastService = toastService;
         _liveKitService = liveKitService;
+        _communicationService = communicationService;
         _logger = logger;
 
         _dotNetObjectReference = DotNetObjectReference.Create(this);
+        _communicationService.IncomingCall += IncomingCall;
+        _communicationService.CallAccepted += CallAccepted;
+        _communicationService.CallDeclined += CallDeclined;
     }
 
     public bool JoinedRoom { get; private set; }
@@ -59,13 +67,33 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     public event Action<MediaDeviceModel[]>? OnCameraListUpdated;
     public event Action<string>? OnError;
     public event Action<CallParticipantModel>? OnParticipantConnected;
-    public event Action<CallParticipantModel>? OnDisplayParticipant;
+    public event Action<CallParticipantModel>? OnParticipantUpdated;
     public event Action<CallParticipantModel>? OnParticipantDisconnected;
+    public event Func<UserModel, CallOfferId, Task>? CallOfferIncoming;
 
     public async Task InitializeAsync()
     {
         _jsModule ??= await _jsRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference,
             "wss://192.168.1.134:1230/jajo");
+    }
+
+    public async Task StartCallAsync(ChannelId channelId)
+    {
+        var callOfferId = await _communicationService.StartVoiceCallAsync(channelId);
+        if (callOfferId is null)
+        {
+            _logger.LogError("Call offer id is null");
+        }
+    }
+
+    public async Task AcceptCallAsync(CallOfferId id)
+    {
+        await _communicationService.AcceptCallAsync(id);
+    }
+
+    public Task DeclineCallAsync(CallOfferId id)
+    {
+        return _communicationService.DeclineCallAsync(id);
     }
 
     public async Task JoinCallAsync(ChannelId channelId)
@@ -194,6 +222,24 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
         }
     }
 
+    private Task IncomingCall(IChatUser caller, CallOfferId id)
+    {
+        _logger.LogInformation("Incoming call from: {Caller}", caller.Username);
+        return CallOfferIncoming.TryInvoke(UserModel.GetOrCreate(caller), id);
+    }
+
+    private Task CallDeclined(CallOfferId id)
+    {
+        _logger.LogInformation("Call declined, id: {Id}", id);
+        return Task.CompletedTask;
+    }
+
+    private Task CallAccepted(CallOfferId id)
+    {
+        _logger.LogInformation("Call accepted, id: {Id}", id);
+        return Task.CompletedTask;
+    }
+
     [JSInvokable]
     public void MicrophonesUpdatedCallback(MediaDeviceModel[] microphones)
     {
@@ -234,7 +280,7 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     public void DisplayParticipantCallback(CallParticipantModel participant)
     {
         _participants[participant.Sid] = participant;
-        OnDisplayParticipant?.Invoke(participant);
+        OnParticipantUpdated?.Invoke(participant);
     }
 
     [JSInvokable]

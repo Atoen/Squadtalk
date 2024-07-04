@@ -13,7 +13,7 @@ public interface ISignalrVoiceService
     event Func<List<UserDto>, CallId, Task>? GetCallUsers;
     event Func<VoicePacketDto, Task>? GetVoicePacket;
     
-    Task<CallOfferId?> StartVoiceCallAsync(UserId id);
+    Task<CallOfferId?> StartVoiceCallAsync(ChannelId id);
 
     Task EndCallAsync(CallId id);
 

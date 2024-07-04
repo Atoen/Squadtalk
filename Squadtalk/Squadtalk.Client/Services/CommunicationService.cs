@@ -27,24 +27,24 @@ public class CommunicationService : ICommunicationService
         return _signalrService.SendMessageAsync(content, channelId, cancellationToken);
     }
 
-    public Task<CallOfferId?> StartVoiceCallAsync(UserId id)
+    public Task<CallOfferId?> StartVoiceCallAsync(ChannelId id)
     {
         return _signalrService.StartVoiceCallAsync(id);
     }
 
-    public Task EndCallAsync(CallId id)
+    public Task EndCallAsync(CallId callId)
     {
-        return _signalrService.EndCallAsync(id);
+        return _signalrService.EndCallAsync(callId);
     }
 
-    public Task AcceptCallAsync(CallOfferId id)
+    public Task AcceptCallAsync(CallOfferId callOfferId)
     {
-        return _signalrService.AcceptCallAsync(id);
+        return _signalrService.AcceptCallAsync(callOfferId);
     }
 
-    public Task DeclineCallAsync(CallOfferId id)
+    public Task DeclineCallAsync(CallOfferId callOfferId)
     {
-        return _signalrService.DeclineCallAsync(id);
+        return _signalrService.DeclineCallAsync(callOfferId);
     }
 
     public Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken)
