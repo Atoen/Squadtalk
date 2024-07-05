@@ -1,10 +1,13 @@
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using Shared.Services;
 
 namespace Squadtalk.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class LiveKitController(ILiveKitService liveKitService, ILogger<LiveKitController> logger) : ControllerBase
@@ -17,8 +20,9 @@ public class LiveKitController(ILiveKitService liveKitService, ILogger<LiveKitCo
         return token is null ? Problem() : Ok(token);
     }
 
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost("WebHook")]
-    public async Task<IActionResult> HandleWebHook([FromBody] JsonObject payload)
+    public IActionResult HandleWebHook(JsonObject payload)
     {
         var eventName = payload["event"]!.ToString();
         var id = payload["id"]!.ToString();

@@ -16,14 +16,14 @@ public class LocalLiveKitService : ILiveKitService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<LocalLiveKitService> _logger;
 
-    private readonly string _apiKey;
+    private readonly string _issuer;
     private readonly SigningCredentials _signingCredentials;
 
     public LocalLiveKitService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<LocalLiveKitService> logger)
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
-        _apiKey = configuration.GetString("LiveKit:ApiKey");
+        _issuer = configuration.GetString("LiveKit:Issuer");
 
         var apiSecret = configuration.GetString("LiveKit:ApiSecret");
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiSecret));
@@ -47,7 +47,7 @@ public class LocalLiveKitService : ILiveKitService
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Issuer = _apiKey,
+            Issuer = _issuer,
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, username),

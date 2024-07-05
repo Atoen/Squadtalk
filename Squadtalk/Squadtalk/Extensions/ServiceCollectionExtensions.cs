@@ -1,8 +1,11 @@
+using System.Text;
 using Blazored.LocalStorage;
 using Coravel;
 using MailKit.Net.Smtp;
 using MessagePack;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using Polly.Registry;
 using Shared.Services;
 using Squadtalk.Client.Services;
@@ -14,7 +17,45 @@ namespace Squadtalk.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddServerServices(this IServiceCollection serviceCollection, IWebHostEnvironment environment)
+    public static WebApplicationBuilder ConfigureAuthentication(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidateIssuer = true,
+                ValidateAudience = false,
+                ValidIssuer = builder.Configuration["LiveKit:Issuer"],
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["LiveKit:ApiSecret"]!))
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Headers.Authorization;
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        context.Token = token;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
+        }).AddIdentityCookies();
+
+        return builder;
+    }
+
+    public static IServiceCollection AddServerServices(this IServiceCollection serviceCollection,
+        IWebHostEnvironment environment)
     {
         if (environment.IsDevelopment())
         {
@@ -30,7 +71,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<DnsRecordUpdaterStateManager>();
         serviceCollection.AddTransient<IPService>();
         serviceCollection.AddScheduler();
-        
+
         serviceCollection.AddSingleton<TusHelper>();
         serviceCollection.AddSignalR()
             .AddMessagePackProtocol(options =>
@@ -40,23 +81,23 @@ public static class ServiceCollectionExtensions
                     .WithCompressionMinLength(256)
                     .WithSecurity(MessagePackSecurity.UntrustedData);
             });
-        
+
         serviceCollection.AddBlazoredLocalStorage();
         serviceCollection.AddBlazorBootstrap();
-        
+
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
         serviceCollection.AddSingleton<ChatConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
         serviceCollection.AddSingleton<LocalMessageNotificationService>();
-        
+
         serviceCollection.AddScoped<MessageStorageService>();
         serviceCollection.AddScoped<FileStorageService>();
         serviceCollection.AddScoped<IMessageService, MessageService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
         serviceCollection.AddScoped<ICreateTextChannelRequestHandler, LocalChannelCreator>();
-        
+
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
         serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
@@ -64,7 +105,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
         serviceCollection.AddScoped<ILiveKitService, LocalLiveKitService>();
         serviceCollection.AddScoped<INewVoiceChatService, NewVoiceChatService>();
-        
+
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
