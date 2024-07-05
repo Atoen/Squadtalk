@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using Shared.Services;
+using Squadtalk.Data.LiveKit.Events;
 
 namespace Squadtalk.Controllers;
 
@@ -24,13 +25,15 @@ public class LiveKitController(ILiveKitService liveKitService, ILogger<LiveKitCo
     [HttpPost("WebHook")]
     public IActionResult HandleWebHook(JsonObject payload)
     {
-        var eventName = payload["event"]!.ToString();
-        var id = payload["id"]!.ToString();
-        var createdAt = payload["createdAt"]!.ToString();
-        var timestamp = long.Parse(createdAt);
-        var createdAtTimestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).ToLocalTime();
+        var @event = LiveKitEvent.Create(payload);
 
-        logger.LogInformation("Event: {Event} {Id} {CreatedAt}", eventName, id, createdAtTimestamp);
+        // var eventName = payload["event"]!.ToString();
+        // var id = payload["id"]!.ToString();
+        // var createdAt = payload["createdAt"]!.ToString();
+        // var timestamp = long.Parse(createdAt);
+        // var createdAtTimestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).ToLocalTime();
+        //
+        // logger.LogInformation("Event: {Event} {Id} {CreatedAt}", eventName, id, createdAtTimestamp);
 
         return Ok();
     }

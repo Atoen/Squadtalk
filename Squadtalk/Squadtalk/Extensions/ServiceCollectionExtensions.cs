@@ -89,6 +89,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
         serviceCollection.AddSingleton<ChatConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
+        serviceCollection.AddSingleton<NewVoiceCallManager>();
         serviceCollection.AddSingleton<LocalMessageNotificationService>();
 
         serviceCollection.AddScoped<MessageStorageService>();

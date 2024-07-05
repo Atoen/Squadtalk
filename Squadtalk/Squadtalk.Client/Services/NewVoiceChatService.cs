@@ -99,6 +99,7 @@ public sealed class NewVoiceChatService : INewVoiceChatService, IAsyncDisposable
     public async Task JoinCallAsync(ChannelId channelId)
     {
         if (JoinedRoom) return;
+        MicrophoneEnabled = true;
 
         var token = await _liveKitService.CreateRoomTokenAsync(channelId);
         if (token is null)
