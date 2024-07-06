@@ -57,7 +57,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 builder.Services.AddServerServices(builder.Environment);
 builder.Services.AddScoped<IMyCircuit, MyCircuit>();
 builder.Services.AddScoped<CircuitHandler, MyCircuitHandler>();
-builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.Configuration.GetString("Rest:BasePath"))

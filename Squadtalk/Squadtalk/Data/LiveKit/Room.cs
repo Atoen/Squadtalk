@@ -1,19 +1,42 @@
-using System.Collections.Immutable;
-
 namespace Squadtalk.Data.LiveKit;
 
-public record Room(
-    string Sid,
-    string Name,
-    EmptyTimeout EmptyTimeout,
-    DepartureTimeout DepartureTimeout,
-    DateTimeOffset CreationTime,
-    string TurnPassword,
-    ImmutableList<RoomCodec> EnabledCodecs,
-    int Participants);
+public sealed class Room(string id) : IDisposable
+{
+    private readonly SemaphoreSlim _semaphore = new(1);
 
-public readonly record struct EmptyTimeout(int Seconds);
+    public string Id { get; } = id;
 
-public readonly record struct DepartureTimeout(int Seconds);
+    public IEnumerable<Participant> Participants => _participants;
 
-public readonly record struct RoomCodec(string MimeType);
+    private readonly List<Participant> _participants = [];
+
+    public async Task AddParticipantAsync(Participant participant)
+    {
+        await _semaphore.WaitAsync();
+
+        try
+        {
+            _participants.Add(participant);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public async Task RemoveParticipantBySidAsync(string sid)
+    {
+        await _semaphore.WaitAsync();
+
+        try
+        {
+            _participants.RemoveAll(x => x.Sid == sid);
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    public void Dispose() => _semaphore.Dispose();
+}

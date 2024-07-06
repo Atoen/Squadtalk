@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
@@ -20,20 +19,20 @@ public partial class ChatHub : Hub<IChatClient>
     private readonly ChatConnectionManager _connectionManager;
     private readonly ILogger<ChatHub> _logger;
     private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly VoiceCallManager _voiceCallManager;
+    private readonly LiveKitService _liveKitService;
 
     public ChatHub(ChatConnectionManager connectionManager,
         ILogger<ChatHub> logger,
         ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        VoiceCallManager voiceCallManager)
+        VoiceCallManager voiceCallManager,
+        LiveKitService liveKitService)
     {
         _connectionManager = connectionManager;
         _logger = logger;
         _dbContext = dbContext;
-        _userManager = userManager;
         _voiceCallManager = voiceCallManager;
+        _liveKitService = liveKitService;
     }
 
     private IVoiceChatClient VoiceClient(string connectionId) => Clients.Client(connectionId);
@@ -135,8 +134,6 @@ public partial class ChatHub : Hub<IChatClient>
     {
         var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
-        
-        await EndCall();
 
         var dto = user.ToDto();
         

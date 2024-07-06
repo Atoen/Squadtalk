@@ -89,8 +89,8 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
         serviceCollection.AddSingleton<ChatConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
-        serviceCollection.AddSingleton<NewVoiceCallManager>();
         serviceCollection.AddSingleton<LocalMessageNotificationService>();
+        serviceCollection.AddScoped<LiveKitService>();
 
         serviceCollection.AddScoped<MessageStorageService>();
         serviceCollection.AddScoped<FileStorageService>();
@@ -101,11 +101,9 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
-        serviceCollection.AddScoped<IVoiceChatService, ServerSideVoice>();
         serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
-        serviceCollection.AddScoped<ILiveKitService, LocalLiveKitService>();
-        serviceCollection.AddScoped<INewVoiceChatService, NewVoiceChatService>();
+        serviceCollection.AddScoped<IVoiceChatService, VoiceChatService>();
 
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();

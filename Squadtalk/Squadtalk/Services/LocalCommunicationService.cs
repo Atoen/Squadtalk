@@ -48,13 +48,11 @@ public class LocalCommunicationService : ICommunicationService
     public event Func<string, Task>? ConnectionStatusChanged;
     public event Func<IEnumerable<IChatChannel>, Task>? TextChannelsReceived;
     public event Func<IChatChannel, Task>? AddedToTextChannel;
-    public event Func<IChatUser, CallOfferId, Task>? IncomingCall;
-    public event Func<CallOfferId, Task>? CallAccepted;
-    public event Func<CallOfferId, Task>? CallDeclined;
-    public event Func<CallId, Task>? CallEnded;
+    public event Func<ChannelId, IChatUser, Task>? CallAccepted;
+    public event Func<ChannelId, UserId, Task>? IncomingCall;
+    public event Func<IChatUser, ChannelId, Task>? CallDeclined;
+    public event Func<ChannelId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
-    public event Func<IEnumerable<IChatUser>, CallId, Task>? GetCallUsers;
-    public event Func<VoicePacketDto, Task>? GetVoicePacket;
 
     public string ConnectionStatus => ICommunicationService.Online;
     public bool Connected => true;
@@ -95,27 +93,17 @@ public class LocalCommunicationService : ICommunicationService
         await _hubContext.Clients.Group(channelId).ReceiveMessage(dto);
     }
 
-    public Task<CallOfferId?> StartVoiceCallAsync(ChannelId id)
+    Task<RoomTokenDto?> ICommunicationService.StartVoiceCallAsync(ChannelId channelId)
     {
         throw new NotImplementedException();
     }
 
-    public Task EndCallAsync(CallId callId)
+    public Task<RoomTokenDto?> AcceptCallAsync(ChannelId channelId)
     {
         throw new NotImplementedException();
     }
 
-    public Task AcceptCallAsync(CallOfferId callOfferId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task DeclineCallAsync(CallOfferId callOfferId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken)
+    public Task DeclineCallAsync(ChannelId channelId)
     {
         throw new NotImplementedException();
     }

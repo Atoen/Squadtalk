@@ -15,13 +15,11 @@ public interface ICommunicationService
     event Func<IEnumerable<IChatChannel>, Task>? TextChannelsReceived;
     event Func<IChatChannel, Task>? AddedToTextChannel;
     
-    event Func<IChatUser, CallOfferId, Task>? IncomingCall;
-    event Func<CallOfferId, Task>? CallAccepted;
-    event Func<CallOfferId, Task>? CallDeclined;
-    event Func<CallId, Task>? CallEnded;
+    event Func<ChannelId, UserId, Task>? IncomingCall;
+    event Func<ChannelId, IChatUser, Task>? CallAccepted;
+    event Func<IChatUser, ChannelId, Task>? CallDeclined;
+    event Func<ChannelId, Task>? CallEnded;
     event Func<string, Task>? CallFailed;
-    event Func<IEnumerable<IChatUser>, CallId, Task>? GetCallUsers;
-    event Func<VoicePacketDto, Task>? GetVoicePacket;
     
     const string Online = "Online";
     const string Connecting = "Connecting";
@@ -37,13 +35,9 @@ public interface ICommunicationService
     
     Task SendMessageAsync(string content, ChannelId channelId, CancellationToken cancellationToken);
 
-    Task<CallOfferId?> StartVoiceCallAsync(ChannelId channelId);
+    Task<RoomTokenDto?> StartVoiceCallAsync(ChannelId channelId);
 
-    Task EndCallAsync(CallId callId);
-
-    Task AcceptCallAsync(CallOfferId callOfferId);
+    Task<RoomTokenDto?> AcceptCallAsync(ChannelId channelId);
     
-    Task DeclineCallAsync(CallOfferId callOfferId);
-
-    Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken);
+    Task DeclineCallAsync(ChannelId channelId);
 }

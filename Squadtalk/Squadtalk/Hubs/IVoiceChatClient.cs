@@ -5,17 +5,13 @@ namespace Squadtalk.Hubs;
 
 public interface IVoiceChatClient
 {
-    Task IncomingCall(UserDto caller, CallOfferId id);
+    Task IncomingCall(ChannelId channelId, UserId initiatorId);
 
-    Task CallAccepted(CallOfferId id);
+    Task CallAccepted(ChannelId channelId, UserDto accepting);
 
-    Task CallDeclined(CallOfferId id);
+    Task CallDeclined(UserDto decliningUser, ChannelId channelId);
     
-    Task CallEnded(CallId id);
+    Task CallEnded(ChannelId channelId);
 
     Task CallFailed(string reason);
-
-    Task GetCallUsers(List<UserDto> users, CallId id);
-
-    Task GetVoicePacket(VoicePacketDto packet);
 }

@@ -1,8 +1,8 @@
 @page "/Messages/Chat"
 
 @using Microsoft.AspNetCore.Authorization
+@using Shared.Communication
 @using Squadtalk.Client.Extensions
-@using Shared.Data.TypedIds
 
 @implements IDisposable
 
@@ -16,7 +16,7 @@
     @if (!IsGlobalChat)
     {
         <img alt="@ChannelName Avatar" src="User.png" class="avatar" />
-        if (!NewVoiceChatService.JoinedRoom)
+        if (!VoiceChatService.JoinedRoom)
         {
             <Tooltip Title="Call user">
                 <Button @onclick="StartVoiceCall">
@@ -53,7 +53,6 @@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
-@inject INewVoiceChatService NewVoiceChatService
 @inject ILogger<Chat> Logger
 
 @code {
@@ -80,51 +79,48 @@
         {
             NavigationManager.NavigateTo("/Messages");
         }
-        
-        VoiceChatService.CallOfferIncoming += ShowCallPopup;
-        VoiceChatService.StateHasChanged += StateHasChanged;
-        NewVoiceChatService.OnDisconnected += OnDisconnected;
+
+        VoiceChatService.OnCallIncoming += ShowCallPopup;
+        VoiceChatService.OnDisconnected += OnDisconnected;
     }
 
     private void OnDisconnected(DisconnectReason _) => StateHasChanged();
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        return firstRender ? NewVoiceChatService.InitializeAsync() : Task.CompletedTask;
+        return firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
     }
 
-    private async Task ShowCallPopup(UserModel caller, CallOfferId id)
+    private async Task ShowCallPopup(TextChannelModel channelModel)
     {
-        var accept = await _dialog.ShowAsync($"Incoming call from {caller.Username}", 
+        var accept = await _dialog.ShowAsync($"Incoming call from {channelModel.Name}",
             "Accept call?", _options);
 
         if (accept)
         {
-            await VoiceChatService.AcceptCallAsync(id);
+            await VoiceChatService.AcceptCallAsync(channelModel.Id);
         }
         else
         {
-            await VoiceChatService.DeclineCallAsync(id);
+            await VoiceChatService.DeclineCallAsync(channelModel.Id);
         }
     }
 
     private async Task StartVoiceCall()
     {
-        Logger.LogInformation("Starting call");
-
         if (TextChatService.CurrentChannel is not { Id: { } channelId })
         {
             return;
         }
 
-        await NewVoiceChatService.JoinCallAsync(channelId);
+        Logger.LogInformation("Starting call");
+        await VoiceChatService.StartCallAsync(channelId);
     }
     
     public void Dispose()
     {
-        VoiceChatService.CallOfferIncoming -= ShowCallPopup;
-        VoiceChatService.StateHasChanged -= StateHasChanged;
-        NewVoiceChatService.OnDisconnected -= OnDisconnected;
+        VoiceChatService.OnCallIncoming -= ShowCallPopup;
+        VoiceChatService.OnDisconnected -= OnDisconnected;
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 

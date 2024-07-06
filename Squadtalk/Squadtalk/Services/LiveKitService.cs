@@ -6,22 +6,19 @@ using Microsoft.IdentityModel.Tokens;
 using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Extensions;
-using Shared.Services;
 using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;
 
-public class LocalLiveKitService : ILiveKitService
+public class LiveKitService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<LocalLiveKitService> _logger;
+    private readonly ILogger<LiveKitService> _logger;
 
     private readonly string _issuer;
     private readonly SigningCredentials _signingCredentials;
 
-    public LocalLiveKitService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<LocalLiveKitService> logger)
+    public LiveKitService(IConfiguration configuration, ILogger<LiveKitService> logger)
     {
-        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
         _issuer = configuration.GetString("LiveKit:Issuer");
 
@@ -30,15 +27,13 @@ public class LocalLiveKitService : ILiveKitService
         _signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
     }
 
-    public Task<RoomTokenDto?> CreateRoomTokenAsync(ChannelId channelId)
+    public RoomTokenDto? CreateRoomToken(ClaimsPrincipal? claimsPrincipal, ChannelId channelId)
     {
-        var user = _httpContextAccessor.HttpContext?.User;
-        var username = user?.GetClaimValue(ClaimTypes.Name);
-
+        var username = claimsPrincipal?.GetClaimValue(ClaimTypes.Name);
         if (string.IsNullOrEmpty(username))
         {
             _logger.LogWarning("Missing username claim required for creating room token");
-            return Task.FromResult<RoomTokenDto?>(null);
+            return null;
         }
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -60,6 +55,6 @@ public class LocalLiveKitService : ILiveKitService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         var tokenString = tokenHandler.WriteToken(token);
 
-        return Task.FromResult<RoomTokenDto?>(new RoomTokenDto { Token = tokenString });
+        return new RoomTokenDto { Token = tokenString };
     }
 }

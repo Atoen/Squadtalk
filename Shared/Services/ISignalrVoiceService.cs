@@ -5,21 +5,15 @@ namespace Shared.Services;
 
 public interface ISignalrVoiceService
 {
-    event Func<UserDto, CallOfferId, Task>? IncomingCall;
-    event Func<CallOfferId, Task>? CallAccepted;
-    event Func<CallOfferId, Task>? CallDeclined;
-    event Func<CallId, Task>? CallEnded;
+    event Func<ChannelId, UserId, Task>? IncomingCall;
+    event Func<ChannelId, UserDto, Task>? CallAccepted;
+    event Func<UserDto, ChannelId, Task>? CallDeclined;
+    event Func<ChannelId, Task>? CallEnded;
     event Func<string, Task>? CallFailed;
-    event Func<List<UserDto>, CallId, Task>? GetCallUsers;
-    event Func<VoicePacketDto, Task>? GetVoicePacket;
     
-    Task<CallOfferId?> StartVoiceCallAsync(ChannelId id);
+    Task<RoomTokenDto?> StartVoiceCallAsync(ChannelId id);
 
-    Task EndCallAsync(CallId id);
-
-    Task AcceptCallAsync(CallOfferId id);
+    Task<RoomTokenDto?> AcceptCallAsync(ChannelId id);
     
-    Task DeclineCallAsync(CallOfferId id);
-
-    Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken);
+    Task DeclineCallAsync(ChannelId id);
 }

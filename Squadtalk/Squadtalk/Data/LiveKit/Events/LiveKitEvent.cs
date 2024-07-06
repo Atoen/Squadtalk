@@ -25,8 +25,6 @@ public abstract record LiveKitEvent(string EventName, string Id, DateTimeOffset 
         var timestamp = long.Parse(createdAt);
         var createdAtTimestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).ToLocalTime();
 
-        Console.WriteLine(jsonObject.ToJsonString());
-
         return eventName switch
         {
             RoomStarted => new RoomStartedEvent(eventName, id, createdAtTimestamp, jsonObject),

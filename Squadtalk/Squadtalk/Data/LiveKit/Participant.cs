@@ -1,18 +1,7 @@
-using System.Collections.Immutable;
-
 namespace Squadtalk.Data.LiveKit;
 
-public record Participant(
-    string Sid,
-    string Identity,
-    ParticipantState State,
-    DateTimeOffset JoinedAt,
-    ImmutableList<ParticipantPermission> Permissions);
-
-public record ParticipantPermission(string Name, bool Value);
-
-public enum ParticipantState
+public class Participant(string sid, string name)
 {
-    Active,
-    Disconnected
+    public string Name { get; } = name;
+    public string Sid { get; } = sid;
 }

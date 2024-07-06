@@ -28,9 +28,6 @@ builder.Services.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
 builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 
-builder.Services.AddScoped<ILiveKitService, LiveKitService>();
-builder.Services.AddScoped<INewVoiceChatService, NewVoiceChatService>();
-
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazorBootstrap();
 

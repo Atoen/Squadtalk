@@ -4,10 +4,10 @@
     <video class="video-frame" id="maximized-video" autoplay></video>
 </div>
 
-@if (NewVoiceChatService.JoinedRoom)
+@if (VoiceChatService.JoinedRoom)
 {
     <div class="participants">
-        @foreach (var participant in NewVoiceChatService.Participants)
+        @foreach (var participant in VoiceChatService.Participants)
         {
             <CallParticipant Model="participant"/>
         }
@@ -16,19 +16,19 @@
     <MediaDevicesStatus/>
 }
 
-@inject INewVoiceChatService NewVoiceChatService
+@inject IVoiceChatService VoiceChatService
 
 @code {
 
-    private Task MinimizeVideo() => NewVoiceChatService.MinimizeVideoAsync();
+    private Task MinimizeVideo() => VoiceChatService.MinimizeVideoAsync();
 
     protected override void OnInitialized()
     {
-        NewVoiceChatService.OnParticipantUpdated += ParticipantUpdated;
-        NewVoiceChatService.OnConnected += StateHasChanged;
-        NewVoiceChatService.OnDisconnected += Disconnected;
-        NewVoiceChatService.OnParticipantConnected += ParticipantUpdated;
-        NewVoiceChatService.OnParticipantDisconnected += ParticipantUpdated;
+        VoiceChatService.OnParticipantUpdated += ParticipantUpdated;
+        VoiceChatService.OnConnected += StateHasChanged;
+        VoiceChatService.OnDisconnected += Disconnected;
+        VoiceChatService.OnParticipantConnected += ParticipantUpdated;
+        VoiceChatService.OnParticipantDisconnected += ParticipantUpdated;
     }
 
     private void Disconnected(DisconnectReason _) => StateHasChanged();
@@ -37,10 +37,10 @@
 
     public void Dispose()
     {
-        NewVoiceChatService.OnParticipantUpdated -= ParticipantUpdated;
-        NewVoiceChatService.OnConnected -= StateHasChanged;
-        NewVoiceChatService.OnDisconnected -= Disconnected;
-        NewVoiceChatService.OnParticipantConnected -= ParticipantUpdated;
-        NewVoiceChatService.OnParticipantDisconnected -= ParticipantUpdated;
+        VoiceChatService.OnParticipantUpdated -= ParticipantUpdated;
+        VoiceChatService.OnConnected -= StateHasChanged;
+        VoiceChatService.OnDisconnected -= Disconnected;
+        VoiceChatService.OnParticipantConnected -= ParticipantUpdated;
+        VoiceChatService.OnParticipantDisconnected -= ParticipantUpdated;
     }
 }

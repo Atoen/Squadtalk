@@ -27,29 +27,19 @@ public class CommunicationService : ICommunicationService
         return _signalrService.SendMessageAsync(content, channelId, cancellationToken);
     }
 
-    public Task<CallOfferId?> StartVoiceCallAsync(ChannelId id)
+    public Task<RoomTokenDto?> StartVoiceCallAsync(ChannelId channelId)
     {
-        return _signalrService.StartVoiceCallAsync(id);
+        return _signalrService.StartVoiceCallAsync(channelId);
     }
 
-    public Task EndCallAsync(CallId callId)
+    public Task<RoomTokenDto?> AcceptCallAsync(ChannelId channelId)
     {
-        return _signalrService.EndCallAsync(callId);
+        return _signalrService.AcceptCallAsync(channelId);
     }
 
-    public Task AcceptCallAsync(CallOfferId callOfferId)
+    public Task DeclineCallAsync(ChannelId channelId)
     {
-        return _signalrService.AcceptCallAsync(callOfferId);
-    }
-
-    public Task DeclineCallAsync(CallOfferId callOfferId)
-    {
-        return _signalrService.DeclineCallAsync(callOfferId);
-    }
-
-    public Task StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken)
-    {
-        return _signalrService.StreamDataAsync(callId, stream, cancellationToken);
+        return _signalrService.DeclineCallAsync(channelId);
     }
 
     public event Func<IChatMessage, Task>? MessageReceived
@@ -94,25 +84,25 @@ public class CommunicationService : ICommunicationService
         remove => _signalrService.AddedToTextChannel -= value;
     }
     
-    public event Func<IChatUser, CallOfferId, Task>? IncomingCall
+    public event Func<ChannelId, UserId, Task>? IncomingCall
     {
         add => _signalrService.IncomingCall += value;
         remove => _signalrService.IncomingCall -= value;
     }
 
-    public event Func<CallOfferId, Task>? CallAccepted
+    public event Func<ChannelId, IChatUser, Task>? CallAccepted
     {
         add => _signalrService.CallAccepted += value;
         remove => _signalrService.CallAccepted -= value;
     }
 
-    public event Func<CallOfferId, Task>? CallDeclined
+    public event Func<IChatUser, ChannelId, Task>? CallDeclined
     {
         add => _signalrService.CallDeclined += value;
         remove => _signalrService.CallDeclined -= value;
     }
 
-    public event Func<CallId, Task>? CallEnded
+    public event Func<ChannelId, Task>? CallEnded
     {
         add => _signalrService.CallEnded += value;
         remove => _signalrService.CallEnded -= value;
@@ -122,17 +112,5 @@ public class CommunicationService : ICommunicationService
     {
         add => _signalrService.CallFailed += value;
         remove => _signalrService.CallFailed -= value;
-    }
-
-    public event Func<IEnumerable<IChatUser>, CallId, Task>? GetCallUsers
-    {
-        add => _signalrService.GetCallUsers += value;
-        remove => _signalrService.GetCallUsers -= value;
-    }
-
-    public event Func<VoicePacketDto, Task>? GetVoicePacket
-    {
-        add => _signalrService.GetVoicePacket += value;
-        remove => _signalrService.GetVoicePacket -= value;
     }
 }

@@ -2,38 +2,25 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.DTOs;
-using Shared.Services;
+using Microsoft.AspNetCore.SignalR;
 using Squadtalk.Data.LiveKit.Events;
+using Squadtalk.Hubs;
+using Squadtalk.Services;
 
 namespace Squadtalk.Controllers;
 
-[Authorize]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
 [Route("api/[controller]")]
-public class LiveKitController(ILiveKitService liveKitService, ILogger<LiveKitController> logger) : ControllerBase
+public class LiveKitController(
+    VoiceCallManager voiceCallManager,
+    IHubContext<ChatHub, IChatClient> hubContext) : ControllerBase
 {
-    [HttpPost("CreateRoomToken")]
-    public async Task<IActionResult> CreateRoomToken(CreateRoomRequestDto request)
-    {
-        var token = await liveKitService.CreateRoomTokenAsync(request.ChannelId);
-
-        return token is null ? Problem() : Ok(token);
-    }
-
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost("WebHook")]
-    public IActionResult HandleWebHook(JsonObject payload)
+    public async Task<IActionResult> HandleWebHook(JsonObject payload)
     {
-        var @event = LiveKitEvent.Create(payload);
-
-        // var eventName = payload["event"]!.ToString();
-        // var id = payload["id"]!.ToString();
-        // var createdAt = payload["createdAt"]!.ToString();
-        // var timestamp = long.Parse(createdAt);
-        // var createdAtTimestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).ToLocalTime();
-        //
-        // logger.LogInformation("Event: {Event} {Id} {CreatedAt}", eventName, id, createdAtTimestamp);
+        var liveKitEvent = LiveKitEvent.Create(payload);
+        await voiceCallManager.HandleEventAsync(liveKitEvent, hubContext);
 
         return Ok();
     }

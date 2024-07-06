@@ -16,7 +16,7 @@ public class CallParticipantModel
     public int Volume { get; set; }
 
     [JsonConverter(typeof(ConnectionQualityConverter))]
-    public ConnectionQuality ConnectionQuality { get; set; } = default!;
+    public ConnectionQuality ConnectionQuality { get; set; }
 
     public bool Remote { get; set; }
 

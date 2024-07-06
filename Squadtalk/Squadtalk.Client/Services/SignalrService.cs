@@ -25,13 +25,11 @@ public sealed class SignalrService : ISignalrService
     public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
     public event Func<MessageDto, Task>? MessageReceived;
     
-    public event Func<UserDto, CallOfferId, Task>? IncomingCall;
-    public event Func<CallOfferId, Task>? CallAccepted;
-    public event Func<CallOfferId, Task>? CallDeclined;
-    public event Func<CallId, Task>? CallEnded;
+    public event Func<ChannelId, UserId, Task>? IncomingCall;
+    public event Func<ChannelId, UserDto, Task>? CallAccepted;
+    public event Func<UserDto, ChannelId, Task>? CallDeclined;
+    public event Func<ChannelId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
-    public event Func<List<UserDto>, CallId, Task>? GetCallUsers;
-    public event Func<VoicePacketDto, Task>? GetVoicePacket;
 
     private bool _connectionStared;
     public bool Connected { get; private set; }
@@ -98,29 +96,19 @@ public sealed class SignalrService : ISignalrService
         return SendAsync("SendMessage", message, channelId, cancellationToken);
     }
 
-    Task<CallOfferId?> ISignalrVoiceService.StartVoiceCallAsync(ChannelId id)
+    Task<RoomTokenDto?> ISignalrVoiceService.StartVoiceCallAsync(ChannelId id)
     {
-        return InvokeAsync<CallOfferId?, ChannelId>("StartCall", id);
-    }
-    
-    Task ISignalrVoiceService.EndCallAsync(CallId id)
-    {
-        return SendAsync("EndCall", id);
+        return InvokeAsync<RoomTokenDto?, ChannelId>("StartCall", id);
     }
 
-    Task ISignalrVoiceService.AcceptCallAsync(CallOfferId id)
+    Task<RoomTokenDto?> ISignalrVoiceService.AcceptCallAsync(ChannelId id)
     {
-        return SendAsync("AcceptCall", id);
+        return InvokeAsync<RoomTokenDto?, ChannelId>("AcceptCall", id);
     }
 
-    Task ISignalrVoiceService.DeclineCallAsync(CallOfferId id)
+    Task ISignalrVoiceService.DeclineCallAsync(ChannelId id)
     {
         return SendAsync("DeclineCall", id);
-    }
-    
-    Task ISignalrVoiceService.StreamDataAsync(CallId callId, IAsyncEnumerable<byte[]> stream, CancellationToken cancellationToken)
-    {
-        return SendAsync("StartStream", callId, stream, cancellationToken);
     }
 
     private void RegisterHandlers()
@@ -165,26 +153,20 @@ public sealed class SignalrService : ISignalrService
             UserConnected.TryInvoke(user));
         
         
-        _connection.On<UserDto, CallOfferId>("IncomingCall", (caller, offerId) =>
-            IncomingCall.TryInvoke(caller, offerId));
+        _connection.On<ChannelId, UserId>("IncomingCall", (channelId, initiatorId) =>
+            IncomingCall.TryInvoke(channelId, initiatorId));
 
-        _connection.On<CallOfferId>("CallAccepted", offerId =>
-            CallAccepted.TryInvoke(offerId));
+        _connection.On<ChannelId, UserDto>("CallAccepted", (channelId, accepting) =>
+            CallAccepted.TryInvoke(channelId, accepting));
         
-        _connection.On<CallOfferId>("CallDeclined", offerId =>
-            CallDeclined.TryInvoke(offerId));
+        _connection.On<UserDto, ChannelId>("CallDeclined", (user, channelId) =>
+            CallDeclined.TryInvoke(user, channelId));
         
-        _connection.On<CallId>("CallEnded", callId =>
+        _connection.On<ChannelId>("CallEnded", callId =>
             CallEnded.TryInvoke(callId));
         
         _connection.On<string>("CallFailed", reason =>
             CallFailed.TryInvoke(reason));
-
-        _connection.On<List<UserDto>, CallId>("GetCallUsers", (users, callId) =>
-            GetCallUsers.TryInvoke(users, callId));
-
-        _connection.On<VoicePacketDto>("GetVoicePacket", packet => 
-            GetVoicePacket.TryInvoke(packet));
     }
     
     private async Task<TResult?> InvokeAsync<TResult, TArg>(string methodName, TArg arg,
