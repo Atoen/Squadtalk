@@ -10,8 +10,8 @@ public interface ISignalrTextService
     event Func<UserDto, Task>? UserDisconnected;
     event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
     event Func<string, Task>? ConnectionStatusChanged;
-    event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
-    event Func<ChannelDto, Task>? AddedToTextChannel; 
+    event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
+    event Func<ChannelDto, Task>? AddedToChannel; 
     
     Task SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken = default);
 }

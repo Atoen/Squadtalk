@@ -9,7 +9,7 @@ public class MessageModelService : IMessageModelService
 {
     public TimeSpan MessageSeparationTimespan { get; } = TimeSpan.FromMinutes(5);
 
-    public IList<MessageModel> CreateModelPage(IList<IChatMessage> inputPage, TextChannelState channelState)
+    public IList<MessageModel> CreateModelPage(IList<IChatMessage> inputPage, ChannelState channelState)
     {
         if (inputPage.Count == 0)
         {
@@ -44,7 +44,7 @@ public class MessageModelService : IMessageModelService
         return page;
     }
 
-    public MessageModel CreateModel(IChatMessage message, TextChannelState channelState, bool isFromPage)
+    public MessageModel CreateModel(IChatMessage message, ChannelState channelState, bool isFromPage)
     {
         var model = new MessageModel
         {

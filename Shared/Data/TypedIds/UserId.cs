@@ -1,9 +1,12 @@
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using MessagePack;
+using Shared.Data.JsonConverters;
 
 namespace Shared.Data.TypedIds;
 
 [MessagePackObject]
+[JsonConverter(typeof(UserIdConverter))]
 [TypeConverter(typeof(GuidIdConverter<UserId>))]
 public readonly record struct UserId([property: Key(0)] Guid Value) : IGuidIdRecord<UserId>
 {

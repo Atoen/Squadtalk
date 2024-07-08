@@ -4,7 +4,7 @@ using Shared.Enums;
 
 namespace Shared.Communication;
 
-public abstract class TextChannelModel(ChannelId id)
+public abstract class ChannelModel(ChannelId id)
 {
     public abstract string Name { get; }
     
@@ -13,7 +13,7 @@ public abstract class TextChannelModel(ChannelId id)
     
     public ChannelId Id { get; } = id;
     
-    public TextChannelState State { get; } = new();
+    public ChannelState State { get; } = new();
 
     public void SetLastMessage(string message, DateTimeOffset timestamp, bool byCurrentUser)
     {

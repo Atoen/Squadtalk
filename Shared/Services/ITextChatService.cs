@@ -1,4 +1,3 @@
-using Shared.Communication;
 using Shared.Data.TypedIds;
 using Shared.Models;
 
@@ -6,35 +5,9 @@ namespace Shared.Services;
 
 public interface ITextChatService
 {
-    TextChannelModel? GetChannel(ChannelId id);
-    
-    GroupChatModel GlobalChat { get; }
-    
-    TextChannelModel? CurrentChannel { get; }
+    event Func<ChannelId, Task>? MessageReceived;
 
-    TextChannelState? CurrentChannelState => CurrentChannel?.State;
-    
-    IReadOnlyList<GroupChatModel> GroupChats { get; }
+    Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken);
 
-    IReadOnlyList<DirectMessageChannelModel> DirectMessageChannels { get; }
-    
-    IReadOnlyList<TextChannelModel> AllChannels { get; }
-    
-    IReadOnlyList<UserModel> Users { get; }
-
-    event Action? ChannelChanged;
-
-    event Action? StateChanged;
-
-    event Func<Task>? StateChangedAsync;
-    
-    event Func<Task>? ChannelChangedAsync; 
-    
-    Task OpenOrCreateFakeDirectMessageChannel(UserModel model);
-    
-    Task CreateRealDirectMessageChannel(TextChannelModel channelModel);
-
-    Task OpenChannelAsync(TextChannelModel channelModel);
-
-    Task ClearChannelSelectionAsync();
+    Task SendMessageAsync(string message, CancellationToken cancellationToken = default);
 }

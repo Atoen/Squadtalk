@@ -4,7 +4,7 @@ using static JsModuleLocation;
 
 public record JsModule(string Name, JsModuleLocation Location = Unspecified)
 {
-    public static readonly JsModule WebRTC = new("WebRTC", ScriptsFolderMinified);
+    public static readonly JsModule WebRTC = new("WebRTC", ScriptsFolder);
 
     public static readonly JsModule CanvasFill = new("CanvasFill", ScriptsFolderMinified);
 

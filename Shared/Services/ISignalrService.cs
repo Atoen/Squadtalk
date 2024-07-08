@@ -1,6 +1,6 @@
 namespace Shared.Services;
 
-public interface ISignalrService : ISignalrTextService, ISignalrVoiceService, IAsyncDisposable
+public interface ISignalrService : ISignalrTextService, ISignalrVoiceService
 {
     const string Online = "Online";
     const string Connecting = "Connecting";

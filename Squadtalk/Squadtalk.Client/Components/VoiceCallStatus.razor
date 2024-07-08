@@ -1,46 +1,105 @@
-@implements IDisposable
-
 <div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
     <video class="video-frame" id="maximized-video" autoplay></video>
 </div>
 
-@if (VoiceChatService.JoinedRoom)
+@if (VoiceChatService.ConnectedToVoiceCall)
 {
     <div class="participants">
-        @foreach (var participant in VoiceChatService.Participants)
+        @foreach (var participant in VoiceChatService.ActiveCallParticipants)
         {
             <CallParticipant Model="participant"/>
         }
     </div>
-
-    <MediaDevicesStatus/>
+}
+else if (VoiceChatService.ActiveCallOnCurrentChannel)
+{
+    <div>Join voice call: @VoiceChatService.CurrentChannel?.Name</div>
 }
 
+@if (ShowControls)
+{
+    <VoiceCallControls/>
+}
+
+@using Shared.Communication
+@implements IDisposable
+
 @inject IVoiceChatService VoiceChatService
+@inject ILogger<VoiceCallStatus> Logger
+@inject ToastService ToastService
 
 @code {
+
+    private bool ShowControls => VoiceChatService.ConnectedToVoiceCall || VoiceChatService.ActiveCallOnCurrentChannel;
 
     private Task MinimizeVideo() => VoiceChatService.MinimizeVideoAsync();
 
     protected override void OnInitialized()
     {
-        VoiceChatService.OnParticipantUpdated += ParticipantUpdated;
-        VoiceChatService.OnConnected += StateHasChanged;
-        VoiceChatService.OnDisconnected += Disconnected;
-        VoiceChatService.OnParticipantConnected += ParticipantUpdated;
-        VoiceChatService.OnParticipantDisconnected += ParticipantUpdated;
+        VoiceChatService.OnCallEnded += VoiceChatServiceOnOnCallEnded;
+        VoiceChatService.OnDisconnected += VoiceChatServiceOnOnDisconnected;
+        VoiceChatService.OnError += VoiceChatServiceOnOnError;
+        VoiceChatService.OnParticipantsUpdated += VoiceChatServiceOnOnParticipantsUpdated;
+        VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
     }
 
-    private void Disconnected(DisconnectReason _) => StateHasChanged();
+    private void VoiceChatServiceOnOnError(string title, string message)
+    {
+        var toast = new ToastMessage
+        {
+            Type = ToastType.Danger,
+            Title = title,
+            Message = message,
+            AutoHide = false,
+            IconName = IconName.Exclamation
+        };
 
-    private void ParticipantUpdated(CallParticipantModel _) => StateHasChanged();
+        ToastService.Notify(toast);
+    }
+
+    private void VoiceChatServiceOnOnDisconnected(DisconnectReason reason)
+    {
+        if (reason == DisconnectReason.ClientInitiated) return;
+
+        var toast = new ToastMessage
+        {
+            Type = ToastType.Warning,
+            Title = "Disconnected from channel",
+            Message = $"Disconnect reason: {reason}",
+            AutoHide = false,
+            IconName = IconName.Exclamation
+        };
+
+        ToastService.Notify(toast);
+    }
+
+    private void VoiceChatServiceOnOnCallEnded(ChannelModel channel)
+    {
+        if (VoiceChatService.CurrentChannel == channel)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void VoiceChatServiceOnOnParticipantsUpdated(ChannelModel channel)
+    {
+        foreach (var participant in VoiceChatService.ActiveCallParticipants)
+        {
+            Logger.LogInformation("Participant {Name} sid {Sid}", participant.Username, participant.Sid);
+        }
+
+        if (VoiceChatService.CurrentChannel == channel)
+        {
+            StateHasChanged();
+        }
+    }
 
     public void Dispose()
     {
-        VoiceChatService.OnParticipantUpdated -= ParticipantUpdated;
-        VoiceChatService.OnConnected -= StateHasChanged;
-        VoiceChatService.OnDisconnected -= Disconnected;
-        VoiceChatService.OnParticipantConnected -= ParticipantUpdated;
-        VoiceChatService.OnParticipantDisconnected -= ParticipantUpdated;
+        VoiceChatService.OnCallEnded -= VoiceChatServiceOnOnCallEnded;
+        VoiceChatService.OnDisconnected -= VoiceChatServiceOnOnDisconnected;
+        VoiceChatService.OnError -= VoiceChatServiceOnOnError;
+        VoiceChatService.OnParticipantsUpdated -= VoiceChatServiceOnOnParticipantsUpdated;
+        VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
     }
 }

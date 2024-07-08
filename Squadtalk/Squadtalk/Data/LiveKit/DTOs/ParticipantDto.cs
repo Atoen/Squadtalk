@@ -6,5 +6,7 @@ public class ParticipantDto
 {
     [JsonPropertyName("sid")] public string Sid { get; set; } = default!;
 
-    [JsonPropertyName("identity")] public string Identity { get; set; } = default!;
+    [JsonPropertyName("identity")] public string Id { get; set; } = default!;
+
+    [JsonPropertyName("name")] public string Username { get; set; } = default!;
 }

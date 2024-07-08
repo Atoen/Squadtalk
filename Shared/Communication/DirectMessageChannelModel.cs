@@ -3,7 +3,7 @@ using Shared.Models;
 
 namespace Shared.Communication;
 
-public class DirectMessageChannelModel(UserModel other, ChannelId id) : TextChannelModel(id)
+public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelModel(id)
 {
     public const string FakeChannelIdValue = "fake";
     public static readonly ChannelId FakeChannelId = new(FakeChannelIdValue);

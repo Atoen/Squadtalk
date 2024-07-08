@@ -5,11 +5,11 @@ namespace Squadtalk.Client.Extensions;
 
 public static class TextChannelModelExtensions
 {
-    public static bool IsGlobal(this TextChannelModel? channelModel) => channelModel?.Id == GroupChatModel.GlobalChatId;
+    public static bool IsGlobal(this ChannelModel? channelModel) => channelModel?.Id == GroupChatModel.GlobalChatId;
 
-    public static bool IsFake(this TextChannelModel? channelModel) => channelModel?.Id == DirectMessageChannelModel.FakeChannelId;
+    public static bool IsFake(this ChannelModel? channelModel) => channelModel?.Id == DirectMessageChannelModel.FakeChannelId;
     
-    public static T WithLastMessage<T>(this T textChannel, IChatMessage? messageDto, bool byCurrentUser) where T : TextChannelModel
+    public static T WithLastMessage<T>(this T textChannel, IChatMessage? messageDto, bool byCurrentUser) where T : ChannelModel
     {
         if (messageDto is not null)
         {

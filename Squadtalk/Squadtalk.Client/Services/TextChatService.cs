@@ -1,265 +1,114 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Communication;
 using Shared.Data;
 using Shared.Data.TypedIds;
-using Shared.Enums;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
-using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
 public class TextChatService : ITextChatService
 {
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly ICreateTextChannelRequestHandler _createTextChannelRequestHandler;
-    private readonly ICommunicationService _communicationService;
     private readonly ILogger<TextChatService> _logger;
-    private readonly NavigationManager _navigationManager;
-
-    private readonly List<TextChannelModel> _allChannels = [];
-    private readonly List<GroupChatModel> _groupChats = [];
-    private readonly List<DirectMessageChannelModel> _directMessageChannels = [];
-
-    public IReadOnlyList<UserModel> Users => UserModel.Models;
-    public IReadOnlyList<TextChannelModel> AllChannels => _allChannels;
-    public IReadOnlyList<GroupChatModel> GroupChats => _groupChats;
-    public IReadOnlyList<DirectMessageChannelModel> DirectMessageChannels => _directMessageChannels;
-
+    private readonly IMessageModelService _modelService;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly IMessagePageProvider _messagePageProvider;
+    private readonly ICommunicationService _communicationService;
+    private readonly IChatService _chatService;
+    
     private UserId? _userId;
-
+    
+    public event Func<ChannelId, Task>? MessageReceived;
+    
     public TextChatService(
+        IChatService chatService,
+        IMessageModelService modelService,
         AuthenticationStateProvider authenticationStateProvider,
-        ICreateTextChannelRequestHandler createTextChannelRequestHandler,
+        IMessagePageProvider messagePageProvider,
         ICommunicationService communicationService,
-        ILogger<TextChatService> logger,
-        NavigationManager navigationManager)
+        ILogger<TextChatService> logger)
     {
+        _chatService = chatService;
+        _modelService = modelService;
         _authenticationStateProvider = authenticationStateProvider;
-        _createTextChannelRequestHandler = createTextChannelRequestHandler;
+        _messagePageProvider = messagePageProvider;
         _communicationService = communicationService;
-        _navigationManager = navigationManager;
         _logger = logger;
 
-        _communicationService.UserConnected += user => UserConnected(user, false);
-        _communicationService.UserDisconnected += UserDisconnected;
-        _communicationService.ConnectedUsersReceived += ReceivedConnectedUsers;
-        _communicationService.TextChannelsReceived += TextChannelsReceived;
-        _communicationService.AddedToTextChannel += AddedToTextChannel;
+        _communicationService.MessageReceived += HandleIncomingMessage;
     }
 
-    public event Action? StateChanged;
-    public event Func<Task>? StateChangedAsync;
-    public event Action? ChannelChanged;
-    public event Func<Task>? ChannelChangedAsync;
-
-    public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
-    public TextChannelModel? CurrentChannel { get; private set; }
-
-    public TextChannelModel? GetChannel(ChannelId id)
+    private async Task HandleIncomingMessage(IChatMessage messageDto)
     {
-        return id == GroupChatModel.GlobalChatId
-            ? GlobalChat
-            : AllChannels.FirstOrDefault(x => x.Id == id);
-    }
-
-
-    public async Task OpenChannelAsync(TextChannelModel channelModel)
-    {
-        await ChangeChannelAsync(channelModel);
-        _navigationManager.NavigateTo("Messages/Chat");
-    }
-
-    public Task ClearChannelSelectionAsync() => ChangeChannelAsync(null);
-
-    public async Task OpenOrCreateFakeDirectMessageChannel(UserModel model)
-    {
-        // var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        // // var id = authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
-        // var id = Guid.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-        // var userId = new NewUserId(id);
-
-        if (_userId == model.Id) return;
-
-        var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == model.Id);
-        if (openDirectMessageChannelWithUser is not null)
+        var channel = _chatService.GetChannel(messageDto.ChannelId);
+        if (channel is null)
         {
-            await OpenChannelAsync(openDirectMessageChannelWithUser);
+            _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
             return;
         }
 
-        await OpenChannelAsync(DirectMessageChannelModel.CreateFakeChannel(model));
+        await UpdateChannelMessageState(channel, messageDto);
+        
+        var state = channel.State;
+        var message = _modelService.CreateModel(messageDto, state, false);
+
+        state.Messages.Add(message);
+        state.LastMessageReceived = message;
+
+        if (state.Cursor == default)
+        {
+            state.Cursor = new TextChannelCursor(DateTimeOffset.UtcNow.UtcTicks);
+        }
+
+        await MessageReceived.TryInvoke(messageDto.ChannelId);
     }
 
-    public async Task CreateRealDirectMessageChannel(TextChannelModel channelModel)
+    public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        _userId ??= await GetUserIdAsync();
+        if (_chatService.CurrentChannel is not { Id: var channelId }) return;
 
-        var otherUserId = ((DirectMessageChannelModel) channelModel).Other.Id;
-        var participants = new List<UserId> { (UserId) _userId, otherUserId };
+        await _communicationService.SendMessageAsync(message, channelId, cancellationToken);
 
-        var channelId = await OpenNewChannel(participants);
-
-        if (channelId != default && GetChannel(channelId) is { } openedChannel)
-        {
-            await ChangeChannelAsync(openedChannel);
-        }
+        _chatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
     }
 
-    private Task ChangeChannelAsync(TextChannelModel? channel)
+    private async Task UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
     {
-        if (CurrentChannel == channel)
+        if (_userId is null)
         {
-            return Task.CompletedTask;
+            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            _userId = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
         }
 
-        CurrentChannel = channel;
-        if (CurrentChannel is not null)
+        var messageByCurrentUser = message.Author.Id == _userId;
+
+        if (_chatService.CurrentChannel != channelModel && !messageByCurrentUser)
         {
-            CurrentChannel.State.UnreadMessages = 0;
+            channelModel.State.UnreadMessages++;
         }
 
-        ChannelChanged?.Invoke();
-        return ChannelChangedAsync.TryInvoke();
+        channelModel.SetLastMessage(message, messageByCurrentUser);
     }
-
-    private Task<ChannelId> OpenNewChannel(List<UserId> participants)
+    
+    public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
-        return _createTextChannelRequestHandler.CreateTextChannelAsync(participants);
-    }
-
-    private async Task AddedToTextChannel(IChatChannel channel)
-    {
-        await AddChannel(channel, false);
-        await StateChangedAsync.TryInvoke();
-    }
-
-    private async Task TextChannelsReceived(IEnumerable<IChatChannel> channels)
-    {
-        foreach (var channel in channels)
+        var channel = _chatService.GetChannel(id);
+        if (channel is null or { State.ReachedEnd: true })
         {
-            await AddChannel(channel, true);
+            return Array.Empty<MessageModel>();
         }
 
-        StateChanged?.Invoke();
-        await StateChangedAsync.TryInvoke();
-    }
+        var channelState = channel.State;
+        var page = await _messagePageProvider.GetPageAsync(id, channelState.Cursor, cancellationToken);
 
-    private async Task AddChannel(IChatChannel channel, bool bulk)
-    {
-        if (_allChannels.Exists(x => x.Id == channel.Id)) return;
-        _userId ??= await GetUserIdAsync();
-
-        var model = CreateChannelModel(channel, (UserId) _userId);
-        if (!bulk)
+        if (page.Count == 0)
         {
-            model.State.ReachedEnd = true;
+            return Array.Empty<MessageModel>();
         }
 
-        _allChannels.Add(model);
-
-        if (model is GroupChatModel groupChat)
-        {
-            _groupChats.Add(groupChat);
-        }
-        else
-        {
-            var directMessageChannel = (DirectMessageChannelModel) model;
-            _directMessageChannels.Add(directMessageChannel);
-
-            await CheckIfNeedToUpgradeCurrentFakeChannelToReal(directMessageChannel);
-        }
-
-        if (!bulk)
-        {
-            StateChanged?.Invoke();
-            await StateChangedAsync.TryInvoke();
-        }
-    }
-
-    private Task CheckIfNeedToUpgradeCurrentFakeChannelToReal(DirectMessageChannelModel openedDirectMessageChannelModel)
-    {
-        if (CurrentChannel is DirectMessageChannelModel dm && dm.IsFake() &&
-            dm.Other.Id == openedDirectMessageChannelModel.Other.Id)
-        {
-            return ChangeChannelAsync(openedDirectMessageChannelModel);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private TextChannelModel CreateChannelModel(IChatChannel channel, UserId id)
-    {
-        var lastMessageIsByCurrentUser = channel.LastMessage?.Author.Id == id;
-
-        _logger.LogInformation("Creating model");
-
-        var othersInChannel = channel.Participants.Where(x => x.Id != id).ToList();
-
-        TextChannelModel model = othersInChannel switch
-        {
-            [var other] => new DirectMessageChannelModel(UserModel.GetOrCreate(other), channel.Id),
-            { Count: > 1 } => new GroupChatModel(othersInChannel.Select(UserModel.GetOrCreate), channel.Id),
-            _ => throw new InvalidOperationException()
-        };
-
-        return model.WithLastMessage(channel.LastMessage, lastMessageIsByCurrentUser);
-    }
-
-    private async Task ReceivedConnectedUsers(IEnumerable<IChatUser> users)
-    {
-        foreach (var user in users)
-        {
-            _logger.LogInformation("User {@User} connected in bulk", user.Username);
-            await UserConnected(user, true);
-        }
-
-        StateChanged?.Invoke();
-        await StateChangedAsync.TryInvoke();
-    }
-
-    private async Task UserConnected(IChatUser user, bool bulkAdd)
-    {
-        _userId ??= await GetUserIdAsync();
-
-        if (user.Id == _userId) return;
-
-        var model = UserModel.GetOrCreate(user);
-        model.Status = UserStatus.Online;
-
-        if (!bulkAdd)
-        {
-            StateChanged?.Invoke();
-            await StateChangedAsync.TryInvoke();
-        }
-    }
-
-    private async Task UserDisconnected(IChatUser user)
-    {
-        _userId ??= await GetUserIdAsync();
-
-        if (user.Id == _userId) return;
-
-        var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == user.Id);
-        if (openDirectMessageChannelWithUser is null)
-        {
-            UserModel.Models.RemoveAll(x => x.Id == user.Id);
-        }
-        else
-        {
-            UserModel.Models.First(x => x.Id == user.Id).Status = UserStatus.Offline;
-        }
-
-        StateChanged?.Invoke();
-        await StateChangedAsync.TryInvoke();
-    }
-
-    private async ValueTask<UserId> GetUserIdAsync()
-    {
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        return UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        channelState.Cursor = new TextChannelCursor(page[0].Timestamp.UtcTicks);
+        return _modelService.CreateModelPage(page, channelState);
     }
 }

@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Shared.Models;
 
-namespace Shared.Data;
+namespace Shared.Data.JsonConverters;
 
 public class ConnectionQualityConverter : JsonConverter<ConnectionQuality>
 {

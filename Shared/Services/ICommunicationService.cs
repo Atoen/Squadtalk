@@ -12,8 +12,8 @@ public interface ICommunicationService
     event Func<IChatUser, Task>? UserDisconnected;
     event Func<IEnumerable<IChatUser>, Task>? ConnectedUsersReceived;
     event Func<string, Task>? ConnectionStatusChanged;
-    event Func<IEnumerable<IChatChannel>, Task>? TextChannelsReceived;
-    event Func<IChatChannel, Task>? AddedToTextChannel;
+    event Func<IEnumerable<IChatChannel>, Task>? ChannelsReceived;
+    event Func<IChatChannel, Task>? AddedToChannel;
     
     event Func<ChannelId, UserId, Task>? IncomingCall;
     event Func<ChannelId, IChatUser, Task>? CallAccepted;
@@ -40,4 +40,6 @@ public interface ICommunicationService
     Task<RoomTokenDto?> AcceptCallAsync(ChannelId channelId);
     
     Task DeclineCallAsync(ChannelId channelId);
+
+    Task<bool> ChannelHasActiveCall(ChannelId channelId);
 }

@@ -64,4 +64,14 @@ public partial class ChatHub
 
         await OthersInVoiceGroup(channelId).CallDeclined(user.ToDto(), channelId);
     }
+
+    public async Task<bool> ChannelHasActiveCall(ChannelId channelId)
+    {
+        if (await GetUserWithChannelsAsync(Context.User) is not { } user)
+        {
+            return false;
+        }
+
+        return UserParticipatesInChannel(user, channelId) && _voiceCallManager.RoomExists(channelId);
+    }
 }

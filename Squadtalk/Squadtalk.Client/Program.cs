@@ -15,12 +15,12 @@ builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress)
 ));
 
-builder.Services.AddScoped<ITextChatService, TextChatService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ISignalrService, SignalrService>();
 builder.Services.AddScoped<ICommunicationService, CommunicationService>();
 builder.Services.AddScoped<ICreateTextChannelRequestHandler, CreateTextChannelRequestHandler>();
 
-builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<IMessageModelService, MessageModelService>();
 builder.Services.AddScoped<IMessagePageProvider, HttpMessagePageProvider>();
 

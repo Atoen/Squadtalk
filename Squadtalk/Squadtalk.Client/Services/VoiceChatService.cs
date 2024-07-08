@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using BlazorBootstrap;
 using FluentResults;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
@@ -18,38 +17,21 @@ namespace Squadtalk.Client.Services;
 public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
-    private readonly ToastService _toastService;
     private readonly ICommunicationService _communicationService;
-    private readonly ITextChatService _textChatService;
+    private readonly IChatService _chatService;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly ILogger<VoiceChatService> _logger;
 
+    private readonly DotNetObjectReference<VoiceChatService> _dotNetObjectReference;
     private IJSObjectReference? _jsModule;
-    private DotNetObjectReference<VoiceChatService> _dotNetObjectReference;
 
-    public VoiceChatService(
-        IJSRuntime jsRuntime,
-        ToastService toastService,
-        ICommunicationService communicationService,
-        ITextChatService textChatService,
-        AuthenticationStateProvider authenticationStateProvider,
-        ILogger<VoiceChatService> logger)
-    {
-        _jsRuntime = jsRuntime;
-        _toastService = toastService;
-        _communicationService = communicationService;
-        _textChatService = textChatService;
-        _authenticationStateProvider = authenticationStateProvider;
-        _logger = logger;
+    public bool ConnectedToVoiceCall { get; private set; }
 
-        _dotNetObjectReference = DotNetObjectReference.Create(this);
-        _communicationService.IncomingCall += IncomingCall;
-        _communicationService.CallEnded += CallEnded;
-        _communicationService.CallDeclined += CallDeclined;
-        _communicationService.CallAccepted += CallAccepted;
-    }
+    public bool ActiveCallOnCurrentChannel => CurrentChannel?.State.HasActiveCall ?? false;
 
-    public bool JoinedRoom { get; private set; }
+    public ChannelModel? CallChannel { get; private set; }
+
+    public ChannelModel? CurrentChannel => _chatService.CurrentChannel;
 
     public bool MicrophoneEnabled { get; private set; } = true;
 
@@ -61,29 +43,57 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     public bool CameraAvailable => _cameras.Count > 0;
 
-    public IEnumerable<CallParticipantModel> Participants => _participants.Values;
+    public IEnumerable<CallParticipantModel> ActiveCallParticipants => _participants.Values;
+
     public IEnumerable<MediaDeviceModel> Microphones => _microphones;
+
     public IEnumerable<MediaDeviceModel> Cameras => _cameras;
 
-    private readonly Dictionary<string, CallParticipantModel> _participants = [];
+    private readonly Dictionary<UserId, CallParticipantModel> _participants = [];
     private readonly List<MediaDeviceModel> _microphones = [];
     private readonly List<MediaDeviceModel> _cameras = [];
 
-    public event Action? OnConnected;
+    public event Action? OnMicrophoneListUpdated;
+    public event Action? OnCameraListUpdated;
+    public event ErrorNotificationHandler? OnError;
     public event Action<DisconnectReason>? OnDisconnected;
-    public event Action<MediaDeviceModel[]>? OnMicrophoneListUpdated;
-    public event Action<MediaDeviceModel[]>? OnCameraListUpdated;
-    public event Action<string>? OnError;
-    public event Action<CallParticipantModel>? OnParticipantConnected;
-    public event Action<CallParticipantModel>? OnParticipantUpdated;
-    public event Action<CallParticipantModel>? OnParticipantDisconnected;
-    public event Action<CallParticipantModel>? OnParticipantAcceptedCall;
-    public event Func<TextChannelModel, Task>? OnCallIncoming;
+    public event Action? OnCurrentChannelCallChanged;
+    public event Func<ChannelModel, Task>? OnCallIncoming;
+    public event Action<ChannelModel>? OnCallEnded;
+    public event Action<ChannelModel>? OnParticipantsUpdated;
+
+    public VoiceChatService(
+        IJSRuntime jsRuntime,
+        ICommunicationService communicationService,
+        IChatService chatService,
+        AuthenticationStateProvider authenticationStateProvider,
+        ILogger<VoiceChatService> logger)
+    {
+        _jsRuntime = jsRuntime;
+        _communicationService = communicationService;
+        _chatService = chatService;
+        _authenticationStateProvider = authenticationStateProvider;
+        _logger = logger;
+
+        _dotNetObjectReference = DotNetObjectReference.Create(this);
+        _communicationService.IncomingCall += IncomingCall;
+        _communicationService.CallEnded += CallEnded;
+        _communicationService.CallDeclined += CallDeclined;
+        _communicationService.CallAccepted += CallAccepted;
+        _communicationService.CallFailed += CallFailed;
+    }
 
     public async Task InitializeAsync()
     {
-        _jsModule ??= await _jsRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference,
-            "wss://192.168.1.134:1230/jajo");
+        if (_jsModule is null)
+        {
+            _jsModule = await _jsRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference,
+                "wss://192.168.1.134:1230/jajo");
+        }
+        else
+        {
+            await _jsModule.TryInvokeVoidAsync2("GetElements");
+        }
     }
 
     public async Task StartCallAsync(ChannelId channelId)
@@ -91,12 +101,20 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var roomToken = await _communicationService.StartVoiceCallAsync(channelId);
         if (roomToken is null)
         {
-            OnError?.Invoke("Error while creating room access token");
+            OnError?.Invoke("Error while initiating call", "Failed to create room token");
             _logger.LogError("Call offer id is null");
             return;
         }
 
-        await JoinRoomAsync(roomToken);
+        var currentChannel = _chatService.CurrentChannel;
+        if (currentChannel?.Id != channelId)
+        {
+            OnError?.Invoke("Error while initiating call","Channel not found");
+            _logger.LogError("Channel is null");
+            return;
+        }
+
+        await JoinRoomAsync(roomToken, currentChannel);
     }
 
     public async Task AcceptCallAsync(ChannelId id)
@@ -104,11 +122,13 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var token = await _communicationService.AcceptCallAsync(id);
         if (token is null)
         {
+            OnError?.Invoke("Error while joining the call", "Failed to create room token");
             _logger.LogInformation("Null token from accepting");
             return;
         }
 
-        await JoinRoomAsync(token);
+        var channel = _chatService.GetChannel(id)!;
+        await JoinRoomAsync(token, channel);
     }
 
     public Task DeclineCallAsync(ChannelId id)
@@ -121,19 +141,19 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var result = await _jsModule.TryInvokeVoidAsync2("Stop");
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while disconnecting from room");
+            NotifyOnError("Error while disconnecting from call", result);
         }
 
-        JoinedRoom = false;
+        ConnectedToVoiceCall = false;
         _participants.Clear();
     }
 
-    public async Task ChangeVolumeAsync(CallParticipantModel participant, int volume, AudioSource audioSource = AudioSource.Microphone)
+    public async Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone)
     {
-        var result = await _jsModule.TryInvokeVoidAsync2("ChangeVolume", participant.Username, volume);
+        var result = await _jsModule.TryInvokeVoidAsync2("ChangeVolume", participant.Id, volume.Value);
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while changing volume");
+            NotifyOnError("Error while changing volume", result);
         }
     }
 
@@ -142,16 +162,16 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var result = await _jsModule.TryInvokeVoidAsync2("SwapCamera");
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while swapping camera");
+            NotifyOnError("Error while changing camera direction", result);
         }
     }
 
     public async Task ShowVideoAsync(CallParticipantModel participant, VideoSource videoSource)
     {
-        var result = await _jsModule.TryInvokeVoidAsync2("ShowVideo", participant.Username, videoSource);
+        var result = await _jsModule.TryInvokeVoidAsync2("ShowVideo", participant.Id, videoSource);
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while showing video");
+            NotifyOnError("Error while displaying video", result);
         }
     }
 
@@ -160,7 +180,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var result = await _jsModule.TryInvokeVoidAsync2("MinimizeVideo");
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while minimizing video");
+            NotifyOnError("Error while minimizing video", result);
         }
     }
 
@@ -169,7 +189,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var result = await _jsModule.TryInvokeVoidAsync2("ChangeDevice", InputDevice.Microphone, microphone.Id);
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while selecting microphone");
+            NotifyOnError("Error while selecting microphone", result);
         }
     }
 
@@ -178,69 +198,91 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var result = await _jsModule.TryInvokeVoidAsync2("ChangeDevice", InputDevice.Camera, camera.Id);
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while selecting camera");
+            NotifyOnError("Error while selecting camera", result);
         }
     }
 
     public async Task ToggleMicrophoneAsync()
     {
-        MicrophoneEnabled = !MicrophoneEnabled;
-        var result = await _jsModule.TryInvokeVoidAsync2("SetMicrophoneEnabled", MicrophoneEnabled);
+        var result = await _jsModule.TryInvokeAsync2<bool>("ToggleMicrophoneEnabled");
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while toggling microphone");
+            NotifyOnError("Error while toggling microphone", result);
+            return;
         }
+
+        MicrophoneEnabled = result.Value;
     }
 
     public async Task ToggleCameraAsync()
     {
-        CameraEnabled = !CameraEnabled;
-        var result = await _jsModule.TryInvokeVoidAsync2("SetCameraEnabled", CameraEnabled);
+        var result = await _jsModule.TryInvokeAsync2<bool>("ToggleCameraEnabled");
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while toggling camera");
+            NotifyOnError("Error while toggling camera", result);
+            return;
         }
+
+        CameraEnabled = result.Value;
     }
 
     public async Task ToggleScreenShareAsync()
     {
-        ScreenShareEnabled = !ScreenShareEnabled;
-        var result = await _jsModule.TryInvokeVoidAsync2("SetScreenShareEnabled", ScreenShareEnabled);
+        var result = await _jsModule.TryInvokeAsync2<bool>("ToggleScreenShareEnabled");
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Error while toggling screen share");
+            NotifyOnError("Error while toggling screenShare", result);
+            return;
         }
+
+        ScreenShareEnabled = result.Value;
     }
 
-    private async Task JoinRoomAsync(RoomTokenDto token)
+    public async Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel)
+    {
+        var hasCall = await _communicationService.ChannelHasActiveCall(channel.Id);
+
+        channel.State.HasActiveCall = hasCall;
+        if (hasCall)
+        {
+            OnCurrentChannelCallChanged?.Invoke();
+        }
+
+        return hasCall;
+    }
+
+    private async Task JoinRoomAsync(RoomTokenDto token, ChannelModel channel)
     {
         var result = await _jsModule.TryInvokeAsync2<bool>("Start", token.Token);
         if (result.IsFailed)
         {
-            DisplayErrors(result, "Unable to connect to room");
+            NotifyOnError("Error while joining room", result);
             return;
         }
 
         var joined = result.Value;
         if (!joined)
         {
-            var toast = new ToastMessage(ToastType.Danger, "Unable to connect to room");
-            _toastService.Notify(toast);
+            OnError?.Invoke("Error while joining room", "Unable to connect to the server");
             return;
         }
 
-        JoinedRoom = true;
+        channel.State.HasActiveCall = true;
+        ConnectedToVoiceCall = true;
+        CallChannel = channel;
+
         MicrophoneEnabled = true;
-        OnConnected?.Invoke();
+
+        OnCurrentChannelCallChanged?.Invoke();
     }
 
     private async Task IncomingCall(ChannelId channelId, UserId initiatorId)
     {
-        // if (JoinedRoom && _textChatService.CurrentChannel?.Id == channelId)
-        // {
-        //     return Task.CompletedTask;
-        // }
-
+        if (_chatService.GetChannel(channelId) is not { } channel)
+        {
+            _logger.LogError("Call on null channel");
+            return;
+        }
 
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
         var id = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
@@ -248,115 +290,130 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         if (initiatorId == id) return;
 
         _logger.LogInformation("Incoming call from: {Caller}", channelId.Value);
-        var channel = _textChatService.GetChannel(channelId);
-
-        if (channel is null)
-        {
-            _logger.LogError("Call on null channel");
-            return;
-        }
 
         await OnCallIncoming.TryInvoke(channel);
     }
 
     private Task CallAccepted(ChannelId channelId, IChatUser accepting)
     {
+        if (_participants.ContainsKey(accepting.Id))
+        {
+            return Task.CompletedTask;
+        }
+
         _logger.LogInformation("User {User} accepted call", accepting.Username);
 
-        var model = new CallParticipantModel
-        {
-            Username = accepting.Username,
-            Sid = string.Empty,
-            ConnectionQuality = ConnectionQuality.Unknown
-        };
+        // var model = new CallParticipantModel
+        // {
+        //     Username = accepting.Username,
+        //     Sid = string.Empty,
+        //     Id = accepting.Id,
+        //     ConnectionQuality = ConnectionQuality.Unknown
+        // };
+        //
+        // _participants[model.Id] = model;
+        // OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
 
-        OnParticipantAcceptedCall?.Invoke(model);
         return Task.CompletedTask;
     }
 
     private Task CallDeclined(IChatUser declining, ChannelId channelId)
     {
-        _logger.LogInformation("Call declined, id: {Id}", channelId);
+        _logger.LogInformation("Call {CallId} declined by {User}", channelId, declining.Username);
         return Task.CompletedTask;
     }
 
     private Task CallEnded(ChannelId channelId)
     {
         _logger.LogInformation("Call {Id} ended", channelId);
+
+        var channel = _chatService.GetRequiredChannel(channelId);
+        channel.State.HasActiveCall = false;
+
+        OnCallEnded?.Invoke(channel);
+        OnCurrentChannelCallChanged?.Invoke();
+
         return Task.CompletedTask;
     }
 
-    [JSInvokable]
-    public void MicrophonesUpdatedCallback(MediaDeviceModel[] microphones)
+    private Task CallFailed(string reason)
     {
+        OnError?.Invoke("Error when creating call", reason);
+        return Task.CompletedTask;
+    }
+
+    private bool MediaDevicesMatches(List<MediaDeviceModel> firstList, List<MediaDeviceModel> secondList)
+    {
+        if (firstList.Count != secondList.Count) return false;
+        for (var i = 0; i < firstList.Count; i++)
+        {
+            if (firstList[i].Id != secondList[i].Id) return false;
+        }
+
+        return true;
+    }
+
+    [JSInvokable]
+    public void MicrophonesUpdatedCallback(List<MediaDeviceModel> microphones)
+    {
+        if (MediaDevicesMatches(_microphones, microphones)) return;
+
         _microphones.Clear();
         _microphones.AddRange(microphones);
-        OnMicrophoneListUpdated?.Invoke(microphones);
+        OnMicrophoneListUpdated?.Invoke();
     }
 
     [JSInvokable]
-    public void CamerasUpdatedCallback(MediaDeviceModel[] cameras)
+    public void CamerasUpdatedCallback(List<MediaDeviceModel> cameras)
     {
+        if (MediaDevicesMatches(_cameras, cameras)) return;
+
         _cameras.Clear();
         _cameras.AddRange(cameras);
-        OnCameraListUpdated?.Invoke(cameras);
+        OnCameraListUpdated?.Invoke();
     }
 
     [JSInvokable]
-    public void DisconnectedCallback(DisconnectReason reason)
+    public void DisconnectedCallback(DisconnectReason reason, ChannelId channelId)
     {
-        JoinedRoom = false;
-        _participants.Clear();
+        ConnectedToVoiceCall = false;
+        CallChannel = null;
 
         OnDisconnected?.Invoke(reason);
-        if (reason is DisconnectReason.ClientInitiated) return;
-
-        var toast = new ToastMessage(ToastType.Warning, "Disconnected", reason.ToString());
-        _toastService.Notify(toast);
+        OnCurrentChannelCallChanged?.Invoke();
     }
 
     [JSInvokable]
     public void ErrorCallback(string error)
     {
-        _toastService.Notify(new ToastMessage(ToastType.Warning, error));
-        OnError?.Invoke(error);
+        OnError?.Invoke("Error",error);
     }
 
     [JSInvokable]
-    public void DisplayParticipantCallback(CallParticipantModel participant)
+    public void DisplayParticipantCallback(CallParticipantModel participant, ChannelId channelId)
     {
-        _participants[participant.Sid] = participant;
-        OnParticipantUpdated?.Invoke(participant);
+        _participants[participant.Id] = participant;
+        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
-    public void ParticipantConnectedCallback(CallParticipantModel participant)
+    public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
-        _participants[participant.Sid] = participant;
-        OnParticipantConnected?.Invoke(participant);
+        _participants[participant.Id] = participant;
+        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
-    public void ParticipantDisconnectedCallback(CallParticipantModel participant)
+    public void ParticipantDisconnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
-        _participants.Remove(participant.Sid);
-        OnParticipantDisconnected?.Invoke(participant);
+        _participants.Remove(participant.Id);
+        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
 
-    private void DisplayErrors(
-        ResultBase result,
-        string message,
-        ToastType toastType = ToastType.Danger,
-        bool autoHide = false)
+    private void NotifyOnError(string title, ResultBase result)
     {
         var errors = string.Join(", ", result.Errors);
-        var toast = new ToastMessage
-        {
-            Type = toastType,
-            AutoHide = autoHide,
-            Message = $"{message}: {errors}"
-        };
-        _toastService.Notify(toast);
+        OnError?.Invoke(title, errors);
     }
 
     public async ValueTask DisposeAsync()

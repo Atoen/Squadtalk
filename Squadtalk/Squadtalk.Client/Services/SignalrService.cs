@@ -10,7 +10,7 @@ using Squadtalk.Client.SignalR;
 
 namespace Squadtalk.Client.Services;
 
-public sealed class SignalrService : ISignalrService
+public sealed class SignalrService : ISignalrService, IAsyncDisposable
 {
     private readonly ILogger<SignalrService> _logger;
     private readonly HubConnection _connection;
@@ -18,8 +18,8 @@ public sealed class SignalrService : ISignalrService
     private bool _handlersRegistered;
 
     public event Func<string, Task>? ConnectionStatusChanged;
-    public event Func<IEnumerable<ChannelDto>, Task>? TextChannelsReceived;
-    public event Func<ChannelDto, Task>? AddedToTextChannel;
+    public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
+    public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<UserDto, Task>? UserDisconnected;
     public event Func<UserDto, Task>? UserConnected;
     public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
@@ -98,17 +98,22 @@ public sealed class SignalrService : ISignalrService
 
     Task<RoomTokenDto?> ISignalrVoiceService.StartVoiceCallAsync(ChannelId id)
     {
-        return InvokeAsync<RoomTokenDto?, ChannelId>("StartCall", id);
+        return InvokeAsync<ChannelId, RoomTokenDto?>("StartCall", id);
     }
 
     Task<RoomTokenDto?> ISignalrVoiceService.AcceptCallAsync(ChannelId id)
     {
-        return InvokeAsync<RoomTokenDto?, ChannelId>("AcceptCall", id);
+        return InvokeAsync<ChannelId, RoomTokenDto?>("AcceptCall", id);
     }
 
     Task ISignalrVoiceService.DeclineCallAsync(ChannelId id)
     {
         return SendAsync("DeclineCall", id);
+    }
+
+    Task<bool> ISignalrVoiceService.ChannelHasActiveCall(ChannelId id)
+    {
+        return InvokeAsync<ChannelId, bool>("ChannelHasActiveCall", id);
     }
 
     private void RegisterHandlers()
@@ -141,10 +146,10 @@ public sealed class SignalrService : ISignalrService
             ConnectedUsersReceived.TryInvoke(users));
 
         _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
-            TextChannelsReceived.TryInvoke(channels));
+            ChannelsReceived.TryInvoke(channels));
 
         _connection.On<ChannelDto>("AddedToChannel", channel =>
-            AddedToTextChannel.TryInvoke(channel));
+            AddedToChannel.TryInvoke(channel));
 
         _connection.On<UserDto>("UserDisconnected", user =>
             UserDisconnected.TryInvoke(user));
@@ -169,7 +174,7 @@ public sealed class SignalrService : ISignalrService
             CallFailed.TryInvoke(reason));
     }
     
-    private async Task<TResult?> InvokeAsync<TResult, TArg>(string methodName, TArg arg,
+    private async Task<TResult?> InvokeAsync<TArg, TResult>(string methodName, TArg arg,
         CancellationToken cancellationToken = default, [CallerMemberName] string? callerName = null)
     {
         try

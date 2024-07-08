@@ -7,30 +7,30 @@ namespace Squadtalk.Client.Services;
 
 public class ChatVisibilityManager : IChatVisibilityManager
 {
-    private readonly ITextChatService _textChatService;
+    private readonly IChatService _chatService;
     private readonly ILocalStorageService _localStorageService;
-    private readonly IMessageService _messageService;
+    private readonly ITextChatService _textChatService;
     
     private const string HiddenChats = "hiddenChats";
     
     private HashSet<ChannelId> _hiddenChannels = [];
-    private readonly List<TextChannelModel> _visibleChannels = [];
+    private readonly List<ChannelModel> _visibleChannels = [];
 
     public event Action? StateChanged;
     
-    public IReadOnlyList<TextChannelModel> VisibleChannels => _visibleChannels;
+    public IReadOnlyList<ChannelModel> VisibleChannels => _visibleChannels;
 
     private bool _initialized;
 
-    public ChatVisibilityManager(ITextChatService textChatService,
-        ILocalStorageService localStorageService, IMessageService messageService)
+    public ChatVisibilityManager(IChatService chatService,
+        ILocalStorageService localStorageService, ITextChatService textChatService)
     {
-        _textChatService = textChatService;
+        _chatService = chatService;
         _localStorageService = localStorageService;
-        _messageService = messageService;
+        _textChatService = textChatService;
 
-        _messageService.MessageReceived += MessageReceived;
-        _textChatService.StateChangedAsync += UpdateListAsync;
+        _textChatService.MessageReceived += TextChatReceived;
+        _chatService.StateChangedAsync += UpdateListAsync;
     }
 
     public async Task UpdateListAsync()
@@ -40,7 +40,7 @@ public class ChatVisibilityManager : IChatVisibilityManager
             await Initialize();
         }
         
-        var updatedChannels = _textChatService.AllChannels.Where(x => !_hiddenChannels.Contains(x.Id));
+        var updatedChannels = _chatService.AllChannels.Where(x => !_hiddenChannels.Contains(x.Id));
         _visibleChannels.Clear();
         _visibleChannels.AddRange(updatedChannels);
         
@@ -64,7 +64,7 @@ public class ChatVisibilityManager : IChatVisibilityManager
         await UpdateListAsync();
     }
 
-    private Task MessageReceived(ChannelId id)
+    private Task TextChatReceived(ChannelId id)
     {
         StateChanged?.Invoke();
         

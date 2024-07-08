@@ -16,4 +16,6 @@ public interface ISignalrVoiceService
     Task<RoomTokenDto?> AcceptCallAsync(ChannelId id);
     
     Task DeclineCallAsync(ChannelId id);
+
+    Task<bool> ChannelHasActiveCall(ChannelId id);
 }

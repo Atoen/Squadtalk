@@ -94,12 +94,12 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddScoped<MessageStorageService>();
         serviceCollection.AddScoped<FileStorageService>();
-        serviceCollection.AddScoped<IMessageService, MessageService>();
+        serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
         serviceCollection.AddScoped<ICreateTextChannelRequestHandler, LocalChannelCreator>();
 
-        serviceCollection.AddScoped<ITextChatService, TextChatService>();
+        serviceCollection.AddScoped<IChatService, ChatService>();
         serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
         serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();

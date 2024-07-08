@@ -1,12 +1,22 @@
+using System.Diagnostics.CodeAnalysis;
 using Shared.Communication;
 using Shared.Data.TypedIds;
 using Shared.Models;
 
 namespace Shared.Services;
 
+public delegate void ErrorNotificationHandler(string title, string message);
+
 public interface IVoiceChatService
 {
-    bool JoinedRoom { get; }
+    [MemberNotNullWhen(true, nameof(CallChannel))]
+    bool ConnectedToVoiceCall { get; }
+
+    bool ActiveCallOnCurrentChannel { get; }
+
+    ChannelModel? CallChannel { get; }
+
+    ChannelModel? CurrentChannel { get; }
 
     bool MicrophoneEnabled { get; }
 
@@ -14,26 +24,24 @@ public interface IVoiceChatService
 
     bool ScreenShareEnabled { get; }
 
-    IEnumerable<CallParticipantModel> Participants { get; }
+    bool MicrophoneAvailable { get; }
+
+    bool CameraAvailable { get; }
 
     IEnumerable<MediaDeviceModel> Microphones { get; }
 
     IEnumerable<MediaDeviceModel> Cameras { get; }
 
-    bool MicrophoneAvailable { get; }
+    IEnumerable<CallParticipantModel> ActiveCallParticipants { get; }
 
-    bool CameraAvailable { get; }
-
-    event Action? OnConnected;
+    event Action? OnMicrophoneListUpdated;
+    event Action? OnCameraListUpdated;
+    event ErrorNotificationHandler? OnError;
     event Action<DisconnectReason>? OnDisconnected;
-    event Action<MediaDeviceModel[]>? OnMicrophoneListUpdated;
-    event Action<MediaDeviceModel[]>? OnCameraListUpdated;
-    event Action<string>? OnError;
-    event Action<CallParticipantModel>? OnParticipantConnected;
-    event Action<CallParticipantModel>? OnParticipantUpdated;
-    event Func<TextChannelModel, Task>? OnCallIncoming;
-    event Action<CallParticipantModel>? OnParticipantDisconnected;
-    event Action<CallParticipantModel>? OnParticipantAcceptedCall;
+    event Action? OnCurrentChannelCallChanged;
+    event Func<ChannelModel, Task>? OnCallIncoming;
+    event Action<ChannelModel>? OnCallEnded;
+    event Action<ChannelModel>? OnParticipantsUpdated;
 
     Task InitializeAsync();
 
@@ -45,7 +53,7 @@ public interface IVoiceChatService
 
     Task LeaveCallAsync();
 
-    Task ChangeVolumeAsync(CallParticipantModel participant, int volume, AudioSource audioSource = AudioSource.Microphone);
+    Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone);
 
     Task SwapCameraAsync();
 
@@ -62,6 +70,8 @@ public interface IVoiceChatService
     Task ToggleCameraAsync();
 
     Task ToggleScreenShareAsync();
+
+    Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel);
 }
 
 public enum AudioSource
@@ -80,4 +90,12 @@ public enum InputDevice
 {
     Microphone,
     Camera
+}
+
+public readonly record struct Volume(int Value)
+{
+    public int Value { get; init; } = Value is < 0 or > 100
+        ? throw new ArgumentOutOfRangeException(nameof(Value),
+            "Volume must be not negative and lass than or equal to 100.")
+        : Value;
 }

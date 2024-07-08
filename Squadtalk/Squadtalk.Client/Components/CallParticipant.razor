@@ -57,7 +57,7 @@
     private Task VolumeChanged(int value)
     {
         _volume = value;
-        return VoiceChatService.ChangeVolumeAsync(Model, value);
+        return VoiceChatService.ChangeVolumeAsync(Model, new Volume(value));
     }
 
     private Task ShowCamera() => VoiceChatService.ShowVideoAsync(Model, VideoSource.Camera);

@@ -3,7 +3,7 @@ using Shared.Models;
 
 namespace Shared.Communication;
 
-public class TextChannelState
+public class ChannelState
 {
     public TextChannelCursor Cursor { get; set; }
     public bool ReachedEnd { get; set; }
@@ -14,4 +14,6 @@ public class TextChannelState
     public MessageModel? LastPageMessageReceived { get; set; }
     
     public int UnreadMessages { get; set; }
+
+    public bool HasActiveCall { get; set; }
 }

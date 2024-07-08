@@ -33,9 +33,9 @@
 
 @implements IAsyncDisposable
 
-@inject IMessageService MessageService
-@inject IJSRuntime JSRuntime
 @inject ITextChatService TextChatService
+@inject IJSRuntime JSRuntime
+@inject IChatService ChatService
 @inject ICommunicationService CommunicationService
 @inject IFileTransferService FileTransferService
 
@@ -95,15 +95,15 @@
     {
         _preventDefaultOnKeyDown = true;
 
-        if (TextChatService.CurrentChannel is null) return;
+        if (ChatService.CurrentChannel is null) return;
         
-        if (TextChatService.CurrentChannel.IsFake())
+        if (ChatService.CurrentChannel.IsFake())
         {
-            await TextChatService.CreateRealDirectMessageChannel(TextChatService.CurrentChannel);
+            await ChatService.CreateRealDirectMessageChannel(ChatService.CurrentChannel);
         }
 
         var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
-        var channel = TextChatService.CurrentChannel;
+        var channel = ChatService.CurrentChannel;
 
         if (FileTransferService.IsFileAvailable)
         {
@@ -112,7 +112,7 @@
         
         if (!string.IsNullOrWhiteSpace(message))
         {
-           await MessageService.SendMessageAsync(message);
+           await TextChatService.SendMessageAsync(message);
         }
     }
 

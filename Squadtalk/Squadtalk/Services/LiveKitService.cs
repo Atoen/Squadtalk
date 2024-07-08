@@ -30,9 +30,10 @@ public class LiveKitService
     public RoomTokenDto? CreateRoomToken(ClaimsPrincipal? claimsPrincipal, ChannelId channelId)
     {
         var username = claimsPrincipal?.GetClaimValue(ClaimTypes.Name);
-        if (string.IsNullOrEmpty(username))
+        var id = claimsPrincipal?.GetClaimValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(id))
         {
-            _logger.LogWarning("Missing username claim required for creating room token");
+            _logger.LogWarning("Missing required claims for creating room token");
             return null;
         }
 
@@ -45,7 +46,8 @@ public class LiveKitService
             Issuer = _issuer,
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, username),
+                new Claim(JwtRegisteredClaimNames.Name, username),
+                new Claim(JwtRegisteredClaimNames.Sub, id),
                 new Claim("video", videoClaim, JsonClaimValueTypes.Json)
             }),
             NotBefore = now,

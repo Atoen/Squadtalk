@@ -42,6 +42,11 @@ public class CommunicationService : ICommunicationService
         return _signalrService.DeclineCallAsync(channelId);
     }
 
+    public Task<bool> ChannelHasActiveCall(ChannelId channelId)
+    {
+        return _signalrService.ChannelHasActiveCall(channelId);
+    }
+
     public event Func<IChatMessage, Task>? MessageReceived
     {
         add => _signalrService.MessageReceived += value;
@@ -72,16 +77,16 @@ public class CommunicationService : ICommunicationService
         remove => _signalrService.ConnectionStatusChanged -= value;
     }
 
-    public event Func<IEnumerable<IChatChannel>, Task>? TextChannelsReceived
+    public event Func<IEnumerable<IChatChannel>, Task>? ChannelsReceived
     {
-        add => _signalrService.TextChannelsReceived += value;
-        remove => _signalrService.TextChannelsReceived -= value;
+        add => _signalrService.ChannelsReceived += value;
+        remove => _signalrService.ChannelsReceived -= value;
     }
     
-    public event Func<IChatChannel, Task>? AddedToTextChannel
+    public event Func<IChatChannel, Task>? AddedToChannel
     {
-        add => _signalrService.AddedToTextChannel += value;
-        remove => _signalrService.AddedToTextChannel -= value;
+        add => _signalrService.AddedToChannel += value;
+        remove => _signalrService.AddedToChannel -= value;
     }
     
     public event Func<ChannelId, UserId, Task>? IncomingCall

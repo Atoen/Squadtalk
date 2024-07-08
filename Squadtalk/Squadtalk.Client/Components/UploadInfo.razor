@@ -7,7 +7,7 @@
         <UploadQueue />
     }
     
-    @if (TextChatService.CurrentChannel?.Id != FileTransferService.UploadChannel?.Id)
+    @if (ChatService.CurrentChannel?.Id != FileTransferService.UploadChannel?.Id)
     {
         <div class="mx-1">@FileTransferService.UploadChannel?.Name</div>
     }
@@ -30,7 +30,7 @@
 
 @implements IDisposable 
 @inject IFileTransferService FileTransferService
-@inject ITextChatService TextChatService
+@inject IChatService ChatService
 
 @code {
 
@@ -40,10 +40,10 @@
     {
         FileTransferService.UploadStarted += FileTransferServiceOnUploadStarted;
         FileTransferService.StateChanged += StateHasChanged;
-        TextChatService.ChannelChanged += StateHasChanged;
+        ChatService.ChannelChanged += StateHasChanged;
     }
 
-    private void FileTransferServiceOnUploadStarted(FileModel fileModel, TextChannelModel textChannelModel)
+    private void FileTransferServiceOnUploadStarted(FileModel fileModel, ChannelModel channelModel)
     {
         StateHasChanged();
     }
@@ -57,6 +57,6 @@
     {
         FileTransferService.UploadStarted -= FileTransferServiceOnUploadStarted;
         FileTransferService.StateChanged -= StateHasChanged;
-        TextChatService.ChannelChanged -= StateHasChanged;
+        ChatService.ChannelChanged -= StateHasChanged;
     }
 }

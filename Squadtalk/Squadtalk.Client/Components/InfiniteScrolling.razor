@@ -3,7 +3,7 @@
 @using Shared.Communication
 @using Shared.Data.TypedIds
 
-@if (TextChatService.CurrentChannel is {State.ReachedEnd: true} channel)
+@if (ChatService.CurrentChannel is {State.ReachedEnd: true} channel)
 {
     var preposition = channel is GroupChatModel ? "in" : "with";
     <div>No more messages @preposition @channel.Name</div>
@@ -17,9 +17,9 @@
 @* ReSharper disable once CSharpWarnings::CS8974 *@
 @RenderLastElement
 
-@if (TextChatService.CurrentChannelState is not null && ItemTemplate is not null)
+@if (ChatService.CurrentChannelState is not null && ItemTemplate is not null)
 {
-    foreach (var item in TextChatService.CurrentChannelState.Messages)
+    foreach (var item in ChatService.CurrentChannelState.Messages)
     {
         @ItemTemplate(item)
     }
@@ -28,8 +28,8 @@
 @implements IAsyncDisposable
 
 @inject IJSRuntime JsRuntime
+@inject IChatService ChatService
 @inject ITextChatService TextChatService
-@inject IMessageService MessageService
 @inject ILogger<InfiniteScrolling> Logger
 
 @code {
@@ -53,8 +53,8 @@
 
     protected override void OnInitialized()
     {
-        MessageService.MessageReceived += UpdateOnMessage;
-        TextChatService.ChannelChangedAsync += ChannelChangedAsync;
+        TextChatService.MessageReceived += UpdateOnTextChat;
+        ChatService.ChannelChangedAsync += ChannelChangedAsync;
     }
 
     private async Task ChannelChangedAsync()
@@ -65,9 +65,9 @@
         await _instance!.InvokeVoidAsync("onNewItems");
     }
 
-    private Task UpdateOnMessage(ChannelId id)
+    private Task UpdateOnTextChat(ChannelId id)
     {
-        if (id != TextChatService.CurrentChannel?.Id)
+        if (id != ChatService.CurrentChannel?.Id)
         {
             return Task.CompletedTask;
         }
@@ -80,7 +80,7 @@
     public async Task LoadMoreItems()
     {
         if (_loading) return;
-        if (TextChatService.CurrentChannel is not { } channel) return;
+        if (ChatService.CurrentChannel is not { } channel) return;
         
         _loading = true;
         
@@ -92,7 +92,7 @@
             
             try
             {
-                var newItems = await MessageService.GetMessagePageAsync(channel.Id, CancellationToken.None);
+                var newItems = await TextChatService.GetMessagePageAsync(channel.Id, CancellationToken.None);
                 if (newItems.Count == 0)
                 {
                     channelState.ReachedEnd = true;
@@ -149,14 +149,14 @@
 
         _currentComponentReference?.Dispose();
 
-        MessageService.MessageReceived -= UpdateOnMessage;
-        TextChatService.ChannelChangedAsync -= ChannelChangedAsync;
+        TextChatService.MessageReceived -= UpdateOnTextChat;
+        ChatService.ChannelChangedAsync -= ChannelChangedAsync;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
     {
         builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = TextChatService.CurrentChannelState is { ReachedEnd: true }
+        var style = ChatService.CurrentChannelState is { ReachedEnd: true }
             ? "height:0;width:0"
             : "height:1px;width:1px;flex-shrink:0";
         

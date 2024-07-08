@@ -38,6 +38,11 @@ public class VoiceCallManager(ILogger<VoiceCallManager> logger)
         }
     }
 
+    public bool RoomExists(ChannelId channelId)
+    {
+        return _rooms.ContainsKey(channelId);
+    }
+
     public void VoiceCallInitiated(IChatUser initiator, string channelId)
     {
         _roomsToInitiate.TryAdd(channelId, initiator.Id);
@@ -82,7 +87,7 @@ public class VoiceCallManager(ILogger<VoiceCallManager> logger)
 
         _userToRoomMap.TryAdd(participantDto.Sid, room);
 
-        var participant = new Participant(participantDto.Sid, participantDto.Identity);
+        var participant = new Participant(participantDto.Sid, participantDto.Username, participantDto.Id);
         await room.AddParticipantAsync(participant);
 
         logger.LogInformation("Participant {Participant} joined room {Room}", participant.Name, room.Id);
@@ -102,6 +107,6 @@ public class VoiceCallManager(ILogger<VoiceCallManager> logger)
         _userToRoomMap.TryRemove(participantDto.Sid, out _);
         await room.RemoveParticipantBySidAsync(participantDto.Sid);
 
-        logger.LogInformation("Participant {Participant} left room {Room}", participantDto.Identity, room.Id);
+        logger.LogInformation("Participant {Participant} left room {Room}", participantDto.Username, room.Id);
     }
 }

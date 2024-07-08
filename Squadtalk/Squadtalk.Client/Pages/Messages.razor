@@ -10,13 +10,13 @@
 <ChannelSelector />
 
 @inject ICommunicationService CommunicationService
-@inject ITextChatService TextChatService
+@inject IChatService ChatService
 
 @code {
     
     protected override async Task OnInitializedAsync()
     {
-        await TextChatService.ClearChannelSelectionAsync();
+        await ChatService.ClearChannelSelectionAsync();
         await CommunicationService.ConnectAsync();
     }
 }

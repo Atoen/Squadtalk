@@ -9,7 +9,7 @@
 
 <PageTitle>Squadtalk | Users</PageTitle>
 
-@foreach (var user in TextChatService.Users)
+@foreach (var user in ChatService.Users)
 {
     <div class="user-card rounded" @onclick="() => OpenChannel(user)">
         <img alt="@user.Username avatar" src="User.png" class="avatar" />
@@ -18,7 +18,7 @@
     </div>
 }
 
-@inject ITextChatService TextChatService
+@inject IChatService ChatService
 @inject ICommunicationService CommunicationService
 @inject IChatVisibilityManager ChatVisibilityManager
 
@@ -26,10 +26,10 @@
     
     protected override async Task OnInitializedAsync()
     {
-        await TextChatService.ClearChannelSelectionAsync();
+        await ChatService.ClearChannelSelectionAsync();
         await CommunicationService.ConnectAsync();
 
-        TextChatService.StateChanged += StateHasChanged;
+        ChatService.StateChanged += StateHasChanged;
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -44,8 +44,8 @@
 
     private Task OpenChannel(UserModel userModel)
     {
-        return TextChatService.OpenOrCreateFakeDirectMessageChannel(userModel);
+        return ChatService.OpenOrCreateFakeDirectMessageChannel(userModel);
     }
 
-    public void Dispose() => TextChatService.StateChanged -= StateHasChanged;
+    public void Dispose() => ChatService.StateChanged -= StateHasChanged;
 }

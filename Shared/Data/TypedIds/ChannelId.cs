@@ -1,7 +1,10 @@
 using System.ComponentModel;
+using System.Text.Json.Serialization;
+using Shared.Data.JsonConverters;
 
 namespace Shared.Data.TypedIds;
 
+[JsonConverter(typeof(ChannelIdConverter))]
 [TypeConverter(typeof(StringIdConverter<ChannelId>))]
 public record ChannelId(string Value) : StringIdRecord(Value), IStringIdRecord<ChannelId>
 {

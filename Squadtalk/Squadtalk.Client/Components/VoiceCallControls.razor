@@ -1,0 +1,134 @@
+<div class="status-container">
+    @if (VoiceChatService.ConnectedToVoiceCall)
+    {
+        <Tooltip Title="@MicrophoneTooltipText">
+            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered">
+                <DropdownActionButton Color="MicrophoneButtonColor" @onclick="VoiceChatService.ToggleMicrophoneAsync">
+                    <Icon Name="MicrophoneIconName" Size="IconSize.x5"/>
+                </DropdownActionButton>
+                <DropdownToggleButton Color="MicrophoneButtonColor"/>
+                <DropdownMenu>
+                    @if (!VoiceChatService.MicrophoneAvailable)
+                    {
+                        <DropdownItem>No microphones detected</DropdownItem>
+                    }
+
+                    @foreach (var microphone in VoiceChatService.Microphones)
+                    {
+                        <DropdownItem @onclick="() => VoiceChatService.SelectMicrophoneAsync(microphone)" Type="ButtonType.Button">
+                            @if (microphone == _selectedMicrophone)
+                            {
+                                <div class="d-flex flex-row">
+                                    <div class="device-label">@microphone.LabelOrDefault</div>
+                                    <Icon Name="IconName.CheckLg" Color="IconColor.Success"/>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="device-label">@microphone.Label</div>
+                            }
+                        </DropdownItem>
+                    }
+                </DropdownMenu>
+            </Dropdown>
+        </Tooltip>
+
+        <Tooltip Title="@CameraTooltipText">
+            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered">
+                <DropdownActionButton Color="CameraButtonColor" @onclick="VoiceChatService.ToggleCameraAsync">
+                    <Icon Name="CameraIconName" Size="IconSize.x5"/>
+                </DropdownActionButton>
+                <DropdownToggleButton Color="CameraButtonColor"/>
+                <DropdownMenu>
+                    @if (!VoiceChatService.CameraAvailable)
+                    {
+                        <DropdownItem>No cameras detected</DropdownItem>
+                    }
+
+                    @foreach (var camera in VoiceChatService.Cameras)
+                    {
+                        <DropdownItem @onclick="() => VoiceChatService.SelectCameraAsync(camera)" Type="ButtonType.Button">
+                            @if (camera == _selectedCamera)
+                            {
+                                <div class="d-flex flex-row">
+                                    <div class="device-label">@camera.LabelOrDefault</div>
+                                    <Icon Name="IconName.CheckLg" Color="IconColor.Success"/>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="device-label">@camera.Label</div>
+                            }
+                        </DropdownItem>
+                    }
+                    <DropdownDivider/>
+
+                    @if (VoiceChatService.CameraAvailable)
+                    {
+                        <DropdownItem @onclick="VoiceChatService.SwapCameraAsync" Type="ButtonType.Button">
+                            <div class="d-flex flex-row gap-1">
+                                <Icon Name="IconName.ArrowRepeat" Color="IconColor.Primary"/>
+                                Swap camera
+                            </div>
+                        </DropdownItem>
+                    }
+                </DropdownMenu>
+            </Dropdown>
+        </Tooltip>
+
+        <Tooltip Title="@ScreenShareTooltipText">
+            <Button Color="ScreenShareButtonColor" @onclick="VoiceChatService.ToggleScreenShareAsync">
+                <Icon Name="ScreenShareIconName" Size="IconSize.x5"/>
+            </Button>
+        </Tooltip>
+
+        <Tooltip Title="Leave call">
+            <Button Color="ButtonColor.Danger" @onclick="VoiceChatService.LeaveCallAsync">
+                <Icon Name="IconName.TelephoneXFill" Size="IconSize.x5"/>
+            </Button>
+        </Tooltip>
+    }
+    else if (VoiceChatService.ActiveCallOnCurrentChannel)
+    {
+        <Tooltip Title="Join call">
+            <Button Color="ButtonColor.Success" @onclick="() => VoiceChatService.AcceptCallAsync(VoiceChatService.CurrentChannel!.Id)">
+                <Icon Name="IconName.TelephoneFill" Size="IconSize.x5"/>
+            </Button>
+        </Tooltip>
+    }
+</div>
+
+@implements IDisposable
+
+@inject IVoiceChatService VoiceChatService
+
+@code {
+    private MediaDeviceModel? _selectedMicrophone;
+    private MediaDeviceModel? _selectedCamera;
+
+    private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    private ButtonColor ScreenShareButtonColor => VoiceChatService.ScreenShareEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+
+    private IconName MicrophoneIconName => VoiceChatService.MicrophoneEnabled ? IconName.MicFill : IconName.MicMuteFill;
+    private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
+    private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
+
+    private string MicrophoneTooltipText => VoiceChatService.MicrophoneEnabled ? "Disable microphone" : "Enable microphone";
+    private string CameraTooltipText => VoiceChatService.CameraEnabled ? "Disable camera" : "Enable camera";
+    private string ScreenShareTooltipText => VoiceChatService.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
+
+    protected override void OnInitialized()
+    {
+        VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        VoiceChatService.OnMicrophoneListUpdated += StateHasChanged;
+        VoiceChatService.OnCameraListUpdated += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+        VoiceChatService.OnMicrophoneListUpdated -= StateHasChanged;
+        VoiceChatService.OnCameraListUpdated -= StateHasChanged;
+    }
+}

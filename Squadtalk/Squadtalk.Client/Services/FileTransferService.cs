@@ -10,7 +10,6 @@ namespace Squadtalk.Client.Services;
 public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
-    // private readonly ITextChatService _textChatService;
     private readonly ILogger<FileTransferService> _logger;
     private readonly ToastService _toastService;
     private readonly DotNetObjectReference<FileTransferService> _dotNetObject;
@@ -18,22 +17,20 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     
     public event Action<FileModel>? FileSelected;
     public event Action? SelectionCleared;
-    public event Action<FileModel, TextChannelModel>? UploadStarted;
+    public event Action<FileModel, ChannelModel>? UploadStarted;
     public event Action? StateChanged;
 
     public int SelectedCount { get; private set; }
     public FileModel? SelectedFile { get; private set; }
     public FileModel? CurrentlyUploadedFile { get; private set; }
-    public TextChannelModel? UploadChannel { get; private set; }
+    public ChannelModel? UploadChannel { get; private set; }
     public List<FileModel> UploadQueue { get; } = [];
 
     public FileTransferService(IJSRuntime jsRuntime,
-        // ITextChatService textChatService,
         ILogger<FileTransferService> logger,
         ToastService toastService)
     {
         _jsRuntime = jsRuntime;
-        // _textChatService = textChatService;
         _logger = logger;
         _toastService = toastService;
         _dotNetObject = DotNetObjectReference.Create(this);
@@ -47,7 +44,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         await _jsModule.InvokeVoidAsync("initialize", _dotNetObject, "127.0.0.1:1235/Upload");
     }
 
-    public Task UploadFileAsync(TextChannelModel channelModel)
+    public Task UploadFileAsync(ChannelModel channelModel)
     {
         if (SelectedFile is null)
         {

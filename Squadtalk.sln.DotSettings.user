@@ -17,6 +17,7 @@
   &lt;Assembly Path="C:\Program Files\dotnet\sdk\8.0.100\Sdks\Microsoft.NET.Sdk.Razor\source-generators\Microsoft.CodeAnalysis.Razor.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Users\bacht\.nuget\packages\blazor.bootstrap\2.0.0\lib\net6.0\BlazorBootstrap.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Program Files\dotnet\packs\Microsoft.AspNetCore.App.Ref\8.0.2\ref\net8.0\Microsoft.AspNetCore.Authentication.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Users\bacht\.nuget\packages\microsoft.jsinterop.webassembly\8.0.3\lib\net8.0\Microsoft.JSInterop.WebAssembly.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	
 	
