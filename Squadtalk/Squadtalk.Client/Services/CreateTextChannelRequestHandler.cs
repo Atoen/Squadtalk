@@ -15,7 +15,7 @@ public class CreateTextChannelRequestHandler : ICreateTextChannelRequestHandler
         _logger = logger;
     }
     
-    public async Task<ChannelId?> CreateTextChannelAsync(List<UserId> participants)
+    public async Task<ChannelId?> CreateTextChannelAsync(IEnumerable<UserId> participants)
     {
         var request = new RestRequest("api/message/createChannel")
             .AddBody(participants);

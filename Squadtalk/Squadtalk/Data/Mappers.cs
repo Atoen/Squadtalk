@@ -33,7 +33,8 @@ public static class Mappers
         {
             Id = channel.Id,
             Participants = channel.Participants.Select(x => x.ToDto()).ToList(),
-            LastMessage = channel.LastMessage?.ToDto()
+            LastMessage = channel.LastMessage?.ToDto(),
+            Name = channel.Name
         };
 
         return dto;

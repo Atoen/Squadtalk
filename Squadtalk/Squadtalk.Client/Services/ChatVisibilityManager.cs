@@ -17,8 +17,8 @@ public class ChatVisibilityManager : IChatVisibilityManager
     private readonly List<ChannelModel> _visibleChannels = [];
 
     public event Action? StateChanged;
-    
-    public IReadOnlyList<ChannelModel> VisibleChannels => _visibleChannels;
+
+    public IEnumerable<ChannelModel> VisibleChannels => _visibleChannels;
 
     private bool _initialized;
 
@@ -39,7 +39,7 @@ public class ChatVisibilityManager : IChatVisibilityManager
         {
             await Initialize();
         }
-        
+
         var updatedChannels = _chatService.AllChannels.Where(x => !_hiddenChannels.Contains(x.Id));
         _visibleChannels.Clear();
         _visibleChannels.AddRange(updatedChannels);

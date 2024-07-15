@@ -3,7 +3,7 @@ using Shared.Models;
 
 namespace Shared.Communication;
 
-public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id) : ChannelModel(id)
+public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? name = null) : ChannelModel(id)
 {
     public const string GlobalChanelIdValue = "global";
 
@@ -12,6 +12,6 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id) : Chann
     
     public List<UserModel> Others { get; } = others.ToList();
     
-    private string? _name;
+    private string? _name = name;
     public override string Name => _name ??= string.Join(", ", Others.Select(x => x.Username));
 }

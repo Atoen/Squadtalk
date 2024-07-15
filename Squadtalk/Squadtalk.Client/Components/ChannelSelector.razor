@@ -26,15 +26,11 @@
         }
     </div>
 
-    @* @foreach (var groupChat in TabManager.VisibleGroupChats) *@
-    @* { *@
-    @*      *@
-    @* } *@
-
-    @foreach (var chat in ChatVisibilityManager.VisibleChannels)
+    @foreach (var channel in ChatVisibilityManager.VisibleChannels.OrderByDescending(x => x.LastMessageTimeStamp))
     {
-        <TextChatTemplate Model="chat as DirectMessageChannelModel" HideCallback="_confirmCallback" />
+        <ChatTemplate Model="channel" HideCallback="_confirmCallback"/>
     }
+
 </div>
 
 @implements IDisposable
@@ -45,11 +41,9 @@
 @code {
 
     private ConfirmDialog _dialog = default!;
-    private EventCallback<DirectMessageChannelModel> _confirmCallback;
+    private EventCallback<ChannelModel> _confirmCallback;
 
     private Modal _createGroupModal = default!;
-    // private EventCallback _cancelCreateGroupCallback;
-    // private EventCallback<UserModel> _createGroupCallback;
     private readonly Dictionary<string, object> _modalParameters = [];
 
     private readonly ConfirmDialogOptions _dialogOptions = new()
@@ -66,7 +60,7 @@
         ChatService.ChannelChanged += StateHasChanged;
         ChatVisibilityManager.StateChanged += StateHasChanged;
 
-        _confirmCallback = EventCallback.Factory.Create<DirectMessageChannelModel>(this, ShowHidingConfirmationAsync);
+        _confirmCallback = EventCallback.Factory.Create<ChannelModel>(this, ShowHidingConfirmationAsync);
 
         var hideModalCallback = EventCallback.Factory.Create(this, HideGroupModal);
         var createGroupCallback = EventCallback.Factory.Create<List<UserModel>>(this, CreateGroupChat);
@@ -80,17 +74,17 @@
         return firstRender ? ChatVisibilityManager.UpdateListAsync() : Task.CompletedTask;
     }
 
-    private async Task ShowHidingConfirmationAsync(DirectMessageChannelModel directMessageChannelModel)
+    private async Task ShowHidingConfirmationAsync(ChannelModel channel)
     {
         var confirmation = await _dialog.ShowAsync(
             title: "Hide Channel",
-            message1: $"Hiding this text channel will make it inaccessible unless you send or receive messages from {directMessageChannelModel.Other.Username}.",
+            message1: $"Hiding this text channel will make it inaccessible unless you send or receive messages from {channel.Name}.",
             message2: "Are you sure you want to proceed?",
             confirmDialogOptions: _dialogOptions);
 
         if (confirmation)
         {
-            await ChatVisibilityManager.HideChannel(directMessageChannelModel.Id);
+            await ChatVisibilityManager.HideChannel(channel.Id);
         }
     }
 
@@ -100,9 +94,9 @@
         ChatService.ChannelChanged -= StateHasChanged;
     }
 
-    private Task DisplayGroupModal()
+    private async Task DisplayGroupModal()
     {
-        return _createGroupModal.ShowAsync<CreateGroupChatModal>("Select users to add", parameters: _modalParameters);
+        await _createGroupModal.ShowAsync<CreateGroupChatModal>("Select users to add", parameters: _modalParameters);
     }
 
     private Task HideGroupModal() => _createGroupModal.HideAsync();
@@ -110,5 +104,8 @@
     private async Task CreateGroupChat(List<UserModel> selectedUsers)
     {
         await _createGroupModal.HideAsync();
+        var id = await ChatService.CreateNewChannel(selectedUsers);
+
+        Logger.LogInformation("Created channel id: {Id}", id);
     }
 }

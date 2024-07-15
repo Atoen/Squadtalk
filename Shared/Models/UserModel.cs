@@ -4,7 +4,7 @@ using Shared.Enums;
 
 namespace Shared.Models;
 
-public class UserModel
+public class UserModel : IEquatable<UserModel>
 {
     public string Username { get; set; } = default!;
     
@@ -15,6 +15,8 @@ public class UserModel
     public UserStatus Status { get; set; }
 
     public static readonly List<UserModel> Models = [];
+
+    public static UserModel? Get(UserId userId) => Models.SingleOrDefault(x => x.Id == userId);
 
     public static UserModel GetOrCreate(IChatUser user)
     {
@@ -36,4 +38,6 @@ public class UserModel
 
         return newModel;
     }
+
+    public bool Equals(UserModel? other) => Id == other?.Id;
 }

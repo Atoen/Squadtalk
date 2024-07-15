@@ -1,3 +1,4 @@
+@using Shared.Data.TypedIds
 <div class="row">
     <AutoComplete @bind-Value="_selectedUserName"
                   @ref="_autoComplete"
@@ -41,14 +42,12 @@
     private string? _selectedUserName;
 
     private readonly List<UserModel> _selectedUsers = [];
-    private IEnumerable<UserModel>? _cachedUsers;
 
     private Task<AutoCompleteDataProviderResult<UserModel>> UserDataProvider(AutoCompleteDataProviderRequest<UserModel> request)
     {
         Logger.LogInformation("Providing data");
 
-        _cachedUsers ??= ChatService.Users;
-        return Task.FromResult(request.ApplyTo(_cachedUsers));
+        return Task.FromResult(request.ApplyTo(ChatService.Users));
     }
 
     private void OnAutoCompleteChanged(UserModel? user)
@@ -60,6 +59,12 @@
         }
 
         _selectedUserName = null;
+
+        if (_selectedUsers.Contains(user))
+        {
+            return;
+        }
+
         _selectedUsers.Add(user);
     }
 
@@ -70,6 +75,8 @@
 
     protected override void OnParametersSet()
     {
+        Logger.LogInformation("Parameters set");
+
         _selectedUsers.Clear();
         _selectedUserName = null;
 

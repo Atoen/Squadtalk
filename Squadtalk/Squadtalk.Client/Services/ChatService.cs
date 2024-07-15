@@ -29,7 +29,7 @@ public class ChatService : IChatService
     public IEnumerable<GroupChatModel> GroupChats => _groupChats;
     public IEnumerable<DirectMessageChannelModel> DirectMessageChannels => _directMessageChannels;
 
-    private UserId? _userId;
+    private UserId _userId;
 
     public ChatService(
         AuthenticationStateProvider authenticationStateProvider,
@@ -85,7 +85,7 @@ public class ChatService : IChatService
 
     public async Task OpenOrCreateFakeDirectMessageChannel(UserModel model)
     {
-        _userId ??= await GetUserIdAsync();
+        if (_userId == default) _userId = await GetUserIdAsync();
 
         if (_userId == model.Id) return;
 
@@ -101,14 +101,17 @@ public class ChatService : IChatService
 
     public async Task CreateRealDirectMessageChannel(ChannelModel channelModel)
     {
-        _userId ??= await GetUserIdAsync();
+        if (_userId == default) _userId = await GetUserIdAsync();
 
-        var otherUserId = ((DirectMessageChannelModel) channelModel).Other.Id;
-        var participants = new List<UserId> { (UserId) _userId, otherUserId };
+        var others = channelModel switch
+        {
+            DirectMessageChannelModel directMessageChannelModel => [directMessageChannelModel.Other],
+            GroupChatModel groupChatModel => groupChatModel.Others,
+            _ => throw new ArgumentOutOfRangeException(nameof(channelModel))
+        };
 
-        var channelId = await OpenNewChannel(participants);
-
-        if (channelId != default && GetChannel(channelId) is { } openedChannel)
+        var channelId = await CreateNewChannel(others);
+        if (channelId is not null && GetChannel(channelId) is { } openedChannel)
         {
             await ChangeChannelAsync(openedChannel);
         }
@@ -131,9 +134,13 @@ public class ChatService : IChatService
         return ChannelChangedAsync.TryInvoke();
     }
 
-    private Task<ChannelId?> OpenNewChannel(List<UserId> participants)
+    public async Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others)
     {
-        return _createTextChannelRequestHandler.CreateTextChannelAsync(participants);
+        if (_userId == default) _userId = await GetUserIdAsync();
+
+        var participantsId = others.Select(x => x.Id).Append(_userId);
+
+        return await _createTextChannelRequestHandler.CreateTextChannelAsync(participantsId);
     }
 
     private async Task AddedToChannel(IChatChannel channel)
@@ -156,9 +163,10 @@ public class ChatService : IChatService
     private async Task AddChannel(IChatChannel channel, bool bulk)
     {
         if (_allChannels.ContainsKey(channel.Id)) return;
-        _userId ??= await GetUserIdAsync();
 
-        var model = CreateChannelModel(channel, (UserId) _userId);
+        if (_userId == default) _userId = await GetUserIdAsync();
+
+        var model = CreateChannelModel(channel, _userId);
         if (!bulk)
         {
             model.State.ReachedEnd = true;
@@ -200,14 +208,14 @@ public class ChatService : IChatService
     {
         var lastMessageIsByCurrentUser = channel.LastMessage?.Author.Id == id;
 
-        _logger.LogInformation("Creating model");
+        _logger.LogInformation("Creating chat model");
 
         var othersInChannel = channel.Participants.Where(x => x.Id != id).ToList();
 
         ChannelModel model = othersInChannel switch
         {
             [var other] => new DirectMessageChannelModel(UserModel.GetOrCreate(other), channel.Id),
-            { Count: > 1 } => new GroupChatModel(othersInChannel.Select(UserModel.GetOrCreate), channel.Id),
+            { Count: > 1 } => new GroupChatModel(othersInChannel.Select(UserModel.GetOrCreate), channel.Id, channel.Name),
             _ => throw new InvalidOperationException()
         };
 
@@ -228,7 +236,7 @@ public class ChatService : IChatService
 
     private async Task UserConnected(IChatUser user, bool bulkAdd)
     {
-        _userId ??= await GetUserIdAsync();
+        if (_userId == default) _userId = await GetUserIdAsync();
 
         if (user.Id == _userId) return;
 
@@ -244,7 +252,7 @@ public class ChatService : IChatService
 
     private async Task UserDisconnected(IChatUser user)
     {
-        _userId ??= await GetUserIdAsync();
+        if (_userId == default) _userId = await GetUserIdAsync();
 
         if (user.Id == _userId) return;
 

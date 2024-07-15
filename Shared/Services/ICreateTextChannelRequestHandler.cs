@@ -4,5 +4,5 @@ namespace Shared.Services;
 
 public interface ICreateTextChannelRequestHandler
 {
-    Task<ChannelId?> CreateTextChannelAsync(List<UserId> participants);
+    Task<ChannelId?> CreateTextChannelAsync(IEnumerable<UserId> participants);
 }

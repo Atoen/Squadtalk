@@ -38,5 +38,7 @@ public interface IChatService
 
     Task OpenChannelAsync(ChannelModel channelModel);
 
+    Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others);
+
     Task ClearChannelSelectionAsync();
 }

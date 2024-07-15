@@ -1,16 +1,23 @@
-@using Squadtalk.Client.Extensions
 @using Shared.Communication
-
+@using Squadtalk.Client.Extensions
 <div class="text-chat rounded" @onclick="OpenChat">
-    <img src="@User.AvatarUrl" class="avatar" alt="Avatar" draggable="false" style="@BorderStyle"/>
-    <div class="username">@User.Username</div>
+    @if (Model is GroupChatModel)
+    {
+        <Icon Class="me-2" Name="IconName.PeopleFill" Size="IconSize.x1" Style="grid-row: 1/3"/>
+    }
+    else if (Model is DirectMessageChannelModel dm)
+    {
+        <img src="@dm.Other.AvatarUrl" class="avatar" alt="Avatar" draggable="false" style="@GetBorderStyle(dm.Other)"/>
+    }
+
+    <div class="username">@Model.Name</div>
     @if (Model.LastMessage is { } message)
     {
         <div class="last-message">@message</div>
         <div class="separator">|</div>
         <div class="last-message-time">@Model.LastMessageTimeStamp.ToStringFormat(DateFormatMode.ChannelStatus)</div>
     }
-    
+
     @if (Model.State is { UnreadMessages: > 0 and var unread })
     {
         <Badge Color="BadgeColor.Danger" Position="Position.Absolute" Placement="BadgePlacement.TopRight"
@@ -22,25 +29,21 @@
     <div class="hide-chat" @onclick="Hide" @onclick:stopPropagation="true">
         <Icon Name="IconName.Trash3" Color="IconColor.Danger" Size="IconSize.x5"/>
     </div>
+
 </div>
 
 @inject IChatService ChatService
-@inject IChatVisibilityManager ChatVisibilityManager
-@inject NavigationManager NavigationManager
 
 @code {
+    [Parameter, EditorRequired]
+    public EventCallback<ChannelModel> HideCallback { get; set; }
 
     [Parameter, EditorRequired]
-    public EventCallback<DirectMessageChannelModel> HideCallback { get; set; }
+    public ChannelModel Model { get; set; } = default!;
 
-    [Parameter, EditorRequired]
-    public DirectMessageChannelModel Model { get; set; } = default!;
-
-    private UserModel User => Model.Other;
-    
-    private string BorderStyle => $"border-color: {User.StatusColor()};";
-    
     private Task OpenChat() => ChatService.OpenChannelAsync(Model);
 
     private Task Hide() => HideCallback.InvokeAsync(Model);
+
+    private string GetBorderStyle(UserModel user) => $"border-color: {user.StatusColor()};";
 }

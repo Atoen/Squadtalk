@@ -25,9 +25,9 @@ public class LocalChannelCreator : ICreateTextChannelRequestHandler
         _dbContext = dbContext;
     }
     
-    public async Task<ChannelId?> CreateTextChannelAsync(List<UserId> participants)
+    public async Task<ChannelId?> CreateTextChannelAsync(IEnumerable<UserId> participants)
     {
-        if (await CreateChannelAsync(participants) is not { } channel) return null;
+        if (await CreateChannelAsync(participants.ToList()) is not { } channel) return null;
 
         await NotifyParticipantsAsync(channel);
 
