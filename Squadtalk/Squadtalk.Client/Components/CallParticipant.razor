@@ -54,6 +54,11 @@
 
     [Parameter, EditorRequired] public CallParticipantModel Model { get; set; } = default!;
 
+    protected override void OnInitialized()
+    {
+        _volume = Model.Volume.Value;
+    }
+
     private Task VolumeChanged(int value)
     {
         _volume = value;

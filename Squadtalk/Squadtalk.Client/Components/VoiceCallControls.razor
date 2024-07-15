@@ -76,25 +76,22 @@
             </Dropdown>
         </Tooltip>
 
-        <Tooltip Title="@ScreenShareTooltipText">
-            <Button Color="ScreenShareButtonColor" @onclick="VoiceChatService.ToggleScreenShareAsync">
-                <Icon Name="ScreenShareIconName" Size="IconSize.x5"/>
-            </Button>
-        </Tooltip>
+        <Button Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText"
+                @onclick="VoiceChatService.ToggleScreenShareAsync">
+            <Icon Name="ScreenShareIconName" Size="IconSize.x5"/>
+        </Button>
 
-        <Tooltip Title="Leave call">
-            <Button Color="ButtonColor.Danger" @onclick="VoiceChatService.LeaveCallAsync">
-                <Icon Name="IconName.TelephoneXFill" Size="IconSize.x5"/>
-            </Button>
-        </Tooltip>
+        <Button Color="ButtonColor.Danger" TooltipTitle="Leave call"
+                @onclick="VoiceChatService.LeaveCallAsync">
+            <Icon Name="IconName.TelephoneXFill" Size="IconSize.x5"/>
+        </Button>
     }
     else if (VoiceChatService.ActiveCallOnCurrentChannel)
     {
-        <Tooltip Title="Join call">
-            <Button Color="ButtonColor.Success" @onclick="() => VoiceChatService.AcceptCallAsync(VoiceChatService.CurrentChannel!.Id)">
-                <Icon Name="IconName.TelephoneFill" Size="IconSize.x5"/>
-            </Button>
-        </Tooltip>
+        <Button Color="ButtonColor.Success" TooltipTitle="Join call"
+                @onclick="() => VoiceChatService.AcceptCallAsync(VoiceChatService.CurrentChannel!.Id)">
+            <Icon Name="IconName.TelephoneFill" Size="IconSize.x5"/>
+        </Button>
     }
 </div>
 

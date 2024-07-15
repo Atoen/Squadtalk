@@ -108,6 +108,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
+        serviceCollection.AddScoped<UserVolumeManager>();
 
         return serviceCollection;
     }

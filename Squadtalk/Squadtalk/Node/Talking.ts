@@ -1,7 +1,5 @@
-// noinspection JSUnusedGlobalSymbols
-
-// @ts-nocheck
-const lk = LivekitClient;
+// @ts-ignore
+import lk = require("livekit-client");
 
 const Room = lk.Room;
 const RoomEvent = lk.RoomEvent;
@@ -110,7 +108,6 @@ export async function Start2(token: string): Promise<boolean> {
         await dotnetObject.invokeMethodAsync("ErrorCallback",
             "Unable to access the microphone",
             "You need to grant access to the microphone in order to let others hear you");
-        return false;
     }
 
     bitrateInterval = setInterval(displayBitrate, 1000);

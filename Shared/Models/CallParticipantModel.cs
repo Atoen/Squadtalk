@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Shared.Data.JsonConverters;
 using Shared.Data.TypedIds;
+using Shared.Services;
 
 namespace Shared.Models;
 
@@ -8,7 +9,6 @@ public class CallParticipantModel
 {
     public string Username { get; set; } = default!;
 
-    [JsonConverter(typeof(UserIdConverter))]
     public UserId Id { get; set; }
     public string Sid { get; set; } = default!;
 
@@ -16,10 +16,9 @@ public class CallParticipantModel
     public bool CameraOn { get; set; }
     public bool ScreenShareOn { get; set; }
 
-    public int Volume { get; set; }
+    public Volume Volume { get; set; }
     public long Bitrate { get; set; }
 
-    [JsonConverter(typeof(ConnectionQualityConverter))]
     public ConnectionQuality ConnectionQuality { get; set; }
 
     public bool Remote { get; set; }
@@ -27,6 +26,7 @@ public class CallParticipantModel
     public bool IsSpeaking { get; set; }
 }
 
+[JsonConverter(typeof(ConnectionQualityConverter))]
 public enum ConnectionQuality
 {
     Excellent,

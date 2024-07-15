@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using FluentResults;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -20,6 +21,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     private readonly ICommunicationService _communicationService;
     private readonly IChatService _chatService;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly UserVolumeManager _volumeManager;
     private readonly ILogger<VoiceChatService> _logger;
 
     private readonly DotNetObjectReference<VoiceChatService> _dotNetObjectReference;
@@ -67,12 +69,14 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         ICommunicationService communicationService,
         IChatService chatService,
         AuthenticationStateProvider authenticationStateProvider,
+        UserVolumeManager volumeManager,
         ILogger<VoiceChatService> logger)
     {
         _jsRuntime = jsRuntime;
         _communicationService = communicationService;
         _chatService = chatService;
         _authenticationStateProvider = authenticationStateProvider;
+        _volumeManager = volumeManager;
         _logger = logger;
 
         _dotNetObjectReference = DotNetObjectReference.Create(this);
@@ -153,53 +157,41 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var result = await _jsModule.TryInvokeVoidAsync2("ChangeVolume", participant.Id, volume.Value);
         if (result.IsFailed)
         {
-            NotifyOnError("Error while changing volume", result);
+            NotifyOnError("Error while changing user volume", result);
+            return;
         }
+
+        await _volumeManager.SaveUserVolume(participant.Id, volume);
     }
 
     public async Task SwapCameraAsync()
     {
         var result = await _jsModule.TryInvokeVoidAsync2("SwapCamera");
-        if (result.IsFailed)
-        {
-            NotifyOnError("Error while changing camera direction", result);
-        }
+        NotifyIfFailed(result);
     }
 
     public async Task ShowVideoAsync(CallParticipantModel participant, VideoSource videoSource)
     {
         var result = await _jsModule.TryInvokeVoidAsync2("ShowVideo", participant.Id, videoSource);
-        if (result.IsFailed)
-        {
-            NotifyOnError("Error while displaying video", result);
-        }
+        NotifyIfFailed(result);
     }
 
     public async Task MinimizeVideoAsync()
     {
         var result = await _jsModule.TryInvokeVoidAsync2("MinimizeVideo");
-        if (result.IsFailed)
-        {
-            NotifyOnError("Error while minimizing video", result);
-        }
+        NotifyIfFailed(result);
     }
 
     public async Task SelectMicrophoneAsync(MediaDeviceModel microphone)
     {
         var result = await _jsModule.TryInvokeVoidAsync2("ChangeDevice", InputDevice.Microphone, microphone.Id);
-        if (result.IsFailed)
-        {
-            NotifyOnError("Error while selecting microphone", result);
-        }
+        NotifyIfFailed(result);
     }
 
     public async Task SelectCameraAsync(MediaDeviceModel camera)
     {
         var result = await _jsModule.TryInvokeVoidAsync2("ChangeDevice", InputDevice.Camera, camera.Id);
-        if (result.IsFailed)
-        {
-            NotifyOnError("Error while selecting camera", result);
-        }
+        NotifyIfFailed(result);
     }
 
     public async Task ToggleMicrophoneAsync()
@@ -253,7 +245,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     private async Task JoinRoomAsync(RoomTokenDto token, ChannelModel channel)
     {
-        var result = await _jsModule.TryInvokeAsync2<bool>("Start", token.Token);
+        var result = await _jsModule.TryInvokeAsync2<bool>("Start2", token.Token);
         if (result.IsFailed)
         {
             NotifyOnError("Error while joining room", result);
@@ -263,7 +255,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         var joined = result.Value;
         if (!joined)
         {
-            OnError?.Invoke("Error while joining room", "Unable to connect to the server");
+            // OnError?.Invoke("Error while joining room", "Unable to connect to the server");
             return;
         }
 
@@ -356,7 +348,11 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     [JSInvokable]
     public void MicrophonesUpdatedCallback(List<MediaDeviceModel> microphones)
     {
-        if (MediaDevicesMatches(_microphones, microphones)) return;
+        if (MediaDevicesMatches(_microphones, microphones))
+        {
+            _logger.LogDebug("Microphones are matching. Skipping update");
+            return;
+        }
 
         _microphones.Clear();
         _microphones.AddRange(microphones);
@@ -366,7 +362,11 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     [JSInvokable]
     public void CamerasUpdatedCallback(List<MediaDeviceModel> cameras)
     {
-        if (MediaDevicesMatches(_cameras, cameras)) return;
+        if (MediaDevicesMatches(_cameras, cameras))
+        {
+            _logger.LogDebug("Cameras are matching. Skipping update");
+            return;
+        }
 
         _cameras.Clear();
         _cameras.AddRange(cameras);
@@ -384,9 +384,11 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     }
 
     [JSInvokable]
-    public void ErrorCallback(string error)
+    public void ErrorCallback(string title, string message)
     {
-        OnError?.Invoke("Error",error);
+        _logger.LogError("Error {Title} {Message}", title, message);
+
+        OnError?.Invoke(title, message);
     }
 
     [JSInvokable]
@@ -397,8 +399,11 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     }
 
     [JSInvokable]
-    public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
+    public async ValueTask ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
+        var volume = await _volumeManager.GetUserVolume(participant.Id);
+        participant.Volume = volume;
+
         _participants[participant.Id] = participant;
         OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
@@ -408,6 +413,14 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     {
         _participants.Remove(participant.Id);
         OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+    }
+
+    private void NotifyIfFailed(ResultBase result, [CallerMemberName] string callerName = "")
+    {
+        if (result.IsFailed)
+        {
+            NotifyOnError(callerName, result);
+        }
     }
 
     private void NotifyOnError(string title, ResultBase result)

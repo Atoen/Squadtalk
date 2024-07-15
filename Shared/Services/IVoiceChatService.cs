@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 using Shared.Communication;
+using Shared.Data.JsonConverters;
 using Shared.Data.TypedIds;
 using Shared.Models;
 
@@ -92,10 +94,13 @@ public enum InputDevice
     Camera
 }
 
+[JsonConverter(typeof(VolumeConverter))]
 public readonly record struct Volume(int Value)
 {
     public int Value { get; init; } = Value is < 0 or > 100
         ? throw new ArgumentOutOfRangeException(nameof(Value),
             "Volume must be not negative and lass than or equal to 100.")
         : Value;
+
+    public static Volume Full => new(100);
 }

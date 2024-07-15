@@ -30,9 +30,8 @@ room
     .on(RoomEvent.ParticipantConnected, participantConnected)
     .on(RoomEvent.ParticipantDisconnected, participantDisconnected)
     .on(RoomEvent.MediaDevicesChanged, handleDevicesChanged)
-    .on(RoomEvent.MediaDevicesError, (e) => {
-    const failure = lk.MediaDeviceFailure.getFailure(e);
-    console.log('media device failure', failure);
+    .on(RoomEvent.MediaDevicesError, async (error) => {
+    const failure = lk.MediaDeviceFailure.getFailure(error);
 })
     .on(RoomEvent.TrackMuted, handleTrackMuted)
     .on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
@@ -61,16 +60,52 @@ export function GetElements() {
     maximizeVideoFrame = document.getElementById("maximized-video-container");
     maximizeVideoPlayer = document.getElementById("maximized-video");
 }
-export async function Start(token) {
+export async function Start2(token) {
     roomToken = token;
     try {
         await room.connect(serverAddress, roomToken);
+    }
+    catch (e) {
+        await dotnetObject.invokeMethodAsync("ErrorCallback", "Failed to connect to the room", "Unable to connect to the room");
+        return false;
+    }
+    try {
         await room.localParticipant.setMicrophoneEnabled(true);
         microphoneEnabled = true;
         const microphones = await Room.getLocalDevices("audioinput");
         await dotnetObject.invokeMethodAsync("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
         const cameras = await Room.getLocalDevices("videoinput", false);
         await dotnetObject.invokeMethodAsync("CamerasUpdatedCallback", mapMediaDevices(cameras));
+    }
+    catch (e) {
+        await dotnetObject.invokeMethodAsync("ErrorCallback", "Unable to access the microphone", "You need to grant access to the microphone in order to let others hear you");
+        return false;
+    }
+    bitrateInterval = setInterval(displayBitrate, 1000);
+    const participant = room.localParticipant;
+    participant
+        .on(ParticipantEvent.TrackMuted, (pub) => displayParticipant(participant))
+        .on(ParticipantEvent.TrackUnmuted, (pub) => displayParticipant(participant))
+        .on(ParticipantEvent.IsSpeakingChanged, (isSpeaking) => displayParticipant(participant))
+        .on(ParticipantEvent.ConnectionQualityChanged, (connectionQuality) => displayParticipant(participant));
+    await displayParticipant(room.localParticipant);
+    return true;
+}
+export async function Start(token) {
+    roomToken = token;
+    try {
+        await room.connect(serverAddress, roomToken);
+        const publication = await room.localParticipant.setMicrophoneEnabled(true);
+        if (!publication) {
+            await dotnetObject.invokeMethodAsync("ErrorCallback", "Unable to access the microphone", "You need to grant access to the microphone in order to let others hear you");
+        }
+        else {
+            microphoneEnabled = true;
+            const microphones = await Room.getLocalDevices("audioinput");
+            await dotnetObject.invokeMethodAsync("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
+            const cameras = await Room.getLocalDevices("videoinput", false);
+            await dotnetObject.invokeMethodAsync("CamerasUpdatedCallback", mapMediaDevices(cameras));
+        }
         bitrateInterval = setInterval(displayBitrate, 1000);
         const participant = room.localParticipant;
         participant

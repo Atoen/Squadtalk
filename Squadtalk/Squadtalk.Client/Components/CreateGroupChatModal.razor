@@ -1,0 +1,78 @@
+<div class="row">
+    <AutoComplete @bind-Value="_selectedUserName"
+                  @ref="_autoComplete"
+                  TItem="UserModel"
+                  DataProvider="UserDataProvider"
+                  Placeholder="Select user"
+                  PropertyName="@nameof(UserModel.Username)"
+                  LoadingText="Loading users..."
+                  EmptyText="No users found"
+                  OnChanged="OnAutoCompleteChanged">
+    </AutoComplete>
+
+    <div class="selected-users my-2">
+        @foreach (var user in _selectedUsers)
+        {
+            <div class="user">
+                <img class="avatar" alt="avatar" src="user.png"/>
+                <div class="username">@user.Username</div>
+                <Icon Name="IconName.X" Size="IconSize.x2" Color="IconColor.Danger" @onclick="() => RemoveUser(user)"/>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <Button @onclick="CancelCallback">Cancel</Button>
+        <Button @onclick="() => CreateCallback.InvokeAsync(_selectedUsers)" Color="ButtonColor.Primary">
+            Create group chat
+        </Button>
+    </div>
+</div>
+
+@inject IChatService ChatService
+@inject ILogger<CreateGroupChatModal> Logger
+
+@code {
+
+    [Parameter] public EventCallback CancelCallback { get; set; }
+    [Parameter] public EventCallback<List<UserModel>> CreateCallback { get; set; }
+
+    private AutoComplete<UserModel> _autoComplete = default!;
+    private string? _selectedUserName;
+
+    private readonly List<UserModel> _selectedUsers = [];
+    private IEnumerable<UserModel>? _cachedUsers;
+
+    private Task<AutoCompleteDataProviderResult<UserModel>> UserDataProvider(AutoCompleteDataProviderRequest<UserModel> request)
+    {
+        Logger.LogInformation("Providing data");
+
+        _cachedUsers ??= ChatService.Users;
+        return Task.FromResult(request.ApplyTo(_cachedUsers));
+    }
+
+    private void OnAutoCompleteChanged(UserModel? user)
+    {
+        if (user is null)
+        {
+            Logger.LogWarning("Selected user is null");
+            return;
+        }
+
+        _selectedUserName = null;
+        _selectedUsers.Add(user);
+    }
+
+    private void RemoveUser(UserModel user)
+    {
+        _selectedUsers.Remove(user);
+    }
+
+    protected override void OnParametersSet()
+    {
+        _selectedUsers.Clear();
+        _selectedUserName = null;
+
+        StateHasChanged();
+    }
+}
