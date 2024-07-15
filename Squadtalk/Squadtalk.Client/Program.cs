@@ -24,7 +24,7 @@ builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<IMessageModelService, MessageModelService>();
 builder.Services.AddScoped<IMessagePageProvider, HttpMessagePageProvider>();
 
-builder.Services.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
+builder.Services.AddScoped<IChannelManager, ChannelManager>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
 builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();

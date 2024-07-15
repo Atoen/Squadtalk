@@ -101,7 +101,7 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddScoped<IChatService, ChatService>();
         serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
-        serviceCollection.AddScoped<IChatVisibilityManager, ChatVisibilityManager>();
+        serviceCollection.AddScoped<IChannelManager, ChannelManager>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
         serviceCollection.AddScoped<IVoiceChatService, VoiceChatService>();
 

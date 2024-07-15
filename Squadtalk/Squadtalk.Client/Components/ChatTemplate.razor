@@ -1,5 +1,6 @@
 @using Shared.Communication
 @using Squadtalk.Client.Extensions
+
 <div class="text-chat rounded" @onclick="OpenChat">
     @if (Model is GroupChatModel)
     {
@@ -29,7 +30,6 @@
     <div class="hide-chat" @onclick="Hide" @onclick:stopPropagation="true">
         <Icon Name="IconName.Trash3" Color="IconColor.Danger" Size="IconSize.x5"/>
     </div>
-
 </div>
 
 @inject IChatService ChatService

@@ -3,15 +3,15 @@ using Shared.Data.TypedIds;
 
 namespace Shared.Services;
 
-public interface IChatVisibilityManager
+public interface IChannelManager
 {
-    event Action? StateChanged;
-    
+    event Action? ChannelListChanged;
+
     IEnumerable<ChannelModel> VisibleChannels { get; }
 
-    Task StopHidingChannel(ChannelId id);
+    Task StopHidingChannel(ChannelId channelId);
 
-    Task HideChannel(ChannelId id);
+    Task HideChannel(ChannelId channelId);
 
     Task UpdateListAsync();
 }

@@ -20,7 +20,7 @@
 
 @inject IChatService ChatService
 @inject ICommunicationService CommunicationService
-@inject IChatVisibilityManager ChatVisibilityManager
+@inject IChannelManager ChannelManager
 
 @code {
     
@@ -34,12 +34,7 @@
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            return ChatVisibilityManager.UpdateListAsync();
-        }
-        
-        return Task.CompletedTask;
+        return firstRender ? ChannelManager.UpdateListAsync() : Task.CompletedTask;
     }
 
     private Task OpenChannel(UserModel userModel)

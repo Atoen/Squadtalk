@@ -26,7 +26,7 @@
         }
     </div>
 
-    @foreach (var channel in ChatVisibilityManager.VisibleChannels.OrderByDescending(x => x.LastMessageTimeStamp))
+    @foreach (var channel in ChannelManager.VisibleChannels)
     {
         <ChatTemplate Model="channel" HideCallback="_confirmCallback"/>
     }
@@ -35,7 +35,7 @@
 
 @implements IDisposable
 @inject IChatService ChatService
-@inject IChatVisibilityManager ChatVisibilityManager
+@inject IChannelManager ChannelManager
 @inject ILogger<ChannelSelector> Logger
 
 @code {
@@ -58,7 +58,7 @@
     {
         ChatService.StateChanged += StateHasChanged;
         ChatService.ChannelChanged += StateHasChanged;
-        ChatVisibilityManager.StateChanged += StateHasChanged;
+        ChannelManager.ChannelListChanged += StateHasChanged;
 
         _confirmCallback = EventCallback.Factory.Create<ChannelModel>(this, ShowHidingConfirmationAsync);
 
@@ -71,7 +71,7 @@
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        return firstRender ? ChatVisibilityManager.UpdateListAsync() : Task.CompletedTask;
+        return firstRender ? ChannelManager.UpdateListAsync() : Task.CompletedTask;
     }
 
     private async Task ShowHidingConfirmationAsync(ChannelModel channel)
@@ -84,7 +84,7 @@
 
         if (confirmation)
         {
-            await ChatVisibilityManager.HideChannel(channel.Id);
+            await ChannelManager.HideChannel(channel.Id);
         }
     }
 
@@ -92,6 +92,7 @@
     {
         ChatService.StateChanged -= StateHasChanged;
         ChatService.ChannelChanged -= StateHasChanged;
+        ChannelManager.ChannelListChanged -= StateHasChanged;
     }
 
     private async Task DisplayGroupModal()
