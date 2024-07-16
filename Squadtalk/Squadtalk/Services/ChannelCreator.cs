@@ -1,58 +1,63 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
-using Shared.DTOs;
-using Shared.Services;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Hubs;
 
 namespace Squadtalk.Services;
 
-public class LocalChannelCreator : ICreateTextChannelRequestHandler
+public class ChannelCreator
 {
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
     private readonly ChatConnectionManager _connectionManager;
     private readonly ApplicationDbContext _dbContext;
+    private readonly SystemMessageService _systemMessageService;
 
-    public LocalChannelCreator(
+    public ChannelCreator(
         IHubContext<ChatHub, IChatClient> hubContext,
         ChatConnectionManager connectionManager,
-        ApplicationDbContext dbContext)
+        ApplicationDbContext dbContext,
+        SystemMessageService systemMessageService)
     {
         _hubContext = hubContext;
         _connectionManager = connectionManager;
         _dbContext = dbContext;
+        _systemMessageService = systemMessageService;
     }
-    
-    public async Task<ChannelId?> CreateTextChannelAsync(IEnumerable<UserId> participants)
-    {
-        if (await CreateChannelAsync(participants.ToList()) is not { } channel) return null;
 
-        await NotifyParticipantsAsync(channel);
+    public async Task<ChannelId?> CreateChannelAsync(ApplicationUser creatingUser, IEnumerable<UserId> participants)
+    {
+        var channel = await CreateChannelAsync(participants.ToList());
+        if (channel is null)
+        {
+            return null;
+        }
+
+        await NotifyParticipantsAsync(channel, creatingUser);
 
         return channel.Id;
     }
 
-    private async Task NotifyParticipantsAsync(Channel channel)
+    private async Task NotifyParticipantsAsync(Channel channel, ApplicationUser creatingUser)
     {
-        var dto = new ChannelDto
-        {
-            Id = channel.Id,
-            Participants = channel.Participants.Select(x => x.ToDto()).ToList()
-        };
-        
         foreach (var user in channel.Participants)
         {
             var userConnections = _connectionManager.GetUserConnections(user);
             foreach (var connection in userConnections)
             {
                 await _hubContext.Groups.AddToGroupAsync(connection, channel.Id);
-                await _hubContext.Clients.Client(connection).AddedToChannel(dto);
             }
         }
+
+        await _hubContext.Clients.Groups(channel.Id).AddedToChannel(channel.ToDto());
+
+        if (channel.Participants.Count > 2)
+        {
+            await _systemMessageService.SendChannelCreatedMessageAsync(creatingUser, channel);
+        }
     }
-    
+
     private async Task<Channel?> CreateChannelAsync(List<UserId> participantsId)
     {
         if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
@@ -68,7 +73,7 @@ public class LocalChannelCreator : ICreateTextChannelRequestHandler
         {
             return null;
         }
-        
+
         var channel = new Channel
         {
             Id = ChannelId.New(),

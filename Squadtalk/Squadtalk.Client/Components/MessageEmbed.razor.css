@@ -85,3 +85,12 @@ a:hover {
     max-width: calc(100vw - 40px);
     display: block;
 }
+
+.system-message {
+
+}
+
+.inline-system-message {
+    display: flex;
+    gap: 5px;
+}

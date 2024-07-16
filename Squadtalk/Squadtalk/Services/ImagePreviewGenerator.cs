@@ -62,16 +62,16 @@ public class ImagePreviewGenerator
         var fileSize = stream.Position;
         stream.Seek(0, SeekOrigin.Begin);
 
-        var originalName = originalMetadata.GetString(FileData.FileName);
+        var originalName = originalMetadata.GetString(EmbedData.FileName);
         var previewName = "preview_" + originalName;
 
         var previewMetadata = new Dictionary<string, string>
         {
-            { FileData.FileName,  previewName},
-            { FileData.FileSize, fileSize.ToString() },
-            { FileData.ContentType, "image/png" },
-            { FileData.ImageWidth, image.Width.ToString() },
-            { FileData.ImageHeight, image.Height.ToString() }
+            { EmbedData.FileName,  previewName},
+            { EmbedData.FileSize, fileSize.ToString() },
+            { EmbedData.ContentType, "image/png" },
+            { EmbedData.ImageWidth, image.Width.ToString() },
+            { EmbedData.ImageHeight, image.Height.ToString() }
         };
         
         var formattedMetadata = TusHelper.FormatMetadata(previewMetadata);

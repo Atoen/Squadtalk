@@ -2,8 +2,8 @@
     display: grid;
     grid-template-columns: 45px auto;
     grid-template-rows: min-content;
-    margin-top: 5px;
-    padding: 0 5px 1px;
+    margin-top: 2px;
+    padding: 0 5px 2px;
 }
 
 .avatar {
@@ -48,11 +48,11 @@
     white-space: nowrap;
     margin-top: 2px;
     font-size: 0.8em;
-    margin-left: 10px;
 }
 
 .message-container:hover .content-only-date {
-    display: block;
+    display: flex;
+    justify-content: center;
 }
 
 .message-container:hover {

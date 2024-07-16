@@ -1,12 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;
 using Shared;
-using Shared.Data.TypedIds;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
-using Squadtalk.Extensions;
-using Squadtalk.Hubs;
 using Squadtalk.Services;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -33,10 +28,12 @@ public static class TusConfigurationFactory
         return Task.FromResult(config);
     }
 
-    private static readonly string[] RequiredMetadataKeys = [FileData.ChannelId, FileData.FileName, FileData.ContentType];
+    private static readonly string[] RequiredMetadataKeys = [EmbedData.ChannelId, EmbedData.FileName, EmbedData.ContentType];
 
     private static Task OnAuthorizeAsync(AuthorizeContext authorizeContext)
     {
+        //TODO Verify upload channel
+
         if (authorizeContext.HttpContext.User.Identity is not { IsAuthenticated: true })
         {
             authorizeContext.FailRequest(HttpStatusCode.Unauthorized);
@@ -68,27 +65,12 @@ public static class TusConfigurationFactory
         var httpContext = fileCompleteContext.HttpContext;
         var cancellationToken = httpContext.RequestAborted;
 
-        var file = await fileCompleteContext.GetFileAsync();
-        var metadata = await file.GetMetadataAsync(cancellationToken);
-        var channelId = (ChannelId) metadata.GetString(FileData.ChannelId);
-
-        var fileService = httpContext.RequestServices.GetRequiredService<FileStorageService>();
-        await fileService.StoreFileAsync(file, channelId);
-
         var userManager = httpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await userManager.GetUserAsync(httpContext.User);
         if (user is null) return;
-        
-        var embedService = httpContext.RequestServices.GetRequiredService<EmbedService>();
-        var embed = await embedService.CreateFileEmbedAsync(file, channelId, cancellationToken);
-        
-        var messageService = httpContext.RequestServices.GetRequiredService<MessageStorageService>();
-        var message = messageService.CreateMessage(user, string.Empty, channelId)
-            .WithEmbed(embed);
-        
-        await messageService.StoreMessageAsync(message);
 
-        var chatHub = httpContext.RequestServices.GetRequiredService<IHubContext<ChatHub, IChatClient>>();
-        await chatHub.Clients.Group(channelId).ReceiveMessage(message.ToDto());
+        var file = await fileCompleteContext.GetFileAsync();
+        var systemMessageService = httpContext.RequestServices.GetRequiredService<SystemMessageService>();
+        await systemMessageService.SendFileEmbedMessageAsync(user, file, cancellationToken);
     }
 }

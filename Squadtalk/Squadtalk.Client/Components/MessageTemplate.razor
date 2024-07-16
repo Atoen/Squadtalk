@@ -1,7 +1,11 @@
 @using Squadtalk.Client.Extensions
 
 <div class="message-container rounded">
-    @if (Model.IsSeparate)
+    @if (Model.EmbedIsInlineSystemMessage || !Model.IsSeparate)
+    {
+        <div class="content-only-date">@_shortDate</div>
+    }
+    else if (Model.IsSeparate)
     {
         <div class="padding"></div>
         <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
@@ -10,17 +14,16 @@
             <div class="date" data-date="@_longDate">@_date</div>
         </div>
     }
-    else
-    {
-        <div class="content-only-date">@_shortDate</div>
-    }
 
     <div class="message-content">
         @if (Model.Embed is not null)
         {
             <MessageEmbed Model="Model.Embed"/>
         }
-        <div style="white-space: pre-wrap">@Model.Content</div>
+        @if (!string.IsNullOrWhiteSpace(Model.Content))
+        {
+            <div style="white-space: pre-wrap">@Model.Content</div>
+        }
     </div>
 </div>
 

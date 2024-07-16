@@ -19,7 +19,8 @@
 
 .header {
     display: grid;
-    grid-template-columns: min-content min-content min-content;
+    grid-template-columns: repeat(4, min-content);
+    grid-gap: 5px;
 }
 
 .avatar {
@@ -36,6 +37,7 @@
     grid-row: 1;
     align-self: center;
     margin-left: 2px;
+    white-space: nowrap;
 }
 
 .call-icon {

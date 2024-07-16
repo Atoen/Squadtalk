@@ -27,9 +27,9 @@ public class EmbedService
     {
         var metadata = await file.GetMetadataAsync(cancellationToken);
 
-        var filename = metadata.GetString(FileData.FileName);
-        var filesize = metadata.GetString(FileData.FileSize);
-        var contentType = metadata.GetString(FileData.ContentType);
+        var filename = metadata.GetString(EmbedData.FileName);
+        var filesize = metadata.GetString(EmbedData.FileSize);
+        var contentType = metadata.GetString(EmbedData.ContentType);
 
         var url = CreateDownloadUrl(channelId, file.Id, filename);
         var embed = CreateFileEmbed(filename, filesize, url, EmbedType.File);
@@ -50,13 +50,13 @@ public class EmbedService
     private async Task AddImageDataAsync(Embed embed, ITusFile file, ChannelId channelId, Dictionary<string, Metadata> metadata,
         CancellationToken cancellationToken)
     {
-        var width = metadata.GetString(FileData.ImageWidth);
-        var height = metadata.GetString(FileData.ImageHeight);
+        var width = metadata.GetString(EmbedData.ImageWidth);
+        var height = metadata.GetString(EmbedData.ImageHeight);
 
         var data = embed.Data;
-        data[FileData.ImageWidth] = width;
-        data[FileData.ImageHeight] = height;
-        data[FileData.PreviewUrl] = data[FileData.Url];
+        data[EmbedData.ImageWidth] = width;
+        data[EmbedData.ImageHeight] = height;
+        data[EmbedData.PreviewUrl] = data[EmbedData.Url];
 
         var imageSize = new Size
         {
@@ -77,9 +77,9 @@ public class EmbedService
         
         var (id, name, size) = previewData;
 
-        data[FileData.PreviewUrl] = CreateDownloadUrl(channelId,  id, name);
-        data[FileData.ImageWidth] = size.Width.ToString();
-        data[FileData.ImageHeight] = size.Height.ToString();
+        data[EmbedData.PreviewUrl] = CreateDownloadUrl(channelId,  id, name);
+        data[EmbedData.ImageWidth] = size.Width.ToString();
+        data[EmbedData.ImageHeight] = size.Height.ToString();
     }
 
     private static Embed CreateFileEmbed(string filename, string filesize, string url, EmbedType type)
@@ -89,9 +89,9 @@ public class EmbedService
             Type = type,
             Data = new Dictionary<string, string>
             {
-                {FileData.Url, url},
-                {FileData.FileName, filename},
-                {FileData.FileSize, filesize}
+                {EmbedData.Url, url},
+                {EmbedData.FileName, filename},
+                {EmbedData.FileSize, filesize}
             }
         };
     }

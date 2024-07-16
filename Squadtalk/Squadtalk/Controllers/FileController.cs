@@ -58,8 +58,8 @@ public class FileController : ControllerBase
     private async Task<IActionResult> SetFileContentDispositionAsync(ITusFile tusFile, CancellationToken cancellationToken)
     {
         var metadata = await tusFile.GetMetadataAsync(cancellationToken);
-        var filename = metadata.GetString(FileData.FileName);
-        var contentType = metadata.GetString(FileData.ContentType);
+        var filename = metadata.GetString(EmbedData.FileName);
+        var contentType = metadata.GetString(EmbedData.ContentType);
 
         var contentDisposition = new ContentDispositionHeaderValue("inline");
         contentDisposition.SetHttpFileName(filename);

@@ -97,7 +97,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
-        serviceCollection.AddScoped<ICreateTextChannelRequestHandler, LocalChannelCreator>();
+        serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<IChatService, ChatService>();
         serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
@@ -109,6 +109,8 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
         serviceCollection.AddScoped<UserVolumeManager>();
+        serviceCollection.AddScoped<SystemMessageService>();
+        serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
         return serviceCollection;
     }

@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Communication;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
-using Shared.Services;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
+using Squadtalk.Services;
 
 namespace Squadtalk.Controllers;
 
@@ -17,16 +17,16 @@ namespace Squadtalk.Controllers;
 public class MessageController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly ICreateTextChannelRequestHandler _createTextChannelRequestHandler;
+    private readonly ChannelCreator _channelCreator;
     private readonly ILogger<MessageController> _logger;
 
     public MessageController(
         ApplicationDbContext dbContext,
-        ICreateTextChannelRequestHandler createTextChannelRequestHandler,
+        ChannelCreator channelCreator,
         ILogger<MessageController> logger)
     {
         _dbContext = dbContext;
-        _createTextChannelRequestHandler = createTextChannelRequestHandler;
+        _channelCreator = channelCreator;
         _logger = logger;
     }
     
@@ -90,7 +90,15 @@ public class MessageController : ControllerBase
     [HttpPost("createChannel")]
     public async Task<IActionResult> CreateChannel(List<UserId> participantsId)
     {
-        var channelId = await _createTextChannelRequestHandler.CreateTextChannelAsync(participantsId);
+        var userId = UserId.Parse(HttpContext.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        var user = await UserWithChannelsByIdAsync(_dbContext, userId);
+        if (user is null)
+        {
+            _logger.LogWarning("Cannot retrieve user data");
+            return Problem("Cannot retrieve user data");
+        }
+
+        var channelId = await _channelCreator.CreateChannelAsync(user, participantsId);
         
         return channelId == default
             ? BadRequest()

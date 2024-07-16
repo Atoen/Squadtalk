@@ -94,7 +94,6 @@ public class ChannelManager : IChannelManager
     private async Task UpdateLocalStorage()
     {
         await _localStorageService.SetItemAsync(HiddenChats, _hiddenChannels);
-
         await UpdateListAsync();
     }
 
@@ -105,12 +104,10 @@ public class ChannelManager : IChannelManager
             await StopHidingChannel(channelId);
         }
 
-        if (_visibleChannels is [var first, ..] && first.Id == channelId)
+        if (_visibleChannels is [var first, ..] && first.Id != channelId)
         {
-            return;
+            _shouldSortChannels = true;
         }
-
-        _shouldSortChannels = true;
 
         ChannelListChanged?.Invoke();
     }

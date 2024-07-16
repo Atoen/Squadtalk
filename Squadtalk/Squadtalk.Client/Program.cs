@@ -18,7 +18,7 @@ builder.Services.AddSingleton(_ => new RestClient(options =>
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ISignalrService, SignalrService>();
 builder.Services.AddScoped<ICommunicationService, CommunicationService>();
-builder.Services.AddScoped<ICreateTextChannelRequestHandler, CreateTextChannelRequestHandler>();
+builder.Services.AddScoped<CreateTextChannelRequestHandler>();
 
 builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<IMessageModelService, MessageModelService>();

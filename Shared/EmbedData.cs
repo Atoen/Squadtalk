@@ -1,8 +1,10 @@
 namespace Shared;
 
-public static class FileData
+public static class EmbedData
 {
     public const string ChannelId = "channel_id";
+    public const string SystemMessageData = "system";
+
     public const string FileName = "file_name";
     public const string ContentType = "content_type";
     public const string ImageWidth = "image_width";

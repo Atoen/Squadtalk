@@ -15,7 +15,7 @@ namespace Squadtalk.Client.Services;
 public class ChatService : IChatService
 {
     private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly ICreateTextChannelRequestHandler _createTextChannelRequestHandler;
+    private readonly CreateTextChannelRequestHandler _createTextChannelRequestHandler;
     private readonly ICommunicationService _communicationService;
     private readonly ILogger<ChatService> _logger;
     private readonly NavigationManager _navigationManager;
@@ -33,7 +33,7 @@ public class ChatService : IChatService
 
     public ChatService(
         AuthenticationStateProvider authenticationStateProvider,
-        ICreateTextChannelRequestHandler createTextChannelRequestHandler,
+        CreateTextChannelRequestHandler createTextChannelRequestHandler,
         ICommunicationService communicationService,
         ILogger<ChatService> logger,
         NavigationManager navigationManager)

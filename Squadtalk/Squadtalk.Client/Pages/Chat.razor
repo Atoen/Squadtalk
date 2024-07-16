@@ -13,19 +13,29 @@
 <ConfirmDialog @ref="_dialog" />
 
 <div class="header">
+    <span class="channel-name">@ChannelName</span>
     @if (!IsGlobalChat)
     {
-        <img alt="@ChannelName Avatar" src="User.png" class="avatar" />
-        if (!VoiceChatService.ActiveCallOnCurrentChannel)
+        if (ChatService.CurrentChannel is GroupChatModel)
         {
-            <Tooltip Title="Call user">
-                <Button @onclick="StartVoiceCall">
+            if (!VoiceChatService.ActiveCallOnCurrentChannel)
+            {
+                <Button @onclick="StartVoiceCall" TooltipTitle="Start call" Style="grid-column: 3"
+                        TooltipPlacement="TooltipPlacement.Bottom">
                     <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x3"/>
                 </Button>
-            </Tooltip>
+            }
+
+            <Button TooltipTitle="Manage channel" Style="grid-column: 4"
+                    TooltipPlacement="TooltipPlacement.Bottom">
+                <Icon Name="IconName.GearFill" Size="IconSize.x3"></Icon>
+            </Button>
+        }
+        else
+        {
+            <img alt="@ChannelName Avatar" src="User.png" class="avatar"/>
         }
     }
-    <span class="channel-name">@ChannelName</span>
 </div>
 
 <div class="chat-container">

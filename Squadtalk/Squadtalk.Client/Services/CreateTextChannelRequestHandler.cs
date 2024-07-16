@@ -1,10 +1,9 @@
 using RestSharp;
 using Shared.Data.TypedIds;
-using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class CreateTextChannelRequestHandler : ICreateTextChannelRequestHandler
+public class CreateTextChannelRequestHandler
 {
     private readonly RestClient _restClient;
     private readonly ILogger<CreateTextChannelRequestHandler> _logger;

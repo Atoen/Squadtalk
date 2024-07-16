@@ -1,3 +1,5 @@
+using Shared.Enums;
+
 namespace Shared.Models;
 
 public class MessageModel
@@ -11,4 +13,6 @@ public class MessageModel
     public bool IsSeparate { get; set; }
     
     public EmbedModel? Embed { get; set; }
+
+    public bool EmbedIsInlineSystemMessage => Embed?.Type == EmbedType.InlineSystemMessage;
 }

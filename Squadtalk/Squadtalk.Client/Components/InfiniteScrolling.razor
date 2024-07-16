@@ -1,12 +1,15 @@
 @using Squadtalk.Client.Extensions
 @using Microsoft.AspNetCore.Components.Rendering
-@using Shared.Communication
 @using Shared.Data.TypedIds
 
 @if (ChatService.CurrentChannel is {State.ReachedEnd: true} channel)
 {
-    var preposition = channel is GroupChatModel ? "in" : "with";
-    <div>No more messages @preposition @channel.Name</div>
+    <div class="channel-start">
+        <div class="title">@channel.Name</div>
+        <div>
+            This is the beginning of chat with <span class="fw-bold d-inline">@channel.Name</span>.
+        </div>
+    </div>
 }
 
 @if (_loading)

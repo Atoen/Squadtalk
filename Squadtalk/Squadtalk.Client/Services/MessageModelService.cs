@@ -59,11 +59,11 @@ public class MessageModelService : IMessageModelService
                 }
                 : null
         };
-        
+
         var previousMessage = isFromPage
             ? channelState.LastPageMessageReceived
             : channelState.LastMessageReceived;
-        
+
         SetMessageSeparateStatus(model, previousMessage);
 
         return model;
@@ -72,14 +72,15 @@ public class MessageModelService : IMessageModelService
     private void SetMessageSeparateStatus(MessageModel current, MessageModel? other)
     {
         ArgumentNullException.ThrowIfNull(current);
-        
+
         if (other is null)
         {
             current.IsSeparate = true;
             return;
         }
-        
-        current.IsSeparate = current.Author != other.Author ||
-                              current.Timestamp.Subtract(other.Timestamp) > MessageSeparationTimespan;
+
+        current.IsSeparate = other.EmbedIsInlineSystemMessage ||
+                             current.Author != other.Author ||
+                             current.Timestamp.Subtract(other.Timestamp) > MessageSeparationTimespan;
     }
 }
