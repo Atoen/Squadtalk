@@ -4,6 +4,24 @@
     grid-template-rows: min-content;
     margin-top: 2px;
     padding: 0 5px 2px;
+    border-radius: 0.25rem;
+}
+
+.system-message-container {
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 5px 2px 15px;
+    margin-top: 2px;
+}
+
+.system-message-container:hover {
+    background: #c7c7c7
+}
+
+.system-message-date {
+    font-size: 0.8em;
 }
 
 .avatar {

@@ -20,7 +20,6 @@
 
 @inject IChatService ChatService
 @inject ICommunicationService CommunicationService
-@inject IChannelManager ChannelManager
 
 @code {
     
@@ -29,12 +28,7 @@
         await ChatService.ClearChannelSelectionAsync();
         await CommunicationService.ConnectAsync();
 
-        ChatService.StateChanged += StateHasChanged;
-    }
-
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        return firstRender ? ChannelManager.UpdateListAsync() : Task.CompletedTask;
+        ChatService.ConnectedUsersChanged += StateHasChanged;
     }
 
     private Task OpenChannel(UserModel userModel)
@@ -42,5 +36,5 @@
         return ChatService.OpenOrCreateFakeDirectMessageChannel(userModel);
     }
 
-    public void Dispose() => ChatService.StateChanged -= StateHasChanged;
+    public void Dispose() => ChatService.ConnectedUsersChanged -= StateHasChanged;
 }

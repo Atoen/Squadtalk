@@ -51,10 +51,13 @@ public class ChatService : IChatService
         _communicationService.AddedToChannel += AddedToChannel;
     }
 
-    public event Action? StateChanged;
-    public event Func<Task>? StateChangedAsync;
+    public event Action? ChannelsListChanged;
+    public event Func<Task>? ChannelsListChangedAsync;
+
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
+
+    public event Action? ConnectedUsersChanged;
 
     public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
     public ChannelModel? CurrentChannel { get; private set; }
@@ -146,7 +149,9 @@ public class ChatService : IChatService
     private async Task AddedToChannel(IChatChannel channel)
     {
         await AddChannel(channel, false);
-        await StateChangedAsync.TryInvoke();
+
+        ChannelsListChanged?.Invoke();
+        await ChannelsListChangedAsync.TryInvoke();
     }
 
     private async Task ChannelsReceived(IEnumerable<IChatChannel> channels)
@@ -156,8 +161,8 @@ public class ChatService : IChatService
             await AddChannel(channel, true);
         }
 
-        StateChanged?.Invoke();
-        await StateChangedAsync.TryInvoke();
+        ChannelsListChanged?.Invoke();
+        await ChannelsListChangedAsync.TryInvoke();
     }
 
     private async Task AddChannel(IChatChannel channel, bool bulk)
@@ -184,12 +189,6 @@ public class ChatService : IChatService
             _directMessageChannels.Add(directMessageChannel);
 
             await CheckIfNeedToUpgradeCurrentFakeChannelToReal(directMessageChannel);
-        }
-
-        if (!bulk)
-        {
-            StateChanged?.Invoke();
-            await StateChangedAsync.TryInvoke();
         }
     }
 
@@ -230,8 +229,7 @@ public class ChatService : IChatService
             await UserConnected(user, true);
         }
 
-        StateChanged?.Invoke();
-        await StateChangedAsync.TryInvoke();
+        ConnectedUsersChanged?.Invoke();
     }
 
     private async Task UserConnected(IChatUser user, bool bulkAdd)
@@ -245,8 +243,7 @@ public class ChatService : IChatService
 
         if (!bulkAdd)
         {
-            StateChanged?.Invoke();
-            await StateChangedAsync.TryInvoke();
+            ConnectedUsersChanged?.Invoke();
         }
     }
 
@@ -266,8 +263,7 @@ public class ChatService : IChatService
             UserModel.Models.First(x => x.Id == user.Id).Status = UserStatus.Offline;
         }
 
-        StateChanged?.Invoke();
-        await StateChangedAsync.TryInvoke();
+        ConnectedUsersChanged?.Invoke();
     }
 
     private async ValueTask<UserId> GetUserIdAsync()

@@ -29,43 +29,46 @@ public class SystemMessageService
         _embedService = embedService;
     }
 
-    public Task SendChannelCreatedMessageAsync(ApplicationUser user, Channel channel)
+    public Task SendChannelCreatedMessageAsync(ApplicationUser user, ChannelId channelId)
     {
-        var content = $"{user.UserName} created this channel";
-        return SendSystemMessageAsync(user, channel, SystemMessageType.ChannelCreated, content);
+        var content = $"{user.UserName} has created this channel.";
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelCreated, content);
     }
 
-    public Task SendChannelNameChangedMessageAsync(ApplicationUser user, Channel channel, string newName)
+    public Task SendChannelNameChangedMessageAsync(ApplicationUser user, ChannelId channelId, string newName)
     {
-        var content = $"{user.UserName} changed this channel name to '{newName}'";
-        return SendSystemMessageAsync(user, channel, SystemMessageType.ChannelNameChanged, content);
+        var content = $"{user.UserName} has changed the channel name to \"{newName}\".";
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameChanged, content);
     }
 
-    public Task SendCallEndedMessageAsync(ApplicationUser user, Channel channel, TimeSpan callDuration)
+    public Task SendCallStartedMessageAsync(ApplicationUser user, ChannelId channelId, string callId)
     {
-        var content = $"{user.UserName} initiated a call that lasted {callDuration}";
-        return SendSystemMessageAsync(user, channel, SystemMessageType.CallEnded, content);
+        var content = $"{user.UserName} has started a call.";
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.CallStarted, content);
     }
 
-    public async Task SendSystemMessageAsync(ApplicationUser user, Channel channel, SystemMessageType messageType, string content)
+    public Task SendCallEndedMessageAsync(ApplicationUser user, ChannelId channelId, TimeSpan callDuration, bool callMissed, string callId)
     {
-        var embedType = messageType switch
-        {
-            SystemMessageType.CallEnded => EmbedType.SystemMessage,
-            _ => EmbedType.InlineSystemMessage
-        };
+        var content = $@"{user.UserName} has started a call that lasted {callDuration:hh\:mm\:ss}.";
+        var messageType = SystemMessageType.CallEnded;
 
+        return SendSystemMessageAsync(user, channelId, messageType, content);
+    }
+
+    public async Task SendSystemMessageAsync(ApplicationUser user, ChannelId channelId, SystemMessageType messageType, string content)
+    {
         var embed = new Embed
         {
-            Type = embedType,
-            [EmbedData.SystemMessageData] = content
+            Type = EmbedType.SystemMessage,
+            [EmbedData.SystemMessageData] = content,
+            [EmbedData.SystemMessageType] = SystemMessageTypeHelper.Format(messageType)
         };
 
-        var message = _messageStorageService.CreateMessage(user, string.Empty, channel.Id)
+        var message = _messageStorageService.CreateMessage(user, string.Empty, channelId)
             .WithEmbed(embed);
 
         await _messageStorageService.StoreMessageAsync(message);
-        await _hubContext.Clients.Group(channel.Id).ReceiveMessage(message.ToDto());
+        await _hubContext.Clients.Group(channelId).ReceiveMessage(message.ToDto());
     }
 
     public async Task SendFileEmbedMessageAsync(ApplicationUser user, ITusFile file, CancellationToken cancellationToken)

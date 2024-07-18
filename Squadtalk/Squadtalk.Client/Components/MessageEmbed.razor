@@ -43,19 +43,14 @@
         <div>Video</div>
         break;
     case EmbedType.SystemMessage:
-        <div class="system-message">@Model[EmbedData.SystemMessageData]</div>
-        break;
-    case EmbedType.InlineSystemMessage:
         <div class="inline-system-message">
-            <Icon Name="IconName.InfoCircle"/>
-            @Model[EmbedData.SystemMessageData]
+            <Icon Name="_systemMessageIconName" Color="_systemMessageIconColor" Size="IconSize.x5"/>
+            <span class="ms-2">@Model[EmbedData.SystemMessageData]</span>
         </div>
         break;
     default:
         throw new ArgumentOutOfRangeException();
 }
-
-@inject ILogger<MessageEmbed> Logger
 
 @code {
     
@@ -81,11 +76,54 @@
         _ => IconName.FileEarmarkFill
     };
 
+    private IconName _systemMessageIconName;
+    private IconColor _systemMessageIconColor;
+    private IconSize _systemMessageIconSize;
+
+    private IconName _lastIcon;
+
     protected override void OnInitialized()
     {
         _fileType = Model.Type == EmbedType.File
             ? FileModel.GetType(Model[EmbedData.FileName])
             : default;
+
+        SetIcon();
+    }
+
+    protected override void OnAfterRender(bool firstRender) => SetIcon();
+
+    private void SetIcon()
+    {
+        if (Model.Type == EmbedType.SystemMessage)
+        {
+            var messageType = SystemMessageTypeHelper.Parse(Model[EmbedData.SystemMessageType]);
+            SetSystemMessageIcon(messageType);
+
+            if (_systemMessageIconName != _lastIcon) StateHasChanged();
+        }
+    }
+
+    private void SetSystemMessageIcon(SystemMessageType messageType)
+    {
+        _lastIcon = _systemMessageIconName;
+
+        _systemMessageIconColor = messageType switch
+        {
+            SystemMessageType.ChannelCreated or SystemMessageType.ChannelNameChanged => IconColor.None,
+            SystemMessageType.CallStarted or SystemMessageType.CallEnded => IconColor.Success,
+            SystemMessageType.CallMissed => IconColor.Danger,
+            _ => IconColor.None
+        };
+
+        _systemMessageIconName = messageType switch
+        {
+            SystemMessageType.ChannelCreated or SystemMessageType.ChannelNameChanged => IconName.InfoCircle,
+            SystemMessageType.CallStarted => IconName.TelephoneOutboundFill,
+            SystemMessageType.CallEnded => IconName.TelephoneFill,
+            SystemMessageType.CallMissed => IconName.TelephoneXFill,
+            _ => IconName.None
+        };
     }
 
     private void ImageLoaded()

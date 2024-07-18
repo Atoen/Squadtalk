@@ -79,7 +79,7 @@ public class MessageModelService : IMessageModelService
             return;
         }
 
-        current.IsSeparate = other.EmbedIsInlineSystemMessage ||
+        current.IsSeparate = other.IsSystemMessage ||
                              current.Author != other.Author ||
                              current.Timestamp.Subtract(other.Timestamp) > MessageSeparationTimespan;
     }

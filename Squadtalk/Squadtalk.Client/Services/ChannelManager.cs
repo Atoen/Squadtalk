@@ -43,7 +43,7 @@ public class ChannelManager : IChannelManager
         _logger = logger;
 
         _textChatService.MessageReceived += MessageReceived;
-        _chatService.StateChangedAsync += UpdateListAsync;
+        _chatService.ChannelsListChangedAsync += UpdateListAsync;
     }
 
     public Task StopHidingChannel(ChannelId channelId)

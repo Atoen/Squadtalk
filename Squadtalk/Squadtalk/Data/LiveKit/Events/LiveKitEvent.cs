@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace Squadtalk.Data.LiveKit.Events;
 
-public abstract record LiveKitEvent(string EventName, string Id, DateTimeOffset CreatedAt)
+public abstract record LiveKitEvent(string EventName, string EventId, DateTimeOffset CreatedAt)
 {
     public const string RoomStarted = "room_started";
     public const string RoomFinished = "room_finished";
@@ -19,7 +19,7 @@ public abstract record LiveKitEvent(string EventName, string Id, DateTimeOffset 
     public static LiveKitEvent Create(JsonObject jsonObject)
     {
         var eventName = jsonObject["event"]!.ToString();
-        var id = jsonObject["id"]!.ToString();
+        var eventId = jsonObject["id"]!.ToString();
 
         var createdAt = jsonObject["createdAt"]!.ToString();
         var timestamp = long.Parse(createdAt);
@@ -27,17 +27,17 @@ public abstract record LiveKitEvent(string EventName, string Id, DateTimeOffset 
 
         return eventName switch
         {
-            RoomStarted => new RoomStartedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            RoomFinished => new RoomFinishedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            ParticipantJoined => new ParticipantJoinedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            ParticipantLeft => new ParticipantLeftEvent(eventName, id, createdAtTimestamp, jsonObject),
-            TrackPublished => new TrackPublishedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            TrackUnpublished => new TrackUnpublishedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            EgressStarted => new EgressStartedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            EgressUpdated => new EgressUpdatedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            EgressEnded => new EgressEndedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            IngressStarted => new IngressStartedEvent(eventName, id, createdAtTimestamp, jsonObject),
-            IngressEnded => new IngressEndedEvent(eventName, id, createdAtTimestamp, jsonObject),
+            RoomStarted => new RoomStartedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            RoomFinished => new RoomFinishedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            ParticipantJoined => new ParticipantJoinedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            ParticipantLeft => new ParticipantLeftEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            TrackPublished => new TrackPublishedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            TrackUnpublished => new TrackUnpublishedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            EgressStarted => new EgressStartedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            EgressUpdated => new EgressUpdatedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            EgressEnded => new EgressEndedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            IngressStarted => new IngressStartedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
+            IngressEnded => new IngressEndedEvent(eventName, eventId, createdAtTimestamp, jsonObject),
             _ => throw new ArgumentException("Invalid event name")
         };
     }

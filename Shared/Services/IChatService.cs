@@ -20,13 +20,13 @@ public interface IChatService
 
     IEnumerable<UserModel> Users { get; }
 
+    event Action? ChannelsListChanged;
+    event Func<Task>? ChannelsListChangedAsync;
+
     event Action? ChannelChanged;
-
-    event Action? StateChanged;
-
-    event Func<Task>? StateChangedAsync;
-    
     event Func<Task>? ChannelChangedAsync;
+
+    event Action? ConnectedUsersChanged;
 
     ChannelModel? GetChannel(ChannelId channelId);
 

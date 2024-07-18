@@ -5,6 +5,5 @@ public enum EmbedType
     File,
     Image,
     Video,
-    SystemMessage,
-    InlineSystemMessage
+    SystemMessage
 }

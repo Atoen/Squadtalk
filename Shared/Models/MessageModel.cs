@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Shared.Enums;
 
 namespace Shared.Models;
@@ -14,5 +15,16 @@ public class MessageModel
     
     public EmbedModel? Embed { get; set; }
 
-    public bool EmbedIsInlineSystemMessage => Embed?.Type == EmbedType.InlineSystemMessage;
+    [MemberNotNullWhen(true, nameof(Embed))]
+    public bool IsSystemMessage => Embed is { Type: EmbedType.SystemMessage };
+
+    private bool _shouldRender = true;
+
+    public bool ShouldRender()
+    {
+        var shouldRender = _shouldRender;
+        _shouldRender = false;
+
+        return shouldRender;
+    }
 }

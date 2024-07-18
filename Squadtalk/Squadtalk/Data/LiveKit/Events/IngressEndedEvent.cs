@@ -4,7 +4,7 @@ namespace Squadtalk.Data.LiveKit.Events;
 
 public record IngressEndedEvent : LiveKitEvent
 {
-    public IngressEndedEvent(string eventName, string id, DateTimeOffset createdAt, JsonObject data)
-        : base(eventName, id, createdAt) { }
+    public IngressEndedEvent(string eventName, string eventId, DateTimeOffset createdAt, JsonObject data)
+        : base(eventName, eventId, createdAt) { }
 
 }

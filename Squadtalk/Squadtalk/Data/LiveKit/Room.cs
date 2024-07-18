@@ -1,14 +1,22 @@
+using Shared.Data.TypedIds;
+
 namespace Squadtalk.Data.LiveKit;
 
-public sealed class Room(string id) : IDisposable
+public sealed class Room(ChannelId channelId) : IDisposable
 {
     private readonly SemaphoreSlim _semaphore = new(1);
+    private readonly Dictionary<string, Participant> _participants = [];
+    private readonly DateTime _startTime = DateTime.Now;
 
-    public string Id { get; } = id;
+    public ChannelId ChannelId { get; } = channelId;
+    public UserId InitiatorId { get; private set; }
+    public IEnumerable<Participant> Participants => _participants.Values;
 
-    public IEnumerable<Participant> Participants => _participants;
+    public bool Active { get; private set; } = true;
+    public bool CallMissed { get; private set; }
+    public TimeSpan Duration { get; private set; }
 
-    private readonly List<Participant> _participants = [];
+    private int _maxParticipants;
 
     public async Task AddParticipantAsync(Participant participant)
     {
@@ -16,7 +24,16 @@ public sealed class Room(string id) : IDisposable
 
         try
         {
-            _participants.Add(participant);
+            if (_participants.Count == 0 && InitiatorId == default)
+            {
+                InitiatorId = participant.Id;
+            }
+
+            _participants.Add(participant.Sid, participant);
+            if (_participants.Count > _maxParticipants)
+            {
+                _maxParticipants = _participants.Count;
+            }
         }
         finally
         {
@@ -30,7 +47,13 @@ public sealed class Room(string id) : IDisposable
 
         try
         {
-            _participants.RemoveAll(x => x.Sid == sid);
+            _participants.Remove(sid);
+            if (_participants.Count == 0)
+            {
+                Active = false;
+                Duration = DateTime.Now - _startTime;
+                CallMissed = _maxParticipants <= 1;
+            }
         }
         finally
         {

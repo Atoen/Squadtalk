@@ -54,7 +54,7 @@ public class ChannelCreator
 
         if (channel.Participants.Count > 2)
         {
-            await _systemMessageService.SendChannelCreatedMessageAsync(creatingUser, channel);
+            await _systemMessageService.SendChannelCreatedMessageAsync(creatingUser, channel.Id);
         }
     }
 

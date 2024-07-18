@@ -56,8 +56,8 @@
 
     protected override void OnInitialized()
     {
-        ChatService.StateChanged += StateHasChanged;
         ChatService.ChannelChanged += StateHasChanged;
+        ChatService.ConnectedUsersChanged += StateHasChanged;
         ChannelManager.ChannelListChanged += StateHasChanged;
 
         _confirmCallback = EventCallback.Factory.Create<ChannelModel>(this, ShowHidingConfirmationAsync);
@@ -67,11 +67,6 @@
 
         _modalParameters.Add(nameof(CreateGroupChatModal.CancelCallback), hideModalCallback);
         _modalParameters.Add(nameof(CreateGroupChatModal.CreateCallback), createGroupCallback);
-    }
-
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        return firstRender ? ChannelManager.UpdateListAsync() : Task.CompletedTask;
     }
 
     private async Task ShowHidingConfirmationAsync(ChannelModel channel)
@@ -90,8 +85,8 @@
 
     public void Dispose()
     {
-        ChatService.StateChanged -= StateHasChanged;
         ChatService.ChannelChanged -= StateHasChanged;
+        ChatService.ConnectedUsersChanged -= StateHasChanged;
         ChannelManager.ChannelListChanged -= StateHasChanged;
     }
 

@@ -6,6 +6,8 @@ namespace Shared.Communication;
 
 public abstract class ChannelModel(ChannelId id)
 {
+    public const string CurrentUserAuthorPrefix = "You";
+
     public abstract string Name { get; }
     
     public string? LastMessage { get; private set; }
@@ -14,12 +16,6 @@ public abstract class ChannelModel(ChannelId id)
     public ChannelId Id { get; } = id;
     
     public ChannelState State { get; } = new();
-
-    public void SetLastMessage(string message, DateTimeOffset timestamp, bool byCurrentUser)
-    {
-        LastMessageTimeStamp = timestamp;
-        LastMessage = byCurrentUser ? $"You: {message}" : message;
-    }
     
     public void SetLastMessage(IChatMessage message, bool byCurrentUser)
     {
@@ -28,9 +24,26 @@ public abstract class ChannelModel(ChannelId id)
             { Type: EmbedType.File } => "Sent file",
             { Type: EmbedType.Image } => "Sent image",
             { Type: EmbedType.Video } => "Sent video",
+            { Type: EmbedType.SystemMessage } => message.Embed.Data[EmbedData.SystemMessageData],
             _ => message.Content
         };
 
-        SetLastMessage(contentToDisplay, message.Timestamp, byCurrentUser);
+        var isSystemMessage = message.Embed?.Type == EmbedType.SystemMessage;
+
+        var authorPrefix = this switch
+        {
+            _ when isSystemMessage => string.Empty,
+            _ when byCurrentUser => CurrentUserAuthorPrefix,
+            DirectMessageChannelModel => string.Empty,
+            _ => message.Author.Username
+        };
+
+        SetLastMessage(contentToDisplay, message.Timestamp, authorPrefix);
+    }
+
+    public void SetLastMessage(string message, DateTimeOffset timestamp, string authorPrefix)
+    {
+        LastMessageTimeStamp = timestamp;
+        LastMessage = string.IsNullOrWhiteSpace(authorPrefix) ? message : $"{authorPrefix}: {message}" ;
     }
 }

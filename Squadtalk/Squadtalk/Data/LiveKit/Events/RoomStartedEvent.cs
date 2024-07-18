@@ -8,8 +8,8 @@ public record RoomStartedEvent : LiveKitEvent
 {
     public RoomDto Room { get; }
 
-    public RoomStartedEvent(string eventName, string id, DateTimeOffset createdAt, JsonObject data)
-        : base(eventName, id, createdAt)
+    public RoomStartedEvent(string eventName, string eventId, DateTimeOffset createdAt, JsonObject data)
+        : base(eventName, eventId, createdAt)
     {
         Room = data["room"].Deserialize<RoomDto>()!;
     }

@@ -19,6 +19,7 @@ public class TextChatService : ITextChatService
     private readonly IChatService _chatService;
     
     private UserId? _userId;
+    private MessageModel? _callStartedMessageModel;
     
     public event Func<ChannelId, Task>? MessageReceived;
     
@@ -40,58 +41,15 @@ public class TextChatService : ITextChatService
         _communicationService.MessageReceived += HandleIncomingMessage;
     }
 
-    private async Task HandleIncomingMessage(IChatMessage messageDto)
-    {
-        var channel = _chatService.GetChannel(messageDto.ChannelId);
-        if (channel is null)
-        {
-            _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
-            return;
-        }
-
-        await UpdateChannelMessageState(channel, messageDto);
-        
-        var state = channel.State;
-        var message = _modelService.CreateModel(messageDto, state, false);
-
-        state.Messages.Add(message);
-        state.LastMessageReceived = message;
-
-        if (state.Cursor == default)
-        {
-            state.Cursor = new TextChannelCursor(DateTimeOffset.UtcNow.UtcTicks);
-        }
-
-        await MessageReceived.TryInvoke(messageDto.ChannelId);
-    }
-
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
         if (_chatService.CurrentChannel is not { Id: var channelId }) return;
 
         await _communicationService.SendMessageAsync(message, channelId, cancellationToken);
 
-        _chatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, true);
+        _chatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, ChannelModel.CurrentUserAuthorPrefix);
     }
 
-    private async Task UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
-    {
-        if (_userId is null)
-        {
-            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-            _userId = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-        }
-
-        var messageByCurrentUser = message.Author.Id == _userId;
-
-        if (_chatService.CurrentChannel != channelModel && !messageByCurrentUser)
-        {
-            channelModel.State.UnreadMessages++;
-        }
-
-        channelModel.SetLastMessage(message, messageByCurrentUser);
-    }
-    
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
         var channel = _chatService.GetChannel(id);
@@ -110,5 +68,42 @@ public class TextChatService : ITextChatService
 
         channelState.Cursor = new TextChannelCursor(page[0].Timestamp.UtcTicks);
         return _modelService.CreateModelPage(page, channelState);
+    }
+
+    private async Task HandleIncomingMessage(IChatMessage messageDto)
+    {
+        var channel = _chatService.GetChannel(messageDto.ChannelId);
+        if (channel is null)
+        {
+            _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
+            return;
+        }
+
+        await UpdateChannelMessageState(channel, messageDto);
+        
+        var channelState = channel.State;
+        var message = _modelService.CreateModel(messageDto, channelState, false);
+
+        channelState.AddMessage(message);
+
+        await MessageReceived.TryInvoke(messageDto.ChannelId);
+    }
+
+    private async Task UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
+    {
+        if (_userId is null)
+        {
+            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+            _userId = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+        }
+
+        var messageByCurrentUser = message.Author.Id == _userId;
+
+        if (_chatService.CurrentChannel != channelModel && !messageByCurrentUser)
+        {
+            channelModel.State.UnreadMessages++;
+        }
+
+        channelModel.SetLastMessage(message, messageByCurrentUser);
     }
 }

@@ -39,7 +39,7 @@ public partial class ChatHub
             return null;
         }
 
-        if (_voiceCallManager.ActiveRooms.All(x => x.Id != channelId))
+        if (!_voiceCallManager.ChannelHasActiveCall(channelId))
         {
             return null;
         }
@@ -56,7 +56,7 @@ public partial class ChatHub
             return;
         }
 
-        var room = _voiceCallManager.ActiveRooms.SingleOrDefault(x => x.Id == channelId);
+        var room = _voiceCallManager.ActiveRooms.SingleOrDefault(x => x.ChannelId == channelId);
         if (room is null)
         {
             return;
@@ -72,6 +72,6 @@ public partial class ChatHub
             return false;
         }
 
-        return UserParticipatesInChannel(user, channelId) && _voiceCallManager.RoomExists(channelId);
+        return UserParticipatesInChannel(user, channelId) && _voiceCallManager.ChannelHasActiveCall(channelId);
     }
 }

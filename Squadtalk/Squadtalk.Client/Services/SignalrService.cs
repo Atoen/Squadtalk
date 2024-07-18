@@ -167,8 +167,8 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         _connection.On<UserDto, ChannelId>("CallDeclined", (user, channelId) =>
             CallDeclined.TryInvoke(user, channelId));
         
-        _connection.On<ChannelId>("CallEnded", callId =>
-            CallEnded.TryInvoke(callId));
+        _connection.On<ChannelId>("CallEnded", channelId =>
+            CallEnded.TryInvoke(channelId));
         
         _connection.On<string>("CallFailed", reason =>
             CallFailed.TryInvoke(reason));

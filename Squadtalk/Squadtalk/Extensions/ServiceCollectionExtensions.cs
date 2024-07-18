@@ -70,6 +70,7 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddSingleton<DnsRecordUpdaterStateManager>();
         serviceCollection.AddTransient<IPService>();
+        serviceCollection.AddTransient<SystemMessageService>();
         serviceCollection.AddScheduler();
 
         serviceCollection.AddSingleton<TusHelper>();
@@ -90,7 +91,9 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ChatConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
         serviceCollection.AddSingleton<LocalMessageNotificationService>();
-        serviceCollection.AddScoped<LiveKitService>();
+
+        serviceCollection.AddTransient<LiveKitEventHandler>();
+        serviceCollection.AddSingleton<LiveKitService>();
 
         serviceCollection.AddScoped<MessageStorageService>();
         serviceCollection.AddScoped<FileStorageService>();
@@ -109,7 +112,6 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
         serviceCollection.AddScoped<UserVolumeManager>();
-        serviceCollection.AddScoped<SystemMessageService>();
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
         return serviceCollection;

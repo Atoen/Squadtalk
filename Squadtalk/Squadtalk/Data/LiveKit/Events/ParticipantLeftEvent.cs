@@ -9,8 +9,8 @@ public record ParticipantLeftEvent : LiveKitEvent
     public RoomDto Room { get; }
     public ParticipantDto Participant { get; }
 
-    public ParticipantLeftEvent(string eventName, string id, DateTimeOffset createdAt, JsonObject data)
-        : base(eventName, id, createdAt)
+    public ParticipantLeftEvent(string eventName, string eventId, DateTimeOffset createdAt, JsonObject data)
+        : base(eventName, eventId, createdAt)
     {
         Room = data["room"].Deserialize<RoomDto>()!;
         Participant = data["participant"].Deserialize<ParticipantDto>()!;
