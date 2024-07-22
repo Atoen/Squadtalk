@@ -71,6 +71,7 @@
 
 @code {
     private string? _errorMessage;
+    private Index _index = default!;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;

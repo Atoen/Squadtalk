@@ -1,10 +1,11 @@
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Localization
 
 @if (Model.IsSystemMessage)
 {
     <div class="system-message-container">
         <MessageEmbed Model="Model.Embed"/>
-        <div class="system-message-date">@_longDate</div>
+        <div class="date" data-date="@_longDate">@_date</div>
     </div>
 }
 else
@@ -15,7 +16,7 @@ else
             <div class="padding"></div>
             <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
             <div class="label">
-                <div>@Model.Author</div>
+                <div class="me-2">@Model.Author</div>
                 <div class="date" data-date="@_longDate">@_date</div>
             </div>
         }
@@ -37,6 +38,8 @@ else
     </div>
 }
 
+@inject ILocalization Localization
+
 @code {
 
     [Parameter, EditorRequired]
@@ -48,9 +51,11 @@ else
 
     protected override void OnInitialized()
     {
-        _date = Model.Timestamp.ToStringFormat();
-        _longDate = Model.Timestamp.ToStringFormat(DateFormatMode.Long);
-        _shortDate = Model.Timestamp.ToStringFormat(DateFormatMode.Short);
+        var table = Localization.TextTable;
+
+        _date = Model.Timestamp.ToStringFormat(table);
+        _longDate = Model.Timestamp.ToStringFormat( table, DateFormatMode.Long);
+        _shortDate = Model.Timestamp.ToStringFormat(table, DateFormatMode.Short);
     }
 
     protected override bool ShouldRender() => Model.ShouldRender();

@@ -1,8 +1,9 @@
 @page "/Messages/Chat"
 
 @using Microsoft.AspNetCore.Authorization
-@using Shared.Communication
+@using Shared.Extensions
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Localization
 
 @implements IDisposable
 
@@ -16,24 +17,24 @@
     <span class="channel-name">@ChannelName</span>
     @if (!IsGlobalChat)
     {
-        if (ChatService.CurrentChannel is GroupChatModel)
+        if (!VoiceChatService.ActiveCallOnCurrentChannel)
         {
-            if (!VoiceChatService.ActiveCallOnCurrentChannel)
-            {
-                <Button @onclick="StartVoiceCall" TooltipTitle="Start call" Style="grid-column: 3"
-                        TooltipPlacement="TooltipPlacement.Bottom">
-                    <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x3"/>
-                </Button>
-            }
-
-            <Button TooltipTitle="Manage channel" Style="grid-column: 4"
+            <Button @onclick="StartVoiceCall" TooltipTitle="@_table.StartCall" Style="grid-column: 3"
                     TooltipPlacement="TooltipPlacement.Bottom">
-                <Icon Name="IconName.GearFill" Size="IconSize.x3"></Icon>
+                <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x3"/>
             </Button>
+        }
+
+        if (ChatService.CurrentChannel is DirectMessageChannelModel)
+        {
+            <img alt="@ChannelName Avatar" src="User.png" class="avatar"/>
         }
         else
         {
-            <img alt="@ChannelName Avatar" src="User.png" class="avatar"/>
+            <Button TooltipTitle="@_table.ManageChannel" Style="grid-column: 4"
+                    TooltipPlacement="TooltipPlacement.Bottom">
+                <Icon Name="IconName.GearFill" Size="IconSize.x3"/>
+            </Button>
         }
     }
 </div>
@@ -64,18 +65,18 @@
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
 @inject ILogger<Chat> Logger
+@inject ILocalization Localization
 
 @code {
 
     private ConfirmDialog _dialog = default!;
+    private TextTable _table = default!;
 
     private readonly ConfirmDialogOptions _options = new()
     {
         IsVerticallyCentered = true,
         Dismissable = true,
-        YesButtonText = "Accept",
         YesButtonColor = ButtonColor.Success,
-        NoButtonText = "Decline",
         NoButtonColor = ButtonColor.Danger,
         Size = DialogSize.Small
     };
@@ -85,6 +86,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _table = Localization.GetTextTable(this);
+
         if (ChatService.CurrentChannel is null)
         {
             NavigationManager.NavigateTo("/Messages");
@@ -100,18 +103,21 @@
     protected override Task OnAfterRenderAsync(bool firstRender) =>
         firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
 
-    private async Task ShowCallPopup(ChannelModel channelModel)
+    private async Task ShowCallPopup(ChannelModel channel)
     {
-        var accept = await _dialog.ShowAsync($"Incoming call from {channelModel.Name}",
-            "Accept call?", _options);
+        _options.YesButtonText = _table.AcceptCall;
+        _options.NoButtonText = _table.DeclineCall;
+
+        var accept = await _dialog.ShowAsync(_table.CallIncomingTemplate.TryFormat(channel.Name),
+            _table.AcceptCallDialogMessage, _options);
 
         if (accept)
         {
-            await VoiceChatService.AcceptCallAsync(channelModel.Id);
+            await VoiceChatService.AcceptCallAsync(channel.Id);
         }
         else
         {
-            await VoiceChatService.DeclineCallAsync(channelModel.Id);
+            await VoiceChatService.DeclineCallAsync(channel.Id);
         }
     }
 

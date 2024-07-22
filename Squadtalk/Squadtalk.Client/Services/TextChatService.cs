@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
-using Shared.Communication;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
@@ -46,8 +45,6 @@ public class TextChatService : ITextChatService
         if (_chatService.CurrentChannel is not { Id: var channelId }) return;
 
         await _communicationService.SendMessageAsync(message, channelId, cancellationToken);
-
-        _chatService.CurrentChannel.SetLastMessage(message, DateTimeOffset.Now, ChannelModel.CurrentUserAuthorPrefix);
     }
 
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
@@ -104,6 +101,6 @@ public class TextChatService : ITextChatService
             channelModel.State.UnreadMessages++;
         }
 
-        channelModel.SetLastMessage(message, messageByCurrentUser);
+        channelModel.SetLastMessage(message);
     }
 }

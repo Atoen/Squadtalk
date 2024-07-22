@@ -11,5 +11,5 @@ public class EmbedDto : IMessageEmbed
 
     [Key(1)] public Dictionary<string, string> Data { get; set; } = default!;
 
-    [IgnoreMember] public string this[string key] => Data[key];
+    public string this[string key] => Data.GetValueOrDefault(key, "-");
 }

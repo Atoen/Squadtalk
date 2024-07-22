@@ -18,25 +18,30 @@ public class UserModel : IEquatable<UserModel>
 
     public static UserModel? Get(UserId userId) => Models.SingleOrDefault(x => x.Id == userId);
 
-    public static UserModel GetOrCreate(IChatUser user)
+    public static UserModel GetOrCreate(string username, UserId userId)
     {
-        if (Models.FirstOrDefault(x => x.Id == user.Id) is { } model)
+        if (Models.FirstOrDefault(x => x.Id == userId) is { } model)
         {
             return model;
         }
-        
+
         var newModel = new UserModel
         {
-            Username = user.Username,
-            Id = user.Id,
+            Username = username,
+            Id = userId,
             Status = UserStatus.Offline,
             Color = "black",
             AvatarUrl = "user.png"
         };
-        
+
         Models.Add(newModel);
 
         return newModel;
+    }
+
+    public static UserModel GetOrCreate(IChatUser user)
+    {
+        return GetOrCreate(user.Username, user.Id);
     }
 
     public bool Equals(UserModel? other) => Id == other?.Id;

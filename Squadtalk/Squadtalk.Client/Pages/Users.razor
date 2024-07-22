@@ -2,6 +2,7 @@
 @using Squadtalk.Client.Layout
 @using Microsoft.AspNetCore.Authorization
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Localization
 
 @attribute [Authorize]
 @implements IDisposable
@@ -14,17 +15,22 @@
     <div class="user-card rounded" @onclick="() => OpenChannel(user)">
         <img alt="@user.Username avatar" src="User.png" class="avatar" />
         <div class="username">@user.Username</div>
-        <div class="status" style="color: @user.StatusColor()">@user.StatusString()</div>
+        <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div>
     </div>
 }
 
 @inject IChatService ChatService
 @inject ICommunicationService CommunicationService
+@inject ILocalization Localization
 
 @code {
-    
+
+    private TextTable _table = default!;
+
     protected override async Task OnInitializedAsync()
     {
+        _table = Localization.GetTextTable(this);
+
         await ChatService.ClearChannelSelectionAsync();
         await CommunicationService.ConnectAsync();
 

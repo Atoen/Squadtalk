@@ -1,11 +1,12 @@
-@using Shared.Communication
+@using Shared.Extensions
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Localization
 
 <ConfirmDialog @ref="_dialog"/>
-<Modal @ref="_createGroupModal" Size="ModalSize.Small" UseStaticBackdrop="true"/>
+<Modal @ref="_createGroupModal" Size="ModalSize.Regular" UseStaticBackdrop="true"/>
 
 <div class="communication-tabs">
-    <Button Color="ButtonColor.Primary" @onclick="DisplayGroupModal" TooltipTitle="Create new group chat">
+    <Button Color="ButtonColor.Primary" @onclick="DisplayGroupModal" TooltipTitle="@_table.CreateChannelTooltip">
         <Icon Name="IconName.PlusSquare" Size="IconSize.x5"/>
     </Button>
 
@@ -37,6 +38,7 @@
 @inject IChatService ChatService
 @inject IChannelManager ChannelManager
 @inject ILogger<ChannelSelector> Logger
+@inject ILocalization Localization
 
 @code {
 
@@ -46,16 +48,18 @@
     private Modal _createGroupModal = default!;
     private readonly Dictionary<string, object> _modalParameters = [];
 
+    private TextTable _table = default!;
+
     private readonly ConfirmDialogOptions _dialogOptions = new()
     {
-        YesButtonText = "Yes",
         YesButtonColor = ButtonColor.Danger,
-        NoButtonText = "Cancel",
         NoButtonColor = ButtonColor.Secondary
     };
 
     protected override void OnInitialized()
     {
+        _table = Localization.GetTextTable(this);
+
         ChatService.ChannelChanged += StateHasChanged;
         ChatService.ConnectedUsersChanged += StateHasChanged;
         ChannelManager.ChannelListChanged += StateHasChanged;
@@ -71,10 +75,13 @@
 
     private async Task ShowHidingConfirmationAsync(ChannelModel channel)
     {
+        _dialogOptions.YesButtonText = _table.DialogYes;
+        _dialogOptions.NoButtonText = _table.DialogCancel;
+
         var confirmation = await _dialog.ShowAsync(
-            title: "Hide Channel",
-            message1: $"Hiding this text channel will make it inaccessible unless you send or receive messages from {channel.Name}.",
-            message2: "Are you sure you want to proceed?",
+            title: _table.HideChannelModalTitle,
+            message1: _table.HideChannelModalBodyTemplate.TryFormat(channel.Name),
+            message2: _table.HideChannelModalProceed,
             confirmDialogOptions: _dialogOptions);
 
         if (confirmation)
@@ -92,7 +99,7 @@
 
     private async Task DisplayGroupModal()
     {
-        await _createGroupModal.ShowAsync<CreateGroupChatModal>("Select users to add", parameters: _modalParameters);
+        await _createGroupModal.ShowAsync<CreateGroupChatModal>(_table.CreateChannelModalTitle, parameters: _modalParameters);
     }
 
     private Task HideGroupModal() => _createGroupModal.HideAsync();

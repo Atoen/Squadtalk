@@ -1,8 +1,7 @@
 using Shared.Data;
 using Shared.Enums;
-using Shared.Models;
 
-namespace Shared.Communication;
+namespace Shared.Models;
 
 public class ChannelState
 {

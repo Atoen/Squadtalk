@@ -29,6 +29,7 @@
     border: 2px solid black;
     margin-right: 10px;
     grid-column: 1;
+    grid-row: 1;
 }
 
 .channel-name {

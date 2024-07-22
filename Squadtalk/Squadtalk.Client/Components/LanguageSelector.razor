@@ -1,0 +1,15 @@
+@inherits LocalizedComponent
+
+<div class="d-flex flex-row">
+    <div class="align-self-center me-2">@Table.SelectLanguage</div>
+    <Dropdown>
+        <DropdownToggleButton Color="ButtonColor.Secondary">@LocalizationService.SelectedLanguage</DropdownToggleButton>
+        <DropdownMenu>
+            <DropdownItem @onclick="() => LocalizationService.SelectLanguage(SupportedLanguage.English)">English</DropdownItem>
+            <DropdownItem @onclick="() => LocalizationService.SelectLanguage(SupportedLanguage.Polish)">Polish</DropdownItem>
+            <DropdownItem @onclick="() => LocalizationService.SelectLanguage(SupportedLanguage.German)">German</DropdownItem>
+        </DropdownMenu>
+    </Dropdown>
+</div>
+
+@inject ILocalizationService LocalizationService

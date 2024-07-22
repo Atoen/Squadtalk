@@ -1,13 +1,14 @@
 @using Squadtalk.Client.Extensions
 @using Microsoft.AspNetCore.Components.Rendering
 @using Shared.Data.TypedIds
+@using Squadtalk.Client.Localization
 
 @if (ChatService.CurrentChannel is {State.ReachedEnd: true} channel)
 {
     <div class="channel-start">
         <div class="title">@channel.Name</div>
         <div>
-            This is the beginning of chat with <span class="fw-bold d-inline">@channel.Name</span>.
+            @_table.ChannelBeginning <span class="fw-bold d-inline">@channel.Name</span>.
         </div>
     </div>
 }
@@ -33,9 +34,12 @@
 @inject IJSRuntime JsRuntime
 @inject IChatService ChatService
 @inject ITextChatService TextChatService
+@inject ILocalization Localization
 @inject ILogger<InfiniteScrolling> Logger
 
 @code {
+
+    private TextTable _table = default!;
 
     private ElementReference _lastItemIndicator;
     private DotNetObjectReference<InfiniteScrolling>? _currentComponentReference;
@@ -56,6 +60,8 @@
 
     protected override void OnInitialized()
     {
+        _table = Localization.GetTextTable(this);
+
         TextChatService.MessageReceived += UpdateOnTextChat;
         ChatService.ChannelChangedAsync += ChannelChangedAsync;
     }

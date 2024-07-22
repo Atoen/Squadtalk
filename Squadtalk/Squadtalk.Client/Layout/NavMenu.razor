@@ -1,13 +1,12 @@
-﻿@implements IDisposable
-
-@inject NavigationManager NavigationManager
+﻿@using Squadtalk.Client.Localization
+@implements IDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid" style="z-index: 1">
-        <a class="navbar-brand" href="">Squadtalk (@RenderMode)</a>
+    <div class="container-fluid d-flex justify-content-center" style="z-index: 1">
+        <a class="navbar-brand" href="">Squadtalk</a>
     </div>
     
-    @if (RenderMode == ServerSide)
+    @if (!OperatingSystem.IsBrowser())
     {
         <div class="progress-bar"></div>
     }
@@ -25,25 +24,25 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="Messages">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Messages
+                <Icon Name="IconName.ChatLeftTextFill" Size="IconSize.x4" Class="mx-2"/> @_textTable.Messages
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <Icon Name="IconName.HouseFill" Size="IconSize.x4" Class="mx-2"/> @_textTable.Home
             </NavLink>
         </div>
         
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="Canvas">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Canvas
+                <Icon Name="IconName.PaletteFill" Size="IconSize.x4" Class="mx-2"/> @_textTable.Canvas
             </NavLink>
         </div>
-        
+
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="ScreenShare">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Screen Share
+            <NavLink class="nav-link" href="Settings">
+                <Icon Name="IconName.List" Size="IconSize.x4" Class="mx-2"/> @_textTable.Settings
             </NavLink>
         </div>
 
@@ -51,7 +50,7 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                        <Icon Name="IconName.PersonFill" Size="IconSize.x4" Class="mx-2"/> @context.User.Identity?.Name
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
@@ -59,7 +58,7 @@
                         <AntiforgeryToken/>
                         <input type="hidden" name="ReturnUrl" value=""/>
                         <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                            <Icon Name="IconName.ArrowBarLeft" Size="IconSize.x4" Class="mx-2"/> @_textTable.Logout
                         </button>
                     </form>
                 </div>
@@ -67,12 +66,12 @@
             <NotAuthorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                        <Icon Name="IconName.PersonAdd" Size="IconSize.x4" Class="mx-2"/> @_textTable.Register
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                        <Icon Name="IconName.PersonBadge" Size="IconSize.x4" Class="mx-2"/> @_textTable.Login
                     </NavLink>
                 </div>
             </NotAuthorized>
@@ -80,17 +79,19 @@
     </nav>
 </div>
 
-@code {
+@inject NavigationManager NavigationManager
+@inject ILocalization Localization
 
-    private const string ClientSide = "Client Side";
-    private const string ServerSide = "Server Side";
+@code {
     
     private string? _currentUrl;
-    
-    private string RenderMode => OperatingSystem.IsBrowser() ? ClientSide : ServerSide;
+
+    private TextTable _textTable = default!;
     
     protected override void OnInitialized()
     {
+        _textTable = Localization.GetTextTable(this);
+
         _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
     }
@@ -106,4 +107,3 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-

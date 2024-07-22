@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
-using Shared.Communication;
 using Shared.Data.JsonConverters;
 using Shared.Data.TypedIds;
 using Shared.Models;

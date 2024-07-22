@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Shared.Communication;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
@@ -9,6 +8,7 @@ using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Extensions;
+using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Services;
 
@@ -17,6 +17,7 @@ public class ChatService : IChatService
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly CreateTextChannelRequestHandler _createTextChannelRequestHandler;
     private readonly ICommunicationService _communicationService;
+    private readonly ILocalization _localization;
     private readonly ILogger<ChatService> _logger;
     private readonly NavigationManager _navigationManager;
 
@@ -35,12 +36,14 @@ public class ChatService : IChatService
         AuthenticationStateProvider authenticationStateProvider,
         CreateTextChannelRequestHandler createTextChannelRequestHandler,
         ICommunicationService communicationService,
+        ILocalization localization,
         ILogger<ChatService> logger,
         NavigationManager navigationManager)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _createTextChannelRequestHandler = createTextChannelRequestHandler;
         _communicationService = communicationService;
+        _localization = localization;
         _navigationManager = navigationManager;
         _logger = logger;
 
@@ -218,7 +221,7 @@ public class ChatService : IChatService
             _ => throw new InvalidOperationException()
         };
 
-        return model.WithLastMessage(channel.LastMessage, lastMessageIsByCurrentUser);
+        return model.WithLastMessage(channel.LastMessage, _localization.TextTable, lastMessageIsByCurrentUser);
     }
 
     private async Task ReceivedConnectedUsers(IEnumerable<IChatUser> users)

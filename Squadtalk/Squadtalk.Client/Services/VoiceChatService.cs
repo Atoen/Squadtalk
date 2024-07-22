@@ -4,7 +4,6 @@ using FluentResults;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Shared;
-using Shared.Communication;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs;

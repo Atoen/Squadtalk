@@ -1,6 +1,6 @@
 using Blazored.LocalStorage;
-using Shared.Communication;
 using Shared.Data.TypedIds;
+using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;
@@ -76,7 +76,7 @@ public class ChannelManager : IChannelManager
         if (!_shouldSortChannels) return;
         _shouldSortChannels = false;
 
-        _visibleChannels = _visibleChannels.OrderByDescending(x => x.LastMessageTimeStamp).ToList();
+        _visibleChannels = _visibleChannels.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
 
         _logger.LogInformation("Channels sorted");
     }

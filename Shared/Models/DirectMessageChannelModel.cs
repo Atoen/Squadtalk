@@ -1,7 +1,6 @@
 using Shared.Data.TypedIds;
-using Shared.Models;
 
-namespace Shared.Communication;
+namespace Shared.Models;
 
 public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelModel(id)
 {

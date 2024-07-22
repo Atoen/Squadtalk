@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Polly.Registry;
 using Shared.Services;
+using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
 using Squadtalk.Data.Entities;
 using Squadtalk.Services;
@@ -113,6 +114,9 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<TusHelper>();
         serviceCollection.AddScoped<UserVolumeManager>();
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
+        serviceCollection.AddScoped<ILocalizationService, ServerLocalizationService>();
+        serviceCollection.AddScoped<ILocalization, Localization>();
+        serviceCollection.AddScoped<IUserService, ServerUserService>();
 
         return serviceCollection;
     }

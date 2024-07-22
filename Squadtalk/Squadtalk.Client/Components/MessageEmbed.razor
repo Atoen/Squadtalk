@@ -1,4 +1,6 @@
 @using Shared.Extensions
+@using Squadtalk.Client.Localization
+@using Shared.Models
 @using Shared
 @if (_showOverlay)
 {
@@ -43,27 +45,27 @@
         <div>Video</div>
         break;
     case EmbedType.SystemMessage:
-        <div class="inline-system-message">
+        <div class="system-message">
             <Icon Name="_systemMessageIconName" Color="_systemMessageIconColor" Size="IconSize.x5"/>
-            <span class="ms-2">@Model[EmbedData.SystemMessageData]</span>
+            <span class="ms-2">@GetSystemMessageContent()</span>
         </div>
         break;
     default:
         throw new ArgumentOutOfRangeException();
 }
 
+@inject ILocalization Localization
+
 @code {
     
     [Parameter, EditorRequired]
     public required EmbedModel Model { get; set; }
-    
     private string _imageDisplay = "none";
 
     private bool _imageLoaded;
     private bool _showOverlay;
 
     private FileType _fileType;
-
     private IconName FileIconName => _fileType switch
     {
         FileType.Pdf => IconName.FileEarmarkPdfFill,
@@ -79,6 +81,7 @@
     private IconName _systemMessageIconName;
     private IconColor _systemMessageIconColor;
     private IconSize _systemMessageIconSize;
+    private SystemMessageType _systemMessageType;
 
     private IconName _lastIcon;
 
@@ -95,13 +98,12 @@
 
     private void SetIcon()
     {
-        if (Model.Type == EmbedType.SystemMessage)
-        {
-            var messageType = SystemMessageTypeHelper.Parse(Model[EmbedData.SystemMessageType]);
-            SetSystemMessageIcon(messageType);
+        if (Model.Type != EmbedType.SystemMessage) return;
 
-            if (_systemMessageIconName != _lastIcon) StateHasChanged();
-        }
+        _systemMessageType = SystemMessageTypeHelper.Parse(Model[EmbedData.SystemMessageType]);
+        SetSystemMessageIcon(_systemMessageType);
+
+        if (_systemMessageIconName != _lastIcon) StateHasChanged();
     }
 
     private void SetSystemMessageIcon(SystemMessageType messageType)
@@ -124,6 +126,47 @@
             SystemMessageType.CallMissed => IconName.TelephoneXFill,
             _ => IconName.None
         };
+    }
+
+    private string GetSystemMessageContent()
+    {
+        if (Model.Type != EmbedType.SystemMessage) return string.Empty;
+
+        var table = Localization.TextTable;
+
+        switch (_systemMessageType)
+        {
+            case SystemMessageType.ChannelCreated:
+            {
+                var username = Model[EmbedData.SystemMessageDataUsername];
+                return table.ChannelCreatedTemplate.TryFormat(username);
+            }
+            case SystemMessageType.ChannelNameChanged:
+            {
+                var username = Model[EmbedData.SystemMessageDataUsername];
+                var newName = Model[EmbedData.SystemMessageDataChannelName];
+
+                return table.ChannelNameChangedTemplate.TryFormat(username, newName);
+            }
+            case SystemMessageType.CallStarted:
+            {
+                var username = Model[EmbedData.SystemMessageDataUsername];
+                return table.CallStartedTemplate.TryFormat(username);
+            }
+            case SystemMessageType.CallEnded:
+            {
+                var username = Model[EmbedData.SystemMessageDataUsername];
+                var duration = Model[EmbedData.SystemMessageDataDuration];
+
+                return table.CallEndedTemplate.TryFormat(username, duration);
+            }
+            case SystemMessageType.CallMissed:
+                return "CallMissed";
+
+            case SystemMessageType.None:
+            default:
+                return string.Empty;
+        }
     }
 
     private void ImageLoaded()

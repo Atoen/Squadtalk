@@ -1,7 +1,20 @@
 ﻿@page "/"
+@using Squadtalk.Client.Localization
 
 <PageTitle>Squadtalk | Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>@_textTable.HelloWorld</h1>
 
-Welcome to your new app.
+@_textTable.WelcomeToApp
+
+@inject ILocalization Localization
+
+@code {
+
+    private TextTable _textTable = default!;
+
+    protected override void OnInitialized()
+    {
+        _textTable = Localization.GetTextTable(this);
+    }
+}

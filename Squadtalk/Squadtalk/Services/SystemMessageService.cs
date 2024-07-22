@@ -31,38 +31,64 @@ public class SystemMessageService
 
     public Task SendChannelCreatedMessageAsync(ApplicationUser user, ChannelId channelId)
     {
-        var content = $"{user.UserName} has created this channel.";
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelCreated, content);
+        var data = new Dictionary<string, string>
+        {
+            [EmbedData.SystemMessageDataUsername] = user.UserName!
+        };
+
+        // var content = $"{user.UserName} has created this channel.";
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelCreated, data);
     }
 
     public Task SendChannelNameChangedMessageAsync(ApplicationUser user, ChannelId channelId, string newName)
     {
-        var content = $"{user.UserName} has changed the channel name to \"{newName}\".";
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameChanged, content);
+        var data = new Dictionary<string, string>
+        {
+            [EmbedData.SystemMessageDataUsername] = user.UserName!,
+            [EmbedData.SystemMessageDataChannelName] = newName
+        };
+
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameChanged, data);
     }
 
     public Task SendCallStartedMessageAsync(ApplicationUser user, ChannelId channelId, string callId)
     {
-        var content = $"{user.UserName} has started a call.";
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.CallStarted, content);
+        var data = new Dictionary<string, string>
+        {
+            [EmbedData.SystemMessageDataUsername] = user.UserName!,
+            [EmbedData.SystemMessageDataCallId] = callId
+        };
+
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.CallStarted, data);
     }
 
     public Task SendCallEndedMessageAsync(ApplicationUser user, ChannelId channelId, TimeSpan callDuration, bool callMissed, string callId)
     {
-        var content = $@"{user.UserName} has started a call that lasted {callDuration:hh\:mm\:ss}.";
-        var messageType = SystemMessageType.CallEnded;
+        // var content = $@"{user.UserName} has started a call that lasted {callDuration:hh\:mm\:ss}.";
+        // var messageType = SystemMessageType.CallEnded;
 
-        return SendSystemMessageAsync(user, channelId, messageType, content);
+        var data = new Dictionary<string, string>
+        {
+            [EmbedData.SystemMessageDataUsername] = user.UserName!,
+            [EmbedData.SystemMessageDataCallId] = callId,
+            [EmbedData.SystemMessageDataDuration] = callDuration.ToString(@"hh\:mm\:ss")
+        };
+
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.CallEnded, data);
     }
 
-    public async Task SendSystemMessageAsync(ApplicationUser user, ChannelId channelId, SystemMessageType messageType, string content)
+    public async Task SendSystemMessageAsync(ApplicationUser user, ChannelId channelId, SystemMessageType messageType, Dictionary<string, string> data)
     {
         var embed = new Embed
         {
             Type = EmbedType.SystemMessage,
-            [EmbedData.SystemMessageData] = content,
-            [EmbedData.SystemMessageType] = SystemMessageTypeHelper.Format(messageType)
+            [EmbedData.SystemMessageType] = SystemMessageTypeHelper.Format(messageType),
         };
+
+        foreach (var (key, value) in data)
+        {
+            embed[key] = value;
+        }
 
         var message = _messageStorageService.CreateMessage(user, string.Empty, channelId)
             .WithEmbed(embed);

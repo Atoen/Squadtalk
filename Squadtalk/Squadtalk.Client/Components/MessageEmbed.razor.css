@@ -87,10 +87,6 @@ a:hover {
 }
 
 .system-message {
-
-}
-
-.inline-system-message {
     display: flex;
     gap: 5px;
     align-items: inherit;

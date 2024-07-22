@@ -1,16 +1,17 @@
 using Shared.Enums;
 using Shared.Models;
+using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Extensions;
 
 public static class UserModelExtensions
 {
-    public static string StatusString(this UserModel model) => model.Status switch
+    public static string StatusString(this UserModel model, TextTable textTable) => model.Status switch
     {
-        UserStatus.Online => "Online",
-        UserStatus.Away => "Away",
-        UserStatus.DoNotDisturb => "Do not disturb",
-        UserStatus.Offline => "Offline",
+        UserStatus.Online => textTable.Online,
+        UserStatus.Away => textTable.Away,
+        UserStatus.DoNotDisturb => textTable.DoNotDisturb,
+        UserStatus.Offline => textTable.Offline,
         _ => throw new ArgumentOutOfRangeException(nameof(model))
     };
     

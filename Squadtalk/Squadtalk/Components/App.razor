@@ -25,10 +25,28 @@
     <script src="_content/Blazor.Bootstrap/blazor.bootstrap.js"></script>
     <script src="js/tus.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
-    @* <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script> *@
-    @* <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script> *@
-    @* <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> *@
-    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <script>
+        window.getPreferredLanguage = () => {
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+
+            const languageFromCookie = getCookie('UserLanguage');
+            if (languageFromCookie) {
+                return languageFromCookie;
+            }
+
+            return navigator.language || navigator.userLanguage;
+        };
+
+        window.savePreferredLanguage = (language) => {
+            document.cookie = `UserLanguage=${language}; SameSite=Strict`;
+
+            console.log(document.cookie);
+        }
+    </script>
 </body>
 
 </html>
@@ -36,9 +54,12 @@
 @code {
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private bool ServerSide { get; set; }
     
     private bool IsOnAccountManagePage => HttpContext.Request.Path.StartsWithSegments("/Account");
-    private bool ClientRequestedServerSide => HttpContext.Request.Host.Host.StartsWith("server");
+    private bool ClientRequestedServerSide => ServerSide;
 
     private IComponentRenderMode? RenderModeForPage => (IsOnAccountManagePage, ClientRequestedServerSide) switch
     {

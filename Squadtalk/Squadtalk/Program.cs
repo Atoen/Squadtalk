@@ -2,7 +2,6 @@ using System.Net;
 using Coravel;
 using Coravel.Scheduling.Schedule.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
@@ -55,8 +54,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddServerServices(builder.Environment);
-builder.Services.AddScoped<IMyCircuit, MyCircuit>();
-builder.Services.AddScoped<CircuitHandler, MyCircuitHandler>();
+builder.Services.AddHttpContextAccessor();
+// builder.Services.AddScoped<IMyCircuit, MyCircuit>();
+// builder.Services.AddScoped<CircuitHandler, MyCircuitHandler>();
+// builder.Services.add
 
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.Configuration.GetString("Rest:BasePath"))
@@ -91,6 +92,8 @@ app.Services.UseScheduler(scheduler =>
 );
 
 app.UseCors(corsPolicy);
+
+app.UseLocalization();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

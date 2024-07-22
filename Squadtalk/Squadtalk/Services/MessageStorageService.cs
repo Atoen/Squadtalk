@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Shared.Communication;
 using Shared.Data.TypedIds;
+using Shared.Models;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;

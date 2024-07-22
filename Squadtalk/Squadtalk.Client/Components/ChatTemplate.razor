@@ -1,5 +1,9 @@
-@using Shared.Communication
+@using Shared
+@using Shared.Data
+@using Shared.Extensions
+@using Shared.Models
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Localization
 
 <div class="text-chat rounded" @onclick="OpenChat">
     @if (Model is GroupChatModel)
@@ -14,9 +18,9 @@
     <div class="username">@Model.Name</div>
     @if (Model.LastMessage is { } message)
     {
-        <div class="last-message">@message</div>
+        <div class="last-message">@FormatLastMessage(message)</div>
         <div class="separator">|</div>
-        <div class="last-message-time">@Model.LastMessageTimeStamp.ToStringFormat(DateFormatMode.ChannelStatus)</div>
+        <div class="last-message-time">@message.Timestamp.ToStringFormat(Table, DateFormatMode.ChannelStatus)</div>
     }
 
     @if (Model.State is { UnreadMessages: > 0 and var unread })
@@ -32,7 +36,10 @@
     </div>
 </div>
 
+@inherits LocalizedComponent
+
 @inject IChatService ChatService
+@inject IUserService UserService
 
 @code {
     [Parameter, EditorRequired]
@@ -46,4 +53,70 @@
     private Task Hide() => HideCallback.InvokeAsync(Model);
 
     private string GetBorderStyle(UserModel user) => $"border-color: {user.StatusColor()};";
+
+    private string FormatLastMessage(IChatMessage message)
+    {
+        var messageByCurrentUser = message.Author.Id == UserService.UserModel?.Id;
+        var isDm = Model is DirectMessageChannelModel;
+
+        var authorPrefix = (messageByCurrentUser, isDm) switch
+        {
+            (true, _) => Table.You,
+            (false, true) => string.Empty,
+            _ => message.Author.Username
+        };
+
+        var messageContent = (messageByCurrentUser, message.Embed?.Type) switch
+        {
+            { Type: EmbedType.File } => $"{GetEmbedPrefix(messageByCurrentUser, Table)} {Table.File}",
+            { Type: EmbedType.Image } => $"{GetEmbedPrefix(messageByCurrentUser, Table)} {Table.Image}",
+            { Type: EmbedType.Video } => $"{GetEmbedPrefix(messageByCurrentUser, Table)} {Table.Video}",
+            { Type: EmbedType.SystemMessage } => FormatSystemMessage(message.Embed, messageByCurrentUser),
+            _ => message.Content
+        };
+
+        var useAuthorPrefix = !string.IsNullOrEmpty(authorPrefix) && message.Embed?.Type != EmbedType.SystemMessage;
+
+        return useAuthorPrefix ? $"{authorPrefix}: {messageContent}": messageContent;
+
+        static string GetEmbedPrefix(bool messageByCurrentUser, TextTable table) =>
+            messageByCurrentUser ? table.MessageYouSentInfo : table.MessageSentInfo;
+    }
+
+    private string FormatSystemMessage(IMessageEmbed embed, bool byCurrentUser)
+    {
+        var systemMessageType = SystemMessageTypeHelper.Parse(embed[EmbedData.SystemMessageType]);
+
+        switch (systemMessageType)
+        {
+            case SystemMessageType.ChannelCreated:
+            {
+                if (byCurrentUser) return Table.YouCreatedChannel;
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return Table.UserCreatedChannelTemplate.TryFormat(username);
+            }
+            case SystemMessageType.ChannelNameChanged:
+            {
+                var newName = embed[EmbedData.SystemMessageDataChannelName];
+                if (byCurrentUser) return Table.YouChangedChannelNameTemplate.TryFormat(newName);
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return Table.UserChangedChannelNameTemplate.TryFormat(username, newName);
+            }
+            case SystemMessageType.CallStarted or SystemMessageType.CallEnded:
+            {
+                if (byCurrentUser) return Table.YouCalled;
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return Table.UserCalledTemplate.TryFormat(username);
+            }
+            case SystemMessageType.CallMissed:
+                return "CallMissed";
+
+            case SystemMessageType.None:
+            default:
+                return string.Empty;
+        }
+    }
 }

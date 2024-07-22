@@ -1,6 +1,5 @@
 using BlazorBootstrap;
 using Microsoft.JSInterop;
-using Shared.Communication;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Extensions;

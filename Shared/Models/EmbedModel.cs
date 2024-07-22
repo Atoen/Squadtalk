@@ -9,7 +9,7 @@ public class EmbedModel
 
     public string this[string key]
     {
-        get => Data[key];
+        get => Data.GetValueOrDefault(key, "-");
         set => Data[key] = value;
     }
 }

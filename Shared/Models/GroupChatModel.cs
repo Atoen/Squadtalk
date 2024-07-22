@@ -1,7 +1,6 @@
 using Shared.Data.TypedIds;
-using Shared.Models;
 
-namespace Shared.Communication;
+namespace Shared.Models;
 
 public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? name = null) : ChannelModel(id)
 {

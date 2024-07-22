@@ -1,5 +1,3 @@
-@using Shared.Communication
-
 <div class="info rounded" id="uploadInfo">
     
     @if (!FileTransferService.IsQueueEmpty)
@@ -27,7 +25,6 @@
         <div class="speed" id="uploadSpeed"></div>
     </div>
 </div>
-
 @implements IDisposable 
 @inject IFileTransferService FileTransferService
 @inject IChatService ChatService

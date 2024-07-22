@@ -3,8 +3,12 @@ namespace Shared;
 public static class EmbedData
 {
     public const string ChannelId = "channel_id";
-    public const string SystemMessageData = "system";
+
     public const string SystemMessageType = "system_type";
+    public const string SystemMessageDataUsername = "user";
+    public const string SystemMessageDataDuration = "duration";
+    public const string SystemMessageDataCallId = "call_id";
+    public const string SystemMessageDataChannelName = "channel_name";
 
     public const string FileName = "file_name";
     public const string ContentType = "content_type";
@@ -14,9 +18,9 @@ public static class EmbedData
     public const string PreviewUrl = "preview_url";
     public const string Url = "url";
 
-    public const string SystemMessageChannelCreated = "created";
-    public const string SystemMessageChannelNameChanged = "changed";
-    public const string SystemMessageCallStarted = "started";
-    public const string SystemMessageCallEnded = "ended";
-    public const string SystemMessageCallMissed = "missed";
+    public const string SystemMessageTypeChannelCreated = "created";
+    public const string SystemMessageTypeChannelNameChanged = "changed";
+    public const string SystemMessageTypeCallStarted = "started";
+    public const string SystemMessageTypeCallEnded = "ended";
+    public const string SystemMessageTypeCallMissed = "missed";
 }

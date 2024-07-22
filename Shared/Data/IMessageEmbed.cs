@@ -7,4 +7,10 @@ public interface IMessageEmbed
     EmbedType Type { get; }
     
     Dictionary<string, string> Data { get; }
+
+    public string this[string key]
+    {
+        get => Data.GetValueOrDefault(key, "-");
+        set => Data[key] = value;
+    }
 }
