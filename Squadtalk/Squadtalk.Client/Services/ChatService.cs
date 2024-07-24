@@ -52,10 +52,12 @@ public class ChatService : IChatService
         _communicationService.ConnectedUsersReceived += ReceivedConnectedUsers;
         _communicationService.ChannelsReceived += ChannelsReceived;
         _communicationService.AddedToChannel += AddedToChannel;
+        _communicationService.ChannelNameChanged += OnChannelNameChanged;
     }
 
     public event Action? ChannelsListChanged;
     public event Func<Task>? ChannelsListChangedAsync;
+    public event Action<GroupChatModel>? ChannelNameChanged;
 
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
@@ -121,6 +123,11 @@ public class ChatService : IChatService
         {
             await ChangeChannelAsync(openedChannel);
         }
+    }
+
+    public Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string newName)
+    {
+        return _communicationService.ChangeChannelNameAsync(newName, groupChat.Id);
     }
 
     private Task ChangeChannelAsync(ChannelModel? channel)
@@ -267,6 +274,27 @@ public class ChatService : IChatService
         }
 
         ConnectedUsersChanged?.Invoke();
+    }
+
+    private async Task OnChannelNameChanged(ChannelId channelId, string channelName)
+    {
+        if (!_allChannels.TryGetValue(channelId, out var channel))
+        {
+            _logger.LogInformation("Non-existent channel name changed");
+            return;
+        }
+
+        if (channel is not GroupChatModel groupChat)
+        {
+            return;
+        }
+
+        groupChat.SetName(channelName);
+
+        ChannelNameChanged?.Invoke(groupChat);
+
+        ChannelsListChanged?.Invoke();
+        await ChannelsListChangedAsync.TryInvoke();
     }
 
     private async ValueTask<UserId> GetUserIdAsync()

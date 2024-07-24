@@ -1,37 +1,37 @@
-@using Shared.Extensions
 @using Squadtalk.Client.Extensions
-@using Squadtalk.Client.Localization
 
 <ConfirmDialog @ref="_dialog"/>
 <Modal @ref="_createGroupModal" Size="ModalSize.Regular" UseStaticBackdrop="true"/>
 
-<div class="communication-tabs">
-    <Button Color="ButtonColor.Primary" @onclick="DisplayGroupModal" TooltipTitle="@_table.CreateChannelTooltip">
-        <Icon Name="IconName.PlusSquare" Size="IconSize.x5"/>
-    </Button>
+<div class="channels">
+    <div class="top">
+        <div class="global rounded" @onclick="() => ChatService.OpenChannelAsync(ChatService.GlobalChat)">
+            <Icon Name="IconName.Globe2" Size="IconSize.x2" />
+            <span class>Global</span>
 
-    <div class="global rounded" @onclick="() => ChatService.OpenChannelAsync(ChatService.GlobalChat)">
-        <Icon Name="IconName.Globe2" Size="IconSize.x2"/>
-        <span class>Global</span>
+            @if (ChatService.CurrentChannel.IsGlobal() &&
+                 ChatService.GlobalChat.State is { UnreadMessages: > 0 and var unread })
+            {
+                <Badge Color="BadgeColor.Danger"
+                       Position="Position.Absolute"
+                       Placement="BadgePlacement.TopRight"
+                       IndicatorType="BadgeIndicatorType.RoundedPill"
+                       VisuallyHiddenText="unread messages">
+                    @unread
+                </Badge>
+            }
+        </div>
 
-        @if (ChatService.CurrentChannel.IsGlobal() &&
-             ChatService.GlobalChat.State is { UnreadMessages: > 0 and var unread } )
-        {
-            <Badge Color="BadgeColor.Danger"
-                   Position="Position.Absolute"
-                   Placement="BadgePlacement.TopRight"
-                   IndicatorType="BadgeIndicatorType.RoundedPill"
-                   VisuallyHiddenText="unread messages">
-                @unread
-            </Badge>
-        }
+        <Button Color="ButtonColor.Primary" @onclick="DisplayGroupModal" TooltipTitle="@_table.CreateChannelTooltip"
+                TooltipColor="TooltipColor.Dark">
+            <Icon Name="IconName.PlusSquare" Size="IconSize.x5"/>
+        </Button>
     </div>
 
     @foreach (var channel in ChannelManager.VisibleChannels)
     {
         <ChatTemplate Model="channel" HideCallback="_confirmCallback"/>
     }
-
 </div>
 
 @implements IDisposable

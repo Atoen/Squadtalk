@@ -1,3 +1,4 @@
+using Shared.Data.TypedIds;
 using Shared.DTOs;
 
 namespace Squadtalk.Hubs;
@@ -15,4 +16,6 @@ public interface ITextChatClient
     Task GetChannels(IList<ChannelDto> channelDtos);
 
     Task AddedToChannel(ChannelDto channelDto);
+
+    Task ChannelNameChanged(ChannelId channelId, string name);
 }

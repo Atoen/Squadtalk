@@ -72,7 +72,7 @@ public partial class ChatHub : Hub<IChatClient>
 
     private bool UserParticipatesInChannel(ApplicationUser user, ChannelId id)
     {
-        return user.Channels.Exists(x => x.Id == id);
+        return id == GroupChatModel.GlobalChatId || user.Channels.Exists(x => x.Id == id);
     }
     
     private async Task AddUserToPrivateChannelsAsync(UserDto user, List<Channel> channels, bool isUniqueUserConnection)
@@ -88,12 +88,32 @@ public partial class ChatHub : Hub<IChatClient>
         }
     }
 
+    public async Task<bool> ChangeGroupName(string newName, ChannelId channelId, SystemMessageService systemMessageService)
+    {
+        var user = await GetUserWithChannelsAsync(Context.User);
+        if (user is null) return false;
+
+        if (!UserParticipatesInChannel(user, channelId)) return false;
+
+        var channel = await _dbContext.Channels.SingleOrDefaultAsync(x => x.Id == channelId);
+        if (channel is null) return false;
+
+        channel.Name = newName;
+
+        await _dbContext.SaveChangesAsync();
+
+        await TextGroup(channelId).ChannelNameChanged(channelId, newName);
+        await systemMessageService.SendChannelNameChangedMessageAsync(user, channelId, newName);
+
+        return true;
+    }
+
     public async Task SendMessage(string messageContent, ChannelId id, MessageStorageService messageStorageService)
     {
         var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return;
 
-        if (id != GroupChatModel.GlobalChatId && !UserParticipatesInChannel(user, id))
+        if (!UserParticipatesInChannel(user, id))
         {
             return;
         }

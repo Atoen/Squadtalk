@@ -8,11 +8,11 @@
     padding: 5px;
     grid-template-rows: auto auto;
     grid-template-columns: auto auto auto 1fr;
-    margin-right: 20px;
-    margin-top: 12px;
     background: var(--bs-primary);
-    width: 300px;
-    max-width: calc(100% - 11px);
+    --border-color: var(--bs-primary);
+    width: 350px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
 }
 
 .avatar {

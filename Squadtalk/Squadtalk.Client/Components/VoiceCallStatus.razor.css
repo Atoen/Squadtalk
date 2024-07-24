@@ -2,6 +2,7 @@
     display: none;
     background-color: black;
     border-radius: 8px;
+    order: 2;
 }
 
 .video-frame {
@@ -19,4 +20,21 @@
     justify-content: center;
     gap: 16px;
     padding: 16px;
+    order: 3;
+}
+
+.call-container {
+    background: #ced4da;
+    display: flex;
+    flex-direction: column;
+}
+
+.channel-header {
+    order: 1;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    background: #ced4da;
+    padding: 5px;
+    --border-color: #ced4da;
 }

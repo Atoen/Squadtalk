@@ -1,4 +1,3 @@
-using Shared.Extensions;
 using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Extensions;
@@ -11,7 +10,7 @@ public static class TimeStampExtensions
     private const string HourMinuteSecond = "HH:mm:ss";
     private const string DateHourMinute = "dd-MM-yyyy HH:mm";
     private const string DateHourMinuteSecond = "dd-MM-yyyy HH:mm:ss";
-    private const string DayHourMinute = "dddd HH:mm";
+    private const string DayHourMinute = "ddd HH:mm";
     private const string Day = "m";
     private const string YearDay = "d MMMM yyyy";
 

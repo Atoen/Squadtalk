@@ -14,6 +14,7 @@ public interface ICommunicationService
     event Func<string, Task>? ConnectionStatusChanged;
     event Func<IEnumerable<IChatChannel>, Task>? ChannelsReceived;
     event Func<IChatChannel, Task>? AddedToChannel;
+    event Func<ChannelId, string, Task>? ChannelNameChanged;
     
     event Func<ChannelId, UserId, Task>? IncomingCall;
     event Func<ChannelId, IChatUser, Task>? CallAccepted;
@@ -42,4 +43,6 @@ public interface ICommunicationService
     Task DeclineCallAsync(ChannelId channelId);
 
     Task<bool> ChannelHasActiveCall(ChannelId channelId);
+
+    Task<bool> ChangeChannelNameAsync(string newName, ChannelId channelId);
 }

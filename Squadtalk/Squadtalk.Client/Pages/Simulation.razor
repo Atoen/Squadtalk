@@ -3,21 +3,22 @@
 @using Squadtalk.Client.Extensions
 @using Squadtalk.Client.Data
 @using System.Text.Json
+@using Squadtalk.Client.Localization
 
 @implements IAsyncDisposable
 @layout CanvasLayout
 
 <Modal @ref="_modal" Size="ModalSize.Small" />
 
-<h3>Simulation</h3>
+<h3>@_table.CanvasSimulation</h3>
 <p>
     <canvas id="canvas-simulation" width="600" height="600" style="border: 1px solid black"></canvas>
 </p>
 
-<h4>Rules</h4>
+<h4>@_table.SimulationRules</h4>
 
 <div class="rules">
-    <Button Class="add-rule" Color="ButtonColor.Success" @onclick="ShowRuleModal">Add rule</Button>
+    <Button Class="add-rule" Color="ButtonColor.Success" @onclick="ShowRuleModal">@_table.SimulationAddRule</Button>
     @foreach (var rule in _rules)
     {
         <div class="rule">
@@ -33,14 +34,14 @@
 <p>
     <div class="d-flex flex-row">
         <Button @onclick="ToggleSimulation" Color="ButtonColor.Success">@_buttonText</Button>
-        <Button Class="mx-2" @onclick="ShareSettings" Color="ButtonColor.Info">Share settings</Button>
+        <Button Class="mx-2" @onclick="ShareSettings" Color="ButtonColor.Info">@_table.SimulationShareSettings</Button>
     </div>
     <div class="mt-2">
-        <label class="form-label">Delay between steps (ms)</label>
+        <label class="form-label">@_table.SimulationStep</label>
         <NumberInput TValue="int" @bind-Value="@_delayMs" Max="500" Min="10" EnableMinMax="true" Step="5"/>
     </div>
     <div class="mt-2">
-        <label class="form-label">Color change neighbour threshold</label>
+        <label class="form-label">@_table.SimulationThreshold</label>
         <NumberInput TValue="int" @bind-Value="@_threshold" Max="8" Min="1" EnableMinMax="true" Step="1"/>
     </div>
 </p>
@@ -49,9 +50,12 @@
 @inject IJSRuntime JSRuntime
 @inject ToastService ToastService
 @inject NavigationManager NavigationManager
+@inject ILocalization Localization
 @inject ILogger<Simulation> Logger
 
 @code {
+    private TextTable _table = default!;
+
     private const string Start = nameof(Start);
     private const string Stop = "Stop";
     private const string Apply = "Apply";
@@ -89,6 +93,8 @@
 
     protected override void OnInitialized()
     {
+        _table = Localization.GetTextTable(this);
+
         if (Step is { } step)
         {
             _delayMs = Math.Clamp(step, 10, 500);
@@ -221,7 +227,7 @@
 
     private Task ShowRuleModal()
     {
-        return _modal.ShowAsync<RuleCreatorDialog>("Add New Rule", parameters: _parameters);
+        return _modal.ShowAsync<RuleCreatorDialog>(_table.SimulationModalTitle, parameters: _parameters);
     }
 
     private async Task ShareSettings()
@@ -235,12 +241,12 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", link);
-            var toast = new ToastMessage(ToastType.Info, "Share link saved to clipboard");
+            var toast = new ToastMessage(ToastType.Info, _table.SimulationRulesCopied);
             ToastService.Notify(toast);
         }
         catch
         {
-            var errorToast = new ToastMessage(ToastType.Danger, "Failed to save share link to clipboard");
+            var errorToast = new ToastMessage(ToastType.Danger, _table.SimulationShareSettingsFailed);
             ToastService.Notify(errorToast);
         }
     }

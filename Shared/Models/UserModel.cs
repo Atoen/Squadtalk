@@ -4,7 +4,7 @@ using Shared.Enums;
 
 namespace Shared.Models;
 
-public class UserModel : IEquatable<UserModel>
+public class UserModel : IEquatable<UserModel>, IStatus
 {
     public string Username { get; set; } = default!;
     

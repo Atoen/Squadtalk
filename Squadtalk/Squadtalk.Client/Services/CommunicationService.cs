@@ -47,6 +47,11 @@ public class CommunicationService : ICommunicationService
         return _signalrService.ChannelHasActiveCall(channelId);
     }
 
+    public Task<bool> ChangeChannelNameAsync(string newName, ChannelId channelId)
+    {
+        return _signalrService.ChangeChannelNameAsync(newName, channelId);
+    }
+
     public event Func<IChatMessage, Task>? MessageReceived
     {
         add => _signalrService.MessageReceived += value;
@@ -88,7 +93,13 @@ public class CommunicationService : ICommunicationService
         add => _signalrService.AddedToChannel += value;
         remove => _signalrService.AddedToChannel -= value;
     }
-    
+
+    public event Func<ChannelId, string, Task>? ChannelNameChanged
+    {
+        add => _signalrService.ChannelNameChanged += value;
+        remove => _signalrService.ChannelNameChanged-= value;
+    }
+
     public event Func<ChannelId, UserId, Task>? IncomingCall
     {
         add => _signalrService.IncomingCall += value;

@@ -24,6 +24,7 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
     public event Func<UserDto, Task>? UserConnected;
     public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
     public event Func<MessageDto, Task>? MessageReceived;
+    public event Func<ChannelId, string, Task>? ChannelNameChanged;
     
     public event Func<ChannelId, UserId, Task>? IncomingCall;
     public event Func<ChannelId, UserDto, Task>? CallAccepted;
@@ -116,6 +117,11 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         return InvokeAsync<ChannelId, bool>("ChannelHasActiveCall", id);
     }
 
+    Task<bool> ISignalrTextService.ChangeChannelNameAsync(string newName, ChannelId channelId)
+    {
+        return InvokeAsync<string, ChannelId, bool>("ChangeGroupName", newName, channelId);
+    }
+
     private void RegisterHandlers()
     {
         _connection.Reconnecting += _ =>
@@ -156,7 +162,9 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
         _connection.On<UserDto>("UserConnected", user =>
             UserConnected.TryInvoke(user));
-        
+
+        _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
+            ChannelNameChanged.TryInvoke(channelId, name));
         
         _connection.On<ChannelId, UserId>("IncomingCall", (channelId, initiatorId) =>
             IncomingCall.TryInvoke(channelId, initiatorId));
@@ -180,6 +188,20 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         try
         {
             return await _connection.InvokeCoreAsync<TResult>(methodName, [arg], cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
+            return default;
+        }
+    }
+
+    private async Task<TResult?> InvokeAsync<TArg1, TArg2, TResult>(string methodName, TArg1 arg1, TArg2 arg2,
+        CancellationToken cancellationToken = default, [CallerMemberName] string? callerName = null)
+    {
+        try
+        {
+            return await _connection.InvokeCoreAsync<TResult>(methodName, [arg1, arg2], cancellationToken);
         }
         catch (Exception e)
         {

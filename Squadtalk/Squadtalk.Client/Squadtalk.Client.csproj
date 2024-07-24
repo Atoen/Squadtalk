@@ -29,21 +29,4 @@
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Remove="Components\InputBox.razor.js" />
-    <Content Include="Components\InputBox.razor.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Remove="i18ntext\Index.de.json" />
-    <None Remove="i18ntext\Index.en.json" />
-    <None Remove="i18ntext\Index.pl.json" />
-    <None Remove="i18ntext\Index.de.json" />
-    <None Remove="i18ntext\Index.en.json" />
-    <None Remove="i18ntext\Index.pl.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Extensions\MessageExtensions.cs" />
-  </ItemGroup>
-
 </Project>

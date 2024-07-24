@@ -1,8 +1,8 @@
 namespace Squadtalk.Client.Localization.Providers;
 
-public class GermanTextProvider() : LocalizedTextProvider(Dictionary)
+public class GermanTextProvider() : LocalizedTextProvider(Texts)
 {
-    private static Dictionary<string, string> Dictionary => new()
+    private static Dictionary<string, string> Texts => new()
     {
         [nameof(TextTable.HelloWorld)] = "HHellen machen!"
     };

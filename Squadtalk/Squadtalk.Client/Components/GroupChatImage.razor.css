@@ -1,0 +1,43 @@
+.group-avatar-container {
+    position: relative;
+    height: 60px;
+    width: calc(50px + 0.5em);
+}
+
+.online-indicator {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: var(--bs-success);
+    border-radius: 50%;
+    bottom: 6px;
+    right: 6px;
+    z-index: 4;
+}
+
+.group-avatar-item {
+    width: 38px;
+    border-radius: 50%;
+    border: 2px solid black;
+    position: absolute;
+}
+
+.group-avatar-item:nth-child(1) {
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.group-avatar-item:nth-child(2) {
+    bottom: 22px;
+    left: 16px;
+    z-index: 1;
+}
+
+.image {
+    width: 50px;
+    border: 2px solid;
+    border-radius: 50%;
+    margin-right: 0.5em;
+}

@@ -9,9 +9,11 @@ public class TextTable
 {
     private readonly ConcurrentDictionary<SupportedLanguage, LocalizedTextProvider> _providers = new();
 
+    public static SupportedLanguage DefaultLanguage { get; set; } = SupportedLanguage.English;
+
     public SupportedLanguage Language { get; private set; } = DefaultLanguage;
 
-    public CultureInfo CultureInfo { get; private set; }
+    public CultureInfo CultureInfo { get; private set; } = CultureInfo.GetCultureInfoByIetfLanguageTag(GetLanguageCode(DefaultLanguage));
 
     public void SetLanguage(SupportedLanguage language)
     {
@@ -44,8 +46,6 @@ public class TextTable
         _ => string.Empty
     };
 
-    public static SupportedLanguage DefaultLanguage { get; set; } = SupportedLanguage.English;
-
     private static LocalizedTextProvider CreateProvider(SupportedLanguage language) => language switch
     {
         SupportedLanguage.English => new EnglishTextProvider(),
@@ -54,84 +54,100 @@ public class TextTable
         _ => throw new ArgumentOutOfRangeException(nameof(language), language, null)
     };
 
-    private LocalizedTextProvider Provider => _providers.GetOrAdd(Language, CreateProvider);
-
-    // Home page
-    public string HelloWorld => Provider[nameof(HelloWorld)];
-    public string WelcomeToApp => Provider[nameof(WelcomeToApp)];
+    private LocalizedTextProvider CurrentLanguageProvider => _providers.GetOrAdd(Language, CreateProvider);
 
     // Navigation
-    public string Messages => Provider[nameof(Messages)];
-    public string Home => Provider[nameof(Home)];
-    public string Canvas => Provider[nameof(Canvas)];
-    public string Register => Provider[nameof(Register)];
-    public string Login => Provider[nameof(Login)];
-    public string Logout => Provider[nameof(Logout)];
-    public string Users => Provider[nameof(Users)];
-    public string Settings => Provider[nameof(Settings)];
-    public string SelectLanguage => Provider[nameof(SelectLanguage)];
+    public string Messages => CurrentLanguageProvider[nameof(Messages)];
+    public string Home => CurrentLanguageProvider[nameof(Home)];
+    public string Canvas => CurrentLanguageProvider[nameof(Canvas)];
+    public string Register => CurrentLanguageProvider[nameof(Register)];
+    public string Login => CurrentLanguageProvider[nameof(Login)];
+    public string Logout => CurrentLanguageProvider[nameof(Logout)];
+    public string Users => CurrentLanguageProvider[nameof(Users)];
+    public string Settings => CurrentLanguageProvider[nameof(Settings)];
+
+    // Messages page
+    public string CreateChannelTooltip => CurrentLanguageProvider[nameof(CreateChannelTooltip)];
+    public string CreateChannelModalTitle => CurrentLanguageProvider[nameof(CreateChannelModalTitle)];
+    public string CreateGroupChatButton => CurrentLanguageProvider[nameof(CreateGroupChatButton)];
+    public string SelectUserPlaceholder => CurrentLanguageProvider[nameof(SelectUserPlaceholder)];
+    public string LoadingUsers => CurrentLanguageProvider[nameof(LoadingUsers)];
+    public string NoUsersFound => CurrentLanguageProvider[nameof(NoUsersFound)];
+
+    // Chat page
+    public string StartCall => CurrentLanguageProvider[nameof(StartCall)];
+    public string ManageChannel => CurrentLanguageProvider[nameof(ManageChannel)];
+    public string ChannelBeginning => CurrentLanguageProvider[nameof(ChannelBeginning)];
+
+    // Home page
+    public string HelloWorld => CurrentLanguageProvider[nameof(HelloWorld)];
+    public string WelcomeToApp => CurrentLanguageProvider[nameof(WelcomeToApp)];
+
+    // Settings page
+    public string SelectLanguage => CurrentLanguageProvider[nameof(SelectLanguage)];
+
+    // Canvas page
+    public string CanvasRandomFill => CurrentLanguageProvider[nameof(CanvasRandomFill)];
+    public string CanvasSimulation => CurrentLanguageProvider[nameof(CanvasSimulation)];
+    public string CanvasStart => CurrentLanguageProvider[nameof(CanvasStart)];
+    public string CanvasStop => CurrentLanguageProvider[nameof(CanvasStop)];
+    public string CanvasApply => CurrentLanguageProvider[nameof(CanvasApply)];
+
+    // Simulation page
+    public string SimulationRules => CurrentLanguageProvider[nameof(SimulationRules)];
+    public string SimulationAddRule => CurrentLanguageProvider[nameof(SimulationAddRule)];
+    public string SimulationShareSettings => CurrentLanguageProvider[nameof(SimulationShareSettings)];
+    public string SimulationShareSettingsFailed => CurrentLanguageProvider[nameof(SimulationShareSettingsFailed)];
+    public string SimulationStep => CurrentLanguageProvider[nameof(SimulationStep)];
+    public string SimulationThreshold => CurrentLanguageProvider[nameof(SimulationThreshold)];
+    public string SimulationRulesCopied => CurrentLanguageProvider[nameof(SimulationRulesCopied)];
+    public string SimulationModalTitle => CurrentLanguageProvider[nameof(SimulationModalTitle)];
+    public string SimulationAttacker => CurrentLanguageProvider[nameof(SimulationAttacker)];
+    public string SimulationAttacked => CurrentLanguageProvider[nameof(SimulationAttacked)];
+    public string SimulationSelectAttacker => CurrentLanguageProvider[nameof(SimulationSelectAttacker)];
+    public string SimulationSelectAttacked => CurrentLanguageProvider[nameof(SimulationSelectAttacked)];
 
     // Dialog
-    public string DialogYes => Provider[nameof(DialogYes)];
-    public string DialogNo => Provider[nameof(DialogNo)];
-    public string DialogCancel => Provider[nameof(DialogCancel)];
+    public string DialogYes => CurrentLanguageProvider[nameof(DialogYes)];
+    public string DialogNo => CurrentLanguageProvider[nameof(DialogNo)];
+    public string DialogCancel => CurrentLanguageProvider[nameof(DialogCancel)];
 
     // User status
-    public string Online => Provider[nameof(Online)];
-    public string Offline => Provider[nameof(Offline)];
-    public string Away => Provider[nameof(Away)];
-    public string DoNotDisturb => Provider[nameof(DoNotDisturb)];
+    public string Online => CurrentLanguageProvider[nameof(Online)];
+    public string Offline => CurrentLanguageProvider[nameof(Offline)];
+    public string Away => CurrentLanguageProvider[nameof(Away)];
+    public string DoNotDisturb => CurrentLanguageProvider[nameof(DoNotDisturb)];
 
-    // Channel selector
-    public string CreateChannelTooltip => Provider[nameof(CreateChannelTooltip)];
-    public string CreateChannelModalTitle => Provider[nameof(CreateChannelModalTitle)];
-    public string CreateGroupChatButton => Provider[nameof(CreateGroupChatButton)];
-    public string SelectUserPlaceholder => Provider[nameof(SelectUserPlaceholder)];
-    public string LoadingUsers => Provider[nameof(LoadingUsers)];
-    public string NoUsersFound => Provider[nameof(NoUsersFound)];
-
-    // Chat
-    public string StartCall => Provider[nameof(StartCall)];
-    public string ManageChannel => Provider[nameof(ManageChannel)];
-    public string ChannelBeginning => Provider[nameof(ChannelBeginning)];
-
-    // System message
-    public string ChannelCreatedTemplate => Provider[nameof(ChannelCreatedTemplate)];
-    public string ChannelNameChangedTemplate => Provider[nameof(ChannelNameChangedTemplate)];
-    public string CallStartedTemplate => Provider[nameof(CallStartedTemplate)];
-    public string CallEndedTemplate => Provider[nameof(CallEndedTemplate)];
+    // Chat message
+    public StringTemplate TodayTimeTemplate => CurrentLanguageProvider[nameof(TodayTimeTemplate)];
+    public StringTemplate YesterdayTimeTemplate => CurrentLanguageProvider[nameof(YesterdayTimeTemplate)];
+    public StringTemplate ChannelCreatedTemplate => CurrentLanguageProvider[nameof(ChannelCreatedTemplate)];
+    public StringTemplate ChannelNameChangedTemplate => CurrentLanguageProvider[nameof(ChannelNameChangedTemplate)];
+    public StringTemplate CallStartedTemplate => CurrentLanguageProvider[nameof(CallStartedTemplate)];
+    public StringTemplate CallEndedTemplate => CurrentLanguageProvider[nameof(CallEndedTemplate)];
 
     // Call dialog
-    public string AcceptCallDialogMessage => Provider[nameof(AcceptCallDialogMessage)];
-    public string AcceptCall => Provider[nameof(AcceptCall)];
-    public string DeclineCall => Provider[nameof(DeclineCall)];
-    public string CallIncomingTemplate => Provider[nameof(CallIncomingTemplate)];
+    public string AcceptCallDialogMessage => CurrentLanguageProvider[nameof(AcceptCallDialogMessage)];
+    public string AcceptCall => CurrentLanguageProvider[nameof(AcceptCall)];
+    public string DeclineCall => CurrentLanguageProvider[nameof(DeclineCall)];
+    public StringTemplate CallIncomingTemplate => CurrentLanguageProvider[nameof(CallIncomingTemplate)];
 
-    // User message
-    public string TodayTimeTemplate => Provider[nameof(TodayTimeTemplate)];
-    public string YesterdayTimeTemplate => Provider[nameof(YesterdayTimeTemplate)];
-    
     // Hide channel modal
-    public string HideChannelModalTitle => Provider[nameof(HideChannelModalTitle)];
-    public string HideChannelModalBodyTemplate => Provider[nameof(HideChannelModalBodyTemplate)];
-    public string HideChannelModalProceed => Provider[nameof(HideChannelModalProceed)];
+    public string HideChannelModalTitle => CurrentLanguageProvider[nameof(HideChannelModalTitle)];
+    public StringTemplate HideChannelModalBodyTemplate => CurrentLanguageProvider[nameof(HideChannelModalBodyTemplate)];
+    public string HideChannelModalProceed => CurrentLanguageProvider[nameof(HideChannelModalProceed)];
 
     // Channel last message
-    public string File => Provider[nameof(File)];
-    public string Image => Provider[nameof(Image)];
-    public string Video => Provider[nameof(Video)];
-
-    public string MessageSentInfo => Provider[nameof(MessageSentInfo)];
-    public string MessageYouSentInfo => Provider[nameof(MessageYouSentInfo)];
-
-    public string You => Provider[nameof(You)];
-
-    public string UserCalledTemplate => Provider[nameof(UserCalledTemplate)];
-    public string UserCreatedChannelTemplate => Provider[nameof(UserCreatedChannelTemplate)];
-    public string UserChangedChannelNameTemplate => Provider[nameof(UserChangedChannelNameTemplate)];
-
-    public string YouCalled => Provider[nameof(YouCalled)];
-    public string YouCreatedChannel => Provider[nameof(YouCreatedChannel)];
-    public string YouChangedChannelNameTemplate => Provider[nameof(YouChangedChannelNameTemplate)];
-
+    public string You => CurrentLanguageProvider[nameof(You)];
+    public string MessageSentInfo => CurrentLanguageProvider[nameof(MessageSentInfo)];
+    public string MessageYouSentInfo => CurrentLanguageProvider[nameof(MessageYouSentInfo)];
+    public string File => CurrentLanguageProvider[nameof(File)];
+    public string Image => CurrentLanguageProvider[nameof(Image)];
+    public string Video => CurrentLanguageProvider[nameof(Video)];
+    public StringTemplate UserCalledTemplate => CurrentLanguageProvider[nameof(UserCalledTemplate)];
+    public StringTemplate UserCreatedChannelTemplate => CurrentLanguageProvider[nameof(UserCreatedChannelTemplate)];
+    public StringTemplate UserChangedChannelNameTemplate => CurrentLanguageProvider[nameof(UserChangedChannelNameTemplate)];
+    public string YouCalled => CurrentLanguageProvider[nameof(YouCalled)];
+    public string YouCreatedChannel => CurrentLanguageProvider[nameof(YouCreatedChannel)];
+    public StringTemplate YouChangedChannelNameTemplate => CurrentLanguageProvider[nameof(YouChangedChannelNameTemplate)];
 }

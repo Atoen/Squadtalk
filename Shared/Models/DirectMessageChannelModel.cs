@@ -1,4 +1,5 @@
 using Shared.Data.TypedIds;
+using Shared.Enums;
 
 namespace Shared.Models;
 
@@ -12,4 +13,8 @@ public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelM
     public UserModel Other { get; } = other;
 
     public override string Name => Other.Username;
+
+    public override IEnumerable<UserModel> Others { get; } = [other];
+
+    public override UserStatus Status => Other.Status;
 }

@@ -1,5 +1,3 @@
-@using Squadtalk.Client.Data
-
 <div class="row">
     <div class="d-flex flex-row align-items-center mb-2">
         <span>Attacker:</span>
@@ -51,14 +49,11 @@
 
 
 @code {
-    private const string FirstPlaceholder = "Select attacker";
-    private const string SecondPlaceholder = "Select attacker";
-    
-    private string _firstChoice = FirstPlaceholder;
-    private string _secondChoice = SecondPlaceholder;
+    private string _firstChoice = "first";
+    private string _secondChoice = "second";
 
-    private bool RuleIsInvalid => _firstChoice == FirstPlaceholder ||
-                                _secondChoice == SecondPlaceholder ||
+    private bool RuleIsInvalid => _firstChoice == "first" ||
+                                _secondChoice == "second" ||
                                 _firstChoice == _secondChoice;
 
     [Parameter] public EventCallback CancelCallback { get; set; }
@@ -66,8 +61,8 @@
 
     private void ClearSelection()
     {
-        _firstChoice = FirstPlaceholder;
-        _secondChoice = SecondPlaceholder;
+        _firstChoice = "first";
+        _secondChoice = "second";
     }
 
     private Task Close()

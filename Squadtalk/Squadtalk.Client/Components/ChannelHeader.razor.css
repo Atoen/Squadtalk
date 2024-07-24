@@ -1,0 +1,8 @@
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    background: #ced4da;
+    --border-color: #ced4da;
+}

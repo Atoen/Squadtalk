@@ -1,25 +1,28 @@
-<div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
-    <video class="video-frame" id="maximized-video" autoplay></video>
+<div class="call-container rounded">
+    <div class="video-container my-2" id="maximized-video-container" @onclick="MinimizeVideo">
+        <video class="video-frame" id="maximized-video" autoplay></video>
+    </div>
+
+    @if (VoiceChatService.ConnectedToVoiceCall)
+    {
+        <div class="participants">
+            @foreach (var participant in VoiceChatService.ActiveCallParticipants)
+            {
+                <CallParticipant Model="participant"/>
+            }
+        </div>
+    }
+    else if (VoiceChatService.ActiveCallOnCurrentChannel)
+    {
+        <div>Join voice call: @VoiceChatService.CurrentChannel?.Name</div>
+    }
+
+    @if (ShowControls)
+    {
+        <VoiceCallControls/>
+    }
 </div>
 
-@if (VoiceChatService.ConnectedToVoiceCall)
-{
-    <div class="participants">
-        @foreach (var participant in VoiceChatService.ActiveCallParticipants)
-        {
-            <CallParticipant Model="participant"/>
-        }
-    </div>
-}
-else if (VoiceChatService.ActiveCallOnCurrentChannel)
-{
-    <div>Join voice call: @VoiceChatService.CurrentChannel?.Name</div>
-}
-
-@if (ShowControls)
-{
-    <VoiceCallControls/>
-}
 @implements IDisposable
 
 @inject IVoiceChatService VoiceChatService

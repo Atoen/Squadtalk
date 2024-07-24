@@ -6,7 +6,7 @@ namespace Squadtalk.Client.Extensions;
 
 public static class UserModelExtensions
 {
-    public static string StatusString(this UserModel model, TextTable textTable) => model.Status switch
+    public static string StatusString(this IStatus model, TextTable textTable) => model.Status switch
     {
         UserStatus.Online => textTable.Online,
         UserStatus.Away => textTable.Away,
@@ -15,7 +15,7 @@ public static class UserModelExtensions
         _ => throw new ArgumentOutOfRangeException(nameof(model))
     };
     
-    public static string StatusColor(this UserModel model) => model.Status switch
+    public static string StatusColor(this IStatus model) => model.Status switch
     {
         UserStatus.Online => "limegreen",
         UserStatus.Away => "darkorange",

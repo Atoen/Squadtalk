@@ -1,0 +1,45 @@
+<div class="row">
+    <div class="col-12 mb-2">
+        <label for="group-name" class="form-label">Group name</label>
+        <div class="d-flex">
+            <InputText id="group-name" @bind-Value="_newGroupName" Placeholder="Group name" class="form-control me-2"/>
+            <Button Color="ButtonColor.Primary" @onclick="ChangeGroupName" Disabled="@NameIsInvalid">Save</Button>
+        </div>
+
+        @if (_changeResultMessage != null)
+        {
+            <small class="form-text text-muted">@_changeResultMessage</small>
+        }
+    </div>
+</div>
+
+<div class="row my-3 justify-content-center">
+    <div class="col-auto">
+        <Button Color="ButtonColor.Danger">Leave group</Button>
+    </div>
+</div>
+
+@code {
+
+    [Parameter, EditorRequired] public GroupChatModel GroupChat { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<GroupChatModel, string, Task<bool>> GroupNameChanged { get; set; } = default!;
+
+    private string? _newGroupName;
+    private string? _changeResultMessage;
+
+    private bool NameIsInvalid => string.IsNullOrWhiteSpace(_newGroupName) || _newGroupName == GroupChat.Name;
+
+    private async Task ChangeGroupName()
+    {
+        if (NameIsInvalid) return;
+
+        var changed = await GroupNameChanged.Invoke(GroupChat, _newGroupName!);
+        _changeResultMessage = changed ? "Group name changed successfully." : "Failed to change group name.";
+    }
+
+    protected override void OnParametersSet()
+    {
+        _changeResultMessage = null;
+        _newGroupName = GroupChat.Name;
+    }
+}

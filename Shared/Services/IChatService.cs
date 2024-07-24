@@ -20,6 +20,8 @@ public interface IChatService
 
     IEnumerable<UserModel> Users { get; }
 
+    event Action<GroupChatModel>? ChannelNameChanged;
+
     event Action? ChannelsListChanged;
     event Func<Task>? ChannelsListChangedAsync;
 
@@ -41,4 +43,6 @@ public interface IChatService
     Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others);
 
     Task ClearChannelSelectionAsync();
+
+    Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string newName);
 }

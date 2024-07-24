@@ -1,4 +1,5 @@
 using Shared.Data.TypedIds;
+using Shared.Enums;
 
 namespace Shared.Models;
 
@@ -9,8 +10,31 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string?
     public static readonly ChannelId GlobalChatId = new(GlobalChanelIdValue);
     public static GroupChatModel CreateGlobalChat() => new([], GlobalChatId) { _name = "Global" };
     
-    public List<UserModel> Others { get; } = others.ToList();
+    public override List<UserModel> Others { get; } = others.ToList();
     
     private string? _name = name;
     public override string Name => _name ??= string.Join(", ", Others.Select(x => x.Username));
+
+    public void SetName(string value) => _name = value;
+
+    public override UserStatus Status => GetStatus();
+
+    private UserStatus GetStatus()
+    {
+        var status = UserStatus.Offline;
+
+        foreach (var user in Others)
+        {
+            if (user.Status == UserStatus.Online)
+            {
+                return UserStatus.Online;
+            }
+            if (user.Status == UserStatus.Away)
+            {
+                status = UserStatus.Away;
+            }
+        }
+
+        return status;
+    }
 }

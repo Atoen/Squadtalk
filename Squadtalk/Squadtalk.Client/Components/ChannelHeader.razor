@@ -1,0 +1,117 @@
+@using Squadtalk.Client.Extensions
+
+<Modal @ref="_modal" />
+
+<div class="header rounded">
+    <div class="d-flex gap-1 align-items-center w-100 rounded ps-2">
+        <span class="channel-name ms-1 order-2">@Channel.Name</span>
+        @if (!VoiceChatService.CurrentChannel.IsGlobal())
+        {
+            <div class="order-1">
+                <ChatImage Channel="VoiceChatService.CurrentChannel" Inline="true"/>
+            </div>
+
+            <div class="d-flex ms-auto order-3">
+                @if (!VoiceChatService.ActiveCallOnCurrentChannel)
+                {
+                    <Button @onclick="StartVoiceCall" TooltipTitle="@_table.StartCall"
+                            TooltipPlacement="TooltipPlacement.Bottom">
+                        <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x5"/>
+                    </Button>
+                }
+
+                @if (VoiceChatService.CurrentChannel is GroupChatModel)
+                {
+                    <Button @onclick="ManageChannel" TooltipTitle="@_table.ManageChannel"
+                            TooltipPlacement="TooltipPlacement.Bottom">
+                        <Icon Name="IconName.GearFill" Size="IconSize.x5"/>
+                    </Button>
+                }
+            </div>
+        }
+    </div>
+
+    <VoiceCallStatus/>
+</div>
+
+@implements IDisposable
+
+@inject IChatService ChatService
+@inject IVoiceChatService VoiceChatService
+@inject ILocalization Localization
+@inject ILogger<ChannelHeader> Logger
+
+@code {
+
+    [Parameter, EditorRequired] public ChannelModel Channel { get; set; } = default!;
+
+    private Modal _modal = default!;
+    private readonly Dictionary<string, object> _modalParameters = new();
+
+    private TextTable _table = default!;
+    private UserStatus _lastStatus;
+
+    private async Task StartVoiceCall()
+    {
+        if (VoiceChatService.CurrentChannel is not { Id: { } channelId })
+        {
+            return;
+        }
+
+        await VoiceChatService.StartCallAsync(channelId);
+    }
+
+    private async Task ManageChannel()
+    {
+        if (Channel is not GroupChatModel groupChat) return;
+
+        _modalParameters[nameof(ManageChannelModal.GroupChat)] = groupChat;
+
+        await _modal.ShowAsync<ManageChannelModal>("Manage channel", parameters: _modalParameters);
+    }
+
+    protected override void OnInitialized()
+    {
+        _table = Localization.GetTextTable(this);
+        _lastStatus = Channel.Status;
+
+        _modalParameters[nameof(ManageChannelModal.GroupNameChanged)] =
+            (Func<GroupChatModel, string, Task<bool>>) GroupNameChanged;
+
+        ChatService.ConnectedUsersChanged += ConnectedUsersChanged;
+        ChatService.ChannelNameChanged += ChannelNameChanged;
+    }
+
+    private void ChannelNameChanged(GroupChatModel groupChat)
+    {
+        if (groupChat.Id != ChatService.CurrentChannel?.Id) return;
+
+        StateHasChanged();
+    }
+
+    private async Task<bool> GroupNameChanged(GroupChatModel groupChat, string newName)
+    {
+        Logger.LogInformation("New name {NewName}", newName);
+
+        var changedName = await ChatService.ChangeGroupChatNameAsync(groupChat, newName);
+
+        return changedName;
+    }
+
+    private void ConnectedUsersChanged()
+    {
+        if (Channel is not { Status: var status }) return;
+
+        if (status != _lastStatus)
+        {
+            _lastStatus = status;
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        ChatService.ConnectedUsersChanged -= ConnectedUsersChanged;
+        ChatService.ChannelNameChanged -= ChannelNameChanged;
+    }
+}

@@ -101,6 +101,6 @@ public class TextChatService : ITextChatService
             channelModel.State.UnreadMessages++;
         }
 
-        channelModel.SetLastMessage(message);
+        channelModel.LastMessage = message;
     }
 }

@@ -1,48 +1,24 @@
 @page "/Messages/Chat"
 
 @using Microsoft.AspNetCore.Authorization
-@using Shared.Extensions
-@using Squadtalk.Client.Extensions
 @using Squadtalk.Client.Localization
 
 @implements IDisposable
 
 @attribute [Authorize]
 
-<PageTitle>Squadtalk | @ChannelName</PageTitle>
+<PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name;</PageTitle>
 
-<ConfirmDialog @ref="_dialog" />
-
-<div class="header">
-    <span class="channel-name">@ChannelName</span>
-    @if (!IsGlobalChat)
-    {
-        if (!VoiceChatService.ActiveCallOnCurrentChannel)
-        {
-            <Button @onclick="StartVoiceCall" TooltipTitle="@_table.StartCall" Style="grid-column: 3"
-                    TooltipPlacement="TooltipPlacement.Bottom">
-                <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x3"/>
-            </Button>
-        }
-
-        if (ChatService.CurrentChannel is DirectMessageChannelModel)
-        {
-            <img alt="@ChannelName Avatar" src="User.png" class="avatar"/>
-        }
-        else
-        {
-            <Button TooltipTitle="@_table.ManageChannel" Style="grid-column: 4"
-                    TooltipPlacement="TooltipPlacement.Bottom">
-                <Icon Name="IconName.GearFill" Size="IconSize.x3"/>
-            </Button>
-        }
-    }
-</div>
+<ConfirmDialog @ref="_dialog"/>
 
 <div class="chat-container">
-    <VoiceCallStatus/>
 
-    <div class="message-listbox rounded my-1" id="listbox">
+    @if (ChatService.CurrentChannel is { } channel)
+    {
+        <ChannelHeader Channel="channel"/>
+    }
+
+    <div class="message-listbox rounded mt-2" id="listbox">
         <InfiniteScrolling>
             <ItemTemplate>
                 <MessageTemplate Model="context"/>
@@ -64,7 +40,6 @@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
-@inject ILogger<Chat> Logger
 @inject ILocalization Localization
 
 @code {
@@ -80,19 +55,16 @@
         NoButtonColor = ButtonColor.Danger,
         Size = DialogSize.Small
     };
-    
-    private string? ChannelName => ChatService.CurrentChannel?.Name;
-    private bool IsGlobalChat => ChatService.CurrentChannel.IsGlobal();
 
     protected override async Task OnInitializedAsync()
     {
-        _table = Localization.GetTextTable(this);
-
         if (ChatService.CurrentChannel is null)
         {
-            NavigationManager.NavigateTo("/Messages");
+            NavigationManager.NavigateTo("/Messages", replace: true);
             return;
         }
+
+        _table = Localization.GetTextTable(this);
 
         VoiceChatService.OnCallIncoming += ShowCallPopup;
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
@@ -119,17 +91,6 @@
         {
             await VoiceChatService.DeclineCallAsync(channel.Id);
         }
-    }
-
-    private async Task StartVoiceCall()
-    {
-        if (ChatService.CurrentChannel is not { Id: { } channelId })
-        {
-            return;
-        }
-
-        Logger.LogInformation("Starting call");
-        await VoiceChatService.StartCallAsync(channelId);
     }
     
     public void Dispose()
