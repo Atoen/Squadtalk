@@ -15,8 +15,7 @@ public class ConnectionQualityConverter : JsonConverter<ConnectionQuality>
             "good" => ConnectionQuality.Good,
             "poor" => ConnectionQuality.Poor,
             "lost" => ConnectionQuality.Lost,
-            "unknown" => ConnectionQuality.Unknown,
-            _ => throw new JsonException($"Unexpected value '{value}' for ConnectionQuality.")
+            _ => ConnectionQuality.Unknown
         };
     }
 
@@ -28,8 +27,7 @@ public class ConnectionQualityConverter : JsonConverter<ConnectionQuality>
             ConnectionQuality.Good => "good",
             ConnectionQuality.Poor => "poor",
             ConnectionQuality.Lost => "lost",
-            ConnectionQuality.Unknown => "unknown",
-            _ => throw new JsonException($"Unexpected value '{value}' for ConnectionQuality.")
+            _ => "unknown"
         };
 
         writer.WriteStringValue(stringValue);

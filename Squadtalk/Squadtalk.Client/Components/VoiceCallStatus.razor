@@ -3,14 +3,15 @@
         <video class="video-frame" id="maximized-video" autoplay></video>
     </div>
 
-    @if (VoiceChatService.ConnectedToVoiceCall)
+    @if (VoiceChatService.ConnectedToVoiceCallOnCurrentChannel)
     {
         <div class="participants">
-            @foreach (var participant in VoiceChatService.ActiveCallParticipants)
+            @foreach (var participant in VoiceChatService.ActiveCallParticipants.OrderBy(x => x.Username))
             {
                 <CallParticipant Model="participant"/>
             }
         </div>
+
     }
     else if (VoiceChatService.ActiveCallOnCurrentChannel)
     {
@@ -31,7 +32,8 @@
 
 @code {
 
-    private bool ShowControls => VoiceChatService.ConnectedToVoiceCall || VoiceChatService.ActiveCallOnCurrentChannel;
+    private bool ShowControls => VoiceChatService.ConnectedToVoiceCallOnCurrentChannel
+                                 || VoiceChatService.ActiveCallOnCurrentChannel;
 
     private Task MinimizeVideo() => VoiceChatService.MinimizeVideoAsync();
 
@@ -84,11 +86,6 @@
 
     private void VoiceChatServiceOnOnParticipantsUpdated(ChannelModel channel)
     {
-        foreach (var participant in VoiceChatService.ActiveCallParticipants)
-        {
-            Logger.LogInformation("Participant {Name} sid {Sid}", participant.Username, participant.Sid);
-        }
-
         if (VoiceChatService.CurrentChannel == channel)
         {
             StateHasChanged();

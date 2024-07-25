@@ -31,7 +31,6 @@
     {
         _table = Localization.GetTextTable(this);
 
-        await ChatService.ClearChannelSelectionAsync();
         await CommunicationService.ConnectAsync();
 
         ChatService.ConnectedUsersChanged += StateHasChanged;

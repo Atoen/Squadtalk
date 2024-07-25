@@ -8,19 +8,21 @@ public class UserVolumeManager(ILocalStorageService localStorageService)
 {
     private readonly Func<UserId, string> _keyGenerator = id => $"v_{id.ToString()}";
 
-    public async ValueTask SaveUserVolume(UserId userId, Volume volume)
+    public async ValueTask SaveUserVolumeAsync(UserId userId, Volume volume)
     {
         var key = _keyGenerator(userId);
         await localStorageService.SetItemAsync(key, volume);
     }
 
-    public async ValueTask<Volume> GetUserVolume(UserId userId)
+    public async ValueTask<Volume> GetUserVolumeAsync(UserId userId)
     {
         var key = _keyGenerator(userId);
         var containsKey = await localStorageService.ContainKeyAsync(key);
 
-        return containsKey ?
+        var volume = containsKey ?
             await localStorageService.GetItemAsync<Volume>(key)
             : Volume.Full;
+
+        return volume;
     }
 }

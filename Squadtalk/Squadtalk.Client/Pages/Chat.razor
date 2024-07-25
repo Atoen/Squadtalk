@@ -3,13 +3,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Squadtalk.Client.Localization
 
-@implements IDisposable
+@implements IAsyncDisposable
 
 @attribute [Authorize]
 
 <PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name;</PageTitle>
-
-<ConfirmDialog @ref="_dialog"/>
 
 <div class="chat-container">
 
@@ -41,20 +39,12 @@
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
 @inject ILocalization Localization
+@inject ILogger<Chat> Logger
 
 @code {
 
-    private ConfirmDialog _dialog = default!;
+    // private Modal _callIncomingModal = default!;
     private TextTable _table = default!;
-
-    private readonly ConfirmDialogOptions _options = new()
-    {
-        IsVerticallyCentered = true,
-        Dismissable = true,
-        YesButtonColor = ButtonColor.Success,
-        NoButtonColor = ButtonColor.Danger,
-        Size = DialogSize.Small
-    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,7 +56,7 @@
 
         _table = Localization.GetTextTable(this);
 
-        VoiceChatService.OnCallIncoming += ShowCallPopup;
+        // VoiceChatService.OnCallIncoming += ShowCallPopup;
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
@@ -75,28 +65,22 @@
     protected override Task OnAfterRenderAsync(bool firstRender) =>
         firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
 
-    private async Task ShowCallPopup(ChannelModel channel)
-    {
-        _options.YesButtonText = _table.AcceptCall;
-        _options.NoButtonText = _table.DeclineCall;
-
-        var accept = await _dialog.ShowAsync(_table.CallIncomingTemplate.TryFormat(channel.Name),
-            _table.AcceptCallDialogMessage, _options);
-
-        if (accept)
-        {
-            await VoiceChatService.AcceptCallAsync(channel.Id);
-        }
-        else
-        {
-            await VoiceChatService.DeclineCallAsync(channel.Id);
-        }
-    }
+    // private async Task ShowCallPopup(ChannelModel channel)
+    // {
+    //     _options.YesButtonText = _table.AcceptCall;
+    //     _options.NoButtonText = _table.DeclineCall;
+    //
+    //     Logger.LogInformation("Incoming call - showing dialog");
+    //
+    //     await _callIncomingModal.ShowAsync();
+    // }
     
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        VoiceChatService.OnCallIncoming -= ShowCallPopup;
-        VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        // VoiceChatService.OnCallIncoming -= ShowCallPopup;
+        VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+
+        await ChatService.ClearChannelSelectionAsync();
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 

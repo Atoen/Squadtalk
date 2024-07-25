@@ -30,6 +30,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     public bool ActiveCallOnCurrentChannel => CurrentChannel?.State.HasActiveCall ?? false;
 
+    public bool ConnectedToVoiceCallOnCurrentChannel => ConnectedToVoiceCall && CurrentChannel == CallChannel;
+
     public ChannelModel? CallChannel { get; private set; }
 
     public ChannelModel? CurrentChannel => _chatService.CurrentChannel;
@@ -43,6 +45,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     public bool MicrophoneAvailable => _microphones.Count > 0;
 
     public bool CameraAvailable => _cameras.Count > 0;
+
+    public ConnectionQuality ConnectionQuality => ConnectionQuality.Excellent;
 
     public IEnumerable<CallParticipantModel> ActiveCallParticipants => _participants.Values;
 
@@ -160,7 +164,12 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
             return;
         }
 
-        await _volumeManager.SaveUserVolume(participant.Id, volume);
+        await _volumeManager.SaveUserVolumeAsync(participant.Id, volume);
+    }
+
+    public async Task<Volume> GetUserVolumeAsync(CallParticipantModel participant)
+    {
+        return await _volumeManager.GetUserVolumeAsync(participant.Id);
     }
 
     public async Task SwapCameraAsync()
@@ -263,6 +272,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         CallChannel = channel;
 
         MicrophoneEnabled = true;
+        CameraEnabled = false;
+        ScreenShareEnabled = false;
 
         OnCurrentChannelCallChanged?.Invoke();
     }
@@ -275,6 +286,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
             return;
         }
 
+        channel.State.HasActiveCall = true;
+
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
         var id = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
 
@@ -282,6 +295,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
         _logger.LogInformation("Incoming call from: {Caller}", channelId.Value);
 
+        OnCurrentChannelCallChanged?.Invoke();
         await OnCallIncoming.TryInvoke(channel);
     }
 
@@ -293,17 +307,6 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         }
 
         _logger.LogInformation("User {User} accepted call", accepting.Username);
-
-        // var model = new CallParticipantModel
-        // {
-        //     Username = accepting.Username,
-        //     Sid = string.Empty,
-        //     Id = accepting.Id,
-        //     ConnectionQuality = ConnectionQuality.Unknown
-        // };
-        //
-        // _participants[model.Id] = model;
-        // OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
 
         return Task.CompletedTask;
     }
@@ -398,11 +401,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     }
 
     [JSInvokable]
-    public async ValueTask ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
+    public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
-        var volume = await _volumeManager.GetUserVolume(participant.Id);
-        participant.Volume = volume;
-
         _participants[participant.Id] = participant;
         OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }

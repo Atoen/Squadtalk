@@ -151,7 +151,16 @@
         display: block;
 
         /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
         overflow-y: auto;
+
+        -webkit-mask-image: linear-gradient(to top, transparent, black), linear-gradient(to left, transparent 17px, black 17px);
+        -webkit-mask-size: 100% 20000px;
+        -webkit-mask-position: left bottom;
+        transition: mask-position 0.3s, -webkit-mask-position 0.3s;
+        flex: 1;
+    }
+
+    .nav-scrollable:hover {
+        -webkit-mask-position: left top;
     }
 }

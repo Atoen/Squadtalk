@@ -20,6 +20,15 @@ a, .btn-link {
     padding-top: 1.1rem;
 }
 
+.red-rectangle {
+    width: 100px; /* Width of the rectangle */
+    height: 50px; /* Height of the rectangle */
+    background-color: red; /* Color of the rectangle */
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
 h1:focus {
     outline: none;
 }

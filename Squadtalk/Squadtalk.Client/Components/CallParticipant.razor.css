@@ -56,3 +56,10 @@
     border: 1px var(--bs-border-color) solid;
     background: var(--bs-body-bg);
 }
+
+.volume {
+    width: 3.5em;
+    margin-left: 0.25em;
+    text-align: center;
+    margin-top: -1px;
+}

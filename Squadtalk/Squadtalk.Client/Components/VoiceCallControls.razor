@@ -2,17 +2,12 @@
     @if (VoiceChatService.ConnectedToVoiceCall)
     {
         <Tooltip Title="@MicrophoneTooltipText">
-            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered">
+            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered" Disabled="@(!VoiceChatService.MicrophoneAvailable)">
                 <DropdownActionButton Color="MicrophoneButtonColor" @onclick="VoiceChatService.ToggleMicrophoneAsync">
                     <Icon Name="MicrophoneIconName" Size="IconSize.x5"/>
                 </DropdownActionButton>
                 <DropdownToggleButton Color="MicrophoneButtonColor"/>
                 <DropdownMenu>
-                    @if (!VoiceChatService.MicrophoneAvailable)
-                    {
-                        <DropdownItem>No microphones detected</DropdownItem>
-                    }
-
                     @foreach (var microphone in VoiceChatService.Microphones)
                     {
                         <DropdownItem @onclick="() => VoiceChatService.SelectMicrophoneAsync(microphone)" Type="ButtonType.Button">
@@ -34,17 +29,12 @@
         </Tooltip>
 
         <Tooltip Title="@CameraTooltipText">
-            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered">
+            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered" Disabled="@(!VoiceChatService.CameraAvailable)">
                 <DropdownActionButton Color="CameraButtonColor" @onclick="VoiceChatService.ToggleCameraAsync">
                     <Icon Name="CameraIconName" Size="IconSize.x5"/>
                 </DropdownActionButton>
                 <DropdownToggleButton Color="CameraButtonColor"/>
                 <DropdownMenu>
-                    @if (!VoiceChatService.CameraAvailable)
-                    {
-                        <DropdownItem>No cameras detected</DropdownItem>
-                    }
-
                     @foreach (var camera in VoiceChatService.Cameras)
                     {
                         <DropdownItem @onclick="() => VoiceChatService.SelectCameraAsync(camera)" Type="ButtonType.Button">
@@ -61,10 +51,9 @@
                             }
                         </DropdownItem>
                     }
-                    <DropdownDivider/>
-
                     @if (VoiceChatService.CameraAvailable)
                     {
+                        <DropdownDivider/>
                         <DropdownItem @onclick="VoiceChatService.SwapCameraAsync" Type="ButtonType.Button">
                             <div class="d-flex flex-row gap-1">
                                 <Icon Name="IconName.ArrowRepeat" Color="IconColor.Primary"/>
@@ -110,8 +99,20 @@
     private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
     private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
 
-    private string MicrophoneTooltipText => VoiceChatService.MicrophoneEnabled ? "Disable microphone" : "Enable microphone";
-    private string CameraTooltipText => VoiceChatService.CameraEnabled ? "Disable camera" : "Enable camera";
+    private string MicrophoneTooltipText => VoiceChatService switch
+    {
+        { MicrophoneAvailable: false } => "Microphone is unavailable",
+        { MicrophoneEnabled: false } => "Enable microphone",
+        _ => "Disable microphone"
+    };
+
+    private string CameraTooltipText => VoiceChatService switch
+    {
+        { CameraAvailable: false } => "Camera is unavailable",
+        { CameraEnabled: false } => "Enable camera",
+        _ => "Disable camera"
+    };
+
     private string ScreenShareTooltipText => VoiceChatService.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
 
     protected override void OnInitialized()

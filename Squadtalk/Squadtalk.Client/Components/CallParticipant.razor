@@ -23,10 +23,10 @@
                 <DropdownMenu>
                     <div class="d-flex px-2">
                         <RangeInput TValue="int" Min="0" Max="100"
+                                    Value="_volume"
                                     ValueExpression="() => _volume"
-                                    ValueChanged="VolumeChanged"
-                                    Value="_volume"/>
-                        <Badge Color="BadgeColor.Primary" Class="ms-2" VisuallyHiddenText="Volume">@_volume%</Badge>
+                                    ValueChanged="VolumeChanged"/>
+                        <span class="volume">@_volume%</span>
                     </div>
                 </DropdownMenu>
             </Dropdown>
@@ -54,22 +54,31 @@
 
     [Parameter, EditorRequired] public CallParticipantModel Model { get; set; } = default!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _volume = Model.Volume.Value;
+        _volume = await VoiceChatService.GetUserVolumeAsync(Model);
     }
 
-    private Task VolumeChanged(int value)
+    private int _volume;
+
+    private int Volume => Model.Volume.Value;
+    private bool _firstChange = true;
+
+    private async Task VolumeChanged(int value)
     {
+        if (_firstChange)
+        {
+            _firstChange = false;
+            return;
+        }
+
         _volume = value;
-        return VoiceChatService.ChangeVolumeAsync(Model, new Volume(value));
+        await VoiceChatService.ChangeVolumeAsync(Model, new Volume(value));
     }
 
     private Task ShowCamera() => VoiceChatService.ShowVideoAsync(Model, VideoSource.Camera);
 
     private Task ShowScreenShare() => VoiceChatService.ShowVideoAsync(Model, VideoSource.ScreenShare);
-
-    private int _volume = 100;
 
     private string? _audioId;
     private string? _screenShareAudioId;

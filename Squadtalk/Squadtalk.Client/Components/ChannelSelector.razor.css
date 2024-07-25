@@ -60,4 +60,5 @@ svg path {
     gap: 10px;
     align-items: center;
     scroll-snap-align: start;
+    padding-top: 10px;
 }

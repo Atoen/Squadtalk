@@ -13,6 +13,9 @@ public interface IVoiceChatService
     [MemberNotNullWhen(true, nameof(CallChannel))]
     bool ConnectedToVoiceCall { get; }
 
+    [MemberNotNullWhen(true, nameof(CallChannel))]
+    bool ConnectedToVoiceCallOnCurrentChannel { get; }
+
     bool ActiveCallOnCurrentChannel { get; }
 
     ChannelModel? CallChannel { get; }
@@ -28,6 +31,8 @@ public interface IVoiceChatService
     bool MicrophoneAvailable { get; }
 
     bool CameraAvailable { get; }
+
+    ConnectionQuality ConnectionQuality { get; }
 
     IEnumerable<MediaDeviceModel> Microphones { get; }
 
@@ -55,6 +60,8 @@ public interface IVoiceChatService
     Task LeaveCallAsync();
 
     Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone);
+
+    Task<Volume> GetUserVolumeAsync(CallParticipantModel participantModel);
 
     Task SwapCameraAsync();
 
@@ -96,10 +103,12 @@ public enum InputDevice
 [JsonConverter(typeof(VolumeConverter))]
 public readonly record struct Volume(int Value)
 {
-    public int Value { get; init; } = Value is < 0 or > 100
+    public int Value { get; } = Value is < 0 or > 100
         ? throw new ArgumentOutOfRangeException(nameof(Value),
-            "Volume must be not negative and lass than or equal to 100.")
+            "Volume must be not negative and not greater than 100.")
         : Value;
 
     public static Volume Full => new(100);
+
+    public static implicit operator int(Volume volume) => volume.Value;
 }

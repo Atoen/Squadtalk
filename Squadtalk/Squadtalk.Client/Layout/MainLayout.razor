@@ -1,10 +1,16 @@
-﻿@inherits LayoutComponentBase
+﻿@using Shared.Models
+@using Squadtalk.Client.Components
+@using Squadtalk.Client.Localization
+@inherits LayoutComponentBase
 
 <Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
-<div class="page">
+<Modal @ref="_callIncomingModal"/>
+
+<div class="page position-relative">
     <div class="sidebar">
         <NavMenu/>
+        <MiniCallInfo/>
     </div>
 
     <main>
@@ -19,3 +25,27 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@inject IVoiceChatService VoiceChatService
+@inject ILocalization Localization
+@inject ILogger<MainLayout> Logger
+
+@code {
+
+    private Modal _callIncomingModal = default!;
+
+    private Dictionary<string, object> _modalParameters = [];
+
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("On initialized");
+
+        VoiceChatService.OnCallIncoming += CallIncoming;
+    }
+
+    private Task CallIncoming(ChannelModel channel)
+    {
+        return _callIncomingModal.ShowAsync<IncomingCallModal>(
+            title: Localization.TextTable.CallIncomingTemplate.TryFormat(channel.Name));
+    }
+}
