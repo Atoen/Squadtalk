@@ -14,4 +14,6 @@ public interface IChannelManager
     Task HideChannel(ChannelId channelId);
 
     Task UpdateListAsync();
+
+    Task InitializeAsync();
 }

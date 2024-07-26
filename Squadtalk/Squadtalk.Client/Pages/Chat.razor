@@ -19,7 +19,7 @@
     <div class="message-listbox rounded mt-2" id="listbox">
         <InfiniteScrolling>
             <ItemTemplate>
-                <MessageTemplate Model="context"/>
+                <MessageTemplate Model="context" @key="context"/>
             </ItemTemplate>
             <LoadingTemplate>
                 <div class="spinner-border" role="status">
@@ -43,9 +43,6 @@
 
 @code {
 
-    // private Modal _callIncomingModal = default!;
-    private TextTable _table = default!;
-
     protected override async Task OnInitializedAsync()
     {
         if (ChatService.CurrentChannel is null)
@@ -54,30 +51,18 @@
             return;
         }
 
-        _table = Localization.GetTextTable(this);
-
-        // VoiceChatService.OnCallIncoming += ShowCallPopup;
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
     }
 
-    protected override Task OnAfterRenderAsync(bool firstRender) =>
-        firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
+    }
 
-    // private async Task ShowCallPopup(ChannelModel channel)
-    // {
-    //     _options.YesButtonText = _table.AcceptCall;
-    //     _options.NoButtonText = _table.DeclineCall;
-    //
-    //     Logger.LogInformation("Incoming call - showing dialog");
-    //
-    //     await _callIncomingModal.ShowAsync();
-    // }
-    
     public async ValueTask DisposeAsync()
     {
-        // VoiceChatService.OnCallIncoming -= ShowCallPopup;
         VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
 
         await ChatService.ClearChannelSelectionAsync();

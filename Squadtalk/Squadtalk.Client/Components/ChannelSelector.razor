@@ -70,6 +70,11 @@
         _modalParameters.Add(nameof(CreateGroupChatModal.CreateCallback), createGroupCallback);
     }
 
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return firstRender ? ChannelManager.InitializeAsync() : Task.CompletedTask;
+    }
+
     private async Task ShowHidingConfirmationAsync(ChannelModel channel)
     {
         _dialogOptions.YesButtonText = _table.DialogYes;

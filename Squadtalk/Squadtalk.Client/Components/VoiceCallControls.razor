@@ -117,6 +117,7 @@
 
     protected override void OnInitialized()
     {
+        VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
         VoiceChatService.OnMicrophoneListUpdated += StateHasChanged;
         VoiceChatService.OnCameraListUpdated += StateHasChanged;
@@ -124,6 +125,7 @@
 
     public void Dispose()
     {
+        VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
         VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
         VoiceChatService.OnMicrophoneListUpdated -= StateHasChanged;
         VoiceChatService.OnCameraListUpdated -= StateHasChanged;

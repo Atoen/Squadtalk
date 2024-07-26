@@ -44,5 +44,5 @@ public interface IChatService
 
     Task ClearChannelSelectionAsync();
 
-    Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string newName);
+    Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName);
 }

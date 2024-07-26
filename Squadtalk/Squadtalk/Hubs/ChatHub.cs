@@ -88,7 +88,7 @@ public partial class ChatHub : Hub<IChatClient>
         }
     }
 
-    public async Task<bool> ChangeGroupName(string newName, ChannelId channelId, SystemMessageService systemMessageService)
+    public async Task<bool> ChangeGroupName(string? newName, ChannelId channelId, SystemMessageService systemMessageService)
     {
         var user = await GetUserWithChannelsAsync(Context.User);
         if (user is null) return false;

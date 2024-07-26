@@ -1,0 +1,42 @@
+@using Squadtalk.Client.Extensions
+
+<div class="image-container @InlineClass">
+    @switch (Channel)
+    {
+        case DirectMessageChannelModel dm:
+            <img alt="@dm.Name avatar" src="@dm.Other.AvatarUrl" class="image @InlineClass"/>
+            break;
+
+        case GroupChatModel { ImageUrl: not null } groupChat:
+            <img alt="@groupChat.Name image" src="@groupChat.ImageUrl" class="image @InlineClass"/>
+            break;
+
+        case GroupChatModel groupChat:
+        {
+            foreach (var user in groupChat.Others.Take(2))
+            {
+                <img alt="@user.Username Avatar" src="@user.AvatarUrl" class="group-avatar-item @InlineClass"/>
+            }
+            break;
+        }
+    }
+
+    @if (DisplayStatus)
+    {
+        <div class="online-indicator @InlineClass" style="@GetStyle"></div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ChannelModel Channel { get; set; } = default!;
+
+    [Parameter]
+    public bool Inline { get; set; }
+
+    [Parameter]
+    public bool DisplayStatus { get; set; } = true;
+
+    private string GetStyle => $"background-color: {Channel.StatusColor()}";
+    private string InlineClass => Inline ? "inline" : "";
+}

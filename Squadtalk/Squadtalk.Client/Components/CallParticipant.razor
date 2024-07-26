@@ -1,18 +1,5 @@
 <div class="call-participant">
-    <audio id="@AudioId"></audio>
-    <audio id="@ScreenShareAudioId"></audio>
-    <div class="video-preview my-2" id="@CameraContainerId" @onclick="ShowCamera">
-        <video class="video-frame-preview" id="@CameraId"></video>
-    </div>
-    <div class="video-preview my-2" id="@VideoContainerId" @onclick="ShowScreenShare">
-        <video class="video-frame-preview" id="@VideoId"></video>
-    </div>
-
-    @if (Model is { CameraOn: false, ScreenShareOn: false })
-    {
-        <img class="avatar" style="@AvatarBorderStyle" src="user.png" alt="Avatar" draggable="false"/>
-    }
-
+    <img class="avatar" style="@AvatarBorderStyle" src="user.png" alt="Avatar" draggable="false"/>
     <div class="username">@Model.Username</div>
     <div class="status">
 
@@ -79,20 +66,6 @@
     private Task ShowCamera() => VoiceChatService.ShowVideoAsync(Model, VideoSource.Camera);
 
     private Task ShowScreenShare() => VoiceChatService.ShowVideoAsync(Model, VideoSource.ScreenShare);
-
-    private string? _audioId;
-    private string? _screenShareAudioId;
-    private string? _cameraId;
-    private string? _videoId;
-    private string? _cameraContainerId;
-    private string? _videoContainerId;
-
-    private string AudioId => _audioId ??= $"audio-{Model.Sid}";
-    private string ScreenShareAudioId => _screenShareAudioId ??= $"screen-audio-{Model.Sid}";
-    private string CameraId => _cameraId ??= $"camera-{Model.Sid}";
-    private string VideoId => _videoId ??= $"video-{Model.Sid}";
-    private string CameraContainerId => _cameraContainerId ??= $"camera-container-{Model.Sid}";
-    private string VideoContainerId => _videoContainerId ??= $"video-container-{Model.Sid}";
 
     private string AvatarBorderStyle => Model.IsSpeaking ? "border-color: limegreen;" : string.Empty;
 

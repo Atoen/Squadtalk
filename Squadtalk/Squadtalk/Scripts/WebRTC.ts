@@ -20,7 +20,7 @@ const room = new Room({
     disconnectOnPageLeave: true,
     publishDefaults: {
         simulcast: true,
-        videoSimulcastLayers: [lk.VideoPresets.h216],
+        videoSimulcastLayers: [lk.VideoPresets.h216, lk.VideoPresets.h90],
         dtx: true,
         red: true,
         forceStereo: false,
@@ -43,10 +43,38 @@ room
     .on(RoomEvent.MediaDevicesChanged, handleDevicesChanged)
     .on(RoomEvent.MediaDevicesError, async error => {
         const failure = lk.MediaDeviceFailure.getFailure(error);
-        // await dotnetObject.invokeMethodAsync("ErrorCallback", "Media device error", failure);
+        await dotnetObject.invokeMethodAsync("ErrorCallback", "Media device error", failure);
     })
     .on(RoomEvent.TrackMuted, handleTrackMuted)
     .on(RoomEvent.TrackUnmuted, handleTrackUnmuted)
+
+const getParticipantAudioElement = (participant: lk.Participant): HTMLAudioElement => {
+    const id = `audio-${participant.sid}`;
+
+    const element = document.getElementById(id) as HTMLAudioElement;
+    if (element) {
+        console.log("Reusing existing audio element");
+        return element;
+    }
+
+    console.log("Creating new audio element");
+    const newElement = document.createElement('audio');
+    newElement.id = id;
+
+    return newElement;
+}
+
+const removeParticipantAudioElement = (participant: lk.Participant) => {
+    const id = `audio-${participant.sid}`;
+    const element = document.getElementById(id);
+
+    if (element) {
+        console.log("Deleting audio element");
+        element.parentElement?.removeChild(element);
+    }
+
+    console.log("No audio element to delete");
+}
 
 let maximizeVideoFrame: HTMLElement;
 let maximizeVideoPlayer: HTMLVideoElement;
@@ -96,6 +124,8 @@ export async function Start2(token: string): Promise<boolean> {
         return false;
     }
 
+    displayParticipant(room.localParticipant);
+
     try {
         await room.localParticipant.setMicrophoneEnabled(true);
 
@@ -110,7 +140,6 @@ export async function Start2(token: string): Promise<boolean> {
         await dotnetObject.invokeMethodAsync("ErrorCallback",
             "Unable to access the microphone",
             "You need to grant access to the microphone in order to let others hear you");
-        return false;
     }
 
     bitrateInterval = setInterval(displayBitrate, 1000);
@@ -120,7 +149,10 @@ export async function Start2(token: string): Promise<boolean> {
         .on(ParticipantEvent.TrackMuted, (pub: lk.TrackPublication) => displayParticipant(participant))
         .on(ParticipantEvent.TrackUnmuted, (pub: lk.TrackPublication) => displayParticipant(participant))
         .on(ParticipantEvent.IsSpeakingChanged, (isSpeaking: boolean) => displayParticipant(participant))
-        .on(ParticipantEvent.ConnectionQualityChanged, (connectionQuality: lk.ConnectionQuality) => displayParticipant(participant))
+        .on(ParticipantEvent.ConnectionQualityChanged, (connectionQuality: lk.ConnectionQuality) => {
+            updateLocalParticipantState();
+            displayParticipant(participant);
+        })
 
     await displayParticipant(room.localParticipant);
 
@@ -132,6 +164,9 @@ export async function Start(token: string): Promise<boolean> {
 
     try {
         await room.connect(serverAddress, roomToken);
+
+        displayParticipant(room.localParticipant);
+
         const publication = await room.localParticipant.setMicrophoneEnabled(true);
         if (!publication) {
             await dotnetObject.invokeMethodAsync("ErrorCallback",
@@ -221,16 +256,16 @@ export function ShowVideo(participantIdentity: string, videoMaximized: number) {
     maximizeVideoFrame.style.display = "block";
     publication.track.attach(maximizeVideoPlayer);
 
-    if (source === Source.Camera) {
-        attachVideo(track, participant, "camera");
-        const otherTrack = participant.getTrackPublication(Source.ScreenShare)?.track;
-        detachVideo(otherTrack, participant, "video");
-    }
-    else if (source === Source.ScreenShare) {
-        attachVideo(track, participant, "video");
-        const otherTrack = participant.getTrackPublication(Source.Camera)?.track;
-        detachVideo(otherTrack, participant, "camera");
-    }
+    // if (source === Source.Camera) {
+    //     attachVideo(track, participant, "camera");
+    //     const otherTrack = participant.getTrackPublication(Source.ScreenShare)?.track;
+    //     detachVideo(otherTrack, participant, "video");
+    // }
+    // else if (source === Source.ScreenShare) {
+    //     attachVideo(track, participant, "video");
+    //     const otherTrack = participant.getTrackPublication(Source.Camera)?.track;
+    //     detachVideo(otherTrack, participant, "camera");
+    // }
 }
 
 export function MinimizeVideo() {
@@ -337,18 +372,21 @@ function handleTrackSubscribed(track: lk.RemoteTrack, publication: lk.RemoteTrac
     const both = screenShare && camera;
 
     if (track.source === Source.Microphone) {
-        const audioPlayer = document.getElementById(`audio-${participant.sid}`) as HTMLAudioElement;
+        const audioPlayer = getParticipantAudioElement(participant);
         track.attach(audioPlayer);
+
+
+        // const audioPlayer = document.getElementById(`audio-${participant.sid}`) as HTMLAudioElement;
     }
     else if (track.source === Source.ScreenShareAudio) {
-        const screenAudioPlayer = document.getElementById(`screen-audio-${participant.sid}`) as HTMLAudioElement;
-        track.attach(screenAudioPlayer);
+        // const screenAudioPlayer = document.getElementById(`screen-audio-${participant.sid}`) as HTMLAudioElement;
+        // track.attach(screenAudioPlayer);
     }
     else if (track.source === Source.Camera && !screenShare || both) {
-        attachVideo(track, participant, "camera");
+        // attachVideo(track, participant, "camera");
     }
     else if (track.source === Source.ScreenShare && !camera) {
-        attachVideo(track, participant, "video");
+        // attachVideo(track, participant, "video");
     }
 
     displayParticipant(participant);
@@ -357,16 +395,20 @@ function handleTrackSubscribed(track: lk.RemoteTrack, publication: lk.RemoteTrac
 function handleTrackUnsubscribed(track: lk.RemoteTrack, publication: lk.RemoteTrackPublication, participant: lk.RemoteParticipant) {
     track.detach();
 
-    if (track.source === Source.Camera) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "none";
+    if (track.source == Source.Microphone) {
+        removeParticipantAudioElement(participant);
+    }
+
+    else if (track.source === Source.Camera) {
+        // const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
+        // cameraContainer.style.display = "none";
     }
     else if (track.source === Source.ScreenShare) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "none";
+        // const videoContainer = document.getElementById(`video-container-${participant.sid}`);
+        // videoContainer.style.display = "none";
     }
     if (track.sid === maximizedTrackSid) {
-        maximizeVideoFrame.style.display = "none";
+        // maximizeVideoFrame.style.display = "none";
     }
 
     displayParticipant(participant);
@@ -380,35 +422,35 @@ function handleLocalTrackPublished(publication: lk.LocalTrackPublication) {
     const screenShare = participant.isScreenShareEnabled;
     const both = screenShare && camera;
 
-    if (track.source === Source.Camera && !screenShare || both) {
-        attachVideo(track, participant, "camera");
-    }
-    else if (track.source === Source.ScreenShare && !camera) {
-        attachVideo(track, participant, "video");
-    }
+    // if (track.source === Source.Camera && !screenShare || both) {
+    //     attachVideo(track, participant, "camera");
+    // }
+    // else if (track.source === Source.ScreenShare && !camera) {
+    //     attachVideo(track, participant, "video");
+    // }
 
     displayParticipant(participant);
 }
 
-async function handleLocalTrackUnpublished(
+function handleLocalTrackUnpublished(
     publication: lk.LocalTrackPublication,
     participant: lk.LocalParticipant) {
 
     const track = publication.track;
     track.detach();
 
-    if (track.source === Source.Camera) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "none";
-    }
-    else if (track.source === Source.ScreenShare) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "none";
-    }
-
-    if (track.sid === maximizedTrackSid) {
-        maximizeVideoFrame.style.display = "none";
-    }
+    // if (track.source === Source.Camera) {
+    //     const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
+    //     cameraContainer.style.display = "none";
+    // }
+    // else if (track.source === Source.ScreenShare) {
+    //     const videoContainer = document.getElementById(`video-container-${participant.sid}`);
+    //     videoContainer.style.display = "none";
+    // }
+    //
+    // if (track.sid === maximizedTrackSid) {
+    //     maximizeVideoFrame.style.display = "none";
+    // }
 
     displayParticipant(participant);
 }
@@ -422,14 +464,14 @@ function handleTrackUnmuted(
     const screenShare = participant.isScreenShareEnabled;
     const both = screenShare && camera;
 
-    if (track.source === Source.Camera && !screenShare || both) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "block";
-    }
-    else if (track.source === Source.ScreenShare && !camera) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "block";
-    }
+    // if (track.source === Source.Camera && !screenShare || both) {
+    //     const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
+    //     cameraContainer.style.display = "block";
+    // }
+    // else if (track.source === Source.ScreenShare && !camera) {
+    //     const videoContainer = document.getElementById(`video-container-${participant.sid}`);
+    //     videoContainer.style.display = "block";
+    // }
 
     displayParticipant(participant);
 }
@@ -440,18 +482,18 @@ function handleTrackMuted(
 
     const track = publication.track;
 
-    if (track.source === Source.Camera) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "none";
-    }
-    else if (track.source === Source.ScreenShare) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "none";
-    }
-
-    if (track.sid === maximizedTrackSid) {
-        maximizeVideoFrame.style.display = "none";
-    }
+    // if (track.source === Source.Camera) {
+    //     const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
+    //     cameraContainer.style.display = "none";
+    // }
+    // else if (track.source === Source.ScreenShare) {
+    //     const videoContainer = document.getElementById(`video-container-${participant.sid}`);
+    //     videoContainer.style.display = "none";
+    // }
+    //
+    // if (track.sid === maximizedTrackSid) {
+    //     maximizeVideoFrame.style.display = "none";
+    // }
 
     displayParticipant(participant);
 }
@@ -491,6 +533,20 @@ async function handleDevicesChanged() {
 async function displayParticipant(participant: lk.Participant) {
     const channelId = room.name;
     await dotnetObject.invokeMethodAsync("DisplayParticipantCallback", mapParticipant(participant), channelId);
+}
+
+async function updateLocalParticipantState() {
+    const participant = room?.localParticipant;
+    if (!participant) return;
+
+    const localParticipantState = ({
+        MicrophoneOn: participant.isMicrophoneEnabled,
+        CameraOn: participant.isCameraEnabled,
+        ScreenShareOn: participant.isScreenShareEnabled,
+        ConnectionQuality: participant.connectionQuality,
+    });
+
+    await dotnetObject.invokeMethodAsync("LocalParticipantStateUpdatedCallback", localParticipantState);
 }
 
 async function displayBitrate() {

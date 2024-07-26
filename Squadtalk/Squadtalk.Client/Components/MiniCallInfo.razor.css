@@ -17,3 +17,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.channel-name:hover {
+    text-decoration: underline;
+}

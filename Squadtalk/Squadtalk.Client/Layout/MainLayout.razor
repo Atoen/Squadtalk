@@ -1,9 +1,10 @@
-﻿@using Shared.Models
+﻿@using Shared.Data.TypedIds
+@using Shared.Models
 @using Squadtalk.Client.Components
 @using Squadtalk.Client.Localization
 @inherits LayoutComponentBase
 
-<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"/>
 
 <Modal @ref="_callIncomingModal"/>
 
@@ -26,6 +27,7 @@
     <a class="dismiss">🗙</a>
 </div>
 
+@inject ICommunicationService CommunicationService
 @inject IVoiceChatService VoiceChatService
 @inject ILocalization Localization
 @inject ILogger<MainLayout> Logger
@@ -34,18 +36,45 @@
 
     private Modal _callIncomingModal = default!;
 
-    private Dictionary<string, object> _modalParameters = [];
+    private readonly Dictionary<string, object> _modalParameters = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("On initialized");
+
+        await CommunicationService.ConnectAsync();
+
+        _modalParameters[nameof(IncomingCallModal.DecisionCallback)] =
+            (Func<bool, ChannelId, Task>) CallAcceptedDecisionCallback;
 
         VoiceChatService.OnCallIncoming += CallIncoming;
     }
 
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
+    }
+
     private Task CallIncoming(ChannelModel channel)
     {
+        _modalParameters[nameof(IncomingCallModal.CallChannel)] = channel;
+
         return _callIncomingModal.ShowAsync<IncomingCallModal>(
-            title: Localization.TextTable.CallIncomingTemplate.TryFormat(channel.Name));
+            title: Localization.TextTable.CallIncomingTemplate.TryFormat(channel.Name),
+            parameters: _modalParameters);
+    }
+
+    private async Task CallAcceptedDecisionCallback(bool accepted, ChannelId channelId)
+    {
+        await _callIncomingModal.HideAsync();
+
+        if (accepted)
+        {
+            await VoiceChatService.AcceptCallAsync(channelId);
+        }
+        else
+        {
+            await VoiceChatService.DeclineCallAsync(channelId);
+        }
     }
 }

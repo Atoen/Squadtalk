@@ -3,8 +3,8 @@
 @using Squadtalk.Client.Extensions
 
 <div class="text-chat rounded" @onclick="OpenChat">
-    <div style="grid-row:1/3">
-        <ChatImage Channel="Model"/>
+    <div class="me-2" style="grid-row:1/3">
+        <ChannelImage Channel="Model"/>
     </div>
 
     <div class="username">@Model.Name</div>

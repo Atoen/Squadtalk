@@ -16,12 +16,11 @@ public class TextChatService : ITextChatService
     private readonly IMessagePageProvider _messagePageProvider;
     private readonly ICommunicationService _communicationService;
     private readonly IChatService _chatService;
-    
+
     private UserId? _userId;
-    private MessageModel? _callStartedMessageModel;
-    
+
     public event Func<ChannelId, Task>? MessageReceived;
-    
+
     public TextChatService(
         IChatService chatService,
         IMessageModelService modelService,
@@ -77,7 +76,7 @@ public class TextChatService : ITextChatService
         }
 
         await UpdateChannelMessageState(channel, messageDto);
-        
+
         var channelState = channel.State;
         var message = _modelService.CreateModel(messageDto, channelState, false);
 

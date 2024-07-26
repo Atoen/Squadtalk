@@ -20,19 +20,15 @@
 }
 
 @inject IChatService ChatService
-@inject ICommunicationService CommunicationService
 @inject ILocalization Localization
 
 @code {
 
     private TextTable _table = default!;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _table = Localization.GetTextTable(this);
-
-        await CommunicationService.ConnectAsync();
-
         ChatService.ConnectedUsersChanged += StateHasChanged;
     }
 

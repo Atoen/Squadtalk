@@ -58,6 +58,11 @@ public class ChannelManager : IChannelManager
         return added ? UpdateLocalStorage() : Task.CompletedTask;
     }
 
+    public Task InitializeAsync()
+    {
+        return _initialized ? Task.CompletedTask : UpdateListAsync();
+    }
+
     public async Task UpdateListAsync()
     {
         if (!_initialized)
@@ -104,7 +109,8 @@ public class ChannelManager : IChannelManager
             await StopHidingChannel(channelId);
         }
 
-        if (_visibleChannels is [var first, ..] && first.Id != channelId)
+        if (channelId != GroupChatModel.GlobalChatId &&
+            _visibleChannels is [var first, ..] && first.Id != channelId)
         {
             _shouldSortChannels = true;
         }

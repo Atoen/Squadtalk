@@ -36,7 +36,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     public ChannelModel? CurrentChannel => _chatService.CurrentChannel;
 
-    public bool MicrophoneEnabled { get; private set; } = true;
+    public bool MicrophoneEnabled { get; private set; }
 
     public bool CameraEnabled { get; private set; }
 
@@ -46,7 +46,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     public bool CameraAvailable => _cameras.Count > 0;
 
-    public ConnectionQuality ConnectionQuality => ConnectionQuality.Excellent;
+    public ConnectionQuality ConnectionQuality { get; private set; } = ConnectionQuality.Unknown;
 
     public IEnumerable<CallParticipantModel> ActiveCallParticipants => _participants.Values;
 
@@ -66,6 +66,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     public event Func<ChannelModel, Task>? OnCallIncoming;
     public event Action<ChannelModel>? OnCallEnded;
     public event Action<ChannelModel>? OnParticipantsUpdated;
+    public event Action? LocalParticipantStateUpdated;
 
     public VoiceChatService(
         IJSRuntime jsRuntime,
@@ -211,7 +212,12 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
             return;
         }
 
-        MicrophoneEnabled = result.Value;
+        var lastEnabled = MicrophoneEnabled;
+        if (result.Value != lastEnabled)
+        {
+            MicrophoneEnabled = result.Value;
+            LocalParticipantStateUpdated?.Invoke();
+        }
     }
 
     public async Task ToggleCameraAsync()
@@ -223,7 +229,12 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
             return;
         }
 
-        CameraEnabled = result.Value;
+        var lastEnabled = CameraEnabled;
+        if (result.Value != lastEnabled)
+        {
+            CameraEnabled = result.Value;
+            LocalParticipantStateUpdated?.Invoke();
+        }
     }
 
     public async Task ToggleScreenShareAsync()
@@ -235,7 +246,12 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
             return;
         }
 
-        ScreenShareEnabled = result.Value;
+        var lastEnabled = ScreenShareEnabled;
+        if (result.Value != lastEnabled)
+        {
+            ScreenShareEnabled = result.Value;
+            LocalParticipantStateUpdated?.Invoke();
+        }
     }
 
     public async Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel)
@@ -286,6 +302,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
             return;
         }
 
+        if (channel.State.HasActiveCall) return;
+
         channel.State.HasActiveCall = true;
 
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
@@ -301,12 +319,18 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     private Task CallAccepted(ChannelId channelId, IChatUser accepting)
     {
-        if (_participants.ContainsKey(accepting.Id))
-        {
-            return Task.CompletedTask;
-        }
-
         _logger.LogInformation("User {User} accepted call", accepting.Username);
+
+        if (!_participants.ContainsKey(accepting.Id))
+        {
+            _participants[accepting.Id] = new CallParticipantModel
+            {
+                Username = $"(Accepting) {accepting.Username}",
+                ConnectionQuality = ConnectionQuality.Unknown
+            };
+
+            OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        }
 
         return Task.CompletedTask;
     }
@@ -412,6 +436,17 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     {
         _participants.Remove(participant.Id);
         OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+    }
+
+    [JSInvokable]
+    public void LocalParticipantStateUpdatedCallback(ParticipantState localParticipantState)
+    {
+        MicrophoneEnabled = localParticipantState.MicrophoneOn;
+        CameraEnabled = localParticipantState.CameraOn;
+        ScreenShareEnabled = localParticipantState.ScreenShareOn;
+        ConnectionQuality = localParticipantState.ConnectionQuality;
+
+        LocalParticipantStateUpdated?.Invoke();
     }
 
     private void NotifyIfFailed(ResultBase result, [CallerMemberName] string callerName = "")

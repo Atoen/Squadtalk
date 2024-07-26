@@ -3,7 +3,7 @@ using Shared.Enums;
 
 namespace Shared.Models;
 
-public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? name = null) : ChannelModel(id)
+public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? customName = null) : ChannelModel(id)
 {
     public const string GlobalChanelIdValue = "global";
 
@@ -12,10 +12,10 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string?
     
     public override List<UserModel> Others { get; } = others.ToList();
     
-    private string? _name = name;
-    public override string Name => _name ??= string.Join(", ", Others.Select(x => x.Username));
+    private string? _name;
+    public override string Name => CustomName ?? (_name ??= string.Join(", ", Others.Select(x => x.Username)));
 
-    public void SetName(string value) => _name = value;
+    public string? CustomName { get; set; } = customName;
 
     public override UserStatus Status => GetStatus();
 

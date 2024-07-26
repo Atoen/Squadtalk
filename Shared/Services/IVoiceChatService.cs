@@ -48,6 +48,7 @@ public interface IVoiceChatService
     event Func<ChannelModel, Task>? OnCallIncoming;
     event Action<ChannelModel>? OnCallEnded;
     event Action<ChannelModel>? OnParticipantsUpdated;
+    event Action? LocalParticipantStateUpdated;
 
     Task InitializeAsync();
 

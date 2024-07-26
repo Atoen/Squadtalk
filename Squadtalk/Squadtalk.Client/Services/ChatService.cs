@@ -85,6 +85,8 @@ public class ChatService : IChatService
 
     public async Task OpenChannelAsync(ChannelModel channelModel)
     {
+        if (CurrentChannel == channelModel) return;
+
         await ChangeChannelAsync(channelModel);
         _navigationManager.NavigateTo("Messages/Chat");
     }
@@ -125,7 +127,7 @@ public class ChatService : IChatService
         }
     }
 
-    public Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string newName)
+    public Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName)
     {
         return _communicationService.ChangeChannelNameAsync(newName, groupChat.Id);
     }
@@ -276,7 +278,7 @@ public class ChatService : IChatService
         ConnectedUsersChanged?.Invoke();
     }
 
-    private async Task OnChannelNameChanged(ChannelId channelId, string channelName)
+    private async Task OnChannelNameChanged(ChannelId channelId, string? channelName)
     {
         if (!_allChannels.TryGetValue(channelId, out var channel))
         {
@@ -289,7 +291,7 @@ public class ChatService : IChatService
             return;
         }
 
-        groupChat.SetName(channelName);
+        groupChat.CustomName = channelName;
 
         ChannelNameChanged?.Invoke(groupChat);
 

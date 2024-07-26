@@ -48,7 +48,7 @@ public class LocalCommunicationService : ICommunicationService
     public event Func<string, Task>? ConnectionStatusChanged;
     public event Func<IEnumerable<IChatChannel>, Task>? ChannelsReceived;
     public event Func<IChatChannel, Task>? AddedToChannel;
-    public event Func<ChannelId, string, Task>? ChannelNameChanged;
+    public event Func<ChannelId, string?, Task>? ChannelNameChanged;
     public event Func<ChannelId, IChatUser, Task>? CallAccepted;
     public event Func<ChannelId, UserId, Task>? IncomingCall;
     public event Func<IChatUser, ChannelId, Task>? CallDeclined;
@@ -113,7 +113,8 @@ public class LocalCommunicationService : ICommunicationService
     {
         throw new NotImplementedException();
     }
-    public Task<bool> ChangeChannelNameAsync(string newName, ChannelId channelId)
+
+    public Task<bool> ChangeChannelNameAsync(string? newName, ChannelId channelId)
     {
         throw new NotImplementedException();
     }

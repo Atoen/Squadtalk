@@ -3,7 +3,7 @@
     <div class="info">
         <div class="d-flex gap-1 w-100 align-items-center">
             <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" Size="IconSize.x4"/>
-            <span class="channel-name">@VoiceChatService.CallChannel?.Name</span>
+            <span class="channel-name" @onclick="GoToCallChannel">@VoiceChatService.CallChannel?.Name</span>
         </div>
 
         <div class="d-flex gap-1 w-100">
@@ -35,13 +35,14 @@
 
 @implements IDisposable
 
+@inject IChatService ChatService
 @inject IVoiceChatService VoiceChatService
 @inject NavigationManager NavigationManager
 @inject ILogger<MiniCallInfo> Logger
 
 @code {
 
-    private bool ShouldDisplay => VoiceChatService.ConnectedToVoiceCall && !VoiceChatService.ActiveCallOnCurrentChannel;
+    private bool ShouldDisplay => VoiceChatService.ConnectedToVoiceCall;
 
     private bool _shouldRerenderControls;
     private bool _lastShouldDisplay;
@@ -90,10 +91,24 @@
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += NavigationChanged;
-
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
-        VoiceChatService.OnMicrophoneListUpdated += StateHasChanged;
-        VoiceChatService.OnCameraListUpdated += StateHasChanged;
+        VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
+        ChatService.ChannelNameChanged += ChannelNameChanged;
+    }
+
+    private void ChannelNameChanged(GroupChatModel groupChat)
+    {
+        if (VoiceChatService.CallChannel == groupChat)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private Task GoToCallChannel()
+    {
+        return VoiceChatService.CallChannel is { } channel
+            ? ChatService.OpenChannelAsync(channel)
+            : Task.CompletedTask;
     }
 
     private void NavigationChanged(object? sender, LocationChangedEventArgs e) => StateHasChanged();
@@ -101,9 +116,8 @@
     public void Dispose()
     {
         NavigationManager.LocationChanged -= NavigationChanged;
-
         VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
-        VoiceChatService.OnMicrophoneListUpdated -= StateHasChanged;
-        VoiceChatService.OnCameraListUpdated -= StateHasChanged;
+        VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
+        ChatService.ChannelNameChanged -= ChannelNameChanged;
     }
 }

@@ -24,8 +24,8 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
     public event Func<UserDto, Task>? UserConnected;
     public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
     public event Func<MessageDto, Task>? MessageReceived;
-    public event Func<ChannelId, string, Task>? ChannelNameChanged;
-    
+    public event Func<ChannelId, string?, Task>? ChannelNameChanged;
+
     public event Func<ChannelId, UserId, Task>? IncomingCall;
     public event Func<ChannelId, UserDto, Task>? CallAccepted;
     public event Func<UserDto, ChannelId, Task>? CallDeclined;
@@ -66,7 +66,7 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
     {
         if (_connectionStared) return;
         _connectionStared = true;
-        
+
         if (!_handlersRegistered)
         {
             RegisterHandlers();
@@ -78,11 +78,11 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
             ConnectionStatus = ISignalrService.Connecting;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
             await _connection.StartAsync();
-            
+
             Connected = true;
             ConnectionStatus = ISignalrService.Online;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
-            
+
             _logger.LogInformation("Successfully connected to chat hub");
         }
         catch
@@ -117,9 +117,9 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         return InvokeAsync<ChannelId, bool>("ChannelHasActiveCall", id);
     }
 
-    Task<bool> ISignalrTextService.ChangeChannelNameAsync(string newName, ChannelId channelId)
+    Task<bool> ISignalrTextService.ChangeChannelNameAsync(string? newName, ChannelId channelId)
     {
-        return InvokeAsync<string, ChannelId, bool>("ChangeGroupName", newName, channelId);
+        return InvokeAsync<string?, ChannelId, bool>("ChangeGroupName", newName, channelId);
     }
 
     private void RegisterHandlers()
@@ -165,23 +165,23 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
         _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
             ChannelNameChanged.TryInvoke(channelId, name));
-        
+
         _connection.On<ChannelId, UserId>("IncomingCall", (channelId, initiatorId) =>
             IncomingCall.TryInvoke(channelId, initiatorId));
 
         _connection.On<ChannelId, UserDto>("CallAccepted", (channelId, accepting) =>
             CallAccepted.TryInvoke(channelId, accepting));
-        
+
         _connection.On<UserDto, ChannelId>("CallDeclined", (user, channelId) =>
             CallDeclined.TryInvoke(user, channelId));
-        
+
         _connection.On<ChannelId>("CallEnded", channelId =>
             CallEnded.TryInvoke(channelId));
-        
+
         _connection.On<string>("CallFailed", reason =>
             CallFailed.TryInvoke(reason));
     }
-    
+
     private async Task<TResult?> InvokeAsync<TArg, TResult>(string methodName, TArg arg,
         CancellationToken cancellationToken = default, [CallerMemberName] string? callerName = null)
     {
@@ -209,7 +209,7 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
             return default;
         }
     }
-    
+
     private Task SendAsync<T>(string methodName, T arg, CancellationToken cancellationToken = default,
         [CallerMemberName] string? callerName = null)
     {
@@ -223,8 +223,8 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
             return Task.CompletedTask;
         }
     }
-    
-    private Task SendAsync<T1, T2>(string methodName, T1 arg1, T2 arg2, CancellationToken cancellationToken = default, 
+
+    private Task SendAsync<T1, T2>(string methodName, T1 arg1, T2 arg2, CancellationToken cancellationToken = default,
         [CallerMemberName] string? callerName = null)
     {
         try

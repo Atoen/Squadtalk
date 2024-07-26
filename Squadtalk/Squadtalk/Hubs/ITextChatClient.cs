@@ -17,5 +17,5 @@ public interface ITextChatClient
 
     Task AddedToChannel(ChannelDto channelDto);
 
-    Task ChannelNameChanged(ChannelId channelId, string name);
+    Task ChannelNameChanged(ChannelId channelId, string? name);
 }

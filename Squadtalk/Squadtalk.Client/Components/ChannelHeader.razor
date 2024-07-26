@@ -3,12 +3,12 @@
 <Modal @ref="_modal"/>
 
 <div class="header rounded">
-    <div class="d-flex gap-1 align-items-center w-100 rounded ps-2">
+    <div class="d-flex gap-1 align-items-center w-100 rounded ps-2" style="height: 44px">
         <span class="channel-name ms-1 order-2">@Channel.Name</span>
         @if (!VoiceChatService.CurrentChannel.IsGlobal())
         {
             <div class="order-1">
-                <ChatImage Channel="VoiceChatService.CurrentChannel" Inline="true"/>
+                <ChannelImage Channel="VoiceChatService.CurrentChannel" Inline="true"/>
             </div>
 
             <div class="d-flex ms-auto order-3">
@@ -65,9 +65,9 @@
     {
         if (Channel is not GroupChatModel groupChat) return;
 
-        _modalParameters[nameof(ManageChannelModal.GroupChat)] = groupChat;
+        _modalParameters[nameof(ManageGroupModal.GroupChat)] = groupChat;
 
-        await _modal.ShowAsync<ManageChannelModal>("Manage channel", parameters: _modalParameters);
+        await _modal.ShowAsync<ManageGroupModal>("Manage channel", parameters: _modalParameters);
     }
 
     protected override void OnInitialized()
@@ -75,8 +75,8 @@
         _table = Localization.GetTextTable(this);
         _lastStatus = Channel.Status;
 
-        _modalParameters[nameof(ManageChannelModal.GroupNameChanged)] =
-            (Func<GroupChatModel, string, Task<bool>>) GroupNameChanged;
+        _modalParameters[nameof(ManageGroupModal.GroupNameChanged)] =
+            (Func<GroupChatModel, string?, Task<bool>>) GroupNameChanged;
 
         ChatService.ConnectedUsersChanged += ConnectedUsersChanged;
         ChatService.ChannelNameChanged += ChannelNameChanged;
@@ -89,7 +89,7 @@
         StateHasChanged();
     }
 
-    private async Task<bool> GroupNameChanged(GroupChatModel groupChat, string newName)
+    private async Task<bool> GroupNameChanged(GroupChatModel groupChat, string? newName)
     {
         Logger.LogInformation("New name {NewName}", newName);
 

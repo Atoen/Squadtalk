@@ -12,9 +12,9 @@ public interface ISignalrTextService
     event Func<string, Task>? ConnectionStatusChanged;
     event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
     event Func<ChannelDto, Task>? AddedToChannel;
-    event Func<ChannelId, string, Task>? ChannelNameChanged;
+    event Func<ChannelId, string?, Task>? ChannelNameChanged;
     
     Task SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken = default);
 
-    Task<bool> ChangeChannelNameAsync(string newName, ChannelId channelId);
+    Task<bool> ChangeChannelNameAsync(string? newName, ChannelId channelId);
 }

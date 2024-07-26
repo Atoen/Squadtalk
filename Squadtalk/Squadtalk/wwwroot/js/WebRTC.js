@@ -10,7 +10,7 @@ const room = new Room({
     disconnectOnPageLeave: true,
     publishDefaults: {
         simulcast: true,
-        videoSimulcastLayers: [lk.VideoPresets.h216],
+        videoSimulcastLayers: [lk.VideoPresets.h216, lk.VideoPresets.h90],
         dtx: true,
         red: true,
         forceStereo: false,
@@ -32,9 +32,31 @@ room
     .on(RoomEvent.MediaDevicesChanged, handleDevicesChanged)
     .on(RoomEvent.MediaDevicesError, async (error) => {
     const failure = lk.MediaDeviceFailure.getFailure(error);
+    await dotnetObject.invokeMethodAsync("ErrorCallback", "Media device error", failure);
 })
     .on(RoomEvent.TrackMuted, handleTrackMuted)
     .on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+const getParticipantAudioElement = (participant) => {
+    const id = `audio-${participant.sid}`;
+    const element = document.getElementById(id);
+    if (element) {
+        console.log("Reusing existing audio element");
+        return element;
+    }
+    console.log("Creating new audio element");
+    const newElement = document.createElement('audio');
+    newElement.id = id;
+    return newElement;
+};
+const removeParticipantAudioElement = (participant) => {
+    const id = `audio-${participant.sid}`;
+    const element = document.getElementById(id);
+    if (element) {
+        console.log("Deleting audio element");
+        element.parentElement?.removeChild(element);
+    }
+    console.log("No audio element to delete");
+};
 let maximizeVideoFrame;
 let maximizeVideoPlayer;
 let dotnetObject;
@@ -69,6 +91,7 @@ export async function Start2(token) {
         await dotnetObject.invokeMethodAsync("ErrorCallback", "Failed to connect to the room", "Unable to connect to the room");
         return false;
     }
+    displayParticipant(room.localParticipant);
     try {
         await room.localParticipant.setMicrophoneEnabled(true);
         microphoneEnabled = true;
@@ -79,7 +102,6 @@ export async function Start2(token) {
     }
     catch (e) {
         await dotnetObject.invokeMethodAsync("ErrorCallback", "Unable to access the microphone", "You need to grant access to the microphone in order to let others hear you");
-        return false;
     }
     bitrateInterval = setInterval(displayBitrate, 1000);
     const participant = room.localParticipant;
@@ -87,7 +109,10 @@ export async function Start2(token) {
         .on(ParticipantEvent.TrackMuted, (pub) => displayParticipant(participant))
         .on(ParticipantEvent.TrackUnmuted, (pub) => displayParticipant(participant))
         .on(ParticipantEvent.IsSpeakingChanged, (isSpeaking) => displayParticipant(participant))
-        .on(ParticipantEvent.ConnectionQualityChanged, (connectionQuality) => displayParticipant(participant));
+        .on(ParticipantEvent.ConnectionQualityChanged, (connectionQuality) => {
+        updateLocalParticipantState();
+        displayParticipant(participant);
+    });
     await displayParticipant(room.localParticipant);
     return true;
 }
@@ -95,6 +120,7 @@ export async function Start(token) {
     roomToken = token;
     try {
         await room.connect(serverAddress, roomToken);
+        displayParticipant(room.localParticipant);
         const publication = await room.localParticipant.setMicrophoneEnabled(true);
         if (!publication) {
             await dotnetObject.invokeMethodAsync("ErrorCallback", "Unable to access the microphone", "You need to grant access to the microphone in order to let others hear you");
@@ -168,16 +194,6 @@ export function ShowVideo(participantIdentity, videoMaximized) {
     maximizedParticipantIdentity = participant.identity;
     maximizeVideoFrame.style.display = "block";
     publication.track.attach(maximizeVideoPlayer);
-    if (source === Source.Camera) {
-        attachVideo(track, participant, "camera");
-        const otherTrack = participant.getTrackPublication(Source.ScreenShare)?.track;
-        detachVideo(otherTrack, participant, "video");
-    }
-    else if (source === Source.ScreenShare) {
-        attachVideo(track, participant, "video");
-        const otherTrack = participant.getTrackPublication(Source.Camera)?.track;
-        detachVideo(otherTrack, participant, "camera");
-    }
 }
 export function MinimizeVideo() {
     const participant = room.getParticipantByIdentity(maximizedParticipantIdentity);
@@ -266,33 +282,27 @@ function handleTrackSubscribed(track, publication, participant) {
     const screenShare = participant.isScreenShareEnabled;
     const both = screenShare && camera;
     if (track.source === Source.Microphone) {
-        const audioPlayer = document.getElementById(`audio-${participant.sid}`);
+        const audioPlayer = getParticipantAudioElement(participant);
         track.attach(audioPlayer);
     }
     else if (track.source === Source.ScreenShareAudio) {
-        const screenAudioPlayer = document.getElementById(`screen-audio-${participant.sid}`);
-        track.attach(screenAudioPlayer);
     }
     else if (track.source === Source.Camera && !screenShare || both) {
-        attachVideo(track, participant, "camera");
     }
     else if (track.source === Source.ScreenShare && !camera) {
-        attachVideo(track, participant, "video");
     }
     displayParticipant(participant);
 }
 function handleTrackUnsubscribed(track, publication, participant) {
     track.detach();
-    if (track.source === Source.Camera) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "none";
+    if (track.source == Source.Microphone) {
+        removeParticipantAudioElement(participant);
+    }
+    else if (track.source === Source.Camera) {
     }
     else if (track.source === Source.ScreenShare) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "none";
     }
     if (track.sid === maximizedTrackSid) {
-        maximizeVideoFrame.style.display = "none";
     }
     displayParticipant(participant);
 }
@@ -302,28 +312,11 @@ function handleLocalTrackPublished(publication) {
     const camera = participant.isCameraEnabled;
     const screenShare = participant.isScreenShareEnabled;
     const both = screenShare && camera;
-    if (track.source === Source.Camera && !screenShare || both) {
-        attachVideo(track, participant, "camera");
-    }
-    else if (track.source === Source.ScreenShare && !camera) {
-        attachVideo(track, participant, "video");
-    }
     displayParticipant(participant);
 }
-async function handleLocalTrackUnpublished(publication, participant) {
+function handleLocalTrackUnpublished(publication, participant) {
     const track = publication.track;
     track.detach();
-    if (track.source === Source.Camera) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "none";
-    }
-    else if (track.source === Source.ScreenShare) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "none";
-    }
-    if (track.sid === maximizedTrackSid) {
-        maximizeVideoFrame.style.display = "none";
-    }
     displayParticipant(participant);
 }
 function handleTrackUnmuted(publication, participant) {
@@ -331,29 +324,10 @@ function handleTrackUnmuted(publication, participant) {
     const camera = participant.isCameraEnabled;
     const screenShare = participant.isScreenShareEnabled;
     const both = screenShare && camera;
-    if (track.source === Source.Camera && !screenShare || both) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "block";
-    }
-    else if (track.source === Source.ScreenShare && !camera) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "block";
-    }
     displayParticipant(participant);
 }
 function handleTrackMuted(publication, participant) {
     const track = publication.track;
-    if (track.source === Source.Camera) {
-        const cameraContainer = document.getElementById(`camera-container-${participant.sid}`);
-        cameraContainer.style.display = "none";
-    }
-    else if (track.source === Source.ScreenShare) {
-        const videoContainer = document.getElementById(`video-container-${participant.sid}`);
-        videoContainer.style.display = "none";
-    }
-    if (track.sid === maximizedTrackSid) {
-        maximizeVideoFrame.style.display = "none";
-    }
     displayParticipant(participant);
 }
 function handleDisconnect(reason) {
@@ -383,6 +357,18 @@ async function handleDevicesChanged() {
 async function displayParticipant(participant) {
     const channelId = room.name;
     await dotnetObject.invokeMethodAsync("DisplayParticipantCallback", mapParticipant(participant), channelId);
+}
+async function updateLocalParticipantState() {
+    const participant = room?.localParticipant;
+    if (!participant)
+        return;
+    const localParticipantState = ({
+        MicrophoneOn: participant.isMicrophoneEnabled,
+        CameraOn: participant.isCameraEnabled,
+        ScreenShareOn: participant.isScreenShareEnabled,
+        ConnectionQuality: participant.connectionQuality,
+    });
+    await dotnetObject.invokeMethodAsync("LocalParticipantStateUpdatedCallback", localParticipantState);
 }
 async function displayBitrate() {
     if (!room || room.state !== lk.ConnectionState.Connected) {
