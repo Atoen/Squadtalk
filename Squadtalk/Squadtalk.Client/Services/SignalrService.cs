@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using MessagePack;
 using Microsoft.AspNetCore.Components;
@@ -92,34 +93,40 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         }
     }
 
+    public async Task<TimeSpan> MeasureClientDelayAsync()
+    {
+        var delay = await _connection.InvokeAsync<TimeSpan>("Ping", DateTimeOffset.UtcNow);
+        return delay;
+    }
+
     Task ISignalrTextService.SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken)
     {
-        return SendAsync("SendMessage", message, channelId, cancellationToken);
+        return _connection.SendAsync("SendMessage", message, channelId, cancellationToken);
     }
 
     Task<RoomTokenDto?> ISignalrVoiceService.StartVoiceCallAsync(ChannelId id)
     {
-        return InvokeAsync<ChannelId, RoomTokenDto?>("StartCall", id);
+        return _connection.InvokeAsync<RoomTokenDto?>("StartCall", id);
     }
 
     Task<RoomTokenDto?> ISignalrVoiceService.AcceptCallAsync(ChannelId id)
     {
-        return InvokeAsync<ChannelId, RoomTokenDto?>("AcceptCall", id);
+        return _connection.InvokeAsync<RoomTokenDto?>("AcceptCall", id);
     }
 
     Task ISignalrVoiceService.DeclineCallAsync(ChannelId id)
     {
-        return SendAsync("DeclineCall", id);
+        return _connection.SendAsync("DeclineCall", id);
     }
 
     Task<bool> ISignalrVoiceService.ChannelHasActiveCall(ChannelId id)
     {
-        return InvokeAsync<ChannelId, bool>("ChannelHasActiveCall", id);
+        return _connection.InvokeAsync<bool>("ChannelHasActiveCall", id);
     }
 
     Task<bool> ISignalrTextService.ChangeChannelNameAsync(string? newName, ChannelId channelId)
     {
-        return InvokeAsync<string?, ChannelId, bool>("ChangeGroupName", newName, channelId);
+        return _connection.InvokeAsync<bool>("ChangeGroupName", newName, channelId);
     }
 
     private void RegisterHandlers()
@@ -180,62 +187,6 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
         _connection.On<string>("CallFailed", reason =>
             CallFailed.TryInvoke(reason));
-    }
-
-    private async Task<TResult?> InvokeAsync<TArg, TResult>(string methodName, TArg arg,
-        CancellationToken cancellationToken = default, [CallerMemberName] string? callerName = null)
-    {
-        try
-        {
-            return await _connection.InvokeCoreAsync<TResult>(methodName, [arg], cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
-            return default;
-        }
-    }
-
-    private async Task<TResult?> InvokeAsync<TArg1, TArg2, TResult>(string methodName, TArg1 arg1, TArg2 arg2,
-        CancellationToken cancellationToken = default, [CallerMemberName] string? callerName = null)
-    {
-        try
-        {
-            return await _connection.InvokeCoreAsync<TResult>(methodName, [arg1, arg2], cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
-            return default;
-        }
-    }
-
-    private Task SendAsync<T>(string methodName, T arg, CancellationToken cancellationToken = default,
-        [CallerMemberName] string? callerName = null)
-    {
-        try
-        {
-            return _connection.SendAsync(methodName, arg, cancellationToken: cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
-            return Task.CompletedTask;
-        }
-    }
-
-    private Task SendAsync<T1, T2>(string methodName, T1 arg1, T2 arg2, CancellationToken cancellationToken = default,
-        [CallerMemberName] string? callerName = null)
-    {
-        try
-        {
-            return _connection.SendAsync(methodName, arg1, arg2, cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e,"{CallerName}: Error while dispatching message", callerName);
-            return Task.CompletedTask;
-        }
     }
 
     public ValueTask DisposeAsync()

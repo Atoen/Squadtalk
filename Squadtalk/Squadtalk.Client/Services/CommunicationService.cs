@@ -52,6 +52,11 @@ public class CommunicationService : ICommunicationService
         return _signalrService.ChangeChannelNameAsync(newName, channelId);
     }
 
+    public Task<TimeSpan> MeasureClientDelayAsync()
+    {
+        return _signalrService.MeasureClientDelayAsync();
+    }
+
     public event Func<IChatMessage, Task>? MessageReceived
     {
         add => _signalrService.MessageReceived += value;

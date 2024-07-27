@@ -8,6 +8,8 @@ namespace Squadtalk.Hubs;
 [Authorize]
 public partial class ChatHub
 {
+    public TimeSpan Ping(DateTimeOffset clientTime) => DateTimeOffset.UtcNow - clientTime;
+
     public async Task<RoomTokenDto?> StartCall(ChannelId channelId)
     {
         if (await GetUserWithChannelsAsync(Context.User) is not { } callingUser)

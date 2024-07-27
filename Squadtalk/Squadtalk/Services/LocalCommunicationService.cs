@@ -118,4 +118,9 @@ public class LocalCommunicationService : ICommunicationService
     {
         throw new NotImplementedException();
     }
+
+    public Task<TimeSpan> MeasureClientDelayAsync()
+    {
+        throw new NotImplementedException();
+    }
 }

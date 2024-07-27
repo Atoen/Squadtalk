@@ -63,9 +63,9 @@
         await VoiceChatService.ChangeVolumeAsync(Model, new Volume(value));
     }
 
-    private Task ShowCamera() => VoiceChatService.ShowVideoAsync(Model, VideoSource.Camera);
+    private Task ShowCamera() => VoiceChatService.MaximizeVideoAsync(Model, VideoSource.Camera);
 
-    private Task ShowScreenShare() => VoiceChatService.ShowVideoAsync(Model, VideoSource.ScreenShare);
+    private Task ShowScreenShare() => VoiceChatService.MaximizeVideoAsync(Model, VideoSource.ScreenShare);
 
     private string AvatarBorderStyle => Model.IsSpeaking ? "border-color: limegreen;" : string.Empty;
 

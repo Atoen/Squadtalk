@@ -14,7 +14,7 @@ using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services;
 
-public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
+public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
     private readonly ICommunicationService _communicationService;
@@ -58,6 +58,8 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
     private readonly List<MediaDeviceModel> _microphones = [];
     private readonly List<MediaDeviceModel> _cameras = [];
 
+    private readonly PeriodicTimer _pingTimer = new(TimeSpan.FromMilliseconds(500));
+
     public event Action? OnMicrophoneListUpdated;
     public event Action? OnCameraListUpdated;
     public event ErrorNotificationHandler? OnError;
@@ -89,6 +91,17 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         _communicationService.CallDeclined += CallDeclined;
         _communicationService.CallAccepted += CallAccepted;
         _communicationService.CallFailed += CallFailed;
+
+        // _ = PingAsync();
+    }
+
+    private async Task PingAsync()
+    {
+        while (await _pingTimer.WaitForNextTickAsync())
+        {
+            var ping = await _communicationService.MeasureClientDelayAsync();
+            _logger.LogInformation("Client ping: {Ping} ms", ping.Milliseconds);
+        }
     }
 
     public async Task InitializeAsync()
@@ -179,9 +192,9 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         NotifyIfFailed(result);
     }
 
-    public async Task ShowVideoAsync(CallParticipantModel participant, VideoSource videoSource)
+    public async Task MaximizeVideoAsync(CallParticipantModel participant, VideoSource videoSource)
     {
-        var result = await _jsModule.TryInvokeVoidAsync2("ShowVideo", participant.Id, videoSource);
+        var result = await _jsModule.TryInvokeVoidAsync2("MaximizeVideo", participant.Id, videoSource);
         NotifyIfFailed(result);
     }
 
@@ -269,7 +282,7 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
 
     private async Task JoinRoomAsync(RoomTokenDto token, ChannelModel channel)
     {
-        var result = await _jsModule.TryInvokeAsync2<bool>("Start2", token.Token);
+        var result = await _jsModule.TryInvokeAsync2<bool>("Start", token.Token);
         if (result.IsFailed)
         {
             NotifyOnError("Error while joining room", result);
@@ -287,9 +300,9 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         ConnectedToVoiceCall = true;
         CallChannel = channel;
 
-        MicrophoneEnabled = true;
-        CameraEnabled = false;
-        ScreenShareEnabled = false;
+        // MicrophoneEnabled = true;
+        // CameraEnabled = false;
+        // ScreenShareEnabled = false;
 
         OnCurrentChannelCallChanged?.Invoke();
     }
@@ -369,84 +382,6 @@ public sealed class VoiceChatService : IVoiceChatService, IAsyncDisposable
         }
 
         return true;
-    }
-
-    [JSInvokable]
-    public void MicrophonesUpdatedCallback(List<MediaDeviceModel> microphones)
-    {
-        if (MediaDevicesMatches(_microphones, microphones))
-        {
-            _logger.LogDebug("Microphones are matching. Skipping update");
-            return;
-        }
-
-        _microphones.Clear();
-        _microphones.AddRange(microphones);
-        OnMicrophoneListUpdated?.Invoke();
-    }
-
-    [JSInvokable]
-    public void CamerasUpdatedCallback(List<MediaDeviceModel> cameras)
-    {
-        if (MediaDevicesMatches(_cameras, cameras))
-        {
-            _logger.LogDebug("Cameras are matching. Skipping update");
-            return;
-        }
-
-        _cameras.Clear();
-        _cameras.AddRange(cameras);
-        OnCameraListUpdated?.Invoke();
-    }
-
-    [JSInvokable]
-    public void DisconnectedCallback(DisconnectReason reason, ChannelId channelId)
-    {
-        ConnectedToVoiceCall = false;
-        CallChannel = null;
-
-        OnDisconnected?.Invoke(reason);
-        OnCurrentChannelCallChanged?.Invoke();
-    }
-
-    [JSInvokable]
-    public void ErrorCallback(string title, string message)
-    {
-        _logger.LogError("Error {Title} {Message}", title, message);
-
-        OnError?.Invoke(title, message);
-    }
-
-    [JSInvokable]
-    public void DisplayParticipantCallback(CallParticipantModel participant, ChannelId channelId)
-    {
-        _participants[participant.Id] = participant;
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
-    }
-
-    [JSInvokable]
-    public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
-    {
-        _participants[participant.Id] = participant;
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
-    }
-
-    [JSInvokable]
-    public void ParticipantDisconnectedCallback(CallParticipantModel participant, ChannelId channelId)
-    {
-        _participants.Remove(participant.Id);
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
-    }
-
-    [JSInvokable]
-    public void LocalParticipantStateUpdatedCallback(ParticipantState localParticipantState)
-    {
-        MicrophoneEnabled = localParticipantState.MicrophoneOn;
-        CameraEnabled = localParticipantState.CameraOn;
-        ScreenShareEnabled = localParticipantState.ScreenShareOn;
-        ConnectionQuality = localParticipantState.ConnectionQuality;
-
-        LocalParticipantStateUpdated?.Invoke();
     }
 
     private void NotifyIfFailed(ResultBase result, [CallerMemberName] string callerName = "")

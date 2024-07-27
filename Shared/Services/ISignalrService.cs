@@ -13,4 +13,6 @@ public interface ISignalrService : ISignalrTextService, ISignalrVoiceService
     bool Connected { get; }
     
     Task ConnectAsync();
+
+    Task<TimeSpan> MeasureClientDelayAsync();
 }

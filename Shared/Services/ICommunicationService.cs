@@ -45,4 +45,6 @@ public interface ICommunicationService
     Task<bool> ChannelHasActiveCall(ChannelId channelId);
 
     Task<bool> ChangeChannelNameAsync(string? newName, ChannelId channelId);
+
+    Task<TimeSpan> MeasureClientDelayAsync();
 }

@@ -66,7 +66,7 @@ public interface IVoiceChatService
 
     Task SwapCameraAsync();
 
-    Task ShowVideoAsync(CallParticipantModel participant, VideoSource videoSource);
+    Task MaximizeVideoAsync(CallParticipantModel participant, VideoSource videoSource);
 
     Task MinimizeVideoAsync();
 
