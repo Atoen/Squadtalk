@@ -6,6 +6,8 @@ public record JsModule(string Name, JsModuleLocation Location = Unspecified)
 {
     public static readonly JsModule WebRTC = new("WebRTC", ScriptsFolder);
 
+    public static readonly JsModule MediaQuery = new("MediaQuery", ScriptsFolderMinified);
+
     public static readonly JsModule CanvasFill = new("CanvasFill", ScriptsFolderMinified);
 
     public static readonly JsModule FileTransfer = new("FileTransfer", ScriptsFolderMinified);

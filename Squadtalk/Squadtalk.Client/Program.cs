@@ -33,6 +33,7 @@ builder.Services.AddScoped<ILocalizationService, BrowserLocalizationService>();
 
 builder.Services.AddScoped<ILocalization, Localization>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();
 
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazorBootstrap();

@@ -7,8 +7,15 @@
     align-items: center;
     background: #ced4da;
     padding: 0.5rem;
-    margin: 0 0 10px 10px;
-    border-radius: var(--bs-border-radius) 0 0 var(--bs-border-radius);
+    margin: 0;
+    border-radius: 0;
+}
+
+@media (min-width: 641px) {
+    .info {
+        margin: 0 0 10px 10px;
+        border-radius: var(--bs-border-radius) 0 0 var(--bs-border-radius);
+    }
 }
 
 .channel-name {
@@ -20,4 +27,10 @@
 
 .channel-name:hover {
     text-decoration: underline;
+}
+
+.ping {
+    white-space: nowrap;
+    font-size: 0.8em;
+    font-weight: lighter;
 }

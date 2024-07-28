@@ -14,8 +14,7 @@ const room = new Room({
         dtx: true,
         red: true,
         forceStereo: false,
-        screenShareEncoding: lk.ScreenSharePresets.h1080fps30.encoding,
-        scalabilityMode: "L3T3"
+        screenShareEncoding: lk.ScreenSharePresets.h720fps30.encoding
     },
     videoCaptureDefaults: {
         resolution: lk.VideoPresets.h720.resolution
@@ -25,6 +24,8 @@ room
     .on(RoomEvent.TrackSubscribed, trackSubscribed)
     .on(RoomEvent.TrackUnsubscribed, trackUnsubscribed)
     .on(RoomEvent.Disconnected, disconnected)
+    .on(RoomEvent.TrackPublished, trackPublished)
+    .on(RoomEvent.TrackUnpublished, trackUnpublished)
     .on(RoomEvent.LocalTrackPublished, localTrackPublished)
     .on(RoomEvent.LocalTrackUnpublished, localTrackUnpublished)
     .on(RoomEvent.ParticipantConnected, participantConnected)
@@ -34,18 +35,15 @@ room
     .on(RoomEvent.TrackUnmuted, trackUnmuted)
     .on(RoomEvent.LocalAudioSilenceDetected, localAudioSilenceDetected)
     .on(RoomEvent.MediaDevicesError, mediaDeviceError);
-let maximizeVideoFrame;
-let maximizeVideoPlayer;
 let dotnetObject;
 let serverAddress;
 let maximizedTrackSid;
 let maximizedParticipantIdentity;
 let cameraFrontFacing = false;
-let bitrateInterval;
 let microphoneEnabled;
 let cameraEnabled;
 let screenShareEnabled;
-export async function Init(object, url) {
+export function Init(object, url) {
     if (!object) {
         throw new Error("dotnet object is undefined");
     }
@@ -58,7 +56,7 @@ export async function Start(token) {
         await room.connect(serverAddress, token);
     }
     catch {
-        await error("Failed to connect to the room", "Unable to connect to the room");
+        error("Failed to connect to the room", "Unable to connect to the room");
         return false;
     }
     const localParticipant = room.localParticipant;
@@ -67,14 +65,16 @@ export async function Start(token) {
         .on(ParticipantEvent.TrackUnmuted, updateLocalState)
         .on(ParticipantEvent.IsSpeakingChanged, updateLocalState)
         .on(ParticipantEvent.ConnectionQualityChanged, updateLocalState);
-    setInterval(debugRemoteParticipants, 1000);
+    microphoneEnabled = await enableMicrophoneOnJoin();
+    if (!microphoneEnabled) {
+        error("Unable to access the microphone", "You need to grant access to the microphone in order to let others hear you");
+    }
+    document.documentElement.style.setProperty("--call-info-spacing", "54px");
     updateLocalState();
     updateJoinedParticipants();
     return true;
 }
 export async function Stop() {
-    if (bitrateInterval)
-        clearInterval(bitrateInterval);
     if (maximizedParticipantIdentity)
         MinimizeVideo();
     await room.disconnect(true);
@@ -84,7 +84,7 @@ export async function ToggleMicrophoneEnabled() {
     microphoneEnabled = room.localParticipant.isMicrophoneEnabled;
     if (microphoneEnabled) {
         const microphones = await Room.getLocalDevices("audioinput");
-        await dotnetObject.invokeMethodAsync("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
+        dotnetObject.invokeMethod("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
     }
     return microphoneEnabled;
 }
@@ -93,12 +93,15 @@ export async function ToggleCameraEnabled() {
     cameraEnabled = room.localParticipant.isCameraEnabled;
     if (cameraEnabled) {
         const cameras = await Room.getLocalDevices("videoinput");
-        await dotnetObject.invokeMethodAsync("CamerasUpdatedCallback", mapMediaDevices(cameras));
+        dotnetObject.invokeMethod("CamerasUpdatedCallback", mapMediaDevices(cameras));
     }
     return cameraEnabled;
 }
 export async function ToggleScreenShareEnabled() {
-    await room.localParticipant.setScreenShareEnabled(!screenShareEnabled);
+    await room.localParticipant.setScreenShareEnabled(!screenShareEnabled, {
+        audio: true,
+        systemAudio: "include"
+    });
     screenShareEnabled = room.localParticipant.isScreenShareEnabled;
     return screenShareEnabled;
 }
@@ -115,6 +118,8 @@ export function MaximizeVideo(participantIdentity, videoMaximized) {
         console.error("Track is undefined");
         return;
     }
+    maximizedParticipantIdentity = participantIdentity;
+    maximizedTrackSid = track.sid;
     const [container, player] = getMaximizedVideoContainerAndPlayer();
     if (container)
         container.style.display = "block";
@@ -135,8 +140,7 @@ export function MinimizeVideo() {
         console.error("publication is undefined");
         return;
     }
-    maximizeVideoFrame.style.display = "none";
-    publication.track.detach(maximizeVideoPlayer);
+    publication.track.detach(player);
     maximizedTrackSid = null;
     maximizedParticipantIdentity = null;
 }
@@ -163,28 +167,6 @@ export function ChangeDevice(kind, id) {
     const mediaDeviceKind = kind === 0 ? "audioinput" : "videoinput";
     room?.switchActiveDevice(mediaDeviceKind, id);
 }
-const debugRemoteParticipants = () => {
-    for (const re of room.remoteParticipants.values()) {
-        console.log(`${re.name}: ${re.connectionQuality}`);
-    }
-    const mapped = Array.from(room.remoteParticipants.values())
-        .map(mapParticipant);
-    dotnetObject.invokeMethodAsync("ParticipantListReceivedCallback", mapped, room.name);
-};
-const getParticipantAudioElement = (participant) => {
-    const id = `audio-${participant.sid}`;
-    const element = document.getElementById(id);
-    if (element)
-        return element;
-    const newElement = document.createElement('audio');
-    newElement.id = id;
-    return newElement;
-};
-const removeParticipantAudioElement = (participant) => {
-    const id = `audio-${participant.sid}`;
-    const element = document.getElementById(id);
-    element?.parentElement?.removeChild(element);
-};
 const getMaximizedVideoContainerAndPlayer = () => {
     const container = document.getElementById("maximized-video-container");
     if (!container) {
@@ -196,11 +178,11 @@ const getMaximizedVideoContainerAndPlayer = () => {
     }
     return [container, player];
 };
-const error = (title, message) => dotnetObject.invokeMethodAsync("ErrorCallback", title, message);
+const error = (title, message) => dotnetObject.invokeMethod("ErrorCallback", title, message);
 const updateJoinedParticipants = () => {
     const mapped = Array.from(room.remoteParticipants.values())
         .map(mapParticipant);
-    dotnetObject.invokeMethodAsync("ParticipantListReceivedCallback", mapped, room.name);
+    dotnetObject.invokeMethod("ParticipantListReceivedCallback", mapped, room.name);
 };
 const updateLocalState = () => {
     const localParticipant = room?.localParticipant;
@@ -214,7 +196,7 @@ const updateLocalState = () => {
         ScreenShareOn: localParticipant.isScreenShareEnabled,
         ConnectionQuality: localParticipant.connectionQuality,
     });
-    dotnetObject.invokeMethodAsync("LocalParticipantStateUpdatedCallback", state);
+    dotnetObject.invokeMethod("LocalParticipantStateUpdatedCallback", state);
     updateParticipant(localParticipant);
 };
 const mapParticipant = (participant) => {
@@ -236,16 +218,16 @@ const mapParticipant = (participant) => {
         IsSpeaking: participant.isSpeaking
     });
 };
-const updateParticipant = (participant) => dotnetObject.invokeMethodAsync("ParticipantUpdatedCallback", mapParticipant(participant), room.name);
+const updateParticipant = (participant) => dotnetObject.invokeMethod("ParticipantUpdatedCallback", mapParticipant(participant), room.name);
 const enableMicrophoneOnJoin = async () => {
     try {
         const publication = await room.localParticipant.setMicrophoneEnabled(true);
         if (!publication)
             return false;
         const microphones = await Room.getLocalDevices("audioinput");
-        await dotnetObject.invokeMethodAsync("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
+        dotnetObject.invokeMethod("MicrophonesUpdatedCallback", mapMediaDevices(microphones));
         const cameras = await Room.getLocalDevices("videoinput", false);
-        await dotnetObject.invokeMethodAsync("CamerasUpdatedCallback", mapMediaDevices(cameras));
+        dotnetObject.invokeMethod("CamerasUpdatedCallback", mapMediaDevices(cameras));
         return true;
     }
     catch {
@@ -258,47 +240,60 @@ const mapMediaDevices = (devices) => devices.map(x => ({
     id: x.deviceId
 }));
 function trackSubscribed(track, publication, participant) {
-    if (track.source === Source.Microphone) {
-        const audioPlayer = getParticipantAudioElement(participant);
-        track.attach(audioPlayer);
-    }
+    if (track.source === Source.Microphone || track.source === Source.ScreenShareAudio)
+        track.attach();
     updateParticipant(participant);
 }
 function trackUnsubscribed(track, publication, participant) {
+    if (publication.track?.sid === maximizedTrackSid)
+        MinimizeVideo();
     track.detach();
-    if (track.source == Source.Microphone)
-        removeParticipantAudioElement(participant);
     updateParticipant(participant);
 }
 function disconnected(reason) {
-    dotnetObject.invokeMethodAsync("DisconnectedCallback", reason, room.name);
+    document.documentElement.style.setProperty("--call-info-spacing", "0px");
+    dotnetObject.invokeMethod("DisconnectedCallback", reason, room.name);
+}
+function trackPublished(publication, participant) {
+    updateParticipant(participant);
+}
+function trackUnpublished(publication, participant) {
+    if (publication.track?.sid === maximizedTrackSid)
+        MinimizeVideo();
+    publication.track?.detach();
+    updateParticipant(participant);
 }
 function localTrackPublished(publication) {
-    updateParticipant(room.localParticipant);
+    updateLocalState();
 }
 function localTrackUnpublished(publication, participant) {
+    if (publication.track?.sid === maximizedTrackSid)
+        MinimizeVideo();
     publication.track?.detach();
-    updateParticipant(room.localParticipant);
+    updateLocalState();
 }
 function participantConnected(participant) {
+    const update = () => updateParticipant(participant);
     participant
-        .on(ParticipantEvent.TrackMuted, () => updateParticipant(participant))
-        .on(ParticipantEvent.TrackUnmuted, () => updateParticipant(participant))
-        .on(ParticipantEvent.IsSpeakingChanged, () => updateParticipant(participant))
-        .on(ParticipantEvent.ConnectionQualityChanged, () => {
-        console.log(`Connection quality for ${participant.name}: ${participant.connectionQuality}`);
-        return updateParticipant(participant);
-    });
-    dotnetObject.invokeMethodAsync("ParticipantConnectedCallback", mapParticipant(participant), room.name);
+        .on(ParticipantEvent.TrackMuted, update)
+        .on(ParticipantEvent.TrackUnmuted, update)
+        .on(ParticipantEvent.TrackPublished, update)
+        .on(ParticipantEvent.TrackUnpublished, update)
+        .on(ParticipantEvent.IsSpeakingChanged, update)
+        .on(ParticipantEvent.ConnectionQualityChanged, update);
+    dotnetObject.invokeMethod("ParticipantConnectedCallback", mapParticipant(participant), room.name);
 }
 function participantDisconnected(participant) {
-    dotnetObject.invokeMethodAsync("ParticipantDisconnectedCallback", mapParticipant(participant), room.name);
+    dotnetObject.invokeMethod("ParticipantDisconnectedCallback", mapParticipant(participant), room.name);
 }
 function mediaDevicesChanged() {
     Room.getLocalDevices(null, false)
         .then(r => r.forEach(x => console.log('device', x.label, x.kind)));
 }
 function trackMuted(publication, participant) {
+    if (publication.track?.sid === maximizedTrackSid) {
+        MinimizeVideo();
+    }
     if (participant.isLocal) {
         updateLocalState();
     }
@@ -318,6 +313,6 @@ function localAudioSilenceDetected() {
 }
 function mediaDeviceError(error) {
     const failure = lk.MediaDeviceFailure.getFailure(error);
-    dotnetObject.invokeMethodAsync("ErrorCallback", "Media device error", failure);
+    dotnetObject.invokeMethod("ErrorCallback", "Media device error", failure);
 }
 //# sourceMappingURL=WebRTC.js.map

@@ -54,6 +54,48 @@ public static class JSExtensions
         }
     }
 
+    public static Result TryInvokeVoid(
+        this IJSInProcessObjectReference? jsObjectReference,
+        string identifier,
+        params object?[]? args)
+    {
+        if (jsObjectReference is null)
+        {
+            return Result.Fail(new JsModuleNotLoadedError(identifier));
+        }
+
+        try
+        {
+            jsObjectReference.InvokeVoid(identifier, args);
+            return Result.Ok();
+        }
+        catch (Exception e)
+        {
+            return Result.Fail(new JsInvocationError(identifier, e));
+        }
+    }
+
+    public static Result<T> TryInvoke<T>(
+        this IJSInProcessObjectReference? jsObjectReference,
+        string identifier,
+        params object?[]? args)
+    {
+        if (jsObjectReference is null)
+        {
+            return Result.Fail<T>(new JsModuleNotLoadedError(identifier));
+        }
+
+        try
+        {
+            var result = jsObjectReference.Invoke<T>(identifier, args);
+            return Result.Ok(result);
+        }
+        catch (Exception e)
+        {
+            return Result.Fail<T>(new JsInvocationError(identifier, e));
+        }
+    }
+
     public static ValueTask TryInvokeVoidAsync(
         this IJSObjectReference? jsObjectReference,
         string identifier,

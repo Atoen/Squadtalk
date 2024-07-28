@@ -1,3 +1,7 @@
+:root {
+    --desktop-width: 641px;
+}
+
 .page {
     position: relative;
     display: flex;
@@ -19,7 +23,6 @@ main {
 
 .sidebar {
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-    height: 100dvh;
     display: flex;
     flex-direction: column;
 }
@@ -48,7 +51,7 @@ main {
         text-overflow: ellipsis;
     }
 
-@media (max-width: 640.98px) {
+@media (max-width: 641px) {
     .top-row {
         justify-content: space-between;
     }

@@ -1,3 +1,7 @@
+:root {
+    --call-info-spacing: 0px;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }

@@ -7,7 +7,7 @@
 
 @attribute [Authorize]
 
-<PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name;</PageTitle>
+<PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name</PageTitle>
 
 <div class="chat-container">
 
@@ -38,8 +38,6 @@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
-@inject ILocalization Localization
-@inject ILogger<Chat> Logger
 
 @code {
 
@@ -52,6 +50,7 @@
         }
 
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        ChatService.ChannelChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
     }
@@ -64,6 +63,7 @@
     public async ValueTask DisposeAsync()
     {
         VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+        ChatService.ChannelChanged -= StateHasChanged;
 
         await ChatService.ClearChannelSelectionAsync();
 

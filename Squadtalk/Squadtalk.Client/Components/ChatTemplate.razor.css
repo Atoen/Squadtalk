@@ -10,9 +10,8 @@
     grid-template-columns: auto auto auto 1fr;
     background: var(--bs-primary);
     --border-color: var(--bs-primary);
-    width: 350px;
+    max-width: 350px;
     flex-shrink: 0;
-    scroll-snap-align: start;
 }
 
 .avatar {

@@ -25,10 +25,9 @@
         </Button>
     </div>
 
-    @foreach (var channel in ChannelManager.VisibleChannels)
-    {
-        <ChatTemplate Model="channel" HideCallback="_confirmCallback"/>
-    }
+    <Virtualize Items="ChannelManager.VisibleChannels" ItemSize="75">
+        <ChatTemplate @key="context.Id" Model="@context" HideCallback="_confirmCallback"/>
+    </Virtualize>
 </div>
 
 @implements IDisposable

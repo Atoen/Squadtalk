@@ -1,12 +1,12 @@
 .chat-container {
     display: grid;
     grid-template-rows: min-content min-content auto min-content min-content;
-    height: calc(100dvh - 216px);
+    height: calc(100dvh - 80px - var(--call-info-spacing));
 }
 
 @media (min-width: 641px) {
     .chat-container {
-        height: calc(100dvh - 80px);
+        height: calc(100dvh - 24px);
     }
 }
 

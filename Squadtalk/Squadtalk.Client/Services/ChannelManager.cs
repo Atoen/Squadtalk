@@ -19,7 +19,7 @@ public class ChannelManager : IChannelManager
 
     public event Action? ChannelListChanged;
 
-    public IEnumerable<ChannelModel> VisibleChannels
+    public ICollection<ChannelModel> VisibleChannels
     {
         get
         {

@@ -94,11 +94,4 @@ public partial class VoiceChatService
         _participants.Remove(participant.Id);
         OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
-
-    // [JSInvokable]
-    // public void DisplayParticipantCallback(CallParticipantModel participant, ChannelId channelId)
-    // {
-    //     _participants[participant.Id] = participant;
-    //     OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
-    // }
 }

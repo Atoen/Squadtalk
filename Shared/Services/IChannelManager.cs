@@ -7,7 +7,7 @@ public interface IChannelManager
 {
     event Action? ChannelListChanged;
 
-    IEnumerable<ChannelModel> VisibleChannels { get; }
+    ICollection<ChannelModel> VisibleChannels { get; }
 
     Task StopHidingChannel(ChannelId channelId);
 

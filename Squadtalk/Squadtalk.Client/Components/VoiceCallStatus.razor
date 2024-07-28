@@ -26,6 +26,7 @@
 
 @implements IDisposable
 
+@inject IChatService ChatService
 @inject IVoiceChatService VoiceChatService
 @inject ILogger<VoiceCallStatus> Logger
 @inject ToastService ToastService
@@ -44,6 +45,7 @@
         VoiceChatService.OnError += VoiceChatServiceOnOnError;
         VoiceChatService.OnParticipantsUpdated += VoiceChatServiceOnOnParticipantsUpdated;
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        ChatService.ChannelChanged += StateHasChanged;
     }
 
     private void VoiceChatServiceOnOnError(string title, string message)
@@ -99,5 +101,6 @@
         VoiceChatService.OnError -= VoiceChatServiceOnOnError;
         VoiceChatService.OnParticipantsUpdated -= VoiceChatServiceOnOnParticipantsUpdated;
         VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+        ChatService.ChannelChanged -= StateHasChanged;
     }
 }

@@ -117,6 +117,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ILocalizationService, ServerLocalizationService>();
         serviceCollection.AddScoped<ILocalization, Localization>();
         serviceCollection.AddScoped<IUserService, ServerUserService>();
+        serviceCollection.AddScoped<IMediaQueryService, MediaQueryService>();
 
         return serviceCollection;
     }

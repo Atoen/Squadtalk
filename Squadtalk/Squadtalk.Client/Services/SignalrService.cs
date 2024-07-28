@@ -95,8 +95,10 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
     public async Task<TimeSpan> MeasureClientDelayAsync()
     {
+        var start = Stopwatch.GetTimestamp();
+
         var delay = await _connection.InvokeAsync<TimeSpan>("Ping", DateTimeOffset.UtcNow);
-        return delay;
+        return Stopwatch.GetElapsedTime(start);
     }
 
     Task ISignalrTextService.SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken)

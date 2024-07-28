@@ -27,23 +27,17 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
     private IJSObjectReference? _jsModule;
 
     public bool ConnectedToVoiceCall { get; private set; }
-
     public bool ActiveCallOnCurrentChannel => CurrentChannel?.State.HasActiveCall ?? false;
-
     public bool ConnectedToVoiceCallOnCurrentChannel => ConnectedToVoiceCall && CurrentChannel == CallChannel;
 
     public ChannelModel? CallChannel { get; private set; }
-
     public ChannelModel? CurrentChannel => _chatService.CurrentChannel;
 
     public bool MicrophoneEnabled { get; private set; }
-
     public bool CameraEnabled { get; private set; }
-
     public bool ScreenShareEnabled { get; private set; }
 
     public bool MicrophoneAvailable => _microphones.Count > 0;
-
     public bool CameraAvailable => _cameras.Count > 0;
 
     public ConnectionQuality ConnectionQuality { get; private set; } = ConnectionQuality.Unknown;
@@ -51,14 +45,11 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
     public IEnumerable<CallParticipantModel> ActiveCallParticipants => _participants.Values;
 
     public IEnumerable<MediaDeviceModel> Microphones => _microphones;
-
     public IEnumerable<MediaDeviceModel> Cameras => _cameras;
 
     private readonly Dictionary<UserId, CallParticipantModel> _participants = [];
     private readonly List<MediaDeviceModel> _microphones = [];
     private readonly List<MediaDeviceModel> _cameras = [];
-
-    private readonly PeriodicTimer _pingTimer = new(TimeSpan.FromMilliseconds(500));
 
     public event Action? OnMicrophoneListUpdated;
     public event Action? OnCameraListUpdated;
@@ -91,30 +82,12 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         _communicationService.CallDeclined += CallDeclined;
         _communicationService.CallAccepted += CallAccepted;
         _communicationService.CallFailed += CallFailed;
-
-        // _ = PingAsync();
-    }
-
-    private async Task PingAsync()
-    {
-        while (await _pingTimer.WaitForNextTickAsync())
-        {
-            var ping = await _communicationService.MeasureClientDelayAsync();
-            _logger.LogInformation("Client ping: {Ping} ms", ping.Milliseconds);
-        }
     }
 
     public async Task InitializeAsync()
     {
-        if (_jsModule is null)
-        {
-            _jsModule = await _jsRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference,
-                "wss://192.168.1.134:1230/jajo");
-        }
-        else
-        {
-            await _jsModule.TryInvokeVoidAsync2("GetElements");
-        }
+        _jsModule ??= await _jsRuntime.ImportAndInitModuleAsync(JsModule.WebRTC, _dotNetObjectReference,
+            "wss://192.168.1.134:1230/jajo");
     }
 
     public async Task StartCallAsync(ChannelId channelId)
@@ -292,17 +265,12 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         var joined = result.Value;
         if (!joined)
         {
-            // OnError?.Invoke("Error while joining room", "Unable to connect to the server");
             return;
         }
 
         channel.State.HasActiveCall = true;
         ConnectedToVoiceCall = true;
         CallChannel = channel;
-
-        // MicrophoneEnabled = true;
-        // CameraEnabled = false;
-        // ScreenShareEnabled = false;
 
         OnCurrentChannelCallChanged?.Invoke();
     }
@@ -338,7 +306,7 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         {
             _participants[accepting.Id] = new CallParticipantModel
             {
-                Username = $"(Accepting) {accepting.Username}",
+                Username = accepting.Username,
                 ConnectionQuality = ConnectionQuality.Unknown
             };
 

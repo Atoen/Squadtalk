@@ -2,34 +2,57 @@
 {
     <div class="info">
         <div class="d-flex gap-1 w-100 align-items-center">
-            <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" Size="IconSize.x4"/>
+            <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor"
+                  Size="IconSize.x4" @onclick="ConnectionQualityClicked"/>
+            @if (_measurePing)
+            {
+                <span class="ping">@_ping.Milliseconds ms</span>
+            }
             <span class="channel-name" @onclick="GoToCallChannel">@VoiceChatService.CallChannel?.Name</span>
+
+            @if (ShouldDisplayMobileLayout)
+            {
+                <Tooltip Title="@MicrophoneTooltipText" Class="ms-auto">
+                    <Button Color="MicrophoneButtonColor" Class="px-4"
+                            Disabled="@(!VoiceChatService.MicrophoneAvailable)"
+                            @onclick="VoiceChatService.ToggleMicrophoneAsync">
+                        <Icon Name="MicrophoneIconName" Size="IconSize.x6"/>
+                    </Button>
+                </Tooltip>
+                <Button Color="ButtonColor.Danger" TooltipTitle="Leave call" Class="px-4"
+                        @onclick="VoiceChatService.LeaveCallAsync">
+                    <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/>
+                </Button>
+            }
         </div>
 
-        <div class="d-flex gap-1 w-100">
-            <Tooltip Title="@MicrophoneTooltipText" Class="flex-grow-1 d-flex">
-                <Button Class="flex-grow-1" Color="MicrophoneButtonColor"
-                        Disabled="@(!VoiceChatService.MicrophoneAvailable)"
-                        @onclick="VoiceChatService.ToggleMicrophoneAsync">
-                    <Icon Name="MicrophoneIconName" Size="IconSize.x6"/>
+        @if (ShouldDisplayDesktopLayout)
+        {
+            <div class="d-flex gap-1 w-100">
+                <Tooltip Title="@MicrophoneTooltipText" Class="flex-grow-1 d-flex">
+                    <Button Class="flex-grow-1" Color="MicrophoneButtonColor"
+                            Disabled="@(!VoiceChatService.MicrophoneAvailable)"
+                            @onclick="VoiceChatService.ToggleMicrophoneAsync">
+                        <Icon Name="MicrophoneIconName" Size="IconSize.x6"/>
+                    </Button>
+                </Tooltip>
+                <Tooltip Title="@CameraTooltipText" Class="flex-grow-1 d-flex">
+                    <Button Class="flex-grow-1" Color="CameraButtonColor"
+                            Disabled="@(!VoiceChatService.CameraAvailable)"
+                            @onclick="VoiceChatService.ToggleMicrophoneAsync">
+                        <Icon Name="CameraIconName" Size="IconSize.x6"/>
+                    </Button>
+                </Tooltip>
+                <Button Class="flex-grow-1" Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText"
+                        @onclick="VoiceChatService.ToggleScreenShareAsync">
+                    <Icon Name="ScreenShareIconName" Size="IconSize.x6"/>
                 </Button>
-            </Tooltip>
-            <Tooltip Title="@CameraTooltipText" Class="flex-grow-1 d-flex">
-                <Button Class="flex-grow-1" Color="CameraButtonColor"
-                        Disabled="@(!VoiceChatService.CameraAvailable)"
-                        @onclick="VoiceChatService.ToggleMicrophoneAsync">
-                    <Icon Name="CameraIconName" Size="IconSize.x6"/>
+                <Button Class="flex-grow-1" Color="ButtonColor.Danger" TooltipTitle="Leave call"
+                        @onclick="VoiceChatService.LeaveCallAsync">
+                    <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/>
                 </Button>
-            </Tooltip>
-            <Button Class="flex-grow-1" Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText"
-                    @onclick="VoiceChatService.ToggleScreenShareAsync">
-                <Icon Name="ScreenShareIconName" Size="IconSize.x6"/>
-            </Button>
-            <Button Class="flex-grow-1" Color="ButtonColor.Danger" TooltipTitle="Leave call"
-                    @onclick="VoiceChatService.LeaveCallAsync">
-                <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/>
-            </Button>
-        </div>
+            </div>
+        }
     </div>
 }
 
@@ -39,13 +62,23 @@
 @inject IVoiceChatService VoiceChatService
 @inject NavigationManager NavigationManager
 @inject ILogger<MiniCallInfo> Logger
+@inject ICommunicationService CommunicationService
+@inject IMediaQueryService MediaQueryService
 
 @code {
 
-    private bool ShouldDisplay => VoiceChatService.ConnectedToVoiceCall;
+    private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromSeconds(2));
+    private bool _measurePing;
+    private TimeSpan _ping;
 
-    private bool _shouldRerenderControls;
-    private bool _lastShouldDisplay;
+    private bool ShouldDisplay => ShouldDisplayDesktopLayout || ShouldDisplayMobileLayout;
+
+    private bool ShouldDisplayDesktopLayout => MediaQueryService.UseDesktopLayout &&
+                                               VoiceChatService.ConnectedToVoiceCall;
+
+    private bool ShouldDisplayMobileLayout => MediaQueryService.UseMobileLayout &&
+                                              VoiceChatService.ConnectedToVoiceCall &&
+                                              !VoiceChatService.ConnectedToVoiceCallOnCurrentChannel;
 
     private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
     private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
@@ -94,6 +127,36 @@
         VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
         ChatService.ChannelNameChanged += ChannelNameChanged;
+        MediaQueryService.MediaMatchesChanged += StateHasChanged;
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return firstRender ? MediaQueryService.InitializeAsync() : Task.CompletedTask;
+    }
+
+    private void ConnectionQualityClicked()
+    {
+        _measurePing = !_measurePing && VoiceChatService.ConnectedToVoiceCall;
+        if (_measurePing)
+        {
+            _ = MeasurePingAsync();
+        }
+    }
+
+    private async Task MeasurePingAsync()
+    {
+        while (await _periodicTimer.WaitForNextTickAsync())
+        {
+            if (!_measurePing) break;
+
+            var ping = await CommunicationService.MeasureClientDelayAsync();
+            if (_ping != ping && _measurePing)
+            {
+                _ping = ping;
+                StateHasChanged();
+            }
+        }
     }
 
     private void ChannelNameChanged(GroupChatModel groupChat)
@@ -115,9 +178,12 @@
 
     public void Dispose()
     {
+        _periodicTimer.Dispose();
+
         NavigationManager.LocationChanged -= NavigationChanged;
         VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
         ChatService.ChannelNameChanged -= ChannelNameChanged;
+        MediaQueryService.MediaMatchesChanged -= StateHasChanged;
     }
 }
