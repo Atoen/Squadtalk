@@ -29,4 +29,7 @@
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ServiceWorker Include="..\Squadtalk\wwwroot\service-worker.js" PublishedContent="..\Squadtalk\wwwroot\service-worker.published.js" />
+  </ItemGroup>
 </Project>

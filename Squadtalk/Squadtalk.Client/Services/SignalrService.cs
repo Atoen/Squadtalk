@@ -97,7 +97,7 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
     {
         var start = Stopwatch.GetTimestamp();
 
-        var delay = await _connection.InvokeAsync<TimeSpan>("Ping", DateTimeOffset.UtcNow);
+        await _connection.InvokeAsync<TimeSpan>("Ping");
         return Stopwatch.GetElapsedTime(start);
     }
 

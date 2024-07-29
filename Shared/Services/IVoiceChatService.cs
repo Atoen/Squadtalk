@@ -40,14 +40,15 @@ public interface IVoiceChatService
 
     IEnumerable<CallParticipantModel> ActiveCallParticipants { get; }
 
-    event Action? OnMicrophoneListUpdated;
-    event Action? OnCameraListUpdated;
-    event ErrorNotificationHandler? OnError;
-    event Action<DisconnectReason>? OnDisconnected;
-    event Action? OnCurrentChannelCallChanged;
-    event Func<ChannelModel, Task>? OnCallIncoming;
-    event Action<ChannelModel>? OnCallEnded;
-    event Action<ChannelModel>? OnParticipantsUpdated;
+    event Action? MicrophoneListUpdated;
+    event Action? CameraListUpdated;
+    event ErrorNotificationHandler? Error;
+    event Action<DisconnectReason>? Disconnected;
+    event Action? CurrentChannelCallChanged;
+    event Func<ChannelModel, Task>? CallIncoming;
+    event Action<ChannelModel>? CallEnded;
+    event Action<ChannelModel>? ParticipantListUpdated;
+    event Action<UserId, ChannelModel>? ParticipantUpdated;
     event Action? LocalParticipantStateUpdated;
 
     Task InitializeAsync();

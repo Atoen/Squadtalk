@@ -124,7 +124,7 @@
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += NavigationChanged;
-        VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
         ChatService.ChannelNameChanged += ChannelNameChanged;
         MediaQueryService.MediaMatchesChanged += StateHasChanged;
@@ -181,7 +181,7 @@
         _periodicTimer.Dispose();
 
         NavigationManager.LocationChanged -= NavigationChanged;
-        VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+        VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
         ChatService.ChannelNameChanged -= ChannelNameChanged;
         MediaQueryService.MediaMatchesChanged -= StateHasChanged;

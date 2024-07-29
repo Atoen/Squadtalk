@@ -71,6 +71,7 @@ public class PolishTextProvider() : LocalizedTextProvider(Dictionary)
         [nameof(TextTable.YesterdayTimeTemplate)] = "Wczoraj o {0}",
         [nameof(TextTable.ChannelCreatedTemplate)] = "{0} utworzył(a) tę grupę.",
         [nameof(TextTable.ChannelNameChangedTemplate)] = "{0} zmienił(a) nazwę grupy na {1}.",
+        [nameof(TextTable.ChannelNameClearedTemplate)] = "{0} przywrócił(a) domyślną nazwę grupy.",
         [nameof(TextTable.CallStartedTemplate)] = "{0} rozpoczął(-ęła) rozmowę głosową.",
         [nameof(TextTable.CallEndedTemplate)] = "{0} rozpoczął(-ęła) rozmowę głosową, która trwała {1}.",
 

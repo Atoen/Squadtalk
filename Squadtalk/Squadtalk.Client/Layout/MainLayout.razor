@@ -47,7 +47,7 @@
         _modalParameters[nameof(IncomingCallModal.DecisionCallback)] =
             (Func<bool, ChannelId, Task>) CallAcceptedDecisionCallback;
 
-        VoiceChatService.OnCallIncoming += CallIncoming;
+        VoiceChatService.CallIncoming += CallIncoming;
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)

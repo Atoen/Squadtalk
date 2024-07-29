@@ -49,7 +49,7 @@
             return;
         }
 
-        VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
         ChatService.ChannelChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
@@ -62,7 +62,7 @@
 
     public async ValueTask DisposeAsync()
     {
-        VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+        VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
         ChatService.ChannelChanged -= StateHasChanged;
 
         await ChatService.ClearChannelSelectionAsync();

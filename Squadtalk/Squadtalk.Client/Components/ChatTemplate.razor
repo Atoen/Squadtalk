@@ -96,6 +96,13 @@
                 var username = embed[EmbedData.SystemMessageDataUsername];
                 return Table.UserChangedChannelNameTemplate.TryFormat(username, newName);
             }
+            case SystemMessageType.ChannelNameCleared:
+            {
+                if (byCurrentUser) return Table.YouClearedChannelNameTemplate;
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return Table.UserClearedChannelNameTemplate.TryFormat(username);
+            }
             case SystemMessageType.CallStarted or SystemMessageType.CallEnded:
             {
                 if (byCurrentUser) return Table.YouCalled;

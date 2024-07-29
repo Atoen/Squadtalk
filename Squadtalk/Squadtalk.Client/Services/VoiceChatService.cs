@@ -51,14 +51,15 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
     private readonly List<MediaDeviceModel> _microphones = [];
     private readonly List<MediaDeviceModel> _cameras = [];
 
-    public event Action? OnMicrophoneListUpdated;
-    public event Action? OnCameraListUpdated;
-    public event ErrorNotificationHandler? OnError;
-    public event Action<DisconnectReason>? OnDisconnected;
-    public event Action? OnCurrentChannelCallChanged;
-    public event Func<ChannelModel, Task>? OnCallIncoming;
-    public event Action<ChannelModel>? OnCallEnded;
-    public event Action<ChannelModel>? OnParticipantsUpdated;
+    public event Action? MicrophoneListUpdated;
+    public event Action? CameraListUpdated;
+    public event ErrorNotificationHandler? Error;
+    public event Action<DisconnectReason>? Disconnected;
+    public event Action? CurrentChannelCallChanged;
+    public event Func<ChannelModel, Task>? CallIncoming;
+    public event Action<ChannelModel>? CallEnded;
+    public event Action<ChannelModel>? ParticipantListUpdated;
+    public event Action<UserId, ChannelModel>? ParticipantUpdated;
     public event Action? LocalParticipantStateUpdated;
 
     public VoiceChatService(
@@ -77,11 +78,11 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         _logger = logger;
 
         _dotNetObjectReference = DotNetObjectReference.Create(this);
-        _communicationService.IncomingCall += IncomingCall;
-        _communicationService.CallEnded += CallEnded;
-        _communicationService.CallDeclined += CallDeclined;
-        _communicationService.CallAccepted += CallAccepted;
-        _communicationService.CallFailed += CallFailed;
+        _communicationService.IncomingCall += OnIncomingCall;
+        _communicationService.CallEnded += OnCallEnded;
+        _communicationService.CallDeclined += OnCallDeclined;
+        _communicationService.CallAccepted += OnCallAccepted;
+        _communicationService.CallFailed += OnCallFailed;
     }
 
     public async Task InitializeAsync()
@@ -95,7 +96,7 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         var roomToken = await _communicationService.StartVoiceCallAsync(channelId);
         if (roomToken is null)
         {
-            OnError?.Invoke("Error while initiating call", "Failed to create room token");
+            Error?.Invoke("Error while initiating call", "Failed to create room token");
             _logger.LogError("Call offer id is null");
             return;
         }
@@ -103,7 +104,7 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         var currentChannel = _chatService.CurrentChannel;
         if (currentChannel?.Id != channelId)
         {
-            OnError?.Invoke("Error while initiating call","Channel not found");
+            Error?.Invoke("Error while initiating call","Channel not found");
             _logger.LogError("Channel is null");
             return;
         }
@@ -116,7 +117,7 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         var token = await _communicationService.AcceptCallAsync(id);
         if (token is null)
         {
-            OnError?.Invoke("Error while joining the call", "Failed to create room token");
+            Error?.Invoke("Error while joining the call", "Failed to create room token");
             _logger.LogInformation("Null token from accepting");
             return;
         }
@@ -247,7 +248,7 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         channel.State.HasActiveCall = hasCall;
         if (hasCall)
         {
-            OnCurrentChannelCallChanged?.Invoke();
+            CurrentChannelCallChanged?.Invoke();
         }
 
         return hasCall;
@@ -272,10 +273,10 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         ConnectedToVoiceCall = true;
         CallChannel = channel;
 
-        OnCurrentChannelCallChanged?.Invoke();
+        CurrentChannelCallChanged?.Invoke();
     }
 
-    private async Task IncomingCall(ChannelId channelId, UserId initiatorId)
+    private async Task OnIncomingCall(ChannelId channelId, UserId initiatorId)
     {
         if (_chatService.GetChannel(channelId) is not { } channel)
         {
@@ -294,11 +295,11 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
 
         _logger.LogInformation("Incoming call from: {Caller}", channelId.Value);
 
-        OnCurrentChannelCallChanged?.Invoke();
-        await OnCallIncoming.TryInvoke(channel);
+        CurrentChannelCallChanged?.Invoke();
+        await CallIncoming.TryInvoke(channel);
     }
 
-    private Task CallAccepted(ChannelId channelId, IChatUser accepting)
+    private Task OnCallAccepted(ChannelId channelId, IChatUser accepting)
     {
         _logger.LogInformation("User {User} accepted call", accepting.Username);
 
@@ -310,34 +311,34 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
                 ConnectionQuality = ConnectionQuality.Unknown
             };
 
-            OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+            ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
         }
 
         return Task.CompletedTask;
     }
 
-    private Task CallDeclined(IChatUser declining, ChannelId channelId)
+    private Task OnCallDeclined(IChatUser declining, ChannelId channelId)
     {
         _logger.LogInformation("Call {CallId} declined by {User}", channelId, declining.Username);
         return Task.CompletedTask;
     }
 
-    private Task CallEnded(ChannelId channelId)
+    private Task OnCallEnded(ChannelId channelId)
     {
         _logger.LogInformation("Call {Id} ended", channelId);
 
         var channel = _chatService.GetRequiredChannel(channelId);
         channel.State.HasActiveCall = false;
 
-        OnCallEnded?.Invoke(channel);
-        OnCurrentChannelCallChanged?.Invoke();
+        CallEnded?.Invoke(channel);
+        CurrentChannelCallChanged?.Invoke();
 
         return Task.CompletedTask;
     }
 
-    private Task CallFailed(string reason)
+    private Task OnCallFailed(string reason)
     {
-        OnError?.Invoke("Error when creating call", reason);
+        Error?.Invoke("Error when creating call", reason);
         return Task.CompletedTask;
     }
 
@@ -363,7 +364,7 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
     private void NotifyOnError(string title, ResultBase result)
     {
         var errors = string.Join(", ", result.Errors);
-        OnError?.Invoke(title, errors);
+        Error?.Invoke(title, errors);
     }
 
     public async ValueTask DisposeAsync()

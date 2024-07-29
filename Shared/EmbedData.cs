@@ -20,6 +20,7 @@ public static class EmbedData
 
     public const string SystemMessageTypeChannelCreated = "created";
     public const string SystemMessageTypeChannelNameChanged = "changed";
+    public const string SystemMessageTypeChannelNameCleared = "cleared";
     public const string SystemMessageTypeCallStarted = "started";
     public const string SystemMessageTypeCallEnded = "ended";
     public const string SystemMessageTypeCallMissed = "missed";

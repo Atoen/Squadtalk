@@ -5,9 +5,10 @@ public enum SystemMessageType
     None,
     ChannelCreated,
     ChannelNameChanged,
+    ChannelNameCleared,
     CallStarted,
     CallEnded,
-    CallMissed
+    CallMissed,
 }
 
 public static class SystemMessageTypeHelper
@@ -16,6 +17,7 @@ public static class SystemMessageTypeHelper
     {
         SystemMessageType.ChannelCreated => EmbedData.SystemMessageTypeChannelCreated,
         SystemMessageType.ChannelNameChanged => EmbedData.SystemMessageTypeChannelNameChanged,
+        SystemMessageType.ChannelNameCleared => EmbedData.SystemMessageTypeChannelNameCleared,
         SystemMessageType.CallStarted => EmbedData.SystemMessageTypeCallStarted,
         SystemMessageType.CallEnded => EmbedData.SystemMessageTypeCallEnded,
         SystemMessageType.CallMissed => EmbedData.SystemMessageTypeCallMissed,
@@ -26,6 +28,7 @@ public static class SystemMessageTypeHelper
     {
         EmbedData.SystemMessageTypeChannelCreated => SystemMessageType.ChannelCreated,
         EmbedData.SystemMessageTypeChannelNameChanged => SystemMessageType.ChannelNameChanged,
+        EmbedData.SystemMessageTypeChannelNameCleared => SystemMessageType.ChannelNameCleared,
         EmbedData.SystemMessageTypeCallStarted => SystemMessageType.CallStarted,
         EmbedData.SystemMessageTypeCallEnded => SystemMessageType.CallEnded,
         EmbedData.SystemMessageTypeCallMissed => SystemMessageType.CallMissed,

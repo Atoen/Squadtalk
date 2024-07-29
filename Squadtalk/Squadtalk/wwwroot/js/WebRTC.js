@@ -49,16 +49,25 @@ export function Init(object, url) {
     }
     dotnetObject = object;
     serverAddress = url;
-    room.prepareConnection(serverAddress);
+    try {
+        room.prepareConnection(serverAddress);
+    }
+    catch {
+        error("Failed to prepare connection", "Unable to prepare connection to the rtc server");
+    }
 }
 export async function Start(token) {
     try {
+        console.log("Starting");
         await room.connect(serverAddress, token);
+        console.log("Connected");
     }
-    catch {
+    catch (e) {
+        console.log("error" + e);
         error("Failed to connect to the room", "Unable to connect to the room");
         return false;
     }
+    console.log(room.state);
     const localParticipant = room.localParticipant;
     localParticipant
         .on(ParticipantEvent.TrackMuted, updateLocalState)
@@ -252,7 +261,8 @@ function trackUnsubscribed(track, publication, participant) {
 }
 function disconnected(reason) {
     document.documentElement.style.setProperty("--call-info-spacing", "0px");
-    dotnetObject.invokeMethod("DisconnectedCallback", reason, room.name);
+    if (reason)
+        dotnetObject.invokeMethod("DisconnectedCallback", reason);
 }
 function trackPublished(publication, participant) {
     updateParticipant(participant);

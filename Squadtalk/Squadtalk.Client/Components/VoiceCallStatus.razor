@@ -40,15 +40,15 @@
 
     protected override void OnInitialized()
     {
-        VoiceChatService.OnCallEnded += VoiceChatServiceOnOnCallEnded;
-        VoiceChatService.OnDisconnected += VoiceChatServiceOnOnDisconnected;
-        VoiceChatService.OnError += VoiceChatServiceOnOnError;
-        VoiceChatService.OnParticipantsUpdated += VoiceChatServiceOnOnParticipantsUpdated;
-        VoiceChatService.OnCurrentChannelCallChanged += StateHasChanged;
+        VoiceChatService.CallEnded += VoiceChatServiceCallEnded;
+        VoiceChatService.Disconnected += VoiceChatServiceDisconnected;
+        VoiceChatService.Error += VoiceChatServiceError;
+        VoiceChatService.ParticipantListUpdated += ParticipantListUpdated;
+        VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
         ChatService.ChannelChanged += StateHasChanged;
     }
 
-    private void VoiceChatServiceOnOnError(string title, string message)
+    private void VoiceChatServiceError(string title, string message)
     {
         var toast = new ToastMessage
         {
@@ -62,7 +62,7 @@
         ToastService.Notify(toast);
     }
 
-    private void VoiceChatServiceOnOnDisconnected(DisconnectReason reason)
+    private void VoiceChatServiceDisconnected(DisconnectReason reason)
     {
         if (reason == DisconnectReason.ClientInitiated) return;
 
@@ -78,7 +78,7 @@
         ToastService.Notify(toast);
     }
 
-    private void VoiceChatServiceOnOnCallEnded(ChannelModel channel)
+    private void VoiceChatServiceCallEnded(ChannelModel channel)
     {
         if (VoiceChatService.CurrentChannel == channel)
         {
@@ -86,7 +86,7 @@
         }
     }
 
-    private void VoiceChatServiceOnOnParticipantsUpdated(ChannelModel channel)
+    private void ParticipantListUpdated(ChannelModel channel)
     {
         if (VoiceChatService.CurrentChannel == channel)
         {
@@ -96,11 +96,11 @@
 
     public void Dispose()
     {
-        VoiceChatService.OnCallEnded -= VoiceChatServiceOnOnCallEnded;
-        VoiceChatService.OnDisconnected -= VoiceChatServiceOnOnDisconnected;
-        VoiceChatService.OnError -= VoiceChatServiceOnOnError;
-        VoiceChatService.OnParticipantsUpdated -= VoiceChatServiceOnOnParticipantsUpdated;
-        VoiceChatService.OnCurrentChannelCallChanged -= StateHasChanged;
+        VoiceChatService.CallEnded -= VoiceChatServiceCallEnded;
+        VoiceChatService.Disconnected -= VoiceChatServiceDisconnected;
+        VoiceChatService.Error -= VoiceChatServiceError;
+        VoiceChatService.ParticipantListUpdated -= ParticipantListUpdated;
+        VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
         ChatService.ChannelChanged -= StateHasChanged;
     }
 }

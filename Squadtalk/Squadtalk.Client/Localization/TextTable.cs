@@ -123,6 +123,7 @@ public class TextTable
     public StringTemplate YesterdayTimeTemplate => CurrentLanguageProvider[nameof(YesterdayTimeTemplate)];
     public StringTemplate ChannelCreatedTemplate => CurrentLanguageProvider[nameof(ChannelCreatedTemplate)];
     public StringTemplate ChannelNameChangedTemplate => CurrentLanguageProvider[nameof(ChannelNameChangedTemplate)];
+    public StringTemplate ChannelNameClearedTemplate => CurrentLanguageProvider[nameof(ChannelNameClearedTemplate)];
     public StringTemplate CallStartedTemplate => CurrentLanguageProvider[nameof(CallStartedTemplate)];
     public StringTemplate CallEndedTemplate => CurrentLanguageProvider[nameof(CallEndedTemplate)];
 
@@ -147,7 +148,9 @@ public class TextTable
     public StringTemplate UserCalledTemplate => CurrentLanguageProvider[nameof(UserCalledTemplate)];
     public StringTemplate UserCreatedChannelTemplate => CurrentLanguageProvider[nameof(UserCreatedChannelTemplate)];
     public StringTemplate UserChangedChannelNameTemplate => CurrentLanguageProvider[nameof(UserChangedChannelNameTemplate)];
+    public StringTemplate UserClearedChannelNameTemplate => CurrentLanguageProvider[nameof(UserClearedChannelNameTemplate)];
     public string YouCalled => CurrentLanguageProvider[nameof(YouCalled)];
     public string YouCreatedChannel => CurrentLanguageProvider[nameof(YouCreatedChannel)];
     public StringTemplate YouChangedChannelNameTemplate => CurrentLanguageProvider[nameof(YouChangedChannelNameTemplate)];
+    public string YouClearedChannelNameTemplate => CurrentLanguageProvider[nameof(YouClearedChannelNameTemplate)];
 }

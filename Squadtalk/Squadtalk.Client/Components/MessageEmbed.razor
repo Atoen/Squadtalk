@@ -110,7 +110,6 @@
 
         _systemMessageIconColor = messageType switch
         {
-            SystemMessageType.ChannelCreated or SystemMessageType.ChannelNameChanged => IconColor.None,
             SystemMessageType.CallStarted or SystemMessageType.CallEnded => IconColor.Success,
             SystemMessageType.CallMissed => IconColor.Danger,
             _ => IconColor.None
@@ -118,11 +117,10 @@
 
         _systemMessageIconName = messageType switch
         {
-            SystemMessageType.ChannelCreated or SystemMessageType.ChannelNameChanged => IconName.InfoCircle,
             SystemMessageType.CallStarted => IconName.TelephoneOutboundFill,
             SystemMessageType.CallEnded => IconName.TelephoneFill,
             SystemMessageType.CallMissed => IconName.TelephoneXFill,
-            _ => IconName.None
+            _ => IconName.InfoCircle
         };
     }
 
@@ -145,6 +143,12 @@
                 var newName = Model[EmbedData.SystemMessageDataChannelName];
 
                 return table.ChannelNameChangedTemplate.TryFormat(username, newName);
+            }
+            case SystemMessageType.ChannelNameCleared:
+            {
+                var username = Model[EmbedData.SystemMessageDataUsername];
+
+                return table.ChannelNameClearedTemplate.TryFormat(username);
             }
             case SystemMessageType.CallStarted:
             {

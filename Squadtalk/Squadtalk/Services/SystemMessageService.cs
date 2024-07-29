@@ -36,7 +36,6 @@ public class SystemMessageService
             [EmbedData.SystemMessageDataUsername] = user.UserName!
         };
 
-        // var content = $"{user.UserName} has created this channel.";
         return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelCreated, data);
     }
 
@@ -49,6 +48,16 @@ public class SystemMessageService
         };
 
         return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameChanged, data);
+    }
+
+    public Task SendChannelNameClearedMessageAsync(ApplicationUser user, ChannelId channelId)
+    {
+        var data = new Dictionary<string, string>
+        {
+            [EmbedData.SystemMessageDataUsername] = user.UserName!
+        };
+
+        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameCleared, data);
     }
 
     public Task SendCallStartedMessageAsync(ApplicationUser user, ChannelId channelId, string callId)
@@ -64,9 +73,6 @@ public class SystemMessageService
 
     public Task SendCallEndedMessageAsync(ApplicationUser user, ChannelId channelId, TimeSpan callDuration, bool callMissed, string callId)
     {
-        // var content = $@"{user.UserName} has started a call that lasted {callDuration:hh\:mm\:ss}.";
-        // var messageType = SystemMessageType.CallEnded;
-
         var data = new Dictionary<string, string>
         {
             [EmbedData.SystemMessageDataUsername] = user.UserName!,

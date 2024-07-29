@@ -35,7 +35,10 @@
     </div>
 </div>
 
+@using Shared.Data.TypedIds
+@implements IDisposable
 @inject IVoiceChatService VoiceChatService
+@inject ILogger<CallParticipantModel> Logger
 
 @code {
 
@@ -43,7 +46,16 @@
 
     protected override async Task OnInitializedAsync()
     {
+        VoiceChatService.ParticipantUpdated += ParticipantUpdated;
         _volume = await VoiceChatService.GetUserVolumeAsync(Model);
+    }
+
+    private void ParticipantUpdated(UserId userId, ChannelModel channelModel)
+    {
+        if (Model.Id == userId)
+        {
+            StateHasChanged();
+        }
     }
 
     private int _volume;
@@ -96,4 +108,9 @@
 
     private IconName MicrophoneIcon => Model.MicrophoneOn ? IconName.MicFill : IconName.MicMuteFill;
     private IconColor MicrophoneColor => Model.MicrophoneOn ? IconColor.Secondary : IconColor.Danger;
+
+    public void Dispose()
+    {
+        VoiceChatService.ParticipantUpdated -= ParticipantUpdated;
+    }
 }

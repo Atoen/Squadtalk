@@ -90,20 +90,37 @@ public partial class ChatHub : Hub<IChatClient>
 
     public async Task<bool> ChangeGroupName(string? newName, ChannelId channelId, SystemMessageService systemMessageService)
     {
-        var user = await GetUserWithChannelsAsync(Context.User);
-        if (user is null) return false;
+        var channel = await _dbContext.Channels
+            .Include(x => x.Participants)
+            .SingleOrDefaultAsync(x => x.Id == channelId);
 
-        if (!UserParticipatesInChannel(user, channelId)) return false;
-
-        var channel = await _dbContext.Channels.SingleOrDefaultAsync(x => x.Id == channelId);
         if (channel is null) return false;
 
-        channel.Name = newName;
+        var claimValue = Context.User?.GetClaimValue(ClaimTypes.NameIdentifier);
+        if (claimValue is null || !UserId.TryParse(claimValue, out var id))
+        {
+            return false;
+        }
 
+        var user = channel.Participants.SingleOrDefault(x => x.Id == id);
+        if (user is null)
+        {
+            return false;
+        }
+
+        channel.Name = newName;
         await _dbContext.SaveChangesAsync();
 
         await TextGroup(channelId).ChannelNameChanged(channelId, newName);
-        await systemMessageService.SendChannelNameChangedMessageAsync(user, channelId, newName);
+
+        if (newName is null)
+        {
+            await systemMessageService.SendChannelNameClearedMessageAsync(user, channelId);
+        }
+        else
+        {
+            await systemMessageService.SendChannelNameChangedMessageAsync(user, channelId, newName);
+        }
 
         return true;
     }

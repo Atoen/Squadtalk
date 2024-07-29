@@ -7,13 +7,13 @@ namespace Squadtalk.Client.Services;
 public partial class VoiceChatService
 {
     [JSInvokable]
-    public void DisconnectedCallback(DisconnectReason reason, ChannelId channelId)
+    public void DisconnectedCallback(DisconnectReason reason)
     {
         ConnectedToVoiceCall = false;
         CallChannel = null;
 
-        OnDisconnected?.Invoke(reason);
-        OnCurrentChannelCallChanged?.Invoke();
+        Disconnected?.Invoke(reason);
+        CurrentChannelCallChanged?.Invoke();
     }
 
     [JSInvokable]
@@ -21,7 +21,7 @@ public partial class VoiceChatService
     {
         _logger.LogError("Error {Title} {Message}", title, message);
 
-        OnError?.Invoke(title, message);
+        Error?.Invoke(title, message);
     }
 
     [JSInvokable]
@@ -46,7 +46,7 @@ public partial class VoiceChatService
 
         _microphones.Clear();
         _microphones.AddRange(microphones);
-        OnMicrophoneListUpdated?.Invoke();
+        MicrophoneListUpdated?.Invoke();
     }
 
     [JSInvokable]
@@ -60,14 +60,24 @@ public partial class VoiceChatService
 
         _cameras.Clear();
         _cameras.AddRange(cameras);
-        OnCameraListUpdated?.Invoke();
+        CameraListUpdated?.Invoke();
     }
 
     [JSInvokable]
     public void ParticipantUpdatedCallback(CallParticipantModel participant, ChannelId channelId)
     {
-        _participants[participant.Id] = participant;
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        if (!_participants.TryAdd(participant.Id, participant))
+        {
+            var existingParticipant = _participants[participant.Id];
+
+            existingParticipant.MicrophoneOn = participant.MicrophoneOn;
+            existingParticipant.CameraOn = participant.CameraOn;
+            existingParticipant.ScreenShareOn = participant.ScreenShareOn;
+            existingParticipant.ConnectionQuality = participant.ConnectionQuality;
+            existingParticipant.IsSpeaking = participant.IsSpeaking;
+        }
+
+        ParticipantUpdated?.Invoke(participant.Id, _chatService.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
@@ -78,20 +88,20 @@ public partial class VoiceChatService
             _participants[participant.Id] = participant;
         }
 
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
     public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
         _participants[participant.Id] = participant;
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
     public void ParticipantDisconnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
         _participants.Remove(participant.Id);
-        OnParticipantsUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
     }
 }
