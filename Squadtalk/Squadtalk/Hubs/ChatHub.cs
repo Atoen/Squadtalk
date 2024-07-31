@@ -1,14 +1,13 @@
-using System.Runtime.CompilerServices;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
+using Squadtalk.Extensions;
+using Squadtalk.Repositories;
 using Squadtalk.Services;
 
 namespace Squadtalk.Hubs;
@@ -18,20 +17,27 @@ public partial class ChatHub : Hub<IChatClient>
 {
     private readonly ChatConnectionManager _connectionManager;
     private readonly ILogger<ChatHub> _logger;
-    private readonly ApplicationDbContext _dbContext;
     private readonly VoiceCallManager _voiceCallManager;
+    private readonly UserRepository _userRepository;
+    private readonly MessageRepository _messageRepository;
+    private readonly ChannelRepository _channelRepository;
     private readonly LiveKitService _liveKitService;
 
-    public ChatHub(ChatConnectionManager connectionManager,
-        ILogger<ChatHub> logger,
-        ApplicationDbContext dbContext,
+    public ChatHub(
+        ChatConnectionManager connectionManager,
         VoiceCallManager voiceCallManager,
-        LiveKitService liveKitService)
+        UserRepository userRepository,
+        MessageRepository messageRepository,
+        ChannelRepository channelRepository,
+        LiveKitService liveKitService,
+        ILogger<ChatHub> logger)
     {
         _connectionManager = connectionManager;
         _logger = logger;
-        _dbContext = dbContext;
         _voiceCallManager = voiceCallManager;
+        _userRepository = userRepository;
+        _messageRepository = messageRepository;
+        _channelRepository = channelRepository;
         _liveKitService = liveKitService;
     }
 
@@ -43,36 +49,16 @@ public partial class ChatHub : Hub<IChatClient>
     private ITextChatClient TextGroup(string groupName) => Clients.Group(groupName);
     private ITextChatClient TextClient(string connectionId) => Clients.Client(connectionId);
     private ITextChatClient TextCaller => Clients.Caller;
-    
-    private async Task<ApplicationUser?> GetUserWithChannelsAsync(ClaimsPrincipal? principal,
-        [CallerMemberName] string? callerMemberName = null)
+
+    private async Task<ApplicationUser?> GetChannelParticipantAsync(ChannelId channelId, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.Include)
     {
-        if (principal is not { Identity.IsAuthenticated: true })
+        var user = await _userRepository.GetUserAsync(Context.User, channelsInclusionOption);
+        if (user is null || !user.ParticipatesInChannel(channelId))
         {
-            _logger.LogWarning("{Method}: Unable to get user data", callerMemberName);
             return null;
         }
-        
-        var id = Guid.Parse(principal.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-        var userId = new UserId(id);
-        
-        var user = await _dbContext.Users
-            .AsSplitQuery()
-            .Include(x => x.Channels)
-            .ThenInclude(x => x.Participants)
-            .SingleOrDefaultAsync(x => x.Id == userId);
 
-        if (user is null)
-        {
-            _logger.LogWarning("Unable to access user data");
-        }
-        
         return user;
-    }
-
-    private bool UserParticipatesInChannel(ApplicationUser user, ChannelId id)
-    {
-        return id == GroupChatModel.GlobalChatId || user.Channels.Exists(x => x.Id == id);
     }
     
     private async Task AddUserToPrivateChannelsAsync(UserDto user, List<Channel> channels, bool isUniqueUserConnection)
@@ -90,26 +76,26 @@ public partial class ChatHub : Hub<IChatClient>
 
     public async Task<bool> ChangeGroupName(string? newName, ChannelId channelId, SystemMessageService systemMessageService)
     {
-        var channel = await _dbContext.Channels
-            .Include(x => x.Participants)
-            .SingleOrDefaultAsync(x => x.Id == channelId);
-
-        if (channel is null) return false;
-
-        var claimValue = Context.User?.GetClaimValue(ClaimTypes.NameIdentifier);
-        if (claimValue is null || !UserId.TryParse(claimValue, out var id))
+        var userId = Context.User!.GetUserId();
+        var channel = await _channelRepository.GetChannelAsync(channelId);
+        if (channel is null || !channel.UserParticipatesInChannel(userId))
         {
             return false;
         }
 
-        var user = channel.Participants.SingleOrDefault(x => x.Id == id);
+        var user = channel.Participants.SingleOrDefault(x => x.Id == userId);
         if (user is null)
         {
             return false;
         }
 
         channel.Name = newName;
-        await _dbContext.SaveChangesAsync();
+        var updated = await _channelRepository.UpdateChannelAsync(channel);
+
+        if (!updated)
+        {
+            return false;
+        }
 
         await TextGroup(channelId).ChannelNameChanged(channelId, newName);
 
@@ -125,30 +111,30 @@ public partial class ChatHub : Hub<IChatClient>
         return true;
     }
 
-    public async Task SendMessage(string messageContent, ChannelId id, MessageStorageService messageStorageService)
+    public async Task SendMessage(string messageContent, ChannelId channelId)
     {
-        var user = await GetUserWithChannelsAsync(Context.User);
-        if (user is null) return;
-
-        if (!UserParticipatesInChannel(user, id))
+        var participant = await GetChannelParticipantAsync(channelId);
+        if (participant is null)
         {
             return;
         }
 
-        var message = messageStorageService.CreateMessage(user, messageContent, id);
-        await messageStorageService.StoreMessageAsync(message);
-
-        var dto = message.ToDto();
-        await TextGroup(id).ReceiveMessage(dto);
+        var addedMessage = await _messageRepository.AddMessageAsync(participant, messageContent, channelId, cancellationToken: Context.ConnectionAborted);
+        if (addedMessage is not null)
+        {
+            await TextGroup(channelId).ReceiveMessage(addedMessage.ToDto());
+        }
     }
 
     public override async Task OnConnectedAsync()
     {
-        var user = await GetUserWithChannelsAsync(Context.User);
-        if (user is null) return;
+        var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.IncludeWithParticipants);
+        if (user is null)
+        {
+            return;
+        }
 
         var dto = user.ToDto();
-
         var isUniqueConnection = await _connectionManager.Add(user, Context.ConnectionId);
         if (isUniqueConnection)
         {
@@ -162,23 +148,35 @@ public partial class ChatHub : Hub<IChatClient>
         await TextCaller.GetChannels(channelDtos);
         await TextCaller.GetConnectedUsers(_connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList());
 
-        if (user.Channels is not { Count: > 0 }) return;
+        if (user.Channels is not { Count: > 0 })
+        {
+            return;
+        }
 
         await AddUserToPrivateChannelsAsync(dto, user.Channels, isUniqueConnection);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = await GetUserWithChannelsAsync(Context.User);
-        if (user is null) return;
+        var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.Include);
+        if (user is null)
+        {
+            return;
+        }
 
         var dto = user.ToDto();
         
         var allConnectionsClosed = await _connectionManager.Remove(user, Context.ConnectionId);
-        if (!allConnectionsClosed) return;
+        if (!allConnectionsClosed)
+        {
+            return;
+        }
 
         await TextGroup(GroupChatModel.GlobalChatId).UserDisconnected(dto);
-        if (user.Channels is not { Count: > 0 }) return;
+        if (user.Channels is not { Count: > 0 })
+        {
+            return;
+        }
 
         foreach (var channel in user.Channels)
         {

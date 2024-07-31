@@ -11,6 +11,7 @@ using Shared.Services;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Hubs;
+using Squadtalk.Repositories;
 
 namespace Squadtalk.Services;
 
@@ -19,23 +20,23 @@ public class LocalCommunicationService : ICommunicationService
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly ApplicationDbContext _dbContext;
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
-    private readonly MessageStorageService _messageStorageService;
     private readonly ChatConnectionManager _connectionManager;
+    private readonly MessageRepository _messageRepository;
     private readonly LocalMessageNotificationService _notificationService;
 
     public LocalCommunicationService(
         AuthenticationStateProvider authenticationStateProvider,
         ApplicationDbContext dbContext,
         IHubContext<ChatHub, IChatClient> hubContext,
-        MessageStorageService messageStorageService,
         ChatConnectionManager connectionManager,
+        MessageRepository messageRepository,
         LocalMessageNotificationService notificationService)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _dbContext = dbContext;
         _hubContext = hubContext;
-        _messageStorageService = messageStorageService;
         _connectionManager = connectionManager;
+        _messageRepository = messageRepository;
         _notificationService = notificationService;
         
         _notificationService.MessageSent += NotificationServiceOnMessageSent;
@@ -87,11 +88,11 @@ public class LocalCommunicationService : ICommunicationService
             return;
         }
         
-        var message = _messageStorageService.CreateMessage(user, content, channelId);
-        await _messageStorageService.StoreMessageAsync(message);
-        
-        var dto = message.ToDto();
-        await _hubContext.Clients.Group(channelId).ReceiveMessage(dto);
+        var addedMessage = await _messageRepository.AddMessageAsync(user, content, channelId, cancellationToken: cancellationToken);
+        if (addedMessage is not null)
+        {
+            await _hubContext.Clients.Group(channelId).ReceiveMessage(addedMessage.ToDto());
+        }
     }
 
     Task<RoomTokenDto?> ICommunicationService.StartVoiceCallAsync(ChannelId channelId)

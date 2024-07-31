@@ -1,0 +1,101 @@
+using Microsoft.EntityFrameworkCore;
+using Shared.Data.TypedIds;
+using Shared.Extensions;
+using Shared.Models;
+using Squadtalk.Data;
+using Squadtalk.Data.Entities;
+using Squadtalk.Extensions;
+
+namespace Squadtalk.Repositories;
+
+public class MessageRepository(
+    ApplicationDbContext dbContext,
+    ChannelRepository channelRepository,
+    ILogger<MessageRepository> logger)
+    : RepositoryBase(dbContext, logger)
+{
+    private const int PageSize = 20;
+
+    public async Task<List<Message>> GetPageAsync(ChannelId channelId, string? timestamp = null, CancellationToken cancellationToken = default)
+    {
+        var cursor = CreateCursor(timestamp);
+
+        var page = cursor == default
+            ? MessageFirstPageAsync(DbContext, channelId)
+            : MessagePageByCursorAsync(DbContext, channelId, cursor);
+
+        return await page.ToListAsync(cancellationToken);
+    }
+
+    public async Task<Message?> AddMessageAsync(
+        ApplicationUser author,
+        string content,
+        ChannelId channelId,
+        Embed? embed = null,
+        CancellationToken cancellationToken = default)
+    {
+        var message = new Message
+        {
+            Author = author,
+            Content = content,
+            ChannelId = channelId,
+            Timestamp = DateTimeOffset.Now,
+            Embed = embed
+        };
+
+
+        var added = await AddMessageAsync(message, cancellationToken);
+
+        return added ? message : null;
+    }
+
+    public async Task<bool> AddMessageAsync(Message message, CancellationToken cancellationToken = default)
+    {
+        DbContext.Messages.Add(message);
+        if (message.ChannelId != GroupChatModel.GlobalChatId)
+        {
+            var channel = await channelRepository.GetChannelAsync(message.ChannelId);
+            channel?.WithLastMessage(message);
+        }
+
+        return await SaveChangesAsync(cancellationToken);
+    }
+
+    private static DateTimeOffset CreateCursor(string? timestamp)
+    {
+        if (timestamp is null)
+        {
+            return default;
+        }
+
+        if (!timestamp.TryFromBase64(out var converted, true))
+        {
+            return default;
+        }
+
+        return long.TryParse(converted, out var ticks)
+            ? new DateTimeOffset(ticks, TimeSpan.Zero)
+            : default;
+    }
+
+    private static readonly Func<ApplicationDbContext, ChannelId, IAsyncEnumerable<Message>> MessageFirstPageAsync =
+        EF.CompileAsyncQuery(
+        (ApplicationDbContext context, ChannelId channelId) => context.Messages
+            .AsNoTracking()
+            .Where(x => x.ChannelId == channelId)
+            .OrderByDescending(x => x.Timestamp)
+            .Take(PageSize)
+            .Include(x => x.Author)
+            .Reverse());
+
+    private static readonly Func<ApplicationDbContext, ChannelId, DateTimeOffset, IAsyncEnumerable<Message>> MessagePageByCursorAsync =
+        EF.CompileAsyncQuery(
+        (ApplicationDbContext context, ChannelId channelId, DateTimeOffset cursor) => context.Messages
+            .AsNoTracking()
+            .Where(x => x.ChannelId == channelId)
+            .OrderByDescending(x => x.Timestamp)
+            .Where(x => x.Timestamp < cursor)
+            .Take(PageSize)
+            .Include(x => x.Author)
+            .Reverse());
+}

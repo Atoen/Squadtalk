@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Hubs;
+using Squadtalk.Repositories;
 
 namespace Squadtalk.Services;
 
@@ -11,24 +11,43 @@ public class ChannelCreator
 {
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
     private readonly ChatConnectionManager _connectionManager;
-    private readonly ApplicationDbContext _dbContext;
     private readonly SystemMessageService _systemMessageService;
+    private readonly ChannelRepository _channelRepository;
+    private readonly UserRepository _userRepository;
 
     public ChannelCreator(
         IHubContext<ChatHub, IChatClient> hubContext,
         ChatConnectionManager connectionManager,
-        ApplicationDbContext dbContext,
-        SystemMessageService systemMessageService)
+        SystemMessageService systemMessageService,
+        ChannelRepository channelRepository,
+        UserRepository userRepository)
     {
         _hubContext = hubContext;
         _connectionManager = connectionManager;
-        _dbContext = dbContext;
         _systemMessageService = systemMessageService;
+        _channelRepository = channelRepository;
+        _userRepository = userRepository;
     }
 
-    public async Task<ChannelId?> CreateChannelAsync(ApplicationUser creatingUser, IEnumerable<UserId> participants)
+    public async Task<Channel?> CreateChannelAsync(
+        UserId creatingUserId,
+        List<UserId> participantIds,
+        CancellationToken cancellationToken = default)
     {
-        var channel = await CreateChannelAsync(participants.ToList());
+        if (!participantIds.Contains(creatingUserId))
+        {
+            return null;
+        }
+
+        var participants = await _userRepository.GetUserListAsync(participantIds);
+        var creatingUser = participants.FirstOrDefault(x => x.Id == creatingUserId);
+        if (creatingUser is null)
+        {
+            return null;
+        }
+
+        var channel = await _channelRepository.CreateChannelAsync(participants, cancellationToken);
+
         if (channel is null)
         {
             return null;
@@ -36,7 +55,7 @@ public class ChannelCreator
 
         await NotifyParticipantsAsync(channel, creatingUser);
 
-        return channel.Id;
+        return channel;
     }
 
     private async Task NotifyParticipantsAsync(Channel channel, ApplicationUser creatingUser)
@@ -56,33 +75,5 @@ public class ChannelCreator
         {
             await _systemMessageService.SendChannelCreatedMessageAsync(creatingUser, channel.Id);
         }
-    }
-
-    private async Task<Channel?> CreateChannelAsync(List<UserId> participantsId)
-    {
-        if (participantsId.Count < 2 || participantsId.Distinct().Count() != participantsId.Count)
-        {
-            return null;
-        }
-
-        var participants = await _dbContext.Users
-            .Where(x => participantsId.Contains(x.Id))
-            .ToListAsync();
-
-        if (participants.Count != participantsId.Count)
-        {
-            return null;
-        }
-
-        var channel = new Channel
-        {
-            Id = ChannelId.New(),
-            Participants = participants,
-        };
-
-        await _dbContext.Channels.AddAsync(channel);
-        await _dbContext.SaveChangesAsync();
-
-        return channel;
     }
 }

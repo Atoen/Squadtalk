@@ -1,58 +1,27 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using Shared;
 using Shared.Data.TypedIds;
-using Squadtalk.Data;
-using Squadtalk.Data.Entities;
 using Squadtalk.Data.TypedIds;
 using Squadtalk.Extensions;
-using Squadtalk.Services;
+using Squadtalk.Repositories;
 using tusdotnet.Interfaces;
 
 namespace Squadtalk.Controllers;
 
 [ApiController]
 [Route("api/files")]
-public class FileController : ControllerBase
+public class FileController(FileRepository fileRepository): ControllerBase
 {
-    private readonly TusHelper _tusHelper;
-    private readonly ApplicationDbContext _dbContext;
-
-    public FileController(TusHelper tusHelper, ApplicationDbContext dbContext)
-    {
-        _tusHelper = tusHelper;
-        _dbContext = dbContext;
-    }
-
-    private static readonly Func<ApplicationDbContext, ChannelId, TusFileId, Task<DbFile?>> FileByChannelPathAsync =
-        EF.CompileAsyncQuery(
-            (ApplicationDbContext context, ChannelId channelId, TusFileId fileId) => context.Files
-                .AsNoTracking()
-                .Where(x => x.ChannelId == channelId)
-                .SingleOrDefault(x => x.TusId == fileId));
-
     [HttpGet("{channelId}/{fileId}/{**slug}")]
     public async Task<IActionResult> DownloadFile(ChannelId channelId, TusFileId fileId)
     {
         var cancellationToken = HttpContext.RequestAborted;
+        var file = await fileRepository.GetTusFileAsync(channelId, fileId, cancellationToken);
 
-        if (await FileByChannelPathAsync(_dbContext, channelId, fileId) is not { } file)
-        {
-            return BadRequest("Invalid file path");
-        }
-
-        try
-        {
-            var tusFile = await _tusHelper.DiskStore.GetFileAsync(file.TusId, cancellationToken);
-            return tusFile is not null
-                ? await SetFileContentDispositionAsync(tusFile, cancellationToken)
-                : BadRequest("Invalid file id");
-        }
-        catch
-        {
-            return BadRequest("Error during accessing the file");
-        }
+        return file is not null
+            ? await SetFileContentDispositionAsync(file, cancellationToken)
+            : BadRequest("Invalid file id");
     }
 
     private async Task<IActionResult> SetFileContentDispositionAsync(ITusFile tusFile, CancellationToken cancellationToken)

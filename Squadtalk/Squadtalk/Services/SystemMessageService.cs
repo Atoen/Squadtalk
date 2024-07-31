@@ -6,6 +6,7 @@ using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
+using Squadtalk.Repositories;
 using tusdotnet.Interfaces;
 
 namespace Squadtalk.Services;
@@ -13,19 +14,19 @@ namespace Squadtalk.Services;
 public class SystemMessageService
 {
     private readonly IHubContext<ChatHub, IChatClient> _hubContext;
-    private readonly MessageStorageService _messageStorageService;
-    private readonly FileStorageService _fileStorageService;
+    private readonly FileRepository _fileRepository;
+    private readonly MessageRepository _messageRepository;
     private readonly EmbedService _embedService;
 
     public SystemMessageService(
         IHubContext<ChatHub, IChatClient> hubContext,
-        MessageStorageService messageStorageService,
-        FileStorageService fileStorageService,
+        FileRepository fileRepository,
+        MessageRepository messageRepository,
         EmbedService embedService)
     {
         _hubContext = hubContext;
-        _messageStorageService = messageStorageService;
-        _fileStorageService = fileStorageService;
+        _fileRepository = fileRepository;
+        _messageRepository = messageRepository;
         _embedService = embedService;
     }
 
@@ -96,11 +97,11 @@ public class SystemMessageService
             embed[key] = value;
         }
 
-        var message = _messageStorageService.CreateMessage(user, string.Empty, channelId)
-            .WithEmbed(embed);
-
-        await _messageStorageService.StoreMessageAsync(message);
-        await _hubContext.Clients.Group(channelId).ReceiveMessage(message.ToDto());
+        var addedMessage = await _messageRepository.AddMessageAsync(user, string.Empty, channelId, embed);
+        if (addedMessage is not null)
+        {
+            await _hubContext.Clients.Group(channelId).ReceiveMessage(addedMessage.ToDto());
+        }
     }
 
     public async Task SendFileEmbedMessageAsync(ApplicationUser user, ITusFile file, CancellationToken cancellationToken)
@@ -108,15 +109,14 @@ public class SystemMessageService
         var metadata = await file.GetMetadataAsync(cancellationToken);
         var channelId = (ChannelId) metadata.GetString(EmbedData.ChannelId);
 
-        await _fileStorageService.StoreFileAsync(file, channelId);
+        await _fileRepository.AddFileAsync(file, channelId, cancellationToken);
 
         var embed = await _embedService.CreateFileEmbedAsync(file, channelId, cancellationToken);
 
-        var message = _messageStorageService.CreateMessage(user, string.Empty, channelId)
-            .WithEmbed(embed);
-
-        await _messageStorageService.StoreMessageAsync(message);
-
-        await _hubContext.Clients.Group(channelId).ReceiveMessage(message.ToDto());
+        var addedMessage = await _messageRepository.AddMessageAsync(user, string.Empty, channelId, embed, cancellationToken);
+        if (addedMessage is not null)
+        {
+            await _hubContext.Clients.Group(channelId).ReceiveMessage(addedMessage.ToDto());
+        }
     }
 }

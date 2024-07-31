@@ -12,48 +12,43 @@ public partial class ChatHub
 
     public async Task<RoomTokenDto?> StartCall(ChannelId channelId)
     {
-        if (await GetUserWithChannelsAsync(Context.User) is not { } callingUser)
+        var participant = await GetChannelParticipantAsync(channelId);
+        if (participant is null)
         {
             await VoiceCaller.CallFailed("Failed to create voice call");
             return null;
         }
 
-        if (!UserParticipatesInChannel(callingUser, channelId))
-        {
-            return null;
-        }
-
-        _voiceCallManager.VoiceCallInitiated(callingUser, channelId);
+        _voiceCallManager.VoiceCallInitiated(participant, channelId);
 
         return _liveKitService.CreateRoomToken(Context.User, channelId);
     }
 
     public async Task<RoomTokenDto?> AcceptCall(ChannelId channelId)
     {
-        if (await GetUserWithChannelsAsync(Context.User) is not { } user)
+        var participant = await GetChannelParticipantAsync(channelId);
+        if (participant is null)
         {
-            await VoiceCaller.CallFailed("Failed to join the voice call");
+            await VoiceCaller.CallFailed("Failed to join the call");
             return null;
         }
 
-        if (!UserParticipatesInChannel(user, channelId))
-        {
-            return null;
-        }
+        _voiceCallManager.VoiceCallInitiated(participant, channelId);
 
         if (!_voiceCallManager.ChannelHasActiveCall(channelId))
         {
             return null;
         }
 
-        await OthersInVoiceGroup(channelId).CallAccepted(channelId, user.ToDto());
+        await OthersInVoiceGroup(channelId).CallAccepted(channelId, participant.ToDto());
 
         return _liveKitService.CreateRoomToken(Context.User, channelId);
     }
 
     public async Task DeclineCall(ChannelId channelId)
     {
-        if (await GetUserWithChannelsAsync(Context.User) is not { } user)
+        var participant = await GetChannelParticipantAsync(channelId);
+        if (participant is null)
         {
             return;
         }
@@ -64,16 +59,17 @@ public partial class ChatHub
             return;
         }
 
-        await OthersInVoiceGroup(channelId).CallDeclined(user.ToDto(), channelId);
+        await OthersInVoiceGroup(channelId).CallDeclined(participant.ToDto(), channelId);
     }
 
     public async Task<bool> ChannelHasActiveCall(ChannelId channelId)
     {
-        if (await GetUserWithChannelsAsync(Context.User) is not { } user)
+        var participant = await GetChannelParticipantAsync(channelId);
+        if (participant is null)
         {
             return false;
         }
 
-        return UserParticipatesInChannel(user, channelId) && _voiceCallManager.ChannelHasActiveCall(channelId);
+        return _voiceCallManager.ChannelHasActiveCall(channelId);
     }
 }

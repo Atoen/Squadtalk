@@ -11,6 +11,7 @@ using Shared.Services;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
 using Squadtalk.Data.Entities;
+using Squadtalk.Repositories;
 using Squadtalk.Services;
 using Squadtalk.Services.Scheduling;
 
@@ -96,8 +97,11 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddTransient<LiveKitEventHandler>();
         serviceCollection.AddSingleton<LiveKitService>();
 
-        serviceCollection.AddScoped<MessageStorageService>();
-        serviceCollection.AddScoped<FileStorageService>();
+        serviceCollection.AddScoped<MessageRepository>();
+        serviceCollection.AddScoped<UserRepository>();
+        serviceCollection.AddScoped<ChannelRepository>();
+        serviceCollection.AddScoped<FileRepository>();
+
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();

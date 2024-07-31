@@ -20,12 +20,4 @@ public class LiveKitController(LiveKitEventHandler eventHandler) : ControllerBas
 
         return Ok();
     }
-
-    // [AllowAnonymous]
-    // [HttpPost("token")]
-    // public IActionResult CreateToken([FromBody] string username, [FromServices] LiveKitService liveKitService)
-    // {
-    //     var token = liveKitService.CreateRoomToken(username);
-    //     return Ok(token);
-    // }
 }

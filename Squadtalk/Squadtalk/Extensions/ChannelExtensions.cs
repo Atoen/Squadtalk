@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Shared.Data.TypedIds;
+using Shared.Extensions;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 
@@ -20,5 +23,20 @@ public static class ChannelExtensions
         };
 
         return textChannel;
+    }
+
+    public static bool UserParticipatesInChannel(this Channel channel, ClaimsPrincipal? principal)
+    {
+        if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
+        {
+            return false;
+        }
+
+        return UserId.TryParse(claim, out var userId) && channel.UserParticipatesInChannel(userId);
+    }
+
+    public static bool UserParticipatesInChannel(this Channel channel, UserId userId)
+    {
+        return channel.Participants.Any(x => x.Id == userId);
     }
 }
