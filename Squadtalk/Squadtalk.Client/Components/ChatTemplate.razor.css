@@ -35,10 +35,13 @@
     white-space: nowrap;
 }
 
-.last-message {
-    color: var(--bs-gray-900);
-    grid-column: 2;
+.channel-status {
+    display: flex;
     grid-row: 2;
+    grid-column: 2 / 5;
+}
+
+.last-message {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -46,15 +49,11 @@
 }
 
 .last-message-time {
-    grid-column: 4 / 5;
-    grid-row: 2;
     align-self: start;
     white-space: nowrap;
 }
 
 .separator {
-    grid-row: 2;
-    grid-column: 3;
     align-self: start;
     padding: 0 2px;
 }

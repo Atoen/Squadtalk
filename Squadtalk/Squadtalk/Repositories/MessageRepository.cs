@@ -27,6 +27,14 @@ public class MessageRepository(
         return await page.ToListAsync(cancellationToken);
     }
 
+    public async Task<Dictionary<ChannelId, int>> GetUnreadMessageCountPerChannelAsync(List<Channel> channels, DateTimeOffset since)
+    {
+        var channelIds = channels.Select(x => x.Id).ToList();
+        var grouping = UnreadMessagesPerChannelAsync(dbContext, channelIds, since);
+
+        return await grouping.ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
+
     public async Task<Message?> AddMessageAsync(
         ApplicationUser author,
         string content,
@@ -77,6 +85,13 @@ public class MessageRepository(
             ? new DateTimeOffset(ticks, TimeSpan.Zero)
             : default;
     }
+
+    private static readonly Func<ApplicationDbContext, List<ChannelId>, DateTimeOffset, IAsyncEnumerable<IGrouping<ChannelId, Message>>>
+        UnreadMessagesPerChannelAsync = EF.CompileAsyncQuery(
+            (ApplicationDbContext context, List<ChannelId> channelIds, DateTimeOffset since) => context.Messages
+                .Where(x => channelIds.Contains(x.ChannelId))
+                .Where(x => x.Timestamp > since)
+                .GroupBy(x => x.ChannelId));
 
     private static readonly Func<ApplicationDbContext, ChannelId, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(

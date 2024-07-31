@@ -11,4 +11,6 @@ public interface IChatChannel
     IEnumerable<IChatUser> Participants { get; }
     
     IChatMessage? LastMessage { get; }
+
+    int MessagesSince { get; set; }
 }

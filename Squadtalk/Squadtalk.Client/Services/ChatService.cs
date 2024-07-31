@@ -217,8 +217,6 @@ public class ChatService : IChatService
 
     private ChannelModel CreateChannelModel(IChatChannel channel, UserId id)
     {
-        var lastMessageIsByCurrentUser = channel.LastMessage?.Author.Id == id;
-
         _logger.LogInformation("Creating chat model");
 
         var othersInChannel = channel.Participants.Where(x => x.Id != id).ToList();
@@ -230,7 +228,9 @@ public class ChatService : IChatService
             _ => throw new InvalidOperationException()
         };
 
-        return model.WithLastMessage(channel.LastMessage, _localization.TextTable, lastMessageIsByCurrentUser);
+        return model
+            .WithLastMessage(channel.LastMessage)
+            .WithUnreadMessageCount(channel.MessagesSince);
     }
 
     private async Task ReceivedConnectedUsers(IEnumerable<IChatUser> users)

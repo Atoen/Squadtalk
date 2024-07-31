@@ -19,6 +19,10 @@ public abstract class ChannelModel(ChannelId id) : IStatus
     public ChannelId Id { get; } = id;
 
     public ChannelState State { get; } = new();
+
+    public int UnreadMessages => State.UnreadMessages;
+
+    public bool HasUnreadMessages => State.UnreadMessages > 0;
 }
 
 public interface IStatus

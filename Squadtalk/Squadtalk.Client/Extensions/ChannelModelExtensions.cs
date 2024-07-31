@@ -10,7 +10,7 @@ public static class ChannelModelExtensions
 
     public static bool IsFake(this ChannelModel? channelModel) => channelModel?.Id == DirectMessageChannelModel.FakeChannelId;
 
-    public static T WithLastMessage<T>(this T textChannel, IChatMessage? message, TextTable textTable, bool byCurrentUser) where T : ChannelModel
+    public static T WithLastMessage<T>(this T textChannel, IChatMessage? message) where T : ChannelModel
     {
         if (message is null)
         {
@@ -18,6 +18,13 @@ public static class ChannelModelExtensions
         }
 
         textChannel.LastMessage = message;
+
+        return textChannel;
+    }
+
+    public static T WithUnreadMessageCount<T>(this T textChannel, int unreadMessageCount) where T : ChannelModel
+    {
+        textChannel.State.UnreadMessages = unreadMessageCount;
 
         return textChannel;
     }

@@ -19,6 +19,9 @@ public class ChannelDto : IChatChannel
     [Key(3)]
     public MessageDto? LastMessage { get; set; }
 
+    [Key(4)]
+    public int MessagesSince { get; set; }
+
     [IgnoreMember]
     IEnumerable<IChatUser> IChatChannel.Participants => Participants;
     

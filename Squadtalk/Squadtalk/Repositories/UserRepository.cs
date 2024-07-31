@@ -7,7 +7,7 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Repositories;
 
-public class UserRepository(ApplicationDbContext dbContext)
+public class UserRepository(ApplicationDbContext dbContext, ILogger<UserRepository> logger)  : RepositoryBase(dbContext, logger)
 {
     public Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
     {
@@ -25,16 +25,24 @@ public class UserRepository(ApplicationDbContext dbContext)
     {
         return channelsInclusionOption switch
         {
-            ChannelsInclusionOption.DontInclude => UserByIdAsync(dbContext, userId),
-            ChannelsInclusionOption.Include => UserByIdWithChannelsAsync(dbContext, userId),
-            ChannelsInclusionOption.IncludeWithParticipants => UserByIdWithFullChannelsAsync(dbContext, userId),
+            ChannelsInclusionOption.DontInclude => UserByIdAsync(DbContext, userId),
+            ChannelsInclusionOption.Include => UserByIdWithChannelsAsync(DbContext, userId),
+            ChannelsInclusionOption.IncludeWithParticipants => UserByIdWithFullChannelsAsync(DbContext, userId),
             _ => throw new ArgumentOutOfRangeException(nameof(channelsInclusionOption), channelsInclusionOption, null)
         };
     }
 
+    public async Task SetLastSeen(ApplicationUser user, DateTimeOffset lastSeen)
+    {
+        user.LastSeen = lastSeen;
+        DbContext.Update(user);
+
+        await SaveChangesAsync();
+    }
+
     public async Task<List<ApplicationUser>> GetUserListAsync(List<UserId> userIds)
     {
-        var users = UserListByIdAsync(dbContext, userIds);
+        var users = UserListByIdAsync(DbContext, userIds);
 
         return await users.ToListAsync();
     }

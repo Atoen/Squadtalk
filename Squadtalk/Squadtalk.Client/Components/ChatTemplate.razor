@@ -10,16 +10,18 @@
     <div class="username">@Model.Name</div>
     @if (Model.LastMessage is { } message)
     {
-        <div class="last-message">@FormatLastMessage(message)</div>
-        <div class="separator">|</div>
-        <div class="last-message-time">@message.Timestamp.ToStringFormat(Table, DateFormatMode.ChannelStatus)</div>
+        <div class="channel-status" style="@StatusStyle">
+            <div class="last-message">@FormatLastMessage(message)</div>
+            <div class="separator">|</div>
+            <div class="last-message-time">@message.Timestamp.ToStringFormat(Table, DateFormatMode.ChannelStatus)</div>
+        </div>
     }
 
-    @if (Model.State is { UnreadMessages: > 0 and var unread })
+    @if (Model.HasUnreadMessages)
     {
         <Badge Color="BadgeColor.Danger" Position="Position.Absolute" Placement="BadgePlacement.TopRight"
                IndicatorType="BadgeIndicatorType.RoundedPill" VisuallyHiddenText="unread messages">
-            @unread
+            @Model.UnreadMessages
         </Badge>
     }
 
@@ -44,7 +46,7 @@
 
     private Task Hide() => HideCallback.InvokeAsync(Model);
 
-    private string GetBorderStyle(UserModel user) => $"border-color: {user.StatusColor()};";
+    private string? StatusStyle => Model.HasUnreadMessages ? "color: white; font-weight: bold" : null;
 
     private string FormatLastMessage(IChatMessage message)
     {

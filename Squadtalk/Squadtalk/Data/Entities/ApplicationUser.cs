@@ -12,6 +12,8 @@ public class ApplicationUser : IdentityUser<UserId>, IChatUser
 
     [PersonalData]
     public List<ApplicationUser> Friends { get; set; } = default!;
+
+    public DateTimeOffset LastSeen { get; set; }
     
     string IChatUser.Username => UserName!;
 }

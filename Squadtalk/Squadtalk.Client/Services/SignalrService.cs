@@ -85,10 +85,10 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
             _logger.LogInformation("Successfully connected to chat hub");
         }
-        catch
+        catch (Exception e)
         {
             ConnectionStatus = ISignalrService.Disconnected;
-            _logger.LogError("Failed to connect to chat hub");
+            _logger.LogError(e, "Failed to connect to chat hub");
         }
     }
 
