@@ -1,14 +1,14 @@
 using Shared.Data;
 using Shared.Models;
-using Squadtalk.Client.Localization;
 
-namespace Squadtalk.Client.Extensions;
+namespace Shared.Extensions;
 
 public static class ChannelModelExtensions
 {
     public static bool IsGlobal(this ChannelModel? channelModel) => channelModel?.Id == GroupChatModel.GlobalChatId;
 
-    public static bool IsFake(this ChannelModel? channelModel) => channelModel?.Id == DirectMessageChannelModel.FakeChannelId;
+    public static bool IsFake(this ChannelModel? channelModel) =>
+        channelModel?.Id.Value.StartsWith(DirectMessageChannelModel.TempChannelIdPrefix) ?? false;
 
     public static T WithLastMessage<T>(this T textChannel, IChatMessage? message) where T : ChannelModel
     {

@@ -21,20 +21,7 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string?
 
     private UserStatus GetStatus()
     {
-        var status = UserStatus.Offline;
-
-        foreach (var user in Others)
-        {
-            if (user.Status == UserStatus.Online)
-            {
-                return UserStatus.Online;
-            }
-            if (user.Status == UserStatus.Away)
-            {
-                status = UserStatus.Away;
-            }
-        }
-
-        return status;
+        var hasOnlineUser = Others.Any(x => x.Status == UserStatus.Online);
+        return hasOnlineUser ? UserStatus.Online : UserStatus.Offline;
     }
 }

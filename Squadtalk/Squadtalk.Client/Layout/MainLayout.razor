@@ -27,32 +27,54 @@
     <a class="dismiss">🗙</a>
 </div>
 
+@implements IDisposable
+
 @inject ICommunicationService CommunicationService
 @inject IVoiceChatService VoiceChatService
 @inject ILocalization Localization
+@inject IUserAuthenticationService UserAuthenticationService
 @inject ILogger<MainLayout> Logger
+@inject PersistentComponentState PersistentComponentState
 
 @code {
 
     private Modal _callIncomingModal = default!;
-
     private readonly Dictionary<string, object> _modalParameters = [];
 
-    protected override async Task OnInitializedAsync()
-    {
-        Logger.LogInformation("On initialized");
+    private PersistingComponentStateSubscription _subscription;
 
-        await CommunicationService.ConnectAsync();
+    protected override Task OnInitializedAsync()
+    {
+        _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
 
         _modalParameters[nameof(IncomingCallModal.DecisionCallback)] =
             (Func<bool, ChannelId, Task>) CallAcceptedDecisionCallback;
 
         VoiceChatService.CallIncoming += CallIncoming;
+
+        return UserAuthenticationService.IsAuthenticated
+            ? CommunicationService.ConnectAsync()
+            : Task.CompletedTask;
+    }
+
+    private Task OnPersisting()
+    {
+        if (CommunicationService is IPersistState persist)
+        {
+            return persist.PersistDataAsync();
+        }
+
+        return Task.CompletedTask;
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        return firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
+        if (firstRender && UserAuthenticationService.IsAuthenticated)
+        {
+            return VoiceChatService.InitializeAsync();
+        }
+
+        return Task.CompletedTask;
     }
 
     private Task CallIncoming(ChannelModel channel)
@@ -76,5 +98,11 @@
         {
             await VoiceChatService.DeclineCallAsync(channelId);
         }
+    }
+
+    public void Dispose()
+    {
+        _subscription.Dispose();
+        VoiceChatService.CallIncoming -= CallIncoming;
     }
 }

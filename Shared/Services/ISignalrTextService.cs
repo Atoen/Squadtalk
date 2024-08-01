@@ -8,7 +8,7 @@ public interface ISignalrTextService
     event Func<MessageDto, Task>? MessageReceived;
     event Func<UserDto, Task>? UserConnected;
     event Func<UserDto, Task>? UserDisconnected;
-    event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
+    event Func<IEnumerable<UserDto>, bool, Task>? ConnectedUsersReceived;
     event Func<string, Task>? ConnectionStatusChanged;
     event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
     event Func<ChannelDto, Task>? AddedToChannel;

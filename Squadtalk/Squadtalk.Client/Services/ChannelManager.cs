@@ -1,4 +1,3 @@
-using Blazored.LocalStorage;
 using Shared.Data.TypedIds;
 using Shared.Models;
 using Shared.Services;
@@ -8,72 +7,40 @@ namespace Squadtalk.Client.Services;
 public class ChannelManager : IChannelManager
 {
     private readonly IChatService _chatService;
-    private readonly ILocalStorageService _localStorageService;
     private readonly ITextChatService _textChatService;
     private readonly ILogger<ChannelManager> _logger;
 
-    private const string HiddenChats = "hiddenChats";
+    private List<ChannelModel> _channels = [];
 
-    private HashSet<ChannelId> _hiddenChannels = [];
-    private List<ChannelModel> _visibleChannels = [];
+    public event Action? ChannelsSorted;
 
-    public event Action? ChannelListChanged;
-
-    public ICollection<ChannelModel> VisibleChannels
+    public ICollection<ChannelModel> Channels
     {
         get
         {
             SortChannelsIfNeeded();
-            return _visibleChannels;
+            return _channels;
         }
     }
 
     private bool _shouldSortChannels = true;
-    private bool _initialized;
 
     public ChannelManager(
         IChatService chatService,
-        ILocalStorageService localStorageService,
         ITextChatService textChatService,
         ILogger<ChannelManager> logger)
     {
         _chatService = chatService;
-        _localStorageService = localStorageService;
         _textChatService = textChatService;
         _logger = logger;
 
         _textChatService.MessageReceived += MessageReceived;
-        _chatService.ChannelsListChangedAsync += UpdateListAsync;
+        _chatService.ChannelsListChanged += OnChannelsListChanged;
     }
 
-    public Task StopHidingChannel(ChannelId channelId)
+    private void OnChannelsListChanged()
     {
-        var removed = _hiddenChannels.Remove(channelId);
-        return removed ? UpdateLocalStorage() : Task.CompletedTask;
-    }
-
-    public Task HideChannel(ChannelId channelId)
-    {
-        var added = _hiddenChannels.Add(channelId);
-        return added ? UpdateLocalStorage() : Task.CompletedTask;
-    }
-
-    public Task InitializeAsync()
-    {
-        return _initialized ? Task.CompletedTask : UpdateListAsync();
-    }
-
-    public async Task UpdateListAsync()
-    {
-        if (!_initialized)
-        {
-            await Initialize();
-        }
-
-        _visibleChannels = _chatService.AllChannels.Where(x => !_hiddenChannels.Contains(x.Id)).ToList();
         _shouldSortChannels = true;
-
-        ChannelListChanged?.Invoke();
     }
 
     private void SortChannelsIfNeeded()
@@ -81,40 +48,21 @@ public class ChannelManager : IChannelManager
         if (!_shouldSortChannels) return;
         _shouldSortChannels = false;
 
-        _visibleChannels = _visibleChannels.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
+        _channels = _chatService.AllChannels.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
 
         _logger.LogInformation("Channels sorted");
     }
 
-    private async Task Initialize()
+    private Task MessageReceived(ChannelId channelId)
     {
-        if (await _localStorageService.ContainKeyAsync(HiddenChats))
-        {
-            _hiddenChannels = await _localStorageService.GetItemAsync<HashSet<ChannelId>>(HiddenChats) ?? [];
-        }
-
-        _initialized = true;
-    }
-
-    private async Task UpdateLocalStorage()
-    {
-        await _localStorageService.SetItemAsync(HiddenChats, _hiddenChannels);
-        await UpdateListAsync();
-    }
-
-    private async Task MessageReceived(ChannelId channelId)
-    {
-        if (_hiddenChannels.Contains(channelId))
-        {
-            await StopHidingChannel(channelId);
-        }
-
         if (channelId != GroupChatModel.GlobalChatId &&
-            _visibleChannels is [var first, ..] && first.Id != channelId)
+            _channels is [var first, ..] && first.Id != channelId)
         {
             _shouldSortChannels = true;
         }
 
-        ChannelListChanged?.Invoke();
+        ChannelsSorted?.Invoke();
+
+        return Task.CompletedTask;
     }
 }

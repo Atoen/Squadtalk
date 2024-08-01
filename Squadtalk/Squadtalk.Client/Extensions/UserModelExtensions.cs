@@ -12,7 +12,7 @@ public static class UserModelExtensions
         UserStatus.Away => textTable.Away,
         UserStatus.DoNotDisturb => textTable.DoNotDisturb,
         UserStatus.Offline => textTable.Offline,
-        _ => throw new ArgumentOutOfRangeException(nameof(model))
+        _ => textTable.Offline
     };
     
     public static string StatusColor(this IStatus model) => model.Status switch
@@ -21,6 +21,6 @@ public static class UserModelExtensions
         UserStatus.Away => "darkorange",
         UserStatus.DoNotDisturb => "firebrick",
         UserStatus.Offline => "gray",
-        _ => throw new ArgumentOutOfRangeException(nameof(model))
+        _ => "gray"
     };
 }

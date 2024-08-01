@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Extensions;

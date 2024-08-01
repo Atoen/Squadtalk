@@ -13,7 +13,7 @@
 @foreach (var user in ChatService.Users)
 {
     <div class="user-card rounded" @onclick="() => OpenChannel(user)">
-        <img alt="@user.Username avatar" src="User.png" class="avatar" />
+        <img alt="@user.Username avatar" src="user.png" class="avatar" />
         <div class="username">@user.Username</div>
         <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div>
     </div>
@@ -21,15 +21,18 @@
 
 @inject IChatService ChatService
 @inject ILocalization Localization
+@inject ICommunicationService CommunicationService
 
 @code {
 
     private TextTable _table = default!;
 
-    protected override void OnInitialized()
+    protected override Task OnInitializedAsync()
     {
         _table = Localization.GetTextTable(this);
         ChatService.ConnectedUsersChanged += StateHasChanged;
+
+        return CommunicationService.ConnectAsync();
     }
 
     private Task OpenChannel(UserModel userModel)

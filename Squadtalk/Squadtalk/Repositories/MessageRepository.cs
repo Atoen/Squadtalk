@@ -30,7 +30,7 @@ public class MessageRepository(
     public async Task<Dictionary<ChannelId, int>> GetUnreadMessageCountPerChannelAsync(List<Channel> channels, DateTimeOffset since)
     {
         var channelIds = channels.Select(x => x.Id).ToList();
-        var grouping = UnreadMessagesPerChannelAsync(dbContext, channelIds, since);
+        var grouping = UnreadMessagesPerChannelAsync(DbContext, channelIds, since);
 
         return await grouping.ToDictionaryAsync(g => g.Key, g => g.Count());
     }
@@ -89,28 +89,29 @@ public class MessageRepository(
     private static readonly Func<ApplicationDbContext, List<ChannelId>, DateTimeOffset, IAsyncEnumerable<IGrouping<ChannelId, Message>>>
         UnreadMessagesPerChannelAsync = EF.CompileAsyncQuery(
             (ApplicationDbContext context, List<ChannelId> channelIds, DateTimeOffset since) => context.Messages
+                .AsNoTracking()
                 .Where(x => channelIds.Contains(x.ChannelId))
                 .Where(x => x.Timestamp > since)
                 .GroupBy(x => x.ChannelId));
 
     private static readonly Func<ApplicationDbContext, ChannelId, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(
-        (ApplicationDbContext context, ChannelId channelId) => context.Messages
-            .AsNoTracking()
-            .Where(x => x.ChannelId == channelId)
-            .OrderByDescending(x => x.Timestamp)
-            .Take(PageSize)
-            .Include(x => x.Author)
-            .Reverse());
+            (ApplicationDbContext context, ChannelId channelId) => context.Messages
+                .AsNoTracking()
+                .Where(x => x.ChannelId == channelId)
+                .OrderByDescending(x => x.Timestamp)
+                .Take(PageSize)
+                .Include(x => x.Author)
+                .Reverse());
 
     private static readonly Func<ApplicationDbContext, ChannelId, DateTimeOffset, IAsyncEnumerable<Message>> MessagePageByCursorAsync =
         EF.CompileAsyncQuery(
-        (ApplicationDbContext context, ChannelId channelId, DateTimeOffset cursor) => context.Messages
-            .AsNoTracking()
-            .Where(x => x.ChannelId == channelId)
-            .OrderByDescending(x => x.Timestamp)
-            .Where(x => x.Timestamp < cursor)
-            .Take(PageSize)
-            .Include(x => x.Author)
-            .Reverse());
+            (ApplicationDbContext context, ChannelId channelId, DateTimeOffset cursor) => context.Messages
+                .AsNoTracking()
+                .Where(x => x.ChannelId == channelId)
+                .OrderByDescending(x => x.Timestamp)
+                .Where(x => x.Timestamp < cursor)
+                .Take(PageSize)
+                .Include(x => x.Author)
+                .Reverse());
 }

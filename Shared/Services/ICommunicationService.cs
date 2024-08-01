@@ -10,7 +10,7 @@ public interface ICommunicationService
     
     event Func<IChatUser, Task>? UserConnected;
     event Func<IChatUser, Task>? UserDisconnected;
-    event Func<IEnumerable<IChatUser>, Task>? ConnectedUsersReceived;
+    event Func<IEnumerable<IChatUser>, bool, Task>? ConnectedUsersReceived;
     event Func<string, Task>? ConnectionStatusChanged;
     event Func<IEnumerable<IChatChannel>, Task>? ChannelsReceived;
     event Func<IChatChannel, Task>? AddedToChannel;

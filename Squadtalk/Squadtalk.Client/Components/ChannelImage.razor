@@ -35,7 +35,19 @@
     public bool Inline { get; set; }
 
     [Parameter]
-    public bool DisplayStatus { get; set; } = true;
+    public bool HideStatus { get; set; }
+
+    private bool DisplayStatus
+    {
+        get
+        {
+            if (HideStatus || !OperatingSystem.IsBrowser()) return false;
+
+            if (Channel is DirectMessageChannelModel { Status: not UserStatus.Unknown }) return true;
+
+            return Channel is GroupChatModel { Status: UserStatus.Online };
+        }
+    }
 
     private string GetStyle => $"background-color: {Channel.StatusColor()}";
     private string InlineClass => Inline ? "inline" : "";

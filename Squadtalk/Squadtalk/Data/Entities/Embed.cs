@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Data;
 using Shared.Enums;
 
-namespace Squadtalk.Data;
+namespace Squadtalk.Data.Entities;
 
 [Owned]
 public class Embed : IMessageEmbed

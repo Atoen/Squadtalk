@@ -1,7 +1,5 @@
 using System.Runtime.CompilerServices;
-using System.Security.Claims;
 using FluentResults;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Shared;
 using Shared.Data;
@@ -19,8 +17,8 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
     private readonly IJSRuntime _jsRuntime;
     private readonly ICommunicationService _communicationService;
     private readonly IChatService _chatService;
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly UserVolumeManager _volumeManager;
+    private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly ILogger<VoiceChatService> _logger;
 
     private readonly DotNetObjectReference<VoiceChatService> _dotNetObjectReference;
@@ -66,15 +64,15 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         IJSRuntime jsRuntime,
         ICommunicationService communicationService,
         IChatService chatService,
-        AuthenticationStateProvider authenticationStateProvider,
         UserVolumeManager volumeManager,
+        IUserAuthenticationService userAuthenticationService,
         ILogger<VoiceChatService> logger)
     {
         _jsRuntime = jsRuntime;
         _communicationService = communicationService;
         _chatService = chatService;
-        _authenticationStateProvider = authenticationStateProvider;
         _volumeManager = volumeManager;
+        _userAuthenticationService = userAuthenticationService;
         _logger = logger;
 
         _dotNetObjectReference = DotNetObjectReference.Create(this);
@@ -276,27 +274,23 @@ public sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposab
         CurrentChannelCallChanged?.Invoke();
     }
 
-    private async Task OnIncomingCall(ChannelId channelId, UserId initiatorId)
+    private Task OnIncomingCall(ChannelId channelId, UserId initiatorId)
     {
-        if (_chatService.GetChannel(channelId) is not { } channel)
+        if (_chatService.GetChannel(channelId) is not { } channel || channel.State.HasActiveCall)
         {
-            _logger.LogError("Call on null channel");
-            return;
+            return Task.CompletedTask;
         }
 
-        if (channel.State.HasActiveCall) return;
-
         channel.State.HasActiveCall = true;
-
-        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var id = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-
-        if (initiatorId == id) return;
+        if (initiatorId == _userAuthenticationService.UserId)
+        {
+            return Task.CompletedTask;
+        }
 
         _logger.LogInformation("Incoming call from: {Caller}", channelId.Value);
 
         CurrentChannelCallChanged?.Invoke();
-        await CallIncoming.TryInvoke(channel);
+        return CallIncoming.TryInvoke(channel);
     }
 
     private Task OnCallAccepted(ChannelId channelId, IChatUser accepting)

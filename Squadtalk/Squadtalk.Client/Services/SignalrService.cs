@@ -12,6 +12,7 @@ namespace Squadtalk.Client.Services;
 
 public sealed class SignalrService : ISignalrService, IAsyncDisposable
 {
+    private readonly PersistentComponentState _persistentComponentState;
     private readonly ILogger<SignalrService> _logger;
     private readonly HubConnection _connection;
 
@@ -22,7 +23,7 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
     public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<UserDto, Task>? UserDisconnected;
     public event Func<UserDto, Task>? UserConnected;
-    public event Func<IEnumerable<UserDto>, Task>? ConnectedUsersReceived;
+    public event Func<IEnumerable<UserDto>, bool, Task>? ConnectedUsersReceived;
     public event Func<MessageDto, Task>? MessageReceived;
     public event Func<ChannelId, string?, Task>? ChannelNameChanged;
 
@@ -37,8 +38,12 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
     public string ConnectionStatus { get; private set; } = ISignalrService.Offline;
 
-    public SignalrService(NavigationManager navigationManager, ILogger<SignalrService> logger)
+    public SignalrService(
+        NavigationManager navigationManager,
+        PersistentComponentState persistentComponentState,
+        ILogger<SignalrService> logger)
     {
+        _persistentComponentState = persistentComponentState;
         _logger = logger;
 
         var endpoint = navigationManager.ToAbsoluteUri("/chathub");
@@ -67,6 +72,8 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         if (_connectionStared) return;
         _connectionStared = true;
 
+        await TryGetPersistedData();
+
         if (!_handlersRegistered)
         {
             RegisterHandlers();
@@ -83,20 +90,21 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
             ConnectionStatus = ISignalrService.Online;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
 
-            _logger.LogInformation("Successfully connected to chat hub");
         }
         catch (Exception e)
         {
             ConnectionStatus = ISignalrService.Disconnected;
             _logger.LogError(e, "Failed to connect to chat hub");
         }
+
+        await UpdatePersistedDataAsync();
     }
 
     public async Task<TimeSpan> MeasureClientDelayAsync()
     {
         var start = Stopwatch.GetTimestamp();
 
-        await _connection.InvokeAsync<TimeSpan>("Ping");
+        await _connection.InvokeAsync("Ping");
         return Stopwatch.GetElapsedTime(start);
     }
 
@@ -130,6 +138,29 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         return _connection.InvokeAsync<bool>("ChangeGroupName", newName, channelId);
     }
 
+    private async Task TryGetPersistedData()
+    {
+        if (_persistentComponentState.TryTakeFromJson<List<UserDto>>(IPersistState.Users, out var persistedUsers) && persistedUsers is not null)
+        {
+            _logger.LogInformation("Retrieved persisted users");
+            await ConnectedUsersReceived.TryInvoke(persistedUsers, true);
+        }
+
+        if (_persistentComponentState.TryTakeFromJson<List<ChannelDto>>(IPersistState.Channels, out var persistedChannels) && persistedChannels is not null)
+        {
+            _logger.LogInformation("Retrieved persisted channels");
+            await ChannelsReceived.TryInvoke(persistedChannels);
+        }
+    }
+
+    private async Task UpdatePersistedDataAsync()
+    {
+        var (users, channels) = await _connection.InvokeAsync<(IEnumerable<UserDto>, IEnumerable<ChannelDto>)>("GetUsersAndChannels");
+
+        await ConnectedUsersReceived.TryInvoke(users, false);
+        await ChannelsReceived.TryInvoke(channels);
+    }
+
     private void RegisterHandlers()
     {
         _connection.Reconnecting += _ =>
@@ -157,7 +188,7 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
             MessageReceived.TryInvoke(message));
 
         _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
-            ConnectedUsersReceived.TryInvoke(users));
+            ConnectedUsersReceived.TryInvoke(users, false));
 
         _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
             ChannelsReceived.TryInvoke(channels));

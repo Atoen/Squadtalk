@@ -5,11 +5,14 @@ namespace Shared.Models;
 
 public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelModel(id)
 {
-    public const string FakeChannelIdValue = "fake";
-    public static readonly ChannelId FakeChannelId = new(FakeChannelIdValue);
+    public const string TempChannelIdPrefix = "t_";
 
-    public static DirectMessageChannelModel CreateFakeChannel(UserModel other) => new(other, FakeChannelId);
-    
+    public static DirectMessageChannelModel CreateTempChannel(UserModel other)
+    {
+        var id = ChannelId.From($"{TempChannelIdPrefix}{ChannelId.New()}");
+        return new DirectMessageChannelModel(other, id);
+    }
+
     public UserModel Other { get; } = other;
 
     public override string Name => Other.Username;

@@ -2,7 +2,7 @@ using Shared;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using SixLabors.ImageSharp;
-using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;

@@ -13,6 +13,7 @@ using Squadtalk.Client.Services;
 using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
+using Squadtalk.Services.Prerender;
 using Squadtalk.Services.Scheduling;
 
 namespace Squadtalk.Extensions;
@@ -92,7 +93,6 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
         serviceCollection.AddSingleton<ChatConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
-        serviceCollection.AddSingleton<LocalMessageNotificationService>();
 
         serviceCollection.AddTransient<LiveKitEventHandler>();
         serviceCollection.AddSingleton<LiveKitService>();
@@ -104,7 +104,6 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
-        serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
         serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<IChatService, ChatService>();
@@ -120,7 +119,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
         serviceCollection.AddScoped<ILocalizationService, ServerLocalizationService>();
         serviceCollection.AddScoped<ILocalization, Localization>();
-        serviceCollection.AddScoped<IUserService, ServerUserService>();
+        serviceCollection.AddScoped<IUserAuthenticationService, ServerUserAuthenticationService>();
         serviceCollection.AddScoped<IMediaQueryService, MediaQueryService>();
 
         return serviceCollection;

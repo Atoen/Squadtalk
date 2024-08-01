@@ -23,11 +23,8 @@ public interface IChatService
     event Action<GroupChatModel>? ChannelNameChanged;
 
     event Action? ChannelsListChanged;
-    event Func<Task>? ChannelsListChangedAsync;
-
     event Action? ChannelChanged;
     event Func<Task>? ChannelChangedAsync;
-
     event Action? ConnectedUsersChanged;
 
     ChannelModel? GetChannel(ChannelId channelId);
@@ -38,7 +35,7 @@ public interface IChatService
     
     Task CreateRealDirectMessageChannel(ChannelModel channelModel);
 
-    Task OpenChannelAsync(ChannelModel channelModel);
+    Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true);
 
     Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others);
 

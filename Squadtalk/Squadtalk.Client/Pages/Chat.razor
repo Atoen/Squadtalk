@@ -1,6 +1,7 @@
-@page "/Messages/Chat"
+@page "/Channels/{ChannelId}"
 
 @using Microsoft.AspNetCore.Authorization
+@using Shared.Data.TypedIds
 
 @implements IAsyncDisposable
 
@@ -9,23 +10,27 @@
 <PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name</PageTitle>
 
 <div class="chat-container">
-
-    @if (ChatService.CurrentChannel is { } channel)
+    @if (_channel is not null)
     {
-        <ChannelHeader Channel="channel"/>
+        <ChannelHeader Channel="_channel"/>
     }
 
     <div class="message-listbox rounded mt-2" id="listbox">
-        <InfiniteScrolling>
-            <ItemTemplate>
-                <MessageTemplate Model="context" @key="context"/>
-            </ItemTemplate>
-            <LoadingTemplate>
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </LoadingTemplate>
-        </InfiniteScrolling>
+        @if (OperatingSystem.IsBrowser())
+        {
+            <InfiniteScrolling>
+                <ItemTemplate>
+                    <MessageTemplate Model="context" @key="context"/>
+                </ItemTemplate>
+                <LoadingTemplate>
+                    <Spinner Type="SpinnerType.Border" Class="ms-2" />
+                </LoadingTemplate>
+            </InfiniteScrolling>
+        }
+        else
+        {
+            <Spinner Type="SpinnerType.Border" Class="ms-2" />
+        }
     </div>
 
     <UploadInfo/>
@@ -37,15 +42,30 @@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
+@inject ICommunicationService CommunicationService
 
 @code {
 
+    [Parameter]
+    public string ChannelId { get; set; } = default!;
+
+    private ChannelModel? _channel;
+
     protected override async Task OnInitializedAsync()
     {
+        await CommunicationService.ConnectAsync();
+
         if (ChatService.CurrentChannel is null)
         {
-            NavigationManager.NavigateTo("/Messages", replace: true);
-            return;
+            var channel = ChatService.GetChannel(new ChannelId(ChannelId));
+            if (channel is null)
+            {
+                NavigationManager.NavigateTo("/Channels", replace: true);
+                return;
+            }
+
+            _channel = channel;
+            await ChatService.OpenChannelAsync(_channel, false);
         }
 
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;

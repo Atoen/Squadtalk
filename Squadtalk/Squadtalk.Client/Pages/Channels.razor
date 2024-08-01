@@ -1,5 +1,15 @@
-<ConfirmDialog @ref="_dialog"/>
-<Modal @ref="_createGroupModal" Size="ModalSize.Regular" UseStaticBackdrop="true" HeaderCssClass="justify-content-between"/>
+@page "/Channels"
+@using Microsoft.AspNetCore.Authorization
+@using Squadtalk.Client.Layout
+@using Squadtalk.Client.Localization
+
+@attribute [Authorize]
+@layout ChatLayout
+
+<PageTitle>Squadtalk | Messages</PageTitle>
+
+<Modal @ref="_createGroupModal" Size="ModalSize.Regular"
+       UseStaticBackdrop="true" HeaderCssClass="justify-content-between"/>
 
 <div class="channels">
     <div class="top">
@@ -9,13 +19,13 @@
 
             @if (ChatService.GlobalChat.State is { UnreadMessages: > 0 and var unread })
             {
-                <Badge Color="BadgeColor.Danger"
-                       Position="Position.Absolute"
-                       Placement="BadgePlacement.TopRight"
-                       IndicatorType="BadgeIndicatorType.RoundedPill"
-                       VisuallyHiddenText="unread messages">
-                    @unread
-                </Badge>
+            <Badge Color="BadgeColor.Danger"
+                   Position="Position.Absolute"
+                   Placement="BadgePlacement.TopRight"
+                   IndicatorType="BadgeIndicatorType.RoundedPill"
+                   VisuallyHiddenText="unread messages">
+                @unread
+            </Badge>
             }
         </div>
 
@@ -25,77 +35,49 @@
         </Button>
     </div>
 
-    <Virtualize Items="ChannelManager.VisibleChannels" ItemSize="75">
-        <ChatTemplate @key="context.Id" Model="@context" HideCallback="_confirmCallback"/>
-    </Virtualize>
+    @foreach (var channel in ChannelManager.Channels)
+    {
+        <ChatTemplate @key="channel.Id" Model="@channel" />
+    }
 </div>
 
 @implements IDisposable
+
 @inject IChatService ChatService
 @inject IChannelManager ChannelManager
-@inject ILogger<ChannelSelector> Logger
+@inject ILogger<Channels> Logger
 @inject ILocalization Localization
+@inject ICommunicationService CommunicationService
 
 @code {
-
-    private ConfirmDialog _dialog = default!;
-    private EventCallback<ChannelModel> _confirmCallback;
 
     private Modal _createGroupModal = default!;
     private readonly Dictionary<string, object> _modalParameters = [];
 
     private TextTable _table = default!;
-
-    private readonly ConfirmDialogOptions _dialogOptions = new()
+    protected override Task OnInitializedAsync()
     {
-        YesButtonColor = ButtonColor.Danger,
-        NoButtonColor = ButtonColor.Secondary
-    };
-
-    protected override void OnInitialized()
-    {
+        Logger.LogInformation("Channel count: {Count}", ChatService.AllChannels.Count());
         _table = Localization.GetTextTable(this);
 
         ChatService.ChannelChanged += StateHasChanged;
         ChatService.ConnectedUsersChanged += StateHasChanged;
-        ChannelManager.ChannelListChanged += StateHasChanged;
-
-        _confirmCallback = EventCallback.Factory.Create<ChannelModel>(this, ShowHidingConfirmationAsync);
+        ChannelManager.ChannelsSorted += StateHasChanged;
 
         var hideModalCallback = EventCallback.Factory.Create(this, HideGroupModal);
         var createGroupCallback = EventCallback.Factory.Create<List<UserModel>>(this, CreateGroupChat);
 
         _modalParameters.Add(nameof(CreateGroupChatModal.CancelCallback), hideModalCallback);
         _modalParameters.Add(nameof(CreateGroupChatModal.CreateCallback), createGroupCallback);
-    }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        return firstRender ? ChannelManager.InitializeAsync() : Task.CompletedTask;
-    }
-
-    private async Task ShowHidingConfirmationAsync(ChannelModel channel)
-    {
-        _dialogOptions.YesButtonText = _table.DialogYes;
-        _dialogOptions.NoButtonText = _table.DialogCancel;
-
-        var confirmation = await _dialog.ShowAsync(
-            title: _table.HideChannelModalTitle,
-            message1: _table.HideChannelModalBodyTemplate.TryFormat(channel.Name),
-            message2: _table.HideChannelModalProceed,
-            confirmDialogOptions: _dialogOptions);
-
-        if (confirmation)
-        {
-            await ChannelManager.HideChannel(channel.Id);
-        }
+        return CommunicationService.ConnectAsync();
     }
 
     public void Dispose()
     {
         ChatService.ChannelChanged -= StateHasChanged;
         ChatService.ConnectedUsersChanged -= StateHasChanged;
-        ChannelManager.ChannelListChanged -= StateHasChanged;
+        ChannelManager.ChannelsSorted -= StateHasChanged;
     }
 
     private async Task DisplayGroupModal()

@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
@@ -12,28 +10,26 @@ public class TextChatService : ITextChatService
 {
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly IMessagePageProvider _messagePageProvider;
     private readonly ICommunicationService _communicationService;
+    private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IChatService _chatService;
-
-    private UserId? _userId;
 
     public event Func<ChannelId, Task>? MessageReceived;
 
     public TextChatService(
         IChatService chatService,
         IMessageModelService modelService,
-        AuthenticationStateProvider authenticationStateProvider,
         IMessagePageProvider messagePageProvider,
         ICommunicationService communicationService,
+        IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
         _chatService = chatService;
         _modelService = modelService;
-        _authenticationStateProvider = authenticationStateProvider;
         _messagePageProvider = messagePageProvider;
         _communicationService = communicationService;
+        _userAuthenticationService = userAuthenticationService;
         _logger = logger;
 
         _communicationService.MessageReceived += HandleIncomingMessage;
@@ -51,8 +47,11 @@ public class TextChatService : ITextChatService
         var channel = _chatService.GetChannel(id);
         if (channel is null or { State.ReachedEnd: true })
         {
+            _logger.LogInformation("channel null");
+
             return Array.Empty<MessageModel>();
         }
+
 
         var channelState = channel.State;
         var page = await _messagePageProvider.GetPageAsync(id, channelState.Cursor, cancellationToken);
@@ -75,7 +74,7 @@ public class TextChatService : ITextChatService
             return;
         }
 
-        await UpdateChannelMessageState(channel, messageDto);
+        UpdateChannelMessageState(channel, messageDto);
 
         var channelState = channel.State;
         var message = _modelService.CreateModel(messageDto, channelState, false);
@@ -85,15 +84,9 @@ public class TextChatService : ITextChatService
         await MessageReceived.TryInvoke(messageDto.ChannelId);
     }
 
-    private async Task UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
+    private void UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
     {
-        if (_userId is null)
-        {
-            var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-            _userId = UserId.Parse(authenticationState.User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-        }
-
-        var messageByCurrentUser = message.Author.Id == _userId;
+        var messageByCurrentUser = message.Author.Id == _userAuthenticationService.UserId;
 
         if (_chatService.CurrentChannel != channelModel && !messageByCurrentUser)
         {

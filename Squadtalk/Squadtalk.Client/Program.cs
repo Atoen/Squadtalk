@@ -3,15 +3,21 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using RestSharp;
 using Shared.Services;
-using Squadtalk.Client;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 builder.Services.AddAuthorizationCore();
+builder.Services.AddSingleton<UserAuthenticationService>();
+
+builder.Services.AddSingleton<IUserAuthenticationService>(provider =>
+    provider.GetRequiredService<UserAuthenticationService>());
+
+builder.Services.AddSingleton<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<UserAuthenticationService>());
+
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddSingleton<AuthenticationStateProvider, PersistentAuthenticationStateProvider>();
 builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress)
 ));
@@ -32,7 +38,6 @@ builder.Services.AddScoped<UserVolumeManager>();
 builder.Services.AddScoped<ILocalizationService, BrowserLocalizationService>();
 
 builder.Services.AddScoped<ILocalization, Localization>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();
 
 builder.Services.AddBlazoredLocalStorage();

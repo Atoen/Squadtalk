@@ -24,33 +24,25 @@
             @Model.UnreadMessages
         </Badge>
     }
-
-    <div class="hide-chat" @onclick="Hide" @onclick:stopPropagation="true">
-        <Icon Name="IconName.Trash3" Color="IconColor.Danger" Size="IconSize.x5"/>
-    </div>
 </div>
 
 @inherits LocalizedComponent
 
 @inject IChatService ChatService
-@inject IUserService UserService
+@inject IUserAuthenticationService UserAuthenticationService
 
 @code {
-    [Parameter, EditorRequired]
-    public EventCallback<ChannelModel> HideCallback { get; set; }
 
     [Parameter, EditorRequired]
     public ChannelModel Model { get; set; } = default!;
 
     private Task OpenChat() => ChatService.OpenChannelAsync(Model);
 
-    private Task Hide() => HideCallback.InvokeAsync(Model);
-
     private string? StatusStyle => Model.HasUnreadMessages ? "color: white; font-weight: bold" : null;
 
     private string FormatLastMessage(IChatMessage message)
     {
-        var messageByCurrentUser = message.Author.Id == UserService.UserModel?.Id;
+        var messageByCurrentUser = message.Author.Id == UserAuthenticationService.UserId;
         var isDm = Model is DirectMessageChannelModel;
 
         var authorPrefix = (messageByCurrentUser, isDm) switch

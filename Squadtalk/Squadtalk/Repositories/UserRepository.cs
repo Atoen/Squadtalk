@@ -60,11 +60,11 @@ public class UserRepository(ApplicationDbContext dbContext, ILogger<UserReposito
 
     private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithFullChannelsAsync =
         EF.CompileAsyncQuery(
-        (ApplicationDbContext context, UserId userId) => context.Users
-            .AsSplitQuery()
-            .Include(x => x.Channels)
-            .ThenInclude(x => x.Participants)
-            .SingleOrDefault(x => x.Id == userId));
+            (ApplicationDbContext context, UserId userId) => context.Users
+                .AsSplitQuery()
+                .Include(x => x.Channels)
+                .ThenInclude(x => x.Participants)
+                .SingleOrDefault(x => x.Id == userId));
 
     private static readonly Func<ApplicationDbContext, List<UserId>, IAsyncEnumerable<ApplicationUser>> UserListByIdAsync =
         EF.CompileAsyncQuery(

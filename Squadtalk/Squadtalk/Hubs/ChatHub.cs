@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Extensions;
@@ -17,7 +15,6 @@ namespace Squadtalk.Hubs;
 [Authorize]
 public partial class ChatHub : Hub<IChatClient>
 {
-    private readonly ApplicationDbContext _dbContext;
     private readonly ChatConnectionManager _connectionManager;
     private readonly ILogger<ChatHub> _logger;
     private readonly VoiceCallManager _voiceCallManager;
@@ -33,10 +30,8 @@ public partial class ChatHub : Hub<IChatClient>
         MessageRepository messageRepository,
         ChannelRepository channelRepository,
         LiveKitService liveKitService,
-        ApplicationDbContext dbContext,
         ILogger<ChatHub> logger)
     {
-        _dbContext = dbContext;
         _connectionManager = connectionManager;
         _logger = logger;
         _voiceCallManager = voiceCallManager;
@@ -131,20 +126,32 @@ public partial class ChatHub : Hub<IChatClient>
         }
     }
 
-    public override async Task OnConnectedAsync()
+    public async Task<(IEnumerable<UserDto>, IEnumerable<ChannelDto>)> GetUsersAndChannels()
     {
         var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
-            return;
+            return ([], []);
         }
 
-        var unreadMessagesCount = await _messageRepository.GetUnreadMessageCountPerChannelAsync(user.Channels, user.LastSeen);
+        var connectedUsers = _connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList();
 
+        var unreadMessagesCount = await _messageRepository.GetUnreadMessageCountPerChannelAsync(user.Channels, user.LastSeen);
         var channelDtos = user.Channels.Select(x => x.ToDto()).ToList();
         foreach (var channelDto in channelDtos)
         {
             channelDto.MessagesSince = unreadMessagesCount.GetValueOrDefault(channelDto.Id, 0);
+        }
+
+        return (connectedUsers, channelDtos);
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.Include);
+        if (user is null)
+        {
+            return;
         }
 
         var dto = user.ToDto();
@@ -155,10 +162,6 @@ public partial class ChatHub : Hub<IChatClient>
         }
         
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupChatModel.GlobalChatId);
-
-        await TextCaller.GetChannels(channelDtos);
-
-        await TextCaller.GetConnectedUsers(_connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList());
 
         if (user.Channels is not { Count: > 0 })
         {
