@@ -101,6 +101,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<UserRepository>();
         serviceCollection.AddScoped<ChannelRepository>();
         serviceCollection.AddScoped<FileRepository>();
+        serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
