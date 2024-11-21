@@ -1,14 +1,14 @@
 @page "/Canvas/Simulation"
-@using Squadtalk.Client.Layout
-@using Squadtalk.Client.Extensions
-@using Squadtalk.Client.Data
 @using System.Text.Json
+@using Squadtalk.Client.Data
+@using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Layout
 @using Squadtalk.Client.Localization
 
 @implements IAsyncDisposable
 @layout CanvasLayout
 
-<Modal @ref="_modal" Size="ModalSize.Regular" HeaderCssClass="justify-content-between"/>
+@* <Modal @ref="_modal" Size="ModalSize.Regular" HeaderCssClass="justify-content-between"/> *@
 
 <h3>@_table.CanvasSimulation</h3>
 <p>
@@ -18,7 +18,7 @@
 <h4>@_table.SimulationRules</h4>
 
 <div class="rules">
-    <Button Class="add-rule" Color="ButtonColor.Success" @onclick="ShowRuleModal">@_table.SimulationAddRule</Button>
+    @* <Button Class="add-rule" Color="ButtonColor.Success" @onclick="ShowRuleModal">@_table.SimulationAddRule</Button> *@
     @foreach (var rule in _rules)
     {
         <div class="rule">
@@ -26,7 +26,7 @@
             <div class="separator">→</div>
             <div class="color-box" style="background: @rule.Attacked"></div>
             
-            <Button Class="mx-2" @onclick="() => RemoveRule(rule)" Color="ButtonColor.Danger" Outline="true" Size="Size.ExtraSmall" hidden="@(_rules.Count < 2)">x</Button>
+            <Button Class="mx-2" @onclick="() => RemoveRule(rule)" Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.ExtraSmall" hidden="@(_rules.Count < 2)">x</Button>
         </div>
     }
 </div>
@@ -38,17 +38,17 @@
     </div>
     <div class="mt-2">
         <label class="form-label">@_table.SimulationStep</label>
-        <NumberInput TValue="int" @bind-Value="@_delayMs" Max="500" Min="10" EnableMinMax="true" Step="5"/>
+        @* <NumberInput TValue="int" @bind-Value="@_delayMs" Max="500" Min="10" EnableMinMax="true" Step="5"/> *@
     </div>
     <div class="mt-2">
         <label class="form-label">@_table.SimulationThreshold</label>
-        <NumberInput TValue="int" @bind-Value="@_threshold" Max="8" Min="1" EnableMinMax="true" Step="1"/>
+        @* <NumberInput TValue="int" @bind-Value="@_threshold" Max="8" Min="1" EnableMinMax="true" Step="1"/> *@
     </div>
 </p>
 
 
 @inject IJSRuntime JSRuntime
-@inject ToastService ToastService
+@* @inject ToastService ToastService *@
 @inject NavigationManager NavigationManager
 @inject ILocalization Localization
 @inject ILogger<Simulation> Logger
@@ -74,7 +74,7 @@
     private readonly List<Rule> _rules = [];
     private bool _rulesChanged;
     
-    private Modal _modal = default!;
+    // private Modal _modal = default!;
     private Dictionary<string, object> _parameters = default!;
 
     private readonly JsonSerializerOptions _serializerOptions = new()
@@ -133,19 +133,19 @@
     {
         return
         [
-            new Rule(Color.Orange, Color.Yellow),
-            new Rule(Color.Yellow, Color.Green),
-            new Rule(Color.Green, Color.Orange)
+            // new Rule(Color.Orange, Color.Yellow),
+            // new Rule(Color.Yellow, Color.Green),
+            // new Rule(Color.Green, Color.Orange)
         ];
     }
 
-    private Task CloseModal() => _modal.HideAsync();
+    // private Task CloseModal() => _modal.HideAsync();
 
-    private Task AddRule(Rule rule)
+    private async Task AddRule(Rule rule)
     {
         if (_rules.Contains(rule))
         {
-            return Task.CompletedTask;
+            return;
         }
 
         _rulesChanged = true;
@@ -154,7 +154,7 @@
         
         StateHasChanged();
 
-        return _modal.HideAsync();
+        // return _modal.HideAsync();
     }
 
     private void RemoveRule(Rule rule)
@@ -170,7 +170,7 @@
         
         _parameters = new Dictionary<string, object>
         {
-            { "CancelCallback", EventCallback.Factory.Create(this, CloseModal) },
+            // { "CancelCallback", EventCallback.Factory.Create(this, CloseModal) },
             { "AddRuleCallback", EventCallback.Factory.Create<Rule>(this, AddRule) }
         };
 
@@ -225,9 +225,9 @@
         return _jsModule.TryDisposeAsync();
     }
 
-    private Task ShowRuleModal()
+    private async Task ShowRuleModal()
     {
-        return _modal.ShowAsync<RuleCreatorDialog>(_table.SimulationModalTitle, parameters: _parameters);
+        // return _modal.ShowAsync<RuleCreatorDialog>(_table.SimulationModalTitle, parameters: _parameters);
     }
 
     private async Task ShareSettings()
@@ -241,13 +241,13 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", link);
-            var toast = new ToastMessage(ToastType.Info, _table.SimulationRulesCopied);
-            ToastService.Notify(toast);
+            // var toast = new ToastMessage(ToastType.Info, _table.SimulationRulesCopied);
+            // ToastService.Notify(toast);
         }
         catch
         {
-            var errorToast = new ToastMessage(ToastType.Danger, _table.SimulationShareSettingsFailed);
-            ToastService.Notify(errorToast);
+            // var errorToast = new ToastMessage(ToastType.Danger, _table.SimulationShareSettingsFailed);
+            // ToastService.Notify(errorToast);
         }
     }
 }

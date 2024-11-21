@@ -1,87 +1,87 @@
 <div class="status-container">
-    @if (VoiceChatService.ConnectedToVoiceCall)
-    {
-        <Tooltip Title="@MicrophoneTooltipText">
-            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered" Disabled="@(!VoiceChatService.MicrophoneAvailable)">
-                <DropdownActionButton Color="MicrophoneButtonColor" @onclick="VoiceChatService.ToggleMicrophoneAsync">
-                    <Icon Name="MicrophoneIconName" Size="IconSize.x5"/>
-                </DropdownActionButton>
-                <DropdownToggleButton Color="MicrophoneButtonColor"/>
-                <DropdownMenu>
-                    @foreach (var microphone in VoiceChatService.Microphones)
-                    {
-                        <DropdownItem @onclick="() => VoiceChatService.SelectMicrophoneAsync(microphone)" Type="ButtonType.Button">
-                            @if (microphone == _selectedMicrophone)
-                            {
-                                <div class="d-flex flex-row">
-                                    <div class="device-label">@microphone.LabelOrDefault</div>
-                                    <Icon Name="IconName.CheckLg" Color="IconColor.Success"/>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="device-label">@microphone.Label</div>
-                            }
-                        </DropdownItem>
-                    }
-                </DropdownMenu>
-            </Dropdown>
-        </Tooltip>
-
-        <Tooltip Title="@CameraTooltipText">
-            <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered" Disabled="@(!VoiceChatService.CameraAvailable)">
-                <DropdownActionButton Color="CameraButtonColor" @onclick="VoiceChatService.ToggleCameraAsync">
-                    <Icon Name="CameraIconName" Size="IconSize.x5"/>
-                </DropdownActionButton>
-                <DropdownToggleButton Color="CameraButtonColor"/>
-                <DropdownMenu>
-                    @foreach (var camera in VoiceChatService.Cameras)
-                    {
-                        <DropdownItem @onclick="() => VoiceChatService.SelectCameraAsync(camera)" Type="ButtonType.Button">
-                            @if (camera == _selectedCamera)
-                            {
-                                <div class="d-flex flex-row">
-                                    <div class="device-label">@camera.LabelOrDefault</div>
-                                    <Icon Name="IconName.CheckLg" Color="IconColor.Success"/>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="device-label">@camera.Label</div>
-                            }
-                        </DropdownItem>
-                    }
-                    @if (VoiceChatService.CameraAvailable)
-                    {
-                        <DropdownDivider/>
-                        <DropdownItem @onclick="VoiceChatService.SwapCameraAsync" Type="ButtonType.Button">
-                            <div class="d-flex flex-row gap-1">
-                                <Icon Name="IconName.ArrowRepeat" Color="IconColor.Primary"/>
-                                Swap camera
-                            </div>
-                        </DropdownItem>
-                    }
-                </DropdownMenu>
-            </Dropdown>
-        </Tooltip>
-
-        <Button Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText"
-                @onclick="VoiceChatService.ToggleScreenShareAsync">
-            <Icon Name="ScreenShareIconName" Size="IconSize.x5"/>
-        </Button>
-
-        <Button Color="ButtonColor.Danger" TooltipTitle="Leave call"
-                @onclick="VoiceChatService.LeaveCallAsync">
-            <Icon Name="IconName.TelephoneXFill" Size="IconSize.x5"/>
-        </Button>
-    }
-    else if (VoiceChatService.ActiveCallOnCurrentChannel)
-    {
-        <Button Color="ButtonColor.Success" TooltipTitle="Join call"
-                @onclick="() => VoiceChatService.AcceptCallAsync(VoiceChatService.CurrentChannel!.Id)">
-            <Icon Name="IconName.TelephoneFill" Size="IconSize.x5"/>
-        </Button>
-    }
+    @* @if (VoiceChatService.ConnectedToVoiceCall) *@
+    @* { *@
+    @*     <Tooltip Title="@MicrophoneTooltipText"> *@
+    @*         <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered" Disabled="@(!VoiceChatService.MicrophoneAvailable)"> *@
+    @*             <DropdownActionButton Color="MicrophoneButtonColor" @onclick="VoiceChatService.ToggleMicrophoneAsync"> *@
+    @*                 <Icon Name="MicrophoneIconName" Size="IconSize.x5"/> *@
+    @*             </DropdownActionButton> *@
+    @*             <DropdownToggleButton Color="MicrophoneButtonColor"/> *@
+    @*             <DropdownMenu> *@
+    @*                 @foreach (var microphone in VoiceChatService.Microphones) *@
+    @*                 { *@
+    @*                     <DropdownItem @onclick="() => VoiceChatService.SelectMicrophoneAsync(microphone)" Type="DropdownItemType.Button"> *@
+    @*                         @if (microphone == _selectedMicrophone) *@
+    @*                         { *@
+    @*                             <div class="d-flex flex-row"> *@
+    @*                                 <div class="device-label">@microphone.LabelOrDefault</div> *@
+    @*                                 <Icon Name="IconName.CheckLg" Color="IconColor.Success"/> *@
+    @*                             </div> *@
+    @*                         } *@
+    @*                         else *@
+    @*                         { *@
+    @*                             <div class="device-label">@microphone.Label</div> *@
+    @*                         } *@
+    @*                     </DropdownItem> *@
+    @*                 } *@
+    @*             </DropdownMenu> *@
+    @*         </Dropdown> *@
+    @*     </Tooltip> *@
+    @* *@
+    @*     <Tooltip Title="@CameraTooltipText"> *@
+    @*         <Dropdown Split="true" Direction="DropdownDirection.DropdownCentered" Disabled="@(!VoiceChatService.CameraAvailable)"> *@
+    @*             <DropdownActionButton Color="CameraButtonColor" @onclick="VoiceChatService.ToggleCameraAsync"> *@
+    @*                 <Icon Name="CameraIconName" Size="IconSize.x5"/> *@
+    @*             </DropdownActionButton> *@
+    @*             <DropdownToggleButton Color="CameraButtonColor"/> *@
+    @*             <DropdownMenu> *@
+    @*                 @foreach (var camera in VoiceChatService.Cameras) *@
+    @*                 { *@
+    @*                     <DropdownItem @onclick="() => VoiceChatService.SelectCameraAsync(camera)" Type="DropdownItemType.Button"> *@
+    @*                         @if (camera == _selectedCamera) *@
+    @*                         { *@
+    @*                             <div class="d-flex flex-row"> *@
+    @*                                 <div class="device-label">@camera.LabelOrDefault</div> *@
+    @*                                 <Icon Name="IconName.CheckLg" Color="IconColor.Success"/> *@
+    @*                             </div> *@
+    @*                         } *@
+    @*                         else *@
+    @*                         { *@
+    @*                             <div class="device-label">@camera.Label</div> *@
+    @*                         } *@
+    @*                     </DropdownItem> *@
+    @*                 } *@
+    @*                 @if (VoiceChatService.CameraAvailable) *@
+    @*                 { *@
+    @*                     <DropdownDivider/> *@
+    @*                     <DropdownItem @onclick="VoiceChatService.SwapCameraAsync" Type="DropdownItemType.Button"> *@
+    @*                         <div class="d-flex flex-row gap-1"> *@
+    @*                             <Icon Name="IconName.ArrowRepeat" Color="IconColor.Primary"/> *@
+    @*                             Swap camera *@
+    @*                         </div> *@
+    @*                     </DropdownItem> *@
+    @*                 } *@
+    @*             </DropdownMenu> *@
+    @*         </Dropdown> *@
+    @*     </Tooltip> *@
+    @* *@
+    @*     <Button Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText" *@
+    @*             @onclick="VoiceChatService.ToggleScreenShareAsync"> *@
+    @*         <Icon Name="ScreenShareIconName" Size="IconSize.x5"/> *@
+    @*     </Button> *@
+    @* *@
+    @*     <Button Color="ButtonColor.Danger" TooltipTitle="Leave call" *@
+    @*             @onclick="VoiceChatService.LeaveCallAsync"> *@
+    @*         <Icon Name="IconName.TelephoneXFill" Size="IconSize.x5"/> *@
+    @*     </Button> *@
+    @* } *@
+    @* else if (VoiceChatService.ActiveCallOnCurrentChannel) *@
+    @* { *@
+    @*     <Button Color="ButtonColor.Success" TooltipTitle="Join call" *@
+    @*             @onclick="() => VoiceChatService.AcceptCallAsync(VoiceChatService.CurrentChannel!.Id)"> *@
+    @*         <Icon Name="IconName.TelephoneFill" Size="IconSize.x5"/> *@
+    @*     </Button> *@
+    @* } *@
 </div>
 @implements IDisposable
 
@@ -91,13 +91,13 @@
     private MediaDeviceModel? _selectedMicrophone;
     private MediaDeviceModel? _selectedCamera;
 
-    private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
-    private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
-    private ButtonColor ScreenShareButtonColor => VoiceChatService.ScreenShareEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
-
-    private IconName MicrophoneIconName => VoiceChatService.MicrophoneEnabled ? IconName.MicFill : IconName.MicMuteFill;
-    private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
-    private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
+    // private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    // private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    // private ButtonColor ScreenShareButtonColor => VoiceChatService.ScreenShareEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    //
+    // private IconName MicrophoneIconName => VoiceChatService.MicrophoneEnabled ? IconName.MicFill : IconName.MicMuteFill;
+    // private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
+    // private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
 
     private string MicrophoneTooltipText => VoiceChatService switch
     {

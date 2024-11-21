@@ -17,10 +17,10 @@ public static class UserModelExtensions
     
     public static string StatusColor(this IStatus model) => model.Status switch
     {
-        UserStatus.Online => "limegreen",
-        UserStatus.Away => "darkorange",
-        UserStatus.DoNotDisturb => "firebrick",
-        UserStatus.Offline => "gray",
-        _ => "gray"
+        UserStatus.Online => "var(--mud-palette-success)",
+        UserStatus.Away => "var(--mud-palette-warning)",
+        UserStatus.DoNotDisturb => "var(--mud-palette-error)",
+        UserStatus.Offline => "var(--mud-palette-text-disabled)",
+        _ => "var(--mud-palette-text-disabled)"
     };
 }

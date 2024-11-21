@@ -1,4 +1,3 @@
-using BlazorBootstrap;
 using Microsoft.JSInterop;
 using Shared.Models;
 using Shared.Services;
@@ -10,7 +9,6 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
     private readonly ILogger<FileTransferService> _logger;
-    private readonly ToastService _toastService;
     private readonly DotNetObjectReference<FileTransferService> _dotNetObject;
     private IJSObjectReference? _jsModule;
     
@@ -26,12 +24,10 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     public List<FileModel> UploadQueue { get; } = [];
 
     public FileTransferService(IJSRuntime jsRuntime,
-        ILogger<FileTransferService> logger,
-        ToastService toastService)
+        ILogger<FileTransferService> logger)
     {
         _jsRuntime = jsRuntime;
         _logger = logger;
-        _toastService = toastService;
         _dotNetObject = DotNetObjectReference.Create(this);
     }
     
@@ -96,8 +92,8 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     [JSInvokable]
     public void InvalidUploadCallback(string reason)
     {
-        var toast = new ToastMessage(ToastType.Warning, reason);
-        _toastService.Notify(toast);
+        // var toast = new ToastMessage(ToastType.Warning, reason);
+        // _toastService.Notify(toast);
     }
 
     [JSInvokable]

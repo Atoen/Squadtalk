@@ -1,12 +1,17 @@
-﻿@using Shared.Data.TypedIds
+﻿@using MudBlazor
+@using Shared.Data.TypedIds
 @using Shared.Models
 @using Squadtalk.Client.Components
 @using Squadtalk.Client.Localization
+
 @inherits LayoutComponentBase
 
-<Toasts class="p-3" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight"/>
+<MudThemeProvider @bind-IsDarkMode="@_isDarkTheme" Theme="_theme"/>
+<MudSwitch @bind-Value="_isDarkTheme" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode"/>
 
-<Modal @ref="_callIncomingModal" HeaderCssClass="justify-content-between"/>
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <div class="page">
     <div class="sidebar">
@@ -38,23 +43,31 @@
 
 @code {
 
-    private Modal _callIncomingModal = default!;
-    private readonly Dictionary<string, object> _modalParameters = [];
-
     private PersistingComponentStateSubscription _subscription;
+
+    private MudTheme _theme = new();
+    private bool _isDarkTheme;
 
     protected override Task OnInitializedAsync()
     {
         _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
-
-        _modalParameters[nameof(IncomingCallModal.DecisionCallback)] =
-            (Func<bool, ChannelId, Task>) CallAcceptedDecisionCallback;
 
         VoiceChatService.CallIncoming += CallIncoming;
 
         return UserAuthenticationService.IsAuthenticated
             ? CommunicationService.ConnectAsync()
             : Task.CompletedTask;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (UserAuthenticationService.IsAuthenticated)
+        {
+            await VoiceChatService.InitializeAsync();
+        }
     }
 
     private Task OnPersisting()
@@ -67,28 +80,16 @@
         return Task.CompletedTask;
     }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    private async Task CallIncoming(ChannelModel channel)
     {
-        if (firstRender && UserAuthenticationService.IsAuthenticated)
-        {
-            return VoiceChatService.InitializeAsync();
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private Task CallIncoming(ChannelModel channel)
-    {
-        _modalParameters[nameof(IncomingCallModal.CallChannel)] = channel;
-
-        return _callIncomingModal.ShowAsync<IncomingCallModal>(
-            title: Localization.TextTable.CallIncomingTemplate.TryFormat(channel.Name),
-            parameters: _modalParameters);
+        // return _callIncomingModal.ShowAsync<IncomingCallModal>(
+        //     title: Localization.TextTable.CallIncomingTemplate.TryFormat(channel.Name),
+        //     parameters: _modalParameters);
     }
 
     private async Task CallAcceptedDecisionCallback(bool accepted, ChannelId channelId)
     {
-        await _callIncomingModal.HideAsync();
+        // await _callIncomingModal.HideAsync();
 
         if (accepted)
         {

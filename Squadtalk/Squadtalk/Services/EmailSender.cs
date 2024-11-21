@@ -1,6 +1,6 @@
+using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Identity;
 using MimeKit;
-using MailKit.Net.Smtp;
 using MimeKit.Text;
 using Polly;
 using Polly.Registry;

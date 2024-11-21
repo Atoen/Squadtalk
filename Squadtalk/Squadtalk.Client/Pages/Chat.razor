@@ -23,13 +23,13 @@
                     <MessageTemplate Model="context" @key="context"/>
                 </ItemTemplate>
                 <LoadingTemplate>
-                    <Spinner Type="SpinnerType.Border" Class="ms-2" />
+                    @* <Spinner Type="SpinnerType.Border" Class="ms-2" /> *@
                 </LoadingTemplate>
             </InfiniteScrolling>
         }
         else
         {
-            <Spinner Type="SpinnerType.Border" Class="ms-2" />
+            @* <Spinner Type="SpinnerType.Border" Class="ms-2" /> *@
         }
     </div>
 
@@ -38,7 +38,7 @@
 </div>
 
 @inject IChatService ChatService
-@inject ToastService ToastService
+@* @inject ToastService ToastService *@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
@@ -88,7 +88,7 @@
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 
-        var toast = new ToastMessage(ToastType.Success, $"Your upload to {channel.Name} is still in progress.");
-        ToastService.Notify(toast);
+        // var toast = new ToastMessage(ToastType.Success, $"Your upload to {channel.Name} is still in progress.");
+        // ToastService.Notify(toast);
     }
 }

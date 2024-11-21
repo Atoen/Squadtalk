@@ -1,83 +1,40 @@
 ﻿@using Squadtalk.Client.Localization
 @implements IDisposable
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid d-flex justify-content-center" style="z-index: 1">
-        <a class="navbar-brand" href="">Squadtalk</a>
-    </div>
-    
-    @if (!OperatingSystem.IsBrowser())
-    {
-        <div class="progress-bar"></div>
-    }
-    else
-    {
-        <div class="finished-loading"></div>
-    }
-    
-</div>
+<MudPaper Width="250px" Class="py-3" Elevation="0" Square="true">
+    <MudNavMenu Color="Color.Primary">
+        <MudText Typo="Typo.h6" Class="px-4">Squadtalk</MudText>
+        <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Secondary</MudText>
+        <MudDivider Class="my-2"/>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Channels">
-                <Icon Name="IconName.ChatLeftTextFill" Size="IconSize.x4" Class="mx-2"/> @_textTable.Messages
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <Icon Name="IconName.HouseFill" Size="IconSize.x4" Class="mx-2"/> @_textTable.Home
-            </NavLink>
-        </div>
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Canvas">
-                <Icon Name="IconName.PaletteFill" Size="IconSize.x4" Class="mx-2"/> @_textTable.Canvas
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Settings">
-                <Icon Name="IconName.List" Size="IconSize.x4" Class="mx-2"/> @_textTable.Settings
-            </NavLink>
-        </div>
+        <MudNavLink Href="/Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.Messages</MudNavLink>
+        <MudNavLink Href="/Users" Icon="@Icons.Material.Rounded.People">@_textTable.Users</MudNavLink>
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">@_textTable.Home</MudNavLink>
+        <MudNavLink Href="/Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.Canvas</MudNavLink>
+        <MudNavLink Href="/Settings" Icon="@Icons.Material.Rounded.Settings">@_textTable.Settings</MudNavLink>
 
         <AuthorizeView>
             <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <Icon Name="IconName.PersonFill" Size="IconSize.x4" Class="mx-2"/> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken/>
-                        <input type="hidden" name="ReturnUrl" value=""/>
-                        <button type="submit" class="nav-link">
-                            <Icon Name="IconName.ArrowBarLeft" Size="IconSize.x4" Class="mx-2"/> @_textTable.Logout
-                        </button>
-                    </form>
-                </div>
+                <MudNavLink Href="/Account/Manage" Icon="@Icons.Material.Rounded.Person">@context.User.Identity?.Name</MudNavLink>
+                <MudNavLink Href="/Account/Logout" ForceLoad="true" Icon="@Icons.Material.Rounded.Logout">@_textTable.Logout</MudNavLink>
             </Authorized>
             <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <Icon Name="IconName.PersonAdd" Size="IconSize.x4" Class="mx-2"/> @_textTable.Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <Icon Name="IconName.PersonBadge" Size="IconSize.x4" Class="mx-2"/> @_textTable.Login
-                    </NavLink>
-                </div>
+                <MudNavLink Href="/Account/Register" Icon="@Icons.Material.Rounded.PersonAdd">@_textTable.Register</MudNavLink>
+                <MudNavLink Href="/Account/Login" Icon="@Icons.Material.Rounded.Login">@_textTable.Login</MudNavLink>
             </NotAuthorized>
         </AuthorizeView>
-    </nav>
-</div>
+    </MudNavMenu>
+</MudPaper>
+
+@* <div class="nav-item px-3"> *@
+@*  <form action="Account/Logout" method="post"> *@
+@*      <AntiforgeryToken/> *@
+@*      <button type="submit" class="nav-link" style="justify-content: start"> *@
+@*          <MudIcon Icon="@Icons.Material.Rounded.Logout" Class="mx-2"/> @_textTable.Logout *@
+@*      </button> *@
+@*      <input type="hidden" name="ReturnUrl" value=""/> *@
+@*  </form> *@
+@* </div> *@
 
 @inject NavigationManager NavigationManager
 @inject ILocalization Localization

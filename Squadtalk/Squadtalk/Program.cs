@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
-using tusdotnet;
-using tusdotnet.Helpers;
 using Squadtalk.Client.Pages;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
@@ -17,6 +15,8 @@ using Squadtalk.Hubs;
 using Squadtalk.Services;
 using Squadtalk.Services.Scheduling;
 using Squadtalk.Tus;
+using tusdotnet;
+using tusdotnet.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,6 +110,8 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+app.MapStaticAssets();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

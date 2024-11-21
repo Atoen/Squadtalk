@@ -29,7 +29,7 @@
 @inject IChatService ChatService
 @inject IVoiceChatService VoiceChatService
 @inject ILogger<VoiceCallStatus> Logger
-@inject ToastService ToastService
+@* @inject ToastService ToastService *@
 
 @code {
 
@@ -50,32 +50,32 @@
 
     private void VoiceChatServiceError(string title, string message)
     {
-        var toast = new ToastMessage
-        {
-            Type = ToastType.Danger,
-            Title = title,
-            Message = message,
-            AutoHide = false,
-            IconName = IconName.Exclamation
-        };
-
-        ToastService.Notify(toast);
+        // var toast = new ToastMessage
+        // {
+        //     Type = ToastType.Danger,
+        //     Title = title,
+        //     Message = message,
+        //     AutoHide = false,
+        //     IconName = IconName.Exclamation
+        // };
+        //
+        // ToastService.Notify(toast);
     }
 
     private void VoiceChatServiceDisconnected(DisconnectReason reason)
     {
         if (reason == DisconnectReason.ClientInitiated) return;
 
-        var toast = new ToastMessage
-        {
-            Type = ToastType.Warning,
-            Title = "Disconnected from channel",
-            Message = $"Disconnect reason: {reason}",
-            AutoHide = false,
-            IconName = IconName.Exclamation
-        };
-
-        ToastService.Notify(toast);
+        // var toast = new ToastMessage
+        // {
+        //     Type = ToastType.Warning,
+        //     Title = "Disconnected from channel",
+        //     Message = $"Disconnect reason: {reason}",
+        //     AutoHide = false,
+        //     IconName = IconName.Exclamation
+        // };
+        //
+        // ToastService.Notify(toast);
     }
 
     private void VoiceChatServiceCallEnded(ChannelModel channel)

@@ -1,19 +1,33 @@
 @page "/Users"
-@using Squadtalk.Client.Layout
 @using Microsoft.AspNetCore.Authorization
 @using Squadtalk.Client.Extensions
+@using Squadtalk.Client.Layout
 @using Squadtalk.Client.Localization
 
 @attribute [Authorize]
 @implements IDisposable
-@layout ChatLayout
 
 <PageTitle>Squadtalk | Users</PageTitle>
 
 @foreach (var user in ChatService.Users)
 {
-    <div class="user-card rounded" @onclick="() => OpenChannel(user)">
-        <img alt="@user.Username avatar" src="user.png" class="avatar" />
+    @* <div class="user-card rounded" @onclick="() => OpenChannel(user)"> *@
+    @*     <img alt="@user.Username avatar" src="user.png" class="avatar" /> *@
+    @*     <div class="username">@user.Username</div> *@
+    @*     <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div> *@
+    @* </div> *@
+    <div class="user-card mud-paper mud-elevation-1 mud-card mud-ripple">
+        @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+        {
+            <MudAvatar Class="me-3" Style="grid-row: 1/3" Color="Color.Tertiary">@user.Username[0]</MudAvatar>
+        }
+        else
+        {
+            <MudAvatar Class="me-3" Style="grid-row: 1/3" Color="Color.Transparent">
+                <MudImage Src="@user.AvatarUrl"/>
+            </MudAvatar>
+        }
+
         <div class="username">@user.Username</div>
         <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div>
     </div>

@@ -9,7 +9,7 @@
             <DropdownMenu>
                 @foreach (var color in Rule.AvailableColors)
                 {
-                    <DropdownItem Type="ButtonType.Button" @onclick="() => _firstChoice = color">
+                    <DropdownItem Type="DropdownItemType.Button" @onclick="() => _firstChoice = color">
                         <div class="d-flex">
                             <div class="color-box mx-2" style="background: @color"></div>
                             @color
@@ -30,7 +30,7 @@
             <DropdownMenu>
                 @foreach (var color in Rule.AvailableColors)
                 {
-                    <DropdownItem Type="ButtonType.Button" @onclick="() => _secondChoice = color">
+                    <DropdownItem Type="DropdownItemType.Button" @onclick="() => _secondChoice = color">
                         <div class="d-flex">
                             <div class="color-box mx-2" style="background: @color"></div>
                             @color

@@ -1,58 +1,58 @@
 @if (ShouldDisplay)
 {
     <div class="info">
-        <div class="d-flex gap-1 w-100 align-items-center">
-            <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor"
-                  Size="IconSize.x4" @onclick="ConnectionQualityClicked"/>
-            @if (_measurePing)
-            {
-                <span class="ping">@_ping.Milliseconds ms</span>
-            }
-            <span class="channel-name" @onclick="GoToCallChannel">@VoiceChatService.CallChannel?.Name</span>
-
-            @if (ShouldDisplayMobileLayout)
-            {
-                <Tooltip Title="@MicrophoneTooltipText" Class="ms-auto">
-                    <Button Color="MicrophoneButtonColor" Class="px-4"
-                            Disabled="@(!VoiceChatService.MicrophoneAvailable)"
-                            @onclick="VoiceChatService.ToggleMicrophoneAsync">
-                        <Icon Name="MicrophoneIconName" Size="IconSize.x6"/>
-                    </Button>
-                </Tooltip>
-                <Button Color="ButtonColor.Danger" TooltipTitle="Leave call" Class="px-4"
-                        @onclick="VoiceChatService.LeaveCallAsync">
-                    <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/>
-                </Button>
-            }
-        </div>
-
-        @if (ShouldDisplayDesktopLayout)
-        {
-            <div class="d-flex gap-1 w-100">
-                <Tooltip Title="@MicrophoneTooltipText" Class="flex-grow-1 d-flex">
-                    <Button Class="flex-grow-1" Color="MicrophoneButtonColor"
-                            Disabled="@(!VoiceChatService.MicrophoneAvailable)"
-                            @onclick="VoiceChatService.ToggleMicrophoneAsync">
-                        <Icon Name="MicrophoneIconName" Size="IconSize.x6"/>
-                    </Button>
-                </Tooltip>
-                <Tooltip Title="@CameraTooltipText" Class="flex-grow-1 d-flex">
-                    <Button Class="flex-grow-1" Color="CameraButtonColor"
-                            Disabled="@(!VoiceChatService.CameraAvailable)"
-                            @onclick="VoiceChatService.ToggleMicrophoneAsync">
-                        <Icon Name="CameraIconName" Size="IconSize.x6"/>
-                    </Button>
-                </Tooltip>
-                <Button Class="flex-grow-1" Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText"
-                        @onclick="VoiceChatService.ToggleScreenShareAsync">
-                    <Icon Name="ScreenShareIconName" Size="IconSize.x6"/>
-                </Button>
-                <Button Class="flex-grow-1" Color="ButtonColor.Danger" TooltipTitle="Leave call"
-                        @onclick="VoiceChatService.LeaveCallAsync">
-                    <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/>
-                </Button>
-            </div>
-        }
+        @* <div class="d-flex gap-1 w-100 align-items-center"> *@
+        @*     <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" *@
+        @*           Size="IconSize.x4" @onclick="ConnectionQualityClicked"/> *@
+        @*     @if (_measurePing) *@
+        @*     { *@
+        @*         <span class="ping">@_ping.Milliseconds ms</span> *@
+        @*     } *@
+        @*     <span class="channel-name" @onclick="GoToCallChannel">@VoiceChatService.CallChannel?.Name</span> *@
+        @* *@
+        @*     @if (ShouldDisplayMobileLayout) *@
+        @*     { *@
+        @*         <Tooltip Title="@MicrophoneTooltipText" Class="ms-auto"> *@
+        @*             <Button Color="MicrophoneButtonColor" Class="px-4" *@
+        @*                     Disabled="@(!VoiceChatService.MicrophoneAvailable)" *@
+        @*                     @onclick="VoiceChatService.ToggleMicrophoneAsync"> *@
+        @*                 <Icon Name="MicrophoneIconName" Size="IconSize.x6"/> *@
+        @*             </Button> *@
+        @*         </Tooltip> *@
+        @*         <Button Color="ButtonColor.Danger" TooltipTitle="Leave call" Class="px-4" *@
+        @*                 @onclick="VoiceChatService.LeaveCallAsync"> *@
+        @*             <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/> *@
+        @*         </Button> *@
+        @*     } *@
+        @* </div> *@
+        @* *@
+        @* @if (ShouldDisplayDesktopLayout) *@
+        @* { *@
+        @*     <div class="d-flex gap-1 w-100"> *@
+        @*         <Tooltip Title="@MicrophoneTooltipText" Class="flex-grow-1 d-flex"> *@
+        @*             <Button Class="flex-grow-1" Color="MicrophoneButtonColor" *@
+        @*                     Disabled="@(!VoiceChatService.MicrophoneAvailable)" *@
+        @*                     @onclick="VoiceChatService.ToggleMicrophoneAsync"> *@
+        @*                 <Icon Name="MicrophoneIconName" Size="IconSize.x6"/> *@
+        @*             </Button> *@
+        @*         </Tooltip> *@
+        @*         <Tooltip Title="@CameraTooltipText" Class="flex-grow-1 d-flex"> *@
+        @*             <Button Class="flex-grow-1" Color="CameraButtonColor" *@
+        @*                     Disabled="@(!VoiceChatService.CameraAvailable)" *@
+        @*                     @onclick="VoiceChatService.ToggleMicrophoneAsync"> *@
+        @*                 <Icon Name="CameraIconName" Size="IconSize.x6"/> *@
+        @*             </Button> *@
+        @*         </Tooltip> *@
+        @*         <Button Class="flex-grow-1" Color="ScreenShareButtonColor" TooltipTitle="@ScreenShareTooltipText" *@
+        @*                 @onclick="VoiceChatService.ToggleScreenShareAsync"> *@
+        @*             <Icon Name="ScreenShareIconName" Size="IconSize.x6"/> *@
+        @*         </Button> *@
+        @*         <Button Class="flex-grow-1" Color="ButtonColor.Danger" TooltipTitle="Leave call" *@
+        @*                 @onclick="VoiceChatService.LeaveCallAsync"> *@
+        @*             <Icon Name="IconName.TelephoneXFill" Size="IconSize.x6"/> *@
+        @*         </Button> *@
+        @*     </div> *@
+        @* } *@
     </div>
 }
 
@@ -80,13 +80,13 @@
                                               VoiceChatService.ConnectedToVoiceCall &&
                                               !VoiceChatService.ConnectedToVoiceCallOnCurrentChannel;
 
-    private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
-    private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
-    private ButtonColor ScreenShareButtonColor => VoiceChatService.ScreenShareEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
-
-    private IconName MicrophoneIconName => VoiceChatService.MicrophoneEnabled ? IconName.MicFill : IconName.MicMuteFill;
-    private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
-    private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
+    // private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    // private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    // private ButtonColor ScreenShareButtonColor => VoiceChatService.ScreenShareEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
+    //
+    // private IconName MicrophoneIconName => VoiceChatService.MicrophoneEnabled ? IconName.MicFill : IconName.MicMuteFill;
+    // private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
+    // private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
 
     private string MicrophoneTooltipText => VoiceChatService switch
     {
@@ -104,22 +104,22 @@
 
     private string ScreenShareTooltipText => VoiceChatService.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
 
-    private IconName ConnectionQualityIcon => VoiceChatService.ConnectionQuality switch
-    {
-        ConnectionQuality.Excellent => IconName.Wifi,
-        ConnectionQuality.Good => IconName.Wifi2,
-        ConnectionQuality.Poor => IconName.Wifi1,
-        ConnectionQuality.Unknown => IconName.Broadcast,
-        _ => IconName.WifiOff,
-    };
-
-    private IconColor ConnectionQualityColor => VoiceChatService.ConnectionQuality switch
-    {
-        ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
-        ConnectionQuality.Poor => IconColor.Warning,
-        ConnectionQuality.Unknown => IconColor.Primary,
-        _ => IconColor.Danger,
-    };
+    // private IconName ConnectionQualityIcon => VoiceChatService.ConnectionQuality switch
+    // {
+    //     ConnectionQuality.Excellent => IconName.Wifi,
+    //     ConnectionQuality.Good => IconName.Wifi2,
+    //     ConnectionQuality.Poor => IconName.Wifi1,
+    //     ConnectionQuality.Unknown => IconName.Broadcast,
+    //     _ => IconName.WifiOff,
+    // };
+    //
+    // private IconColor ConnectionQualityColor => VoiceChatService.ConnectionQuality switch
+    // {
+    //     ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
+    //     ConnectionQuality.Poor => IconColor.Warning,
+    //     ConnectionQuality.Unknown => IconColor.Primary,
+    //     _ => IconColor.Danger,
+    // };
 
     protected override void OnInitialized()
     {

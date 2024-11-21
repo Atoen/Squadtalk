@@ -1,6 +1,6 @@
 @using Shared.Extensions
 
-<Modal @ref="_modal" HeaderCssClass="justify-content-between"/>
+@* <Modal @ref="_modal" HeaderCssClass="justify-content-between"/> *@
 
 <div class="header rounded">
     <div class="d-flex gap-1 align-items-center w-100 rounded ps-2" style="height: 44px">
@@ -45,7 +45,7 @@
 
     [Parameter, EditorRequired] public ChannelModel Channel { get; set; } = default!;
 
-    private Modal _modal = default!;
+    // private Modal _modal = default!;
     private readonly Dictionary<string, object> _modalParameters = new();
 
     private TextTable _table = default!;
@@ -62,7 +62,7 @@
 
         _modalParameters[nameof(ManageGroupModal.GroupChat)] = groupChat;
 
-        await _modal.ShowAsync<ManageGroupModal>("Manage channel", parameters: _modalParameters);
+        // await _modal.ShowAsync<ManageGroupModal>("Manage channel", parameters: _modalParameters);
     }
 
     protected override void OnInitialized()

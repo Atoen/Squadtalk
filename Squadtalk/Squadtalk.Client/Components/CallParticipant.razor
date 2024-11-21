@@ -2,36 +2,36 @@
     <img class="avatar" style="@AvatarBorderStyle" src="user.png" alt="Avatar" draggable="false"/>
     <div class="username">@Model.Username</div>
     <div class="status">
-
-        @if (Model.Remote)
-        {
-            <Dropdown Size="Size.Small">
-                <DropdownToggleButton><Icon Name="@VolumeIcon" Size="IconSize.x5"/></DropdownToggleButton>
-                <DropdownMenu>
-                    <div class="d-flex px-2">
-                        <RangeInput TValue="int" Min="0" Max="100"
-                                    Value="_volume"
-                                    ValueExpression="() => _volume"
-                                    ValueChanged="VolumeChanged"/>
-                        <span class="volume">@_volume%</span>
-                    </div>
-                </DropdownMenu>
-            </Dropdown>
-        }
-
-        <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" Size="IconSize.x5"/>
-        <Icon Name="MicrophoneIcon" Color="MicrophoneColor"/>
-
-        <div class="camera-screen-share">
-            @if (Model.CameraOn)
-            {
-                <Button @onclick="ShowCamera"><Icon Name="IconName.CameraVideoFill" Size="IconSize.x5"/></Button>
-            }
-            @if (Model.ScreenShareOn)
-            {
-                <Button @onclick="ShowScreenShare"><Icon Name="IconName.DisplayFill" Size="IconSize.x5"/></Button>
-            }
-        </div>
+        @* *@
+        @* @if (Model.Remote) *@
+        @* { *@
+        @*     <Dropdown Size="DropdownSize.Small"> *@
+        @*         <DropdownToggleButton><Icon Name="@VolumeIcon" Size="IconSize.x5"/></DropdownToggleButton> *@
+        @*         <DropdownMenu> *@
+        @*             <div class="d-flex px-2"> *@
+        @*                 <RangeInput TValue="int" Min="0" Max="100" *@
+        @*                             Value="_volume" *@
+        @*                             ValueExpression="() => _volume" *@
+        @*                             ValueChanged="VolumeChanged"/> *@
+        @*                 <span class="volume">@_volume%</span> *@
+        @*             </div> *@
+        @*         </DropdownMenu> *@
+        @*     </Dropdown> *@
+        @* } *@
+        @* *@
+        @* <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" Size="IconSize.x5"/> *@
+        @* <Icon Name="MicrophoneIcon" Color="MicrophoneColor"/> *@
+        @* *@
+        @* <div class="camera-screen-share"> *@
+        @*     @if (Model.CameraOn) *@
+        @*     { *@
+        @*         <Button @onclick="ShowCamera"><Icon Name="IconName.CameraVideoFill" Size="IconSize.x5"/></Button> *@
+        @*     } *@
+        @*     @if (Model.ScreenShareOn) *@
+        @*     { *@
+        @*         <Button @onclick="ShowScreenShare"><Icon Name="IconName.DisplayFill" Size="IconSize.x5"/></Button> *@
+        @*     } *@
+        @* </div> *@
     </div>
 </div>
 
@@ -81,33 +81,33 @@
 
     private string AvatarBorderStyle => Model.IsSpeaking ? "border-color: limegreen;" : string.Empty;
 
-    private IconName VolumeIcon => _volume switch
-    {
-        0 => IconName.VolumeMuteFill,
-        < 20 => IconName.VolumeOffFill,
-        < 80 => IconName.VolumeDownFill,
-        _ => IconName.VolumeUpFill
-    };
-
-    private IconName ConnectionQualityIcon => Model.ConnectionQuality switch
-    {
-        ConnectionQuality.Excellent => IconName.Wifi,
-        ConnectionQuality.Good => IconName.Wifi2,
-        ConnectionQuality.Poor => IconName.Wifi1,
-        ConnectionQuality.Unknown => IconName.Broadcast,
-        _ => IconName.WifiOff,
-    };
-
-    private IconColor ConnectionQualityColor => Model.ConnectionQuality switch
-    {
-        ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
-        ConnectionQuality.Poor => IconColor.Warning,
-        ConnectionQuality.Unknown => IconColor.Primary,
-        _ => IconColor.Danger,
-    };
-
-    private IconName MicrophoneIcon => Model.MicrophoneOn ? IconName.MicFill : IconName.MicMuteFill;
-    private IconColor MicrophoneColor => Model.MicrophoneOn ? IconColor.Secondary : IconColor.Danger;
+    // private IconName VolumeIcon => _volume switch
+    // {
+    //     0 => IconName.VolumeMuteFill,
+    //     < 20 => IconName.VolumeOffFill,
+    //     < 80 => IconName.VolumeDownFill,
+    //     _ => IconName.VolumeUpFill
+    // };
+    //
+    // private IconName ConnectionQualityIcon => Model.ConnectionQuality switch
+    // {
+    //     ConnectionQuality.Excellent => IconName.Wifi,
+    //     ConnectionQuality.Good => IconName.Wifi2,
+    //     ConnectionQuality.Poor => IconName.Wifi1,
+    //     ConnectionQuality.Unknown => IconName.Broadcast,
+    //     _ => IconName.WifiOff,
+    // };
+    //
+    // private IconColor ConnectionQualityColor => Model.ConnectionQuality switch
+    // {
+    //     ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
+    //     ConnectionQuality.Poor => IconColor.Warning,
+    //     ConnectionQuality.Unknown => IconColor.Primary,
+    //     _ => IconColor.Danger,
+    // };
+    //
+    // private IconName MicrophoneIcon => Model.MicrophoneOn ? IconName.MicFill : IconName.MicMuteFill;
+    // private IconColor MicrophoneColor => Model.MicrophoneOn ? IconColor.Secondary : IconColor.Danger;
 
     public void Dispose()
     {

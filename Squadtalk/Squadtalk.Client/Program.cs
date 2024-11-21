@@ -1,6 +1,7 @@
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor.Services;
 using RestSharp;
 using Shared.Services;
 using Squadtalk.Client.Localization;
@@ -41,7 +42,8 @@ builder.Services.AddScoped<ILocalization, Localization>();
 builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();
 
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddBlazorBootstrap();
+builder.Services.AddMudServices();
+// builder.Services.AddBlazorBootstrap();
 
 var host = builder.Build();
 

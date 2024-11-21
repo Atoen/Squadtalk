@@ -6,6 +6,7 @@ using MessagePack;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using MudBlazor.Services;
 using Polly.Registry;
 using Shared.Services;
 using Squadtalk.Client.Localization;
@@ -87,7 +88,7 @@ public static class ServiceCollectionExtensions
             });
 
         serviceCollection.AddBlazoredLocalStorage();
-        serviceCollection.AddBlazorBootstrap();
+        serviceCollection.AddMudServices();
 
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();

@@ -1,5 +1,5 @@
-@using Shared.Extensions
 @using Shared
+@using Shared.Extensions
 @if (_showOverlay)
 {
     <div class="image-overlay-parent" @onclick="ToggleOverlay">
@@ -18,7 +18,7 @@
 {
     case EmbedType.File:
         <div class="embed rounded">
-            <Icon Size="IconSize.x1" Color="IconColor.White" Name="FileIconName" Class="me-2" Style="grid-row: 1/3"/>
+            @* <Icon Size="IconSize.x1" Color="IconColor.White" Name="FileIconName" Class="me-2" Style="grid-row: 1/3"/> *@
             <a class="link" href="@Model.Data[EmbedData.Url]" target="_blank" rel="noopener noreferrer">@Model[EmbedData.FileName]</a>
             <div class="filesize">@FileSizeConverter.ConvertToHumanReadableSize(Model[EmbedData.FileSize])</div>
         </div>
@@ -44,7 +44,7 @@
         break;
     case EmbedType.SystemMessage:
         <div class="system-message">
-            <Icon Name="_systemMessageIconName" Color="_systemMessageIconColor" Size="IconSize.x5"/>
+            @* <Icon Name="_systemMessageIconName" Color="_systemMessageIconColor" Size="IconSize.x5"/> *@
             <span class="ms-2">@GetSystemMessageContent()</span>
         </div>
         break;
@@ -64,24 +64,24 @@
     private bool _showOverlay;
 
     private FileType _fileType;
-    private IconName FileIconName => _fileType switch
-    {
-        FileType.Pdf => IconName.FileEarmarkPdfFill,
-        FileType.Text => IconName.FileEarmarkTextFill,
-        FileType.Archive => IconName.FileEarmarkZipFill,
-        FileType.Code => IconName.FileEarmarkCodeFill,
-        FileType.Video => IconName.FileEarmarkPlayFill,
-        FileType.Music => IconName.FileEarmarkMusicFill,
-        FileType.Image => IconName.FileEarmarkImageFill,
-        _ => IconName.FileEarmarkFill
-    };
+    // private IconName FileIconName => _fileType switch
+    // {
+    //     FileType.Pdf => IconName.FileEarmarkPdfFill,
+    //     FileType.Text => IconName.FileEarmarkTextFill,
+    //     FileType.Archive => IconName.FileEarmarkZipFill,
+    //     FileType.Code => IconName.FileEarmarkCodeFill,
+    //     FileType.Video => IconName.FileEarmarkPlayFill,
+    //     FileType.Music => IconName.FileEarmarkMusicFill,
+    //     FileType.Image => IconName.FileEarmarkImageFill,
+    //     _ => IconName.FileEarmarkFill
+    // };
 
-    private IconName _systemMessageIconName;
-    private IconColor _systemMessageIconColor;
-    private IconSize _systemMessageIconSize;
+    // private IconName _systemMessageIconName;
+    // private IconColor _systemMessageIconColor;
+    // private IconSize _systemMessageIconSize;
     private SystemMessageType _systemMessageType;
 
-    private IconName _lastIcon;
+    // private IconName _lastIcon;
 
     protected override void OnInitialized()
     {
@@ -101,27 +101,27 @@
         _systemMessageType = SystemMessageTypeHelper.Parse(Model[EmbedData.SystemMessageType]);
         SetSystemMessageIcon(_systemMessageType);
 
-        if (_systemMessageIconName != _lastIcon) StateHasChanged();
+        // if (_systemMessageIconName != _lastIcon) StateHasChanged();
     }
 
     private void SetSystemMessageIcon(SystemMessageType messageType)
     {
-        _lastIcon = _systemMessageIconName;
-
-        _systemMessageIconColor = messageType switch
-        {
-            SystemMessageType.CallStarted or SystemMessageType.CallEnded => IconColor.Success,
-            SystemMessageType.CallMissed => IconColor.Danger,
-            _ => IconColor.None
-        };
-
-        _systemMessageIconName = messageType switch
-        {
-            SystemMessageType.CallStarted => IconName.TelephoneOutboundFill,
-            SystemMessageType.CallEnded => IconName.TelephoneFill,
-            SystemMessageType.CallMissed => IconName.TelephoneXFill,
-            _ => IconName.InfoCircle
-        };
+        // _lastIcon = _systemMessageIconName;
+        //
+        // _systemMessageIconColor = messageType switch
+        // {
+        //     SystemMessageType.CallStarted or SystemMessageType.CallEnded => IconColor.Success,
+        //     SystemMessageType.CallMissed => IconColor.Danger,
+        //     _ => IconColor.None
+        // };
+        //
+        // _systemMessageIconName = messageType switch
+        // {
+        //     SystemMessageType.CallStarted => IconName.TelephoneOutboundFill,
+        //     SystemMessageType.CallEnded => IconName.TelephoneFill,
+        //     SystemMessageType.CallMissed => IconName.TelephoneXFill,
+        //     _ => IconName.InfoCircle
+        // };
     }
 
     private string GetSystemMessageContent()

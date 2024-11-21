@@ -1,14 +1,14 @@
 <div class="row">
-    <AutoComplete @bind-Value="_selectedUserName"
-                  @ref="_autoComplete"
-                  TItem="UserModel"
-                  DataProvider="UserDataProvider"
-                  Placeholder="@_table.SelectUserPlaceholder"
-                  PropertyName="@nameof(UserModel.Username)"
-                  LoadingText="@_table.LoadingUsers"
-                  EmptyText="@_table.NoUsersFound"
-                  OnChanged="OnAutoCompleteChanged">
-    </AutoComplete>
+    @* <AutoComplete @bind-Value="_selectedUserName" *@
+    @*               @ref="_autoComplete" *@
+    @*               TItem="UserModel" *@
+    @*               DataProvider="UserDataProvider" *@
+    @*               Placeholder="@_table.SelectUserPlaceholder" *@
+    @*               PropertyName="@nameof(UserModel.Username)" *@
+    @*               LoadingText="@_table.LoadingUsers" *@
+    @*               EmptyText="@_table.NoUsersFound" *@
+    @*               OnChanged="OnAutoCompleteChanged"> *@
+    @* </AutoComplete> *@
 
     <div class="selected-users my-2">
         @foreach (var user in _selectedUsers)
@@ -38,7 +38,7 @@
     [Parameter] public EventCallback CancelCallback { get; set; }
     [Parameter] public EventCallback<List<UserModel>> CreateCallback { get; set; }
 
-    private AutoComplete<UserModel> _autoComplete = default!;
+    // private AutoComplete<UserModel> _autoComplete = default!;
     private string? _selectedUserName;
 
     private readonly List<UserModel> _selectedUsers = [];
@@ -49,12 +49,12 @@
         _table = Localization.GetTextTable(this);
     }
 
-    private Task<AutoCompleteDataProviderResult<UserModel>> UserDataProvider(AutoCompleteDataProviderRequest<UserModel> request)
-    {
-        Logger.LogInformation("Providing data");
-
-        return Task.FromResult(request.ApplyTo(ChatService.Users));
-    }
+    // private Task<AutoCompleteDataProviderResult<UserModel>> UserDataProvider(AutoCompleteDataProviderRequest<UserModel> request)
+    // {
+    //     Logger.LogInformation("Providing data");
+    //
+    //     return Task.FromResult(request.ApplyTo(ChatService.Users));
+    // }
 
     private void OnAutoCompleteChanged(UserModel? user)
     {

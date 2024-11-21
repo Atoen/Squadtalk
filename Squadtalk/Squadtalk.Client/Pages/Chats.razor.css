@@ -6,8 +6,6 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    background: var(--bs-primary);
-    color: white;
     position: relative;
 }
 
@@ -34,8 +32,8 @@ svg path {
 .channels {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 12px;
+    padding-top: 8px;
     max-height: calc(100dvh - 136px - var(--call-info-spacing));
     overflow: auto;
     position: relative;
