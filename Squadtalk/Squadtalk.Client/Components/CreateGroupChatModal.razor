@@ -22,16 +22,16 @@
     </div>
 
     <div class="d-flex justify-content-between">
-        <Button @onclick="CancelCallback">@_table.DialogCancel</Button>
+        @* <Button @onclick="CancelCallback">@_table.DialogCancel</Button> *@
         <Button @onclick="() => CreateCallback.InvokeAsync(_selectedUsers)" Color="ButtonColor.Primary">
-            @_table.CreateGroupChatButton
+            @* @_table.CreateGroupChatButton *@
         </Button>
     </div>
 </div>
 
 @inject IChatService ChatService
 @inject ILogger<CreateGroupChatModal> Logger
-@inject ILocalization Localization
+@* @inject ILocalization Localization *@
 
 @code {
 
@@ -42,11 +42,11 @@
     private string? _selectedUserName;
 
     private readonly List<UserModel> _selectedUsers = [];
-    private TextTable _table = default!;
+    // private TextTable _table = default!;
 
     protected override void OnInitialized()
     {
-        _table = Localization.GetTextTable(this);
+        // _table = Localization.GetTextTable(this);
     }
 
     // private Task<AutoCompleteDataProviderResult<UserModel>> UserDataProvider(AutoCompleteDataProviderRequest<UserModel> request)

@@ -7,7 +7,7 @@
     <div class="channel-start">
         <div class="title">@channel.Name</div>
         <div>
-            @_table.ChannelBeginning <span class="fw-bold d-inline">@channel.Name</span>.
+            ChannelBeginning <span class="fw-bold d-inline">@channel.Name</span>.
         </div>
     </div>
 }
@@ -33,12 +33,12 @@
 @inject IJSRuntime JsRuntime
 @inject IChatService ChatService
 @inject ITextChatService TextChatService
-@inject ILocalization Localization
+@* @inject ILocalization Localization *@
 @inject ILogger<InfiniteScrolling> Logger
 
 @code {
 
-    private TextTable _table = default!;
+    // private TextTable _table = default!;
 
     private ElementReference _lastItemIndicator;
     private DotNetObjectReference<InfiniteScrolling>? _currentComponentReference;
@@ -59,7 +59,7 @@
 
     protected override void OnInitialized()
     {
-        _table = Localization.GetTextTable(this);
+        // _table = Localization.GetTextTable(this);
 
         TextChatService.MessageReceived += UpdateOnTextChat;
         ChatService.ChannelChangedAsync += ChannelChangedAsync;

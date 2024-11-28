@@ -1,26 +1,28 @@
-﻿@using Squadtalk.Client.Localization
-@implements IDisposable
-
-<MudPaper Width="250px" Class="py-3" Elevation="0" Square="true">
+﻿<MudPaper Width="250px" Class="py-3" Elevation="0" Square="true">
     <MudNavMenu Color="Color.Primary">
-        <MudText Typo="Typo.h6" Class="px-4">Squadtalk</MudText>
-        <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Secondary</MudText>
+        <MudText Typo="Typo.h5" Class="px-4">Squadtalk</MudText>
         <MudDivider Class="my-2"/>
 
-        <MudNavLink Href="/Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.Messages</MudNavLink>
-        <MudNavLink Href="/Users" Icon="@Icons.Material.Rounded.People">@_textTable.Users</MudNavLink>
-        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">@_textTable.Home</MudNavLink>
-        <MudNavLink Href="/Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.Canvas</MudNavLink>
-        <MudNavLink Href="/Settings" Icon="@Icons.Material.Rounded.Settings">@_textTable.Settings</MudNavLink>
+        <MudNavLink Href="/Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.messages</MudNavLink>
+        <MudNavLink Href="/Users" Icon="@Icons.Material.Rounded.People">@_textTable.users</MudNavLink>
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">@_textTable.home</MudNavLink>
+        <MudNavLink Href="/Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.canvas</MudNavLink>
+        <MudNavLink Href="/Settings" Icon="@Icons.Material.Rounded.Settings">@_textTable.settings</MudNavLink>
 
         <AuthorizeView>
             <Authorized>
                 <MudNavLink Href="/Account/Manage" Icon="@Icons.Material.Rounded.Person">@context.User.Identity?.Name</MudNavLink>
-                <MudNavLink Href="/Account/Logout" ForceLoad="true" Icon="@Icons.Material.Rounded.Logout">@_textTable.Logout</MudNavLink>
+                <MudNavLink Href="/Account/Logout" ForceLoad="true" Icon="@Icons.Material.Rounded.Logout">
+                    @_textTable.logout
+                </MudNavLink>
             </Authorized>
             <NotAuthorized>
-                <MudNavLink Href="/Account/Register" Icon="@Icons.Material.Rounded.PersonAdd">@_textTable.Register</MudNavLink>
-                <MudNavLink Href="/Account/Login" Icon="@Icons.Material.Rounded.Login">@_textTable.Login</MudNavLink>
+                <MudNavLink Href="/Account/Register" Icon="@Icons.Material.Rounded.PersonAdd">
+                    @_textTable.register
+                </MudNavLink>
+                <MudNavLink Href="/Account/Login" Icon="@Icons.Material.Rounded.Login">
+                    @_textTable.login
+                </MudNavLink>
             </NotAuthorized>
         </AuthorizeView>
     </MudNavMenu>
@@ -30,24 +32,27 @@
 @*  <form action="Account/Logout" method="post"> *@
 @*      <AntiforgeryToken/> *@
 @*      <button type="submit" class="nav-link" style="justify-content: start"> *@
-@*          <MudIcon Icon="@Icons.Material.Rounded.Logout" Class="mx-2"/> @_textTable.Logout *@
+@*          <MudIcon Icon="@Icons.Material.Rounded.Logout" Class="mx-2"/> Logout *@
 @*      </button> *@
 @*      <input type="hidden" name="ReturnUrl" value=""/> *@
 @*  </form> *@
 @* </div> *@
 
+@using Squadtalk.Client.Localization
+@implements IDisposable
+
 @inject NavigationManager NavigationManager
-@inject ILocalization Localization
+@inject LocalizedText LocalizedText
 
 @code {
     
     private string? _currentUrl;
 
-    private TextTable _textTable = default!;
+    private LocalizedText.TextTable _textTable = default!;
     
     protected override void OnInitialized()
     {
-        _textTable = Localization.GetTextTable(this);
+        _textTable = LocalizedText.GetTextTable(this);
 
         _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;

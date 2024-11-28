@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 
 <head>
     <title>Squadtalk</title>
@@ -33,14 +33,14 @@
     <script>navigator.serviceWorker.register('service-worker.js');</script>
     <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
     <script>
-        window.getPreferredLanguage = () => {
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-            }
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
 
-            const languageFromCookie = getCookie('UserLanguage');
+        window.getPreferredLanguage = () => {
+            const languageFromCookie = getCookie('ApplicationLanguage');
             if (languageFromCookie) {
                 return languageFromCookie;
             }
@@ -48,11 +48,26 @@
             return navigator.language || navigator.userLanguage;
         };
 
+        window.getPreferredTheme = () => {
+            const themeFromCookie = getCookie('ApplicationTheme');
+            if (themeFromCookie) {
+                return themeFromCookie;
+            }
+
+            return 'auto';
+        };
+
         window.savePreferredLanguage = (language) => {
-            document.cookie = `UserLanguage=${language}; SameSite=Strict`;
+            document.cookie = `ApplicationLanguage=${language}; SameSite=Strict`;
 
             console.log(document.cookie);
         }
+
+        window.savePreferredTheme = (theme) => {
+            document.cookie = `ApplicationTheme=${theme}; SameSite=Strict`;
+
+            console.log(document.cookie);
+        };
     </script>
 </body>
 

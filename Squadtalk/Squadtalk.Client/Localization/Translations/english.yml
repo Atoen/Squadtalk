@@ -1,0 +1,75 @@
+# General
+messages: Messages
+home: Home
+canvas: Canvas
+register: Register
+login: Log in
+logout: Log out
+users: Users
+settings: Settings
+
+# Home page
+hello_world: Hello world!
+welcome_to_app: Welcome to your new app.
+
+# Messages page
+create_channel_tooltip: Create new group
+create_channel_modal_title: New group
+create_group_chat_button: Create group
+select_user_placeholder: Select user
+loading_users: Loading...
+no_users_found: No users found
+
+# Settings page
+app_language: App language
+english: English 🇬🇧
+polish: Polish 🇵🇱
+
+# User status
+online: Online
+offline: Offline
+away: Away
+do_not_disturb: Do not disturb
+
+# Dialog
+dialog_cancel: Cancel
+dialog_no: No
+dialog_yes: Yes
+
+# Chat page
+start_call: Start call
+manage_channel: Manage group
+channel_beginning: This is the beginning of chat with
+
+# Chat message
+today_time_template: Today {0}
+yesterday_time_template: Yesterday {0}
+channel_created_template: {0} has created this group.
+channel_name_changed_template: {0} has changed this group's name {1}.
+call_started_template: {0} has started voice call.
+call_ended_template: {0} has started voice call that lasted {1}.
+
+# Call dialog
+call_incoming_template: Incoming call from {0}
+accept_call_dialog_message: Accept voice call?
+accept_call: Accept
+decline_call: Decline
+
+# Hide channel modal
+hide_channel_modal_title: Hide chat
+hide_channel_modal_body_template: Hiding this text channel will make it inaccessible unless you send or receive messages from {0}.
+hide_channel_modal_proceed: Are you sure you want to proceed?
+
+# Channel last message
+message_sent_info: sent
+message_you_sent_info: sent
+you: You
+file: file
+image: image
+video: video
+user_called_template: {0} started a voice call
+user_created_channel_template: {0} created this group
+user_changed_channel_name_template: {0} changed group name to {1}
+you_called: You started a voice call
+you_created_channel: You created this group
+you_changed_channel_name_template: You changed name of the group

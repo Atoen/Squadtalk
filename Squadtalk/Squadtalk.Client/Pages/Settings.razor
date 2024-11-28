@@ -1,7 +1,16 @@
 @page "/Settings"
 
+@using Shared.Data.Personalization
 @inherits LocalizedComponent
 
-<h3>@Table.Settings</h3>
+<h3>@Table.settings</h3>
 
-<LanguageSelector/>
+<MudMenu Label="@Table.app_language" Variant="Variant.Filled"
+         AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+    <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
+    <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
+</MudMenu>
+
+@inject IUserPreferencesService UserPreferences
+
+@* <LanguageSelector/> *@

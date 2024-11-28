@@ -6,12 +6,12 @@ namespace Squadtalk.Client.Components;
 public abstract class LocalizedComponent : ComponentBase
 {
     [Inject]
-    public ILocalization Localization { get; set; } = default!;
+    public LocalizedText LocalizedText { get; set; } = default!;
 
-    protected TextTable Table = default!;
+    protected LocalizedText.TextTable Table = default!;
 
     protected override void OnInitialized()
     {
-        Table = Localization.GetTextTable(this);
+        Table = LocalizedText.GetTextTable(this);
     }
 }

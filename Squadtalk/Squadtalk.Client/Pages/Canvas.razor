@@ -6,13 +6,13 @@
 @implements IAsyncDisposable
 @layout CanvasLayout
 
-<h3>@Table.CanvasRandomFill</h3>
+@* <h3>@Table.CanvasRandomFill</h3> *@
 
 <p>
     <canvas id="canvas-fill" width="600" height="600" style="border: 1px solid black"></canvas>
 </p>
 <p>
-    <Button @onclick="ToggleFilling" Color="ButtonColor.Success">@ButtonText</Button>
+    @* <Button @onclick="ToggleFilling" Color="ButtonColor.Success">@ButtonText</Button> *@
 </p>
 
 @inject IJSRuntime JSRuntime
@@ -20,7 +20,7 @@
 
 @code {
     private IJSObjectReference _jsModule = default!;
-    private string ButtonText => _filling ? Table.CanvasStop : Table.CanvasStart;
+    // private string ButtonText => _filling ? Table.CanvasStop : Table.CanvasStart;
     private bool _filling;
     
     private readonly Random _random = new();

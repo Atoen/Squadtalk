@@ -1,8 +1,5 @@
 @page "/Users"
 @using Microsoft.AspNetCore.Authorization
-@using Squadtalk.Client.Extensions
-@using Squadtalk.Client.Layout
-@using Squadtalk.Client.Localization
 
 @attribute [Authorize]
 @implements IDisposable
@@ -29,21 +26,21 @@
         }
 
         <div class="username">@user.Username</div>
-        <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div>
+        @* <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div> *@
     </div>
 }
 
 @inject IChatService ChatService
-@inject ILocalization Localization
+@* @inject ILocalization Localization *@
 @inject ICommunicationService CommunicationService
 
 @code {
 
-    private TextTable _table = default!;
+    // private TextTable _table = default!;
 
     protected override Task OnInitializedAsync()
     {
-        _table = Localization.GetTextTable(this);
+        // _table = Localization.GetTextTable(this);
         ChatService.ConnectedUsersChanged += StateHasChanged;
 
         return CommunicationService.ConnectAsync();

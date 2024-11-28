@@ -1,38 +1,37 @@
 using Microsoft.JSInterop;
-using Shared.Enums;
+using Shared.Data.Personalization;
 using Shared.Services;
-using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Services;
 
-public class BrowserLocalizationService : ILocalizationService
+public class BrowserLocalizationService
 {
     private readonly IJSInProcessRuntime _jsRuntime;
 
     public event Action? LanguageChanged;
 
     public string UserLanguage { get; private set; }
-    public SupportedLanguage SelectedLanguage { get; private set; }
+    public ApplicationLanguage SelectedLanguage { get; private set; }
 
     public BrowserLocalizationService(IJSRuntime jsRuntime)
     {
         _jsRuntime = (IJSInProcessRuntime) jsRuntime;
 
         UserLanguage = _jsRuntime.Invoke<string>("getPreferredLanguage");
-        SelectedLanguage = TextTable.ParseLanguageCode(UserLanguage);
+        // SelectedLanguage = TextTable.ParseLanguageCode(UserLanguage);
     }
 
-    public void SelectLanguage(SupportedLanguage language)
+    public void SelectLanguage(ApplicationLanguage language)
     {
-        var languageCode = TextTable.GetLanguageCode(language);
-        if (SelectedLanguage == language) return;
-
-        UserLanguage = languageCode;
-        SelectedLanguage = language;
-
-        SaveLanguageSelection(languageCode);
-
-        LanguageChanged?.Invoke();
+        // var languageCode = TextTable.GetLanguageCode(language);
+        // if (SelectedLanguage == language) return;
+        //
+        // UserLanguage = languageCode;
+        // SelectedLanguage = language;
+        //
+        // SaveLanguageSelection(languageCode);
+        //
+        // LanguageChanged?.Invoke();
     }
 
     private void SaveLanguageSelection(string languageCode)

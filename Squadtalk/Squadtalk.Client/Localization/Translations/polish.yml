@@ -1,0 +1,97 @@
+# General
+messages: Wiadomości
+home: Strona główna
+canvas: Płótno
+register: Rejestracja
+login: Logowanie
+logout: Wyloguj się
+users: Użytkownicy
+settings: Ustawienia
+
+# Home page
+hello_world: Witaj świecie!
+welcome_to_app: Witaj w swojej nowej aplikacji.
+
+# Messages page
+create_channel_tooltip: Utwórz nową grupę
+create_channel_modal_title: Nowa grupa
+create_group_chat_button: Utwórz grupę
+select_user_placeholder: Wybierz użytkownika
+loading_users: Ładowanie...
+no_users_found: Nie znaleziono użytkownika
+
+# Chat page
+start_call: Rozpocznij rozmowę
+manage_channel: Zarządzaj grupą
+channel_beginning: To jest początek wiadomości z
+
+# Settings page
+app_language: Język aplikacji
+english: Angielski 🇬🇧
+polish: Polski 🇵🇱
+
+# Canvas page
+canvas_random_fill: Losowe wypełniane
+canvas_simulation: Symulacja
+canvas_start: Start
+canvas_stop: Stop
+canvas_apply: Zastosuj
+
+# Simulation page
+simulation_rules: Zasady symulacji
+simulation_add_rule: Dodaj zasadę
+simulation_share_settings: Udostępnij ustawienia
+simulation_share_settings_failed: Błąd podczas udostępniania ustawień symulacji
+simulation_step: Opóźnienie pomiędzy krokami symulacji (ms)
+simulation_threshold: Próg zmiany koloru przez sąsiadów
+simulation_rules_copied: Link z ustawieniami skopiowany do schowka
+simulation_modal_title: Dodaj nową zasadę
+simulation_attacker: Atakujący
+simulation_attacked: Atakowany
+simulation_select_attacker: Wybierz atakującego
+simulation_select_attacked: Wybierz atakowanego
+
+# Dialog
+dialog_yes: Tak
+dialog_no: Nie
+dialog_cancel: Anuluj
+
+# User status
+online: Online
+offline: Offline
+away: Zaraz wracam
+do_not_disturb: Zajęty
+
+# Chat message
+today_time_template: Dzisiaj o {0}
+yesterday_time_template: Wczoraj o {0}
+channel_created_template: {0} utworzył(a) tę grupę.
+channel_name_changed_template: {0} zmienił(a) nazwę grupy na {1}.
+channel_name_cleared_template: {0} przywrócił(a) domyślną nazwę grupy.
+call_started_template: {0} rozpoczął(-ęła) rozmowę głosową.
+call_ended_template: {0} rozpoczął(-ęła) rozmowę głosową, która trwała {1}.
+
+# Call dialog
+accept_call_dialog_message: Zaakceptować połączenie głosowe?
+accept_call: Akceptuj
+decline_call: Odrzuć
+call_incoming_template: Połączenie przychodzące od {0}
+
+# Hide channel modal
+hide_channel_modal_title: Ukryj rozmowę
+hide_channel_modal_body_template: Ukrycie tej rozmowy sprawi, że będzie on niedostępny, chyba że wyślesz lub otrzymasz wiadomość od {0}.
+hide_channel_modal_proceed: Czy chcesz kontynuować?
+
+# Channel last message
+you: Ty
+message_sent_info: wysłał(a)
+message_you_sent_info: wysłano
+file: plik
+image: obraz
+video: wideo
+user_called_template: {0} rozpoczął rozmowę głosową
+user_created_channel_template: {0} utworzył grupę
+user_changed_channel_name_template: {0} zmienił nazwę grupy na {1}
+you_called: Rozpocząłeś(aś) rozmowę głosową
+you_created_channel: Utworzyłeś(-aś) grupę
+you_changed_channel_name_template: Zmieniłeś(-aś) nazwę grupy

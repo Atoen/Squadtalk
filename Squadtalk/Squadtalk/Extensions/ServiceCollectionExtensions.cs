@@ -119,8 +119,13 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<TusHelper>();
         serviceCollection.AddScoped<UserVolumeManager>();
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
-        serviceCollection.AddScoped<ILocalizationService, ServerLocalizationService>();
-        serviceCollection.AddScoped<ILocalization, Localization>();
+        // serviceCollection.AddScoped<ILocalizationService, ServerLocalizationService>();
+        // serviceCollection.AddScoped<ILocalization, Localization>();/
+
+        serviceCollection.AddScoped<IUserPreferencesService, ServerUserPreferencesService>();
+        serviceCollection.AddScoped<LocalizedText>();
+        serviceCollection.AddSingleton<ITextProviderManager, ServerTextProviderManager>();
+
         serviceCollection.AddScoped<IUserAuthenticationService, ServerUserAuthenticationService>();
         serviceCollection.AddScoped<IMediaQueryService, MediaQueryService>();
 

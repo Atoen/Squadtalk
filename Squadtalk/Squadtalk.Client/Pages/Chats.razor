@@ -1,6 +1,5 @@
 @page "/Chats"
 @using Microsoft.AspNetCore.Authorization
-@using Squadtalk.Client.Localization
 
 @attribute [Authorize]
 
@@ -45,7 +44,7 @@
 @inject IChatService ChatService
 @inject IChannelManager ChannelManager
 @inject ILogger<Chats> Logger
-@inject ILocalization Localization
+@* @inject ILocalization Localization *@
 @inject ICommunicationService CommunicationService
 
 @code {
@@ -53,11 +52,10 @@
     // private Modal _createGroupModal = default!;
     private readonly Dictionary<string, object> _modalParameters = [];
 
-    private TextTable _table = default!;
     protected override Task OnInitializedAsync()
     {
         Logger.LogInformation("Channel count: {Count}", ChatService.AllChannels.Count());
-        _table = Localization.GetTextTable(this);
+        // _table = Localization.GetTextTable(this);
 
         ChatService.ChannelChanged += StateHasChanged;
         ChatService.ConnectedUsersChanged += StateHasChanged;

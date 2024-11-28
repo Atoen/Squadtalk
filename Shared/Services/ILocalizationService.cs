@@ -1,4 +1,4 @@
-using Shared.Enums;
+using Shared.Data.Personalization;
 
 namespace Shared.Services;
 
@@ -6,9 +6,9 @@ public interface ILocalizationService
 {
     string UserLanguage { get; }
 
-    SupportedLanguage SelectedLanguage { get; }
+    ApplicationLanguage SelectedLanguage { get; }
 
-    void SelectLanguage(SupportedLanguage language);
+    void SelectLanguage(ApplicationLanguage language);
 
     event Action? LanguageChanged;
 }

@@ -1,13 +1,12 @@
-﻿@using MudBlazor
+﻿@using Shared.Data.Personalization
 @using Shared.Data.TypedIds
 @using Shared.Models
 @using Squadtalk.Client.Components
-@using Squadtalk.Client.Localization
 
 @inherits LayoutComponentBase
 
-<MudThemeProvider @bind-IsDarkMode="@_isDarkTheme" Theme="_theme"/>
-<MudSwitch @bind-Value="_isDarkTheme" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode"/>
+<MudThemeProvider IsDarkMode="@_isDarkTheme" Theme="_theme"/>
+<MudSwitch Value="_isDarkTheme" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode" ValueChanged="ThemeChanged"/>
 
 <MudPopoverProvider />
 <MudDialogProvider />
@@ -36,7 +35,7 @@
 
 @inject ICommunicationService CommunicationService
 @inject IVoiceChatService VoiceChatService
-@inject ILocalization Localization
+@inject IUserPreferencesService UserPreferences
 @inject IUserAuthenticationService UserAuthenticationService
 @inject ILogger<MainLayout> Logger
 @inject PersistentComponentState PersistentComponentState
@@ -45,8 +44,15 @@
 
     private PersistingComponentStateSubscription _subscription;
 
-    private MudTheme _theme = new();
+    private readonly MudTheme _theme = new();
     private bool _isDarkTheme;
+
+    private void ThemeChanged(bool useDarkTheme)
+    {
+        var theme = useDarkTheme ? ApplicationTheme.Dark : ApplicationTheme.Light;
+        UserPreferences.ChangeTheme(theme);
+        _isDarkTheme = useDarkTheme;
+    }
 
     protected override Task OnInitializedAsync()
     {
@@ -54,11 +60,14 @@
 
         VoiceChatService.CallIncoming += CallIncoming;
 
+        var theme = UserPreferences.Theme;
+        _isDarkTheme = theme == ApplicationTheme.Dark;
+
+
         return UserAuthenticationService.IsAuthenticated
             ? CommunicationService.ConnectAsync()
             : Task.CompletedTask;
     }
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

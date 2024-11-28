@@ -3,18 +3,20 @@
 
 <PageTitle>Squadtalk | Home</PageTitle>
 
-<h1>@_textTable.HelloWorld</h1>
+<h1>@Table.R.hello_world</h1>
 
-@_textTable.WelcomeToApp
+@Table.R.welcome_to_app
 
-@inject ILocalization Localization
-
-@code {
-
-    private TextTable _textTable = default!;
-
-    protected override void OnInitialized()
-    {
-        _textTable = Localization.GetTextTable(this);
-    }
+@if (!RendererInfo.IsInteractive)
+{
+    <p>Not interactive</p>
 }
+else
+{
+    <p>Interactive</p>
+}
+
+<p>@RendererInfo.Name</p>
+
+
+@inject LocalizedText Table

@@ -5,7 +5,7 @@ using MudBlazor.Services;
 using RestSharp;
 using Shared.Services;
 using Squadtalk.Client.Localization;
-using Squadtalk.Client.Services;
+using Squadtalk.Client.Services;;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -36,9 +36,14 @@ builder.Services.AddScoped<IChannelManager, ChannelManager>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
 builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();
-builder.Services.AddScoped<ILocalizationService, BrowserLocalizationService>();
 
-builder.Services.AddScoped<ILocalization, Localization>();
+builder.Services.AddScoped<LocalizedText>();
+builder.Services.AddScoped<ITextProviderManager, BrowserTextProviderManager>();
+builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
+
+// builder.Services.AddScoped<ILocalizationService, BrowserLocalizationService>();
+
+// builder.Services.AddScoped<ILocalization, Localization>();
 builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();
 
 builder.Services.AddBlazoredLocalStorage();

@@ -23,11 +23,17 @@
     <PackageReference Include="MudBlazor" Version="7.15.0" />
     <PackageReference Include="RestSharp" Version="112.1.0" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.0" />
-    <PackageReference Include="TextLocalizer" Version="1.0.1" />
+    <PackageReference Include="TextLocalizer" Version="10.0.6" />
+
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Localization\Translations\english.yml" />
+    <AdditionalFiles Include="Localization\Translations\polish.yml" />
   </ItemGroup>
 
   <ItemGroup>

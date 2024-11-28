@@ -1,56 +1,51 @@
-using System.Web;
-using Microsoft.AspNetCore.Http.Extensions;
-
 namespace Squadtalk.Services;
 
-public class LocalizationMiddleware(RequestDelegate next)
+public class LocalizationMiddleware(RequestDelegate next, ILogger<LocalizationMiddleware> logger)
 {
-    public async Task InvokeAsync(HttpContext context)
+    public const string ContextLanguageItem = "ApplicationLanguage";
+    public const string CookieLanguageName = ContextLanguageItem;
+
+    public const string ContextThemeItem = "ApplicationTheme";
+    public const string CookieThemeName = ContextThemeItem;
+
+    public Task InvokeAsync(HttpContext context)
     {
-        if (context.Request.Path.ToString().Contains("_framework"))
+        var accept = context.Request.Headers.Accept;
+
+        // filtering out requests not made by the user directly
+        if (accept is not [ { } first, .. ] || !first.Contains("text/html"))
         {
-            await next(context);
-            return;
+            return next(context);
         }
 
-        var language = GetUserLanguage(context);
-        if (language is not null)
-        {
-            context.Items[ServerLocalizationService.ContextLanguageItem] = language;
-        }
+        StoreUserPreferences(context, logger);
 
-        await next(context);
+        return next(context);
     }
 
-    private string? GetUserLanguage(HttpContext context)
+    private static void StoreUserPreferences(HttpContext context, ILogger<LocalizationMiddleware> logger)
     {
-        var languageQuery = context.Request.Query[ServerLocalizationService.LanguageQueryParam].ToString();
-        if (!string.IsNullOrWhiteSpace(languageQuery))
+        var themeCookie = context.Request.Cookies[CookieThemeName];
+        if (!string.IsNullOrWhiteSpace(themeCookie))
         {
-            context.Response.Cookies.Append(ServerLocalizationService.LanguageCookieName, languageQuery);
-
-            var uri = context.Request.GetEncodedUrl();
-            var uriBuilder = new UriBuilder(uri);
-
-            var query = HttpUtility.ParseQueryString(uriBuilder.Query);
-            query.Remove(ServerLocalizationService.LanguageQueryParam);
-            uriBuilder.Query = query.ToString();
-
-            context.Response.Redirect(uriBuilder.ToString());
-
-            return languageQuery;
+            logger.LogInformation("Stored theme: {Theme}", themeCookie);
+            context.Items[ContextThemeItem] = themeCookie;
         }
 
-        var languageCookie = context.Request.Cookies[ServerLocalizationService.LanguageCookieName];
+        var languageCookie = context.Request.Cookies[CookieLanguageName];
         if (!string.IsNullOrWhiteSpace(languageCookie))
         {
-            return languageCookie;
+            logger.LogInformation("Stored languge: {Language}", languageCookie);
+            context.Items[ContextLanguageItem] = languageCookie;
         }
-
-        var acceptLanguage = context.Request.Headers.AcceptLanguage.ToString();
-        return !string.IsNullOrWhiteSpace(acceptLanguage)
-            ? acceptLanguage.Split(',').FirstOrDefault()
-            : null;
+        else
+        {
+            var acceptLanguage = context.Request.Headers.AcceptLanguage.ToString();
+            if (!string.IsNullOrWhiteSpace(acceptLanguage) && acceptLanguage.Split(',').FirstOrDefault() is { } first)
+            {
+                context.Items[ContextLanguageItem] = first;
+            }
+        }
     }
 }
 

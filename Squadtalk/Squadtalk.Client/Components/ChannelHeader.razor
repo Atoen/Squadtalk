@@ -14,18 +14,18 @@
             <div class="d-flex ms-auto order-3">
                 @if (!VoiceChatService.ActiveCallOnCurrentChannel)
                 {
-                    <Button @onclick="StartVoiceCall" TooltipTitle="@_table.StartCall"
-                            TooltipPlacement="TooltipPlacement.Bottom">
-                        <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x5"/>
-                    </Button>
+                    @* <Button @onclick="StartVoiceCall" TooltipTitle="@_table.StartCall" *@
+                    @*         TooltipPlacement="TooltipPlacement.Bottom"> *@
+                    @*     <Icon Name="IconName.TelephoneOutboundFill" Size="IconSize.x5"/> *@
+                    @* </Button> *@
                 }
 
                 @if (Channel is GroupChatModel)
                 {
-                    <Button @onclick="ManageChannel" TooltipTitle="@_table.ManageChannel"
-                            TooltipPlacement="TooltipPlacement.Bottom">
-                        <Icon Name="IconName.GearFill" Size="IconSize.x5"/>
-                    </Button>
+                    @* <Button @onclick="ManageChannel" TooltipTitle="@_table.ManageChannel" *@
+                    @*         TooltipPlacement="TooltipPlacement.Bottom"> *@
+                    @*     <Icon Name="IconName.GearFill" Size="IconSize.x5"/> *@
+                    @* </Button> *@
                 }
             </div>
         }
@@ -38,7 +38,7 @@
 
 @inject IChatService ChatService
 @inject IVoiceChatService VoiceChatService
-@inject ILocalization Localization
+@* @inject ILocalization Localization *@
 @inject ILogger<ChannelHeader> Logger
 
 @code {
@@ -48,7 +48,7 @@
     // private Modal _modal = default!;
     private readonly Dictionary<string, object> _modalParameters = new();
 
-    private TextTable _table = default!;
+    // private TextTable _table = default!;
     private UserStatus _lastStatus;
 
     private Task StartVoiceCall()
@@ -67,7 +67,7 @@
 
     protected override void OnInitialized()
     {
-        _table = Localization.GetTextTable(this);
+        // _table = Localization.GetTextTable(this);
         _lastStatus = Channel.Status;
 
         _modalParameters[nameof(ManageGroupModal.GroupNameChanged)] =
