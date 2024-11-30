@@ -1,10 +1,12 @@
-﻿@using Shared.Data.TypedIds
+﻿@using Shared.Data.Personalization
+@using Shared.Data.TypedIds
 @using Shared.Models
 @using Squadtalk.Client.Components
+@using Squadtalk.Client.Palettes
 
 @inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode="@_isDarkTheme" />
+<MudThemeProvider IsDarkMode="_isDarkTheme" Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -43,12 +45,15 @@
 
     private bool _isDarkTheme;
 
+    private readonly MudTheme _theme = new();
+
     protected override Task OnInitializedAsync()
     {
         _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
 
         VoiceChatService.CallIncoming += CallIncoming;
         UserPreferences.UseDarkModeChanged += UseDarkModeChanged;
+        UserPreferences.PaletteChanged += PaletteChanged;
 
         _isDarkTheme = UserPreferences.UseDarkMode;
 
@@ -94,6 +99,22 @@
         }
     }
 
+    private void PaletteChanged()
+    {
+        var (light, dark) = UserPreferences.Palette.Value switch
+        {
+            ApplicationPalette.OrangeValue => (new OrangeLightPalette(), new OrangeDarkPalette()),
+            ApplicationPalette.BlueValue => (new BlueLightPalette(), new BlueDarkPalette()),
+            ApplicationPalette.GreenValue => (new GreenLightPalette(), new GreenDarkPalette()),
+            _ => (new PaletteLight(), new PaletteDark()),
+        };
+
+        _theme.PaletteLight = light;
+        _theme.PaletteDark = dark;
+
+        StateHasChanged();
+    }
+
     private async Task CallAcceptedDecisionCallback(bool accepted, ChannelId channelId)
     {
         // await _callIncomingModal.HideAsync();
@@ -113,5 +134,6 @@
         _subscription.Dispose();
         VoiceChatService.CallIncoming -= CallIncoming;
         UserPreferences.UseDarkModeChanged -= UseDarkModeChanged;
+        UserPreferences.PaletteChanged -= PaletteChanged;
     }
 }

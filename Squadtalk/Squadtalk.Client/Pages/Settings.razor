@@ -3,13 +3,13 @@
 @using Shared.Data.Personalization
 @inherits LocalizedComponent
 
-<h3>@Table.settings</h3>
+<h3 class="primary">@Table.settings</h3>
 
 <div class="settings-row">
-    <div class="flex-1">
+    <div class="flex-1 mud-text-primary">
         @Table.app_language
     </div>
-    <MudMenu Label="@SelectedLanguage" Variant="Variant.Outlined"
+    <MudMenu Label="@SelectedLanguage" Variant="Variant.Outlined" Ripple="false" Color="Color.Primary"
              AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
         <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
         <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
@@ -17,10 +17,10 @@
 </div>
 
 <div class="settings-row">
-    <div class="flex-1">
+    <div class="flex-1 mud-text-primary">
         @Table.app_theme
     </div>
-    <MudMenu Label="@SelectedTheme" Variant="Variant.Outlined"
+    <MudMenu Label="@SelectedTheme" Variant="Variant.Outlined" Ripple="false" Color="Color.Primary"
              AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
         <MudMenuItem
             Icon="@Icons.Material.Rounded.AutoMode"
@@ -36,6 +36,39 @@
             Icon="@Icons.Material.Rounded.DarkMode"
             OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Dark)">
             @Table.theme_dark
+        </MudMenuItem>
+    </MudMenu>
+</div>
+
+<div class="settings-row">
+    <div class="flex-1 mud-text-primary">
+        @Table.app_palette
+    </div>
+    <MudMenu Label="@SelectedPalette" Variant="Variant.Outlined" Ripple="false" Color="Color.Primary"
+             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+        <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Default)">
+            <div class="d-flex gap-1">
+                <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Purple.Default}")"/>
+                @Table.palette_default
+            </div>
+        </MudMenuItem>
+        <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Orange)">
+            <div class="d-flex gap-1">
+                <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Orange.Default}")"/>
+                @Table.palette_orange
+            </div>
+        </MudMenuItem>
+        <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Blue)">
+            <div class="d-flex gap-1">
+                <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Blue.Default}")"/>
+                @Table.palette_blue
+            </div>
+        </MudMenuItem>
+        <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Green)">
+            <div class="d-flex gap-1">
+                <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Green.Default}")"/>
+                @Table.palette_green
+            </div>
         </MudMenuItem>
     </MudMenu>
 </div>
@@ -56,6 +89,15 @@
         ApplicationTheme.AutoValue => Table.theme_auto,
         ApplicationTheme.LightValue => Table.theme_light,
         ApplicationTheme.DarkValue => Table.theme_dark,
+        _ => string.Empty
+    };
+
+    private string SelectedPalette => UserPreferences.Palette.Value switch
+    {
+        ApplicationPalette.DefaultValue => Table.palette_default,
+        ApplicationPalette.OrangeValue => Table.palette_orange,
+        ApplicationPalette.BlueValue => Table.palette_blue,
+        ApplicationPalette.GreenValue => Table.palette_green,
         _ => string.Empty
     };
 }

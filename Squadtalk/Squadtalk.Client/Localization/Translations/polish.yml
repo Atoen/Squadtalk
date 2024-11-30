@@ -33,6 +33,11 @@ app_theme: Motyw aplikacji
 theme_auto: Automatyczny
 theme_light: Jasny
 theme_dark: Ciemny
+app_palette: Paleta kolorów
+palette_default: Domyślna
+palette_orange: Pomarańczowa
+palette_blue: Niebieska
+palette_green: Zielona
 
 # Canvas page
 canvas_random_fill: Losowe wypełniane

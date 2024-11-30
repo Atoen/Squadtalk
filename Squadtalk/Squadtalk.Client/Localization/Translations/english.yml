@@ -8,6 +8,8 @@ logout: Log out
 users: Users
 settings: Settings
 
+unexpected_error: An unhandled error has occurred.
+
 # Home page
 hello_world: Hello world!
 welcome_to_app: Welcome to your new app.
@@ -28,6 +30,11 @@ app_theme: App theme
 theme_auto: Automatic
 theme_light: Light
 theme_dark: Dark
+app_palette: Color palette
+palette_default: Default
+palette_orange: Orange
+palette_blue: Blue
+palette_green: Green
 
 # User status
 online: Online

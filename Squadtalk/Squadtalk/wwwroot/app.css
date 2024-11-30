@@ -2,6 +2,10 @@
     --call-info-spacing: 0px;
 }
 
+.primary {
+    color: var(--mud-palette-primary);
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }

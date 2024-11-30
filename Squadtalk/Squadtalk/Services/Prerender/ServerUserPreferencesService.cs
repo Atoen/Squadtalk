@@ -9,11 +9,13 @@ public class ServerUserPreferencesService : IUserPreferencesService
 
     public ApplicationLanguage Language { get; private set; }
     public ApplicationTheme Theme { get; private set; }
+    public ApplicationPalette Palette { get; private set; } = ApplicationPalette.Default;
     public bool UseDarkMode { get; private set; }
 
     public event Action? LanguageChanged;
     public event Action? ThemeChanged;
     public event Action? UseDarkModeChanged;
+    public event Action? PaletteChanged;
 
     public ServerUserPreferencesService(IHttpContextAccessor contextAccessor)
     {
@@ -37,6 +39,7 @@ public class ServerUserPreferencesService : IUserPreferencesService
         Theme = theme;
         UseDarkMode = ShouldUseDarkMode(theme);
     }
+    public void ChangePalette(ApplicationPalette palette) => Palette = palette;
 
     private bool ShouldUseDarkMode(ApplicationTheme theme)
     {

@@ -8,6 +8,8 @@ public interface IUserPreferencesService
 
     ApplicationTheme Theme { get; }
 
+    ApplicationPalette Palette { get; }
+
     bool UseDarkMode { get; }
 
     event Action? LanguageChanged;
@@ -16,7 +18,11 @@ public interface IUserPreferencesService
 
     event Action? UseDarkModeChanged;
 
+    event Action? PaletteChanged;
+
     void ChangeLanguage(ApplicationLanguage language);
 
     void ChangeTheme(ApplicationTheme theme);
+
+    void ChangePalette(ApplicationPalette palette);
 }

@@ -57,13 +57,27 @@
             return null;
         };
 
-        window.savePreferredLanguage = (language) => {
-            document.cookie = `ApplicationLanguage=${language}; Max-Age=31536000; SameSite=Strict`;
+        window.getPreferences = () => {
+            const languageFromCookie = getCookie('ApplicationLanguage') || navigator.language || navigator.userLanguage;
+            const themeFromCookie = getCookie('ApplicationTheme') || null;
+            const paletteFromCookie = getCookie('ApplicationPalette') || null;
+
+            return {
+                language: languageFromCookie,
+                theme: themeFromCookie,
+                palette: paletteFromCookie
+            }
         }
 
-        window.savePreferredTheme = (theme) => {
+        window.savePreferences = (preferences) => {
+            const language = preferences.language;
+            const theme = preferences.theme;
+            const palette = preferences.palette;
+
+            document.cookie = `ApplicationLanguage=${language}; Max-Age=31536000; SameSite=Strict`;
             document.cookie = `ApplicationTheme=${theme}; Max-Age=31536000; SameSite=Strict`;
-        };
+            document.cookie = `ApplicationPalette=${palette}; Max-Age=31536000; SameSite=Strict`;
+        }
 
         window.saveAutoTheme = (useDark) => {
             document.cookie = `UseDarkTheme=${useDark}; Max-Age=31536000; SameSite=Strict`
