@@ -1,13 +1,10 @@
-﻿@using Shared.Data.Personalization
-@using Shared.Data.TypedIds
+﻿@using Shared.Data.TypedIds
 @using Shared.Models
 @using Squadtalk.Client.Components
 
 @inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode="@_isDarkTheme" Theme="_theme"/>
-<MudSwitch Value="_isDarkTheme" Color="Color.Primary" Class="ma-4" T="bool" Label="Toggle Light/Dark Mode" ValueChanged="ThemeChanged"/>
-
+<MudThemeProvider IsDarkMode="@_isDarkTheme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -40,29 +37,20 @@
 @inject ILogger<MainLayout> Logger
 @inject PersistentComponentState PersistentComponentState
 
-@code {
-
+@code
+{
     private PersistingComponentStateSubscription _subscription;
 
-    private readonly MudTheme _theme = new();
     private bool _isDarkTheme;
-
-    private void ThemeChanged(bool useDarkTheme)
-    {
-        var theme = useDarkTheme ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        UserPreferences.ChangeTheme(theme);
-        _isDarkTheme = useDarkTheme;
-    }
 
     protected override Task OnInitializedAsync()
     {
         _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
 
         VoiceChatService.CallIncoming += CallIncoming;
+        UserPreferences.UseDarkModeChanged += UseDarkModeChanged;
 
-        var theme = UserPreferences.Theme;
-        _isDarkTheme = theme == ApplicationTheme.Dark;
-
+        _isDarkTheme = UserPreferences.UseDarkMode;
 
         return UserAuthenticationService.IsAuthenticated
             ? CommunicationService.ConnectAsync()
@@ -96,6 +84,16 @@
         //     parameters: _modalParameters);
     }
 
+    private void UseDarkModeChanged()
+    {
+        var useDarkMode = UserPreferences.UseDarkMode;
+        if (useDarkMode != _isDarkTheme)
+        {
+            _isDarkTheme = useDarkMode;
+            StateHasChanged();
+        }
+    }
+
     private async Task CallAcceptedDecisionCallback(bool accepted, ChannelId channelId)
     {
         // await _callIncomingModal.HideAsync();
@@ -114,5 +112,6 @@
     {
         _subscription.Dispose();
         VoiceChatService.CallIncoming -= CallIncoming;
+        UserPreferences.UseDarkModeChanged -= UseDarkModeChanged;
     }
 }

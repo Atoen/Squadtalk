@@ -27,8 +27,12 @@ channel_beginning: To jest początek wiadomości z
 
 # Settings page
 app_language: Język aplikacji
-english: Angielski 🇬🇧
-polish: Polski 🇵🇱
+english: 🇬🇧 Angielski
+polish: 🇵🇱 Polski
+app_theme: Motyw aplikacji
+theme_auto: Automatyczny
+theme_light: Jasny
+theme_dark: Ciemny
 
 # Canvas page
 canvas_random_fill: Losowe wypełniane

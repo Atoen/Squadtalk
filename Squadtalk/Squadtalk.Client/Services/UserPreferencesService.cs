@@ -12,15 +12,19 @@ public class UserPreferencesService : IUserPreferencesService
     private const string GetThemeFunctionName = "getPreferredTheme";
     private const string SaveThemeFunctionName = "savePreferredTheme";
 
+    private const string SaveAutoThemeFunctionName = "saveAutoTheme";
+
+    private const string GetPrefersDarkModeFunctionName = "darkModeChange";
+
     private readonly IJSInProcessRuntime _jsRuntime;
 
     public ApplicationLanguage Language { get; set; }
-
     public ApplicationTheme Theme { get; set; }
+    public bool UseDarkMode { get; private set; }
 
     public event Action? LanguageChanged;
-
     public event Action? ThemeChanged;
+    public event Action? UseDarkModeChanged;
 
     public UserPreferencesService(IJSRuntime jsRuntime)
     {
@@ -31,6 +35,7 @@ public class UserPreferencesService : IUserPreferencesService
 
         var userTheme = _jsRuntime.Invoke<string>(GetThemeFunctionName);
         Theme = ApplicationTheme.ParseValue(userTheme);
+        UseDarkMode = ShouldUseDarkMode(Theme);
     }
 
     public void ChangeLanguage(ApplicationLanguage language)
@@ -49,7 +54,21 @@ public class UserPreferencesService : IUserPreferencesService
 
         _jsRuntime.InvokeVoid(SaveThemeFunctionName, theme.Value);
         Theme = theme;
-
         ThemeChanged?.Invoke();
+
+        var useDarkMode = ShouldUseDarkMode(theme);
+        if (UseDarkMode == useDarkMode) return;
+
+        _jsRuntime.InvokeVoid(SaveAutoThemeFunctionName, useDarkMode);
+
+        UseDarkMode = useDarkMode;
+        UseDarkModeChanged?.Invoke();
     }
+
+    private bool ShouldUseDarkMode(ApplicationTheme theme) => theme.Value switch
+    {
+        ApplicationTheme.LightValue => false,
+        ApplicationTheme.DarkValue => true,
+        _ => _jsRuntime.Invoke<bool>(GetPrefersDarkModeFunctionName)
+    };
 }

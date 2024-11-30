@@ -5,12 +5,57 @@
 
 <h3>@Table.settings</h3>
 
-<MudMenu Label="@Table.app_language" Variant="Variant.Filled"
-         AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-    <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
-    <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
-</MudMenu>
+<div class="settings-row">
+    <div class="flex-1">
+        @Table.app_language
+    </div>
+    <MudMenu Label="@SelectedLanguage" Variant="Variant.Outlined"
+             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+        <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
+        <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
+    </MudMenu>
+</div>
+
+<div class="settings-row">
+    <div class="flex-1">
+        @Table.app_theme
+    </div>
+    <MudMenu Label="@SelectedTheme" Variant="Variant.Outlined"
+             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+        <MudMenuItem
+            Icon="@Icons.Material.Rounded.AutoMode"
+            OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Auto)">
+            @Table.theme_auto
+        </MudMenuItem>
+        <MudMenuItem
+            Icon="@Icons.Material.Rounded.LightMode"
+            OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Light)">
+            @Table.theme_light
+        </MudMenuItem>
+        <MudMenuItem
+            Icon="@Icons.Material.Rounded.DarkMode"
+            OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Dark)">
+            @Table.theme_dark
+        </MudMenuItem>
+    </MudMenu>
+</div>
 
 @inject IUserPreferencesService UserPreferences
 
-@* <LanguageSelector/> *@
+@code
+{
+    private string SelectedLanguage => UserPreferences.Language.Tag switch
+    {
+        ApplicationLanguage.EnglishTag => Table.english,
+        ApplicationLanguage.PolishTag => Table.polish,
+        _ => string.Empty
+    };
+
+    private string SelectedTheme => UserPreferences.Theme.Value switch
+    {
+        ApplicationTheme.AutoValue => Table.theme_auto,
+        ApplicationTheme.LightValue => Table.theme_light,
+        ApplicationTheme.DarkValue => Table.theme_dark,
+        _ => string.Empty
+    };
+}

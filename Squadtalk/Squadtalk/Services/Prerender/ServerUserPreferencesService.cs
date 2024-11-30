@@ -9,9 +9,11 @@ public class ServerUserPreferencesService : IUserPreferencesService
 
     public ApplicationLanguage Language { get; private set; }
     public ApplicationTheme Theme { get; private set; }
+    public bool UseDarkMode { get; private set; }
 
     public event Action? LanguageChanged;
     public event Action? ThemeChanged;
+    public event Action? UseDarkModeChanged;
 
     public ServerUserPreferencesService(IHttpContextAccessor contextAccessor)
     {
@@ -24,11 +26,28 @@ public class ServerUserPreferencesService : IUserPreferencesService
         Theme = GetContextValue(LocalizationMiddleware.ContextThemeItem) is { } theme
             ? ApplicationTheme.ParseValue(theme)
             : ApplicationTheme.Default;
+
+        UseDarkMode = ShouldUseDarkMode(Theme);
     }
 
     public void ChangeLanguage(ApplicationLanguage language) => Language = language;
 
-    public void ChangeTheme(ApplicationTheme theme) => Theme = theme;
+    public void ChangeTheme(ApplicationTheme theme)
+    {
+        Theme = theme;
+        UseDarkMode = ShouldUseDarkMode(theme);
+    }
+
+    private bool ShouldUseDarkMode(ApplicationTheme theme)
+    {
+        if (theme == ApplicationTheme.Light) return false;
+        if (theme == ApplicationTheme.Dark) return true;
+
+        var stored = GetContextValue(LocalizationMiddleware.ContextUseDarkThemeItem);
+        var success = bool.TryParse(stored, out var useDarkTheme);
+
+        return success && useDarkTheme;
+    }
 
     private string? GetContextValue(string name)
     {

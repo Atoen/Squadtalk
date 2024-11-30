@@ -1,47 +1,59 @@
+using Shared.Data.Personalization;
+
 namespace Squadtalk.Services;
 
-public class LocalizationMiddleware(RequestDelegate next, ILogger<LocalizationMiddleware> logger)
+public class LocalizationMiddleware(RequestDelegate next)
 {
     public const string ContextLanguageItem = "ApplicationLanguage";
-    public const string CookieLanguageName = ContextLanguageItem;
+    private const string CookieLanguageName = ContextLanguageItem;
 
     public const string ContextThemeItem = "ApplicationTheme";
-    public const string CookieThemeName = ContextThemeItem;
+    private const string CookieThemeName = ContextThemeItem;
+
+    public const string ContextUseDarkThemeItem = "UseDarkTheme";
+    private const string CookieUseDarkThemeName = ContextUseDarkThemeItem;
 
     public Task InvokeAsync(HttpContext context)
     {
-        var accept = context.Request.Headers.Accept;
+        var acceptHeader = context.Request.Headers.Accept;
 
-        // filtering out requests not made by the user directly
-        if (accept is not [ { } first, .. ] || !first.Contains("text/html"))
+        // filtering out requests not made directly by the user
+        if (acceptHeader is not [ { } first, .. ] || !first.StartsWith("text/html", StringComparison.Ordinal))
         {
             return next(context);
         }
 
-        StoreUserPreferences(context, logger);
+        StoreUserPreferences(context);
 
         return next(context);
     }
 
-    private static void StoreUserPreferences(HttpContext context, ILogger<LocalizationMiddleware> logger)
+    private static void StoreUserPreferences(HttpContext context)
     {
         var themeCookie = context.Request.Cookies[CookieThemeName];
         if (!string.IsNullOrWhiteSpace(themeCookie))
         {
-            logger.LogInformation("Stored theme: {Theme}", themeCookie);
             context.Items[ContextThemeItem] = themeCookie;
+        }
+
+        if (themeCookie == ApplicationTheme.AutoValue)
+        {
+            var darkThemeCookie = context.Request.Cookies[CookieUseDarkThemeName];
+            if (!string.IsNullOrWhiteSpace(darkThemeCookie))
+            {
+                context.Items[ContextUseDarkThemeItem] = darkThemeCookie;
+            }
         }
 
         var languageCookie = context.Request.Cookies[CookieLanguageName];
         if (!string.IsNullOrWhiteSpace(languageCookie))
         {
-            logger.LogInformation("Stored languge: {Language}", languageCookie);
             context.Items[ContextLanguageItem] = languageCookie;
         }
         else
         {
             var acceptLanguage = context.Request.Headers.AcceptLanguage.ToString();
-            if (!string.IsNullOrWhiteSpace(acceptLanguage) && acceptLanguage.Split(',').FirstOrDefault() is { } first)
+            if (!string.IsNullOrWhiteSpace(acceptLanguage) && acceptLanguage.Split(',', 2).FirstOrDefault() is { } first)
             {
                 context.Items[ContextLanguageItem] = first;
             }

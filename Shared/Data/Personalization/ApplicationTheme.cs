@@ -10,7 +10,7 @@ public sealed record ApplicationTheme
     public static readonly ApplicationTheme Light = new(LightValue);
     public static readonly ApplicationTheme Dark = new(DarkValue);
 
-    public static readonly ApplicationTheme Default = Auto;
+    public static readonly ApplicationTheme Default = Light;
 
     public string Value { get; }
 

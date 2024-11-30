@@ -22,8 +22,12 @@ no_users_found: No users found
 
 # Settings page
 app_language: App language
-english: English 🇬🇧
-polish: Polish 🇵🇱
+english: 🇬🇧 English
+polish: 🇵🇱 Polish
+app_theme: App theme
+theme_auto: Automatic
+theme_light: Light
+theme_dark: Dark
 
 # User status
 online: Online

@@ -8,9 +8,13 @@ public interface IUserPreferencesService
 
     ApplicationTheme Theme { get; }
 
+    bool UseDarkMode { get; }
+
     event Action? LanguageChanged;
 
     event Action? ThemeChanged;
+
+    event Action? UseDarkModeChanged;
 
     void ChangeLanguage(ApplicationLanguage language);
 

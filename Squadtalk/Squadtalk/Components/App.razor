@@ -54,20 +54,20 @@
                 return themeFromCookie;
             }
 
-            return 'auto';
+            return null;
         };
 
         window.savePreferredLanguage = (language) => {
-            document.cookie = `ApplicationLanguage=${language}; SameSite=Strict`;
-
-            console.log(document.cookie);
+            document.cookie = `ApplicationLanguage=${language}; Max-Age=31536000; SameSite=Strict`;
         }
 
         window.savePreferredTheme = (theme) => {
-            document.cookie = `ApplicationTheme=${theme}; SameSite=Strict`;
-
-            console.log(document.cookie);
+            document.cookie = `ApplicationTheme=${theme}; Max-Age=31536000; SameSite=Strict`;
         };
+
+        window.saveAutoTheme = (useDark) => {
+            document.cookie = `UseDarkTheme=${useDark}; Max-Age=31536000; SameSite=Strict`
+        }
     </script>
 </body>
 
