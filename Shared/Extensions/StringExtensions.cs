@@ -5,6 +5,8 @@ namespace Shared.Extensions;
 
 public static class StringExtensions
 {
+    private const int MaxSpanLength = 128;
+
     public static string ToBase64(this string text, bool urlEncode = false)
     {
         ArgumentNullException.ThrowIfNull(text);
@@ -18,7 +20,9 @@ public static class StringExtensions
         }
         
         var sourceSpan = encoded.AsSpan();
-        Span<char> destinationSpan = stackalloc char[encoded.Length];
+        var destinationSpan = encoded.Length <= MaxSpanLength
+            ? stackalloc char[encoded.Length]
+            : new char[encoded.Length];
  
         sourceSpan.Replace(destinationSpan, '/', '_');
         destinationSpan.Replace('+', '-');
@@ -33,7 +37,9 @@ public static class StringExtensions
         if (urlEncoded)
         {
             var sourceSpan = encoded.AsSpan();
-            Span<char> destinationSpan = stackalloc char[encoded.Length];
+            var destinationSpan = encoded.Length <= MaxSpanLength
+                ? stackalloc char[encoded.Length]
+                : new char[encoded.Length];
             
             sourceSpan.Replace(destinationSpan, '_', '/');
             destinationSpan.Replace('-', '+');
@@ -51,19 +57,23 @@ public static class StringExtensions
     {
         ArgumentNullException.ThrowIfNull(encoded);
 
-        Span<byte> bytes = stackalloc byte[encoded.Length];
-        
         if (urlEncoded)
         {
             var sourceSpan = encoded.AsSpan();
-            Span<char> destinationSpan = stackalloc char[encoded.Length];
-            
+            var destinationSpan = encoded.Length <= MaxSpanLength
+                ? stackalloc char[encoded.Length]
+                : new char[encoded.Length];
+
             sourceSpan.Replace(destinationSpan, '_', '/');
             destinationSpan.Replace('-', '+');
 
             encoded = destinationSpan.ToString();
         }
-        
+
+        var bytes = encoded.Length >= MaxSpanLength
+            ? stackalloc byte[encoded.Length]
+            : new byte[encoded.Length];
+
         var valid = Convert.TryFromBase64String(encoded, bytes, out var length);
 
         text = valid ? Encoding.UTF8.GetString(bytes[..length]) : null;

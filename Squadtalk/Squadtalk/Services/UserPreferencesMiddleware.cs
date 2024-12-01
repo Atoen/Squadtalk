@@ -1,9 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
-using Shared.Data.Personalization;
 
 namespace Squadtalk.Services;
 
-public class LocalizationMiddleware(RequestDelegate next)
+public class UserPreferencesMiddleware(RequestDelegate next)
 {
     public const string ContextLanguageItem = "ApplicationLanguage";
     private const string CookieLanguageName = ContextLanguageItem;
@@ -13,6 +12,9 @@ public class LocalizationMiddleware(RequestDelegate next)
 
     public const string ContextUseDarkThemeItem = "UseDarkTheme";
     private const string CookieUseDarkThemeName = ContextUseDarkThemeItem;
+
+    public const string ContextPreferencesItem = "ap";
+    private const string PreferencesCookieName = ContextPreferencesItem;
 
     [SuppressMessage("ReSharper.DPA", "DPA0003: Excessive memory allocations in LOH")]
     public Task InvokeAsync(HttpContext context)
@@ -32,41 +34,34 @@ public class LocalizationMiddleware(RequestDelegate next)
 
     private static void StoreUserPreferences(HttpContext context)
     {
-        var themeCookie = context.Request.Cookies[CookieThemeName];
-        if (!string.IsNullOrWhiteSpace(themeCookie))
+        var preferencesCookie = context.Request.Cookies[PreferencesCookieName];
+        if (!string.IsNullOrWhiteSpace(preferencesCookie))
         {
-            context.Items[ContextThemeItem] = themeCookie;
-        }
-
-        if (themeCookie == ApplicationTheme.AutoValue)
-        {
-            var darkThemeCookie = context.Request.Cookies[CookieUseDarkThemeName];
-            if (!string.IsNullOrWhiteSpace(darkThemeCookie))
-            {
-                context.Items[ContextUseDarkThemeItem] = darkThemeCookie;
-            }
-        }
-
-        var languageCookie = context.Request.Cookies[CookieLanguageName];
-        if (!string.IsNullOrWhiteSpace(languageCookie))
-        {
-            context.Items[ContextLanguageItem] = languageCookie;
+            context.Items[ContextPreferencesItem] = preferencesCookie;
         }
         else
         {
             var acceptLanguage = context.Request.Headers.AcceptLanguage.ToString();
-            if (!string.IsNullOrWhiteSpace(acceptLanguage) && acceptLanguage.Split(',', 2).FirstOrDefault() is { } first)
+            if (string.IsNullOrWhiteSpace(acceptLanguage) ||
+                acceptLanguage.Split(',', 2).FirstOrDefault() is not { } languageTag)
             {
-                context.Items[ContextLanguageItem] = first;
+                return;
             }
+
+            context.Items[ContextPreferencesItem] = languageTag;
+            context.Response.Cookies.Append(PreferencesCookieName, languageTag, new CookieOptions
+            {
+                SameSite = SameSiteMode.Strict,
+                Expires = new DateTimeOffset(DateTime.Now + TimeSpan.FromDays(365))
+            });
         }
     }
 }
 
-public static class LocalizationMiddlewareExtensions
+public static class UserPreferencesMiddlewareExtensions
 {
-    public static IApplicationBuilder UseLocalization(this IApplicationBuilder app)
+    public static IApplicationBuilder UseUserPreferences(this IApplicationBuilder app)
     {
-        return app.UseMiddleware<LocalizationMiddleware>();
+        return app.UseMiddleware<UserPreferencesMiddleware>();
     }
 }

@@ -14,7 +14,7 @@ public sealed record ApplicationLanguage
 
     private ApplicationLanguage(string tag) => Tag = tag;
 
-    public static ApplicationLanguage ParseLanguageCode(string languageCode) => languageCode switch
+    public static ApplicationLanguage ParseLanguageCode(ReadOnlySpan<char> languageCode) => languageCode switch
     {
         EnglishTag => English,
         PolishTag => Polish,

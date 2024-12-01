@@ -35,6 +35,12 @@ palette_default: Default
 palette_orange: Orange
 palette_blue: Blue
 palette_green: Green
+personalization: Personalization
+profile_settings: Profile settings
+username_color: Username color
+avatar: Avatar
+change_avatar: Change avatar
+delete_avatar: Delete avatar
 
 # User status
 online: Online

@@ -71,7 +71,7 @@ public class MessageRepository(
 
     private static DateTimeOffset CreateCursor(string? timestamp)
     {
-        if (timestamp is null)
+        if (timestamp is null || timestamp.Length > 128)
         {
             return default;
         }

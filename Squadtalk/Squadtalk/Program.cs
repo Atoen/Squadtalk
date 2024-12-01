@@ -108,7 +108,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-app.UseLocalization();
+app.UseUserPreferences();
 
 app.MapStaticAssets();
 

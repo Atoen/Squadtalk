@@ -16,7 +16,7 @@ public sealed record ApplicationPalette
 
     private ApplicationPalette(string value) => Value = value;
 
-    public static ApplicationPalette ParseValue(string value) => value switch
+    public static ApplicationPalette ParseValue(ReadOnlySpan<char> value) => value switch
     {
         DefaultValue => Default,
         OrangeValue => Orange,

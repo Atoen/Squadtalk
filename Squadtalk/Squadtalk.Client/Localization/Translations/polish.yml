@@ -38,6 +38,12 @@ palette_default: Domyślna
 palette_orange: Pomarańczowa
 palette_blue: Niebieska
 palette_green: Zielona
+personalization: Personalizacja
+profile_settings: Ustawienia profilu
+username_color: Kolor nazwy użytkownika
+avatar: Awatar
+change_avatar: Zmień awatar
+delete_avatar: Usuń awatar
 
 # Canvas page
 canvas_random_fill: Losowe wypełniane

@@ -6,26 +6,13 @@ namespace Squadtalk.Client.Services;
 
 public class UserPreferencesService : IUserPreferencesService
 {
-    private const string GetLanguageFunctionName = "getPreferredLanguage";
-    private const string SaveLanguageFunctionName = "savePreferredLanguage";
-
-    private const string GetThemeFunctionName = "getPreferredTheme";
-    private const string SaveThemeFunctionName = "savePreferredTheme";
-
-    private const string GetPaletteFunctionName = "getPreferredTheme";
-    private const string SavePaletteFunctionName = "savePreferredTheme";
-
-    private const string SaveAutoThemeFunctionName = "saveAutoTheme";
-
     private const string GetPreferencesFunctionName = "getPreferences";
     private const string SavePreferencesFunctionName = "savePreferences";
 
     private const string GetPrefersDarkModeFunctionName = "darkModeChange";
 
     private readonly IJSInProcessRuntime _jsRuntime;
-
-    private readonly object[] _invokeArgs;
-    private UserPreferences Preferences => (UserPreferences) _invokeArgs[0];
+    private readonly object?[] _invokeArgs;
 
     public ApplicationLanguage Language { get; private set; }
     public ApplicationTheme Theme { get; private set; }
@@ -41,27 +28,25 @@ public class UserPreferencesService : IUserPreferencesService
     {
         _jsRuntime = (IJSInProcessRuntime) jsRuntime;
 
-        var preferences = _jsRuntime.Invoke<UserPreferences>(GetPreferencesFunctionName);
-        _invokeArgs = [preferences];
+        var preferencesData = _jsRuntime.Invoke<string?>(GetPreferencesFunctionName);
+        _invokeArgs = [preferencesData];
 
-        logger.LogInformation("Oro: {Jajo}", preferences.Language);
+        logger.LogInformation("Retrieved preferences data: {Data}", preferencesData);
 
-        Language = ApplicationLanguage.ParseLanguageCode(preferences.Language);
+        var preferences = ApplicationPreferences.Parse(preferencesData);
 
-        Theme = ApplicationTheme.ParseValue(preferences.Theme);
+        Language = preferences.Language;
+        Palette = preferences.Palette;
+        Theme = preferences.Theme;
         UseDarkMode = ShouldUseDarkMode(Theme);
-
-        Palette = ApplicationPalette.ParseValue(preferences.Palette);
     }
 
     public void ChangeLanguage(ApplicationLanguage language)
     {
         if (Language == language) return;
 
-        Preferences.Language = language.Tag;
-        SavePreferences();
-
         Language = language;
+        SavePreferences();
 
         LanguageChanged?.Invoke();
     }
@@ -70,34 +55,35 @@ public class UserPreferencesService : IUserPreferencesService
     {
         if (Theme == theme) return;
 
-        Preferences.Theme = theme.Value;
-        SavePreferences();
-
         Theme = theme;
         ThemeChanged?.Invoke();
 
         var useDarkMode = ShouldUseDarkMode(theme);
-        if (UseDarkMode == useDarkMode) return;
+        if (UseDarkMode != useDarkMode)
+        {
+            UseDarkMode = useDarkMode;
+            UseDarkModeChanged?.Invoke();
+        }
 
-        _jsRuntime.InvokeVoid(SaveAutoThemeFunctionName, useDarkMode);
-
-        UseDarkMode = useDarkMode;
-        UseDarkModeChanged?.Invoke();
+        SavePreferences();
     }
 
     public void ChangePalette(ApplicationPalette palette)
     {
         if (Palette == palette) return;
 
-        Preferences.Palette = palette.Value;
+        Palette = palette;
         SavePreferences();
 
-        Palette = palette;
         PaletteChanged?.Invoke();
     }
 
     private void SavePreferences()
     {
+        var darkMode = UseDarkMode ? ApplicationTheme.AutoMode.Dark : ApplicationTheme.AutoMode.Light;
+        var preferences = new ApplicationPreferences(Language, Theme, Palette, darkMode);
+
+        _invokeArgs[0] = preferences.Serialize();
         _jsRuntime.InvokeVoid(SavePreferencesFunctionName, _invokeArgs);
     }
 
@@ -107,11 +93,4 @@ public class UserPreferencesService : IUserPreferencesService
         ApplicationTheme.DarkValue => true,
         _ => _jsRuntime.Invoke<bool>(GetPrefersDarkModeFunctionName)
     };
-}
-
-public class UserPreferences
-{
-    public required string Language { get; set; }
-    public required string Theme { get; set; }
-    public required string Palette { get; set; }
 }

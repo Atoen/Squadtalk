@@ -39,48 +39,10 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
 
-        window.getPreferredLanguage = () => {
-            const languageFromCookie = getCookie('ApplicationLanguage');
-            if (languageFromCookie) {
-                return languageFromCookie;
-            }
-
-            return navigator.language || navigator.userLanguage;
-        };
-
-        window.getPreferredTheme = () => {
-            const themeFromCookie = getCookie('ApplicationTheme');
-            if (themeFromCookie) {
-                return themeFromCookie;
-            }
-
-            return null;
-        };
-
-        window.getPreferences = () => {
-            const languageFromCookie = getCookie('ApplicationLanguage') || navigator.language || navigator.userLanguage;
-            const themeFromCookie = getCookie('ApplicationTheme') || null;
-            const paletteFromCookie = getCookie('ApplicationPalette') || null;
-
-            return {
-                language: languageFromCookie,
-                theme: themeFromCookie,
-                palette: paletteFromCookie
-            }
-        }
+        window.getPreferences = () => getCookie('ap')
 
         window.savePreferences = (preferences) => {
-            const language = preferences.language;
-            const theme = preferences.theme;
-            const palette = preferences.palette;
-
-            document.cookie = `ApplicationLanguage=${language}; Max-Age=31536000; SameSite=Strict`;
-            document.cookie = `ApplicationTheme=${theme}; Max-Age=31536000; SameSite=Strict`;
-            document.cookie = `ApplicationPalette=${palette}; Max-Age=31536000; SameSite=Strict`;
-        }
-
-        window.saveAutoTheme = (useDark) => {
-            document.cookie = `UseDarkTheme=${useDark}; Max-Age=31536000; SameSite=Strict`
+            document.cookie = `ap=${preferences}; Max-Age=31536000; SameSite=Strict`;
         }
     </script>
 </body>

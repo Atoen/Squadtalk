@@ -6,7 +6,7 @@
 
 @inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode="_isDarkTheme" Theme="_theme" />
+<MudThemeProvider IsDarkMode="UserPreferences.UseDarkMode" Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -43,19 +43,19 @@
 {
     private PersistingComponentStateSubscription _subscription;
 
-    private bool _isDarkTheme;
-
     private readonly MudTheme _theme = new();
 
     protected override Task OnInitializedAsync()
     {
         _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
+        ChangePalette(UserPreferences.Palette);
 
-        VoiceChatService.CallIncoming += CallIncoming;
-        UserPreferences.UseDarkModeChanged += UseDarkModeChanged;
-        UserPreferences.PaletteChanged += PaletteChanged;
-
-        _isDarkTheme = UserPreferences.UseDarkMode;
+        if (RendererInfo.IsInteractive)
+        {
+            VoiceChatService.CallIncoming += CallIncoming;
+            UserPreferences.UseDarkModeChanged += StateHasChanged;
+            UserPreferences.PaletteChanged += PaletteChanged;
+        }
 
         return UserAuthenticationService.IsAuthenticated
             ? CommunicationService.ConnectAsync()
@@ -89,19 +89,15 @@
         //     parameters: _modalParameters);
     }
 
-    private void UseDarkModeChanged()
-    {
-        var useDarkMode = UserPreferences.UseDarkMode;
-        if (useDarkMode != _isDarkTheme)
-        {
-            _isDarkTheme = useDarkMode;
-            StateHasChanged();
-        }
-    }
-
     private void PaletteChanged()
     {
-        var (light, dark) = UserPreferences.Palette.Value switch
+        ChangePalette(UserPreferences.Palette);
+        StateHasChanged();
+    }
+
+    private void ChangePalette(ApplicationPalette palette)
+    {
+        var (light, dark) = palette.Value switch
         {
             ApplicationPalette.OrangeValue => (new OrangeLightPalette(), new OrangeDarkPalette()),
             ApplicationPalette.BlueValue => (new BlueLightPalette(), new BlueDarkPalette()),
@@ -111,8 +107,6 @@
 
         _theme.PaletteLight = light;
         _theme.PaletteDark = dark;
-
-        StateHasChanged();
     }
 
     private async Task CallAcceptedDecisionCallback(bool accepted, ChannelId channelId)
@@ -132,8 +126,12 @@
     public void Dispose()
     {
         _subscription.Dispose();
-        VoiceChatService.CallIncoming -= CallIncoming;
-        UserPreferences.UseDarkModeChanged -= UseDarkModeChanged;
-        UserPreferences.PaletteChanged -= PaletteChanged;
+
+        if (RendererInfo.IsInteractive)
+        {
+            VoiceChatService.CallIncoming -= CallIncoming;
+            UserPreferences.UseDarkModeChanged -= StateHasChanged;
+            UserPreferences.PaletteChanged -= PaletteChanged;
+        }
     }
 }

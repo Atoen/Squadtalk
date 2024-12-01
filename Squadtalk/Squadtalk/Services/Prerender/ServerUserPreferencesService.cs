@@ -7,10 +7,10 @@ public class ServerUserPreferencesService : IUserPreferencesService
 {
     private readonly IHttpContextAccessor _contextAccessor;
 
-    public ApplicationLanguage Language { get; private set; }
-    public ApplicationTheme Theme { get; private set; }
-    public ApplicationPalette Palette { get; private set; } = ApplicationPalette.Default;
-    public bool UseDarkMode { get; private set; }
+    public ApplicationLanguage Language { get; }
+    public ApplicationTheme Theme { get; }
+    public ApplicationPalette Palette { get; }
+    public bool UseDarkMode { get; }
 
     public event Action? LanguageChanged;
     public event Action? ThemeChanged;
@@ -21,35 +21,28 @@ public class ServerUserPreferencesService : IUserPreferencesService
     {
         _contextAccessor = contextAccessor;
 
-        Language = GetContextValue(LocalizationMiddleware.ContextLanguageItem) is { } language
-            ? ApplicationLanguage.ParseLanguageCode(language)
-            : ApplicationLanguage.Default;
+        var data = GetContextValue(UserPreferencesMiddleware.ContextPreferencesItem);
+        var preferences = ApplicationPreferences.Parse(data);
 
-        Theme = GetContextValue(LocalizationMiddleware.ContextThemeItem) is { } theme
-            ? ApplicationTheme.ParseValue(theme)
-            : ApplicationTheme.Default;
+        Language = preferences.Language;
+        Theme = preferences.Theme;
+        Palette = preferences.Palette;
 
-        UseDarkMode = ShouldUseDarkMode(Theme);
+        UseDarkMode = ShouldUseDarkMode(Theme, preferences.AutoMode);
     }
 
-    public void ChangeLanguage(ApplicationLanguage language) => Language = language;
+    public void ChangeLanguage(ApplicationLanguage language) {}
 
-    public void ChangeTheme(ApplicationTheme theme)
-    {
-        Theme = theme;
-        UseDarkMode = ShouldUseDarkMode(theme);
-    }
-    public void ChangePalette(ApplicationPalette palette) => Palette = palette;
+    public void ChangeTheme(ApplicationTheme theme) {}
 
-    private bool ShouldUseDarkMode(ApplicationTheme theme)
+    public void ChangePalette(ApplicationPalette palette) {}
+
+    private bool ShouldUseDarkMode(ApplicationTheme theme, ApplicationTheme.AutoMode autoMode)
     {
         if (theme == ApplicationTheme.Light) return false;
         if (theme == ApplicationTheme.Dark) return true;
 
-        var stored = GetContextValue(LocalizationMiddleware.ContextUseDarkThemeItem);
-        var success = bool.TryParse(stored, out var useDarkTheme);
-
-        return success && useDarkTheme;
+        return autoMode == ApplicationTheme.AutoMode.Dark;
     }
 
     private string? GetContextValue(string name)

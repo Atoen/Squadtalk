@@ -1,6 +1,5 @@
 .settings-row {
     display: flex;
     align-items: center;
-    max-width: 300px;
     margin: 12px 0;
 }
