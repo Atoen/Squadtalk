@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Shared.Data.Personalization;
 
 namespace Squadtalk.Services;
@@ -13,6 +14,7 @@ public class LocalizationMiddleware(RequestDelegate next)
     public const string ContextUseDarkThemeItem = "UseDarkTheme";
     private const string CookieUseDarkThemeName = ContextUseDarkThemeItem;
 
+    [SuppressMessage("ReSharper.DPA", "DPA0003: Excessive memory allocations in LOH")]
     public Task InvokeAsync(HttpContext context)
     {
         var acceptHeader = context.Request.Headers.Accept;

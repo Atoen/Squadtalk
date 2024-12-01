@@ -10,7 +10,7 @@
         @Table.app_language
     </div>
     <MudMenu Label="@SelectedLanguage" Variant="Variant.Outlined" Ripple="false" Color="Color.Primary"
-             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
         <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
         <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
     </MudMenu>
@@ -21,7 +21,7 @@
         @Table.app_theme
     </div>
     <MudMenu Label="@SelectedTheme" Variant="Variant.Outlined" Ripple="false" Color="Color.Primary"
-             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
         <MudMenuItem
             Icon="@Icons.Material.Rounded.AutoMode"
             OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Auto)">
@@ -45,7 +45,7 @@
         @Table.app_palette
     </div>
     <MudMenu Label="@SelectedPalette" Variant="Variant.Outlined" Ripple="false" Color="Color.Primary"
-             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
         <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Default)">
             <div class="d-flex gap-1">
                 <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Purple.Default}")"/>
@@ -77,6 +77,8 @@
 
 @code
 {
+    private bool DisableMenu => !RendererInfo.IsInteractive;
+
     private string SelectedLanguage => UserPreferences.Language.Tag switch
     {
         ApplicationLanguage.EnglishTag => Table.english,

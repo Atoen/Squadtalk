@@ -91,8 +91,6 @@ app.Services.UseScheduler(scheduler =>
 
 app.UseCors(corsPolicy);
 
-app.UseLocalization();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -110,6 +108,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+app.UseLocalization();
 
 app.MapStaticAssets();
 
