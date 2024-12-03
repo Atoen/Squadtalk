@@ -1,42 +1,55 @@
 ﻿<MudPaper Width="250px" Class="py-3" Elevation="0" Square="true">
     <MudNavMenu Color="Color.Primary" Bordered="true">
         <MudText Typo="Typo.h5" Class="px-4">Squadtalk</MudText>
+
+        <AuthorizeView>
+            <Authorized>
+                <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary mud-typography-nowrap">
+                    @context.User.Identity?.Name
+                </MudText>
+            </Authorized>
+        </AuthorizeView>
+
         <MudDivider Class="my-2"/>
 
         <MudNavLink Href="/Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.messages</MudNavLink>
         <MudNavLink Href="/Users" Icon="@Icons.Material.Rounded.People">@_textTable.users</MudNavLink>
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">@_textTable.home</MudNavLink>
         <MudNavLink Href="/Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.canvas</MudNavLink>
-        <MudNavLink Href="/Settings" Icon="@Icons.Material.Rounded.Settings">@_textTable.settings</MudNavLink>
 
         <AuthorizeView>
             <Authorized>
-                <MudNavLink Href="/Account/Manage" Icon="@Icons.Material.Rounded.Person">@context.User.Identity?.Name</MudNavLink>
-                <MudNavLink Href="/Account/Logout" ForceLoad="true" Icon="@Icons.Material.Rounded.Logout">
-                    @_textTable.logout
-                </MudNavLink>
+
+                <MudNavGroup Title="@_textTable.settings" Icon="@Icons.Material.Rounded.Settings">
+                    <MudNavLink Href="/Settings" Icon="@Icons.Material.Rounded.DashboardCustomize">
+                        @_textTable.personalization
+                    </MudNavLink>
+                    <MudNavLink Href="/Profile/Manage" Icon="@Icons.Material.Rounded.ManageAccounts">
+                        @_textTable.manage_account
+                    </MudNavLink>
+                    <div class="mud-nav-item">
+                        <form class="mud-width-full" action="Api/Profile/logout" method="post">
+                            <AntiforgeryToken/>
+                            <input type="hidden" name="ReturnUrl" value=""/>
+                            <button class="mud-nav-link mud-ripple">
+                                <MudIcon Icon="@Icons.Material.Rounded.Logout" Color="Color.Default" Class="me-3"/>
+                                @_textTable.logout
+                            </button>
+                        </form>
+                    </div>
+                </MudNavGroup>
             </Authorized>
             <NotAuthorized>
-                <MudNavLink Href="/Account/Register" Icon="@Icons.Material.Rounded.PersonAdd">
+                <MudNavLink Href="/Profile/Register" Icon="@Icons.Material.Rounded.PersonAdd">
                     @_textTable.register
                 </MudNavLink>
-                <MudNavLink Href="/Account/Login" Icon="@Icons.Material.Rounded.Login">
+                <MudNavLink Href="/Profile/Login" Icon="@Icons.Material.Rounded.Login">
                     @_textTable.login
                 </MudNavLink>
             </NotAuthorized>
         </AuthorizeView>
     </MudNavMenu>
 </MudPaper>
-
-@* <div class="nav-item px-3"> *@
-@*  <form action="Account/Logout" method="post"> *@
-@*      <AntiforgeryToken/> *@
-@*      <button type="submit" class="nav-link" style="justify-content: start"> *@
-@*          <MudIcon Icon="@Icons.Material.Rounded.Logout" Class="mx-2"/> Logout *@
-@*      </button> *@
-@*      <input type="hidden" name="ReturnUrl" value=""/> *@
-@*  </form> *@
-@* </div> *@
 
 @using Squadtalk.Client.Localization
 @implements IDisposable

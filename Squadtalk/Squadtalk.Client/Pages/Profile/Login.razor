@@ -1,0 +1,106 @@
+@page "/Profile/Login"
+@using RestSharp
+@using Shared
+@using Shared.DTOs.Account
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Class="pa-4" Elevation="8">
+        <MudForm @ref="_form" @bind-IsValid="_formValid">
+            <MudTextField T="string" Label="Username" Required="true" RequiredError="Username is required!"
+                          @ref="_usernameField"/>
+
+            <MudTextField T="string" Label="Password" Required="true" RequiredError="Password is required!"
+                          @ref="_passwordField" InputType="InputType.Password"/>
+
+            <MudCheckBox T="bool" Label="Remember me" Color="Color.Primary" @ref="_rememberCheckBox"/>
+
+            <MudStack Class="mt-4 px-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formValid)" OnClick="LoginUser">
+                    Login
+                </MudButton>
+                <MudButton Variant="Variant.Text" OnClick="NavigateToRegister">Register as new user</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="NavigateToForgotPassword">
+                    Forgot your password?
+                </MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ResendConfirmation">
+                    Resend email confirmation
+                </MudButton>
+            </MudStack>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@inject NavigationManager NavigationManager
+@inject IUserAuthenticationService UserAuthenticationService
+@inject RestClient RestClient
+@inject ISnackbar Snackbar
+
+@code
+{
+    private MudForm _form = default!;
+    private MudTextField<string> _usernameField = default!;
+    private MudTextField<string> _passwordField = default!;
+    private MudCheckBox<bool> _rememberCheckBox = default!;
+
+    private bool _formValid;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (UserAuthenticationService.IsAuthenticated)
+        {
+            NavigateOnLogin();
+        }
+    }
+
+    private async Task LoginUser()
+    {
+        if (!_form.IsValid) return;
+
+        var request = new RestRequest(Endpoints.Login)
+            .AddBody(new UserLoginDto
+            {
+                Username = _usernameField.Value!,
+                Password = _passwordField.Value!,
+                Remember = _rememberCheckBox.Value
+            });
+
+        try
+        {
+            var response = await RestClient.PostAsync(request);
+            if (response.IsSuccessful)
+            {
+                NavigateOnLogin();
+            }
+        }
+        catch
+        {
+            Snackbar.Add("Failed to log in", Severity.Error);
+        }
+    }
+
+    private void NavigateOnLogin()
+    {
+        var returnUrl = ReturnUrl ?? string.Empty;
+        NavigationManager.NavigateTo(Uri.EscapeDataString(returnUrl), forceLoad: true);
+    }
+
+    private void NavigateToRegister()
+    {
+        var uri = NavigationManager.GetUriWithQueryParameters("Profile/Register", new Dictionary<string, object?>
+        {
+            ["ReturnUrl"] = ReturnUrl
+        });
+
+        NavigationManager.NavigateTo(uri);
+    }
+
+    private void NavigateToForgotPassword() => NavigationManager.NavigateTo("ForgotPassword");
+
+    private void ResendConfirmation()
+    {
+        Snackbar.Add("Resend confirmation email", Severity.Success);
+    }
+}

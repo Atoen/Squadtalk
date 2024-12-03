@@ -12,7 +12,7 @@
         <div class="flex-1 mud-text-primary">
             @Table.app_language
         </div>
-        <MudMenu Label="@SelectedLanguage" Variant="Variant.Filled" Ripple="false" Color="Color.Primary"
+        <MudMenu Label="@SelectedLanguage" Variant="Variant.Filled" Color="Color.Primary"
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
             <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
             <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
@@ -23,7 +23,7 @@
         <div class="flex-1 mud-text-primary">
             @Table.app_theme
         </div>
-        <MudMenu Label="@SelectedTheme" Variant="Variant.Filled" Ripple="false" Color="Color.Primary"
+        <MudMenu Label="@SelectedTheme" Variant="Variant.Filled" Color="Color.Primary"
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
             <MudMenuItem
                 Icon="@Icons.Material.Rounded.AutoMode"
@@ -47,7 +47,7 @@
         <div class="flex-1 mud-text-primary">
             @Table.app_palette
         </div>
-        <MudMenu Label="@SelectedPalette" Variant="Variant.Filled" Ripple="false" Color="Color.Primary"
+        <MudMenu Label="@SelectedPalette" Variant="Variant.Filled" Color="Color.Primary"
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
             <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Default)">
                 <div class="d-flex gap-1">
@@ -78,38 +78,47 @@
 
     <MudDivider Class="mb-4" DividerType="DividerType.Middle"/>
 
-    <h3 class="mb-4">@Table.profile_settings</h3>
+    <AuthorizeView>
+        <Authorized>
+            <h3 class="mb-4">@Table.profile_settings</h3>
 
-    <div class="flex-1 mud-text-primary mb-2">
-        @Table.avatar
-    </div>
-    <div class="d-flex gap-2 align-center mb-4">
-        <MudAvatar Color="Color.Secondary" Size="Size.Large">A</MudAvatar>
-        <MudSpacer/>
-        <MudFileUpload T="IBrowserFile" Accept=".png">
-            <ActivatorContent>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           StartIcon="@Icons.Material.Rounded.Upload" Disabled="DisableMenu">
-                    @Table.change_avatar
+            <div class="flex-1 mud-text-primary mb-2">
+                @Table.avatar
+            </div>
+            <div class="d-flex gap-2 align-center mb-4">
+                <MudAvatar Color="Color.Secondary" Size="Size.Large">A</MudAvatar>
+                <MudSpacer/>
+                <MudFileUpload T="IBrowserFile" Accept=".png" FilesChanged="FilesChanged">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Rounded.Upload" Disabled="DisableMenu">
+                            @Table.change_avatar
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                           Disabled="DisableMenu" OnClick="OpenDeleteDialog">
+                    @Table.delete_avatar
                 </MudButton>
-            </ActivatorContent>
-        </MudFileUpload>
-        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" Disabled="DisableMenu">
-            @Table.delete_avatar
-        </MudButton>
-    </div>
+            </div>
 
-    <div class="flex-1 mud-text-primary mb-2">
-        @Table.username_color
-    </div>
-    <div class="d-flex gap-2 align-center mb-4">
-        <MudIcon Size="Size.Large" Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{_colorValue}")"/>
-        <MudColorPicker @bind-Text="_colorValue" Placeholder="Select color" ShowAlpha="false" Disabled="DisableMenu"
-                        ShowToolbar="true" Adornment="Adornment.Start" Clearable="true" Elevation="6"/>
-    </div>
+            <div class="flex-1 mud-text-primary mb-2">
+                @Table.username_color
+            </div>
+            <div class="d-flex gap-2 align-center mb-4">
+                <MudIcon Size="Size.Large" Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{_colorValue}")"/>
+                <MudColorPicker @bind-Text="_colorValue" Placeholder="Select color" ShowAlpha="false" Disabled="DisableMenu"
+                                ShowToolbar="true" Adornment="Adornment.Start" Clearable="true" Elevation="6"/>
+            </div>
+
+        </Authorized>
+    </AuthorizeView>
+
 </MudContainer>
 
 @inject IUserPreferencesService UserPreferences
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 @code
 {
@@ -139,4 +148,23 @@
         ApplicationPalette.GreenValue => Table.palette_green,
         _ => string.Empty
     };
+
+    private Task OpenDeleteDialog()
+    {
+        return DialogService.ShowAsync<RemoveAvatarDialog>(Table.dialog_remove_avatar_title);
+    }
+
+    private void FilesChanged(IBrowserFile? file)
+    {
+        if (file is null)
+        {
+            Snackbar.Add(Table.failed_to_upload_snackbar, Severity.Error);
+            return;
+        }
+
+        var template = Table.avatar_uploaded_snackbar_template;
+        var message = string.Format(template, file.Name, file.Size);
+
+        Snackbar.Add(message, Severity.Success);
+    }
 }

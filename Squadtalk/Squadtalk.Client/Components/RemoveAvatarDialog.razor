@@ -1,0 +1,28 @@
+@using Color = MudBlazor.Color
+
+<MudDialog>
+    <DialogContent>@LocalizedText.R.dialog_remove_avatar_body</DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@LocalizedText.R.dialog_cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="Confirm">@LocalizedText.R.dialog_confirm</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@inject LocalizedText LocalizedText
+@inject ISnackbar Snackbar
+
+@code
+{
+    private const string SnackbarKey = "avatar removed";
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Confirm()
+    {
+        Snackbar.Add(LocalizedText.R.avatar_removed_snackbar, Severity.Info, key: SnackbarKey);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

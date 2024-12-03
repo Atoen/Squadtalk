@@ -7,6 +7,7 @@ login: Logowanie
 logout: Wyloguj się
 users: Użytkownicy
 settings: Ustawienia
+manage_account: Zarządzaj kontem
 
 # Home page
 hello_world: Witaj świecie!

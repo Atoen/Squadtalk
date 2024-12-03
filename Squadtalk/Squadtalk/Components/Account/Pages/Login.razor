@@ -11,7 +11,6 @@
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>Log in</PageTitle>
-
 <h1>Log in</h1>
 <div class="row">
     <div class="col-md-4">
@@ -22,30 +21,30 @@
                 <h2>Use a local account to log in.</h2>
                 <hr />
                 <ValidationSummary class="text-danger" role="alert" />
-                
+
                 <div class="form-floating mb-3">
                     <InputText @bind-Value="Input.Username" class="form-control" autocomplete="username" aria-required="true" placeholder="username" />
                     <label for="username" class="form-label">Username</label>
                     <ValidationMessage For="() => Input.Username" class="text-danger" />
                 </div>
-                
+
                 <div class="form-floating mb-3">
                     <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
                     <label for="password" class="form-label">Password</label>
                     <ValidationMessage For="() => Input.Password" class="text-danger" />
                 </div>
-                
+
                 <div class="checkbox mb-3">
                     <label class="form-label">
                         <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
                         Remember me
                     </label>
                 </div>
-                
+
                 <div>
                     <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
                 </div>
-                
+
                 <div>
                     <p>
                         <a href="Account/ForgotPassword">Forgot your password?</a>
@@ -60,18 +59,13 @@
             </EditForm>
         </section>
     </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
 </div>
 
 @code {
     private string? _errorMessage;
     private Index _index = default!;
+
+    private MudForm _form = default!;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;

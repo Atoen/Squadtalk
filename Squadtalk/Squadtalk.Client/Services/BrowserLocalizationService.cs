@@ -1,6 +1,5 @@
 using Microsoft.JSInterop;
 using Shared.Data.Personalization;
-using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 

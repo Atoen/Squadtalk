@@ -1,0 +1,9 @@
+@page "/Profile/AlreadyConfirmed"
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudAlert Elevation="8" Variant="Variant.Filled" Severity="Severity.Warning">
+        @LocalizedText.R.email_already_confirmed
+    </MudAlert>
+</MudContainer>
+
+@inject LocalizedText LocalizedText

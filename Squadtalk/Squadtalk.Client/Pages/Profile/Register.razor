@@ -1,0 +1,118 @@
+@page "/Profile/Register"
+@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using Shared
+@using Shared.DTOs.Account
+@using RestSharp
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Class="pa-4" Elevation="8">
+        <MudForm @ref="_form" @bind-IsValid="_success">
+
+            <MudTextField T="string" Label="Username" Required="true" RequiredError="Username is required!" @ref="_usernameField"/>
+
+            <MudTextField T="string" Label="Email" Required="true" RequiredError="Email is required!" @ref="_emailField"
+                          Validation="@(new EmailAddressAttribute { ErrorMessage = "The email address is invalid!" })"/>
+
+            <MudTextField T="string" Label="Password" Required="true" RequiredError="Password is required!"
+                          InputType="InputType.Password" @ref="_passwordField"
+                          Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"/>
+
+            <MudTextField T="string"
+                          Label="Password" HelperText="Repeat the password" InputType="InputType.Password"
+                          Validation="@(new Func<string, string?>(PasswordMatch))"/>
+
+            <MudStack Class="mt-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_success)" OnClick="RegisterUser">
+                    Register
+                </MudButton>
+                <MudButton Variant="Variant.Text" OnClick="NavigateToLogin">Login to an existing account</MudButton>
+            </MudStack>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@inject NavigationManager NavigationManager
+@inject RestClient RestClient
+@inject ISnackbar Snackbar
+
+@code
+{
+    private MudForm _form = default!;
+    private MudTextField<string> _usernameField = default!;
+    private MudTextField<string> _emailField = default!;
+    private MudTextField<string> _passwordField = default!;
+
+    private bool _success;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private async Task RegisterUser()
+    {
+        if (!_form.IsValid) return;
+
+        var request = new RestRequest(Endpoints.Register)
+            .AddBody(new UserRegisterDto
+            {
+                Username = _usernameField.Value!,
+                Email = _emailField.Value!,
+                Password = _passwordField.Value!
+
+            });
+
+        try
+        {
+            var response = await RestClient.PostAsync(request);
+            if (response.IsSuccessful)
+            {
+                NavigationManager.NavigateTo("/Profile/ConfirmEmail");
+            }
+        }
+        catch
+        {
+            Snackbar.Add("Failed to log in", Severity.Error);
+        }
+    }
+
+    private void NavigateToLogin()
+    {
+        var uri = NavigationManager.GetUriWithQueryParameters("Profile/Login", new Dictionary<string, object?>
+        {
+            { "ReturnUrl", ReturnUrl }
+        });
+
+        NavigationManager.NavigateTo(uri);
+    }
+
+    private IEnumerable<string> PasswordStrength(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            yield return "Password is required!";
+            yield break;
+        }
+
+        if (password.Length < 8)
+        {
+            yield return "Password must be at least of length 8";
+        }
+        if (!Regex.IsMatch(password, "[A-Z]"))
+        {
+            yield return "Password must contain at least one capital letter";
+        }
+        if (!Regex.IsMatch(password, "[a-z]"))
+        {
+            yield return "Password must contain at least one lowercase letter";
+        }
+        if (!Regex.IsMatch(password, "[0-9]"))
+        {
+            yield return "Password must contain at least one digit";
+        }
+    }
+
+    private string? PasswordMatch(string arg)
+    {
+        return _passwordField.Value != arg ? "Passwords don't match" : null;
+    }
+}

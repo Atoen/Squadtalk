@@ -7,8 +7,17 @@ login: Log in
 logout: Log out
 users: Users
 settings: Settings
+manage_account: Manage account
 
 unexpected_error: An unhandled error has occurred.
+dialog_remove_avatar_title: Confirm removing avatar
+dialog_remove_avatar_body: Are you sure you want to remove your current avatar? This action cannot be undone.
+
+reset_password: Reset password
+password_reset: Your password has been reset.
+log_in: Log in
+email_already_confirmed: This email address was already confirmed.
+error_while_confirming_email: Unexpected error while confirming your email.
 
 # Home page
 hello_world: Hello world!
@@ -42,6 +51,11 @@ avatar: Avatar
 change_avatar: Change avatar
 delete_avatar: Delete avatar
 
+avatar_removed_snackbar: Avatar removed
+avatar_uploaded_snackbar_template: File {0} uploaded ({1})
+file_too_big_snackbar: Selected file is too big!
+failed_to_upload_snackbar: Failed to upload the file
+
 # User status
 online: Online
 offline: Offline
@@ -52,6 +66,7 @@ do_not_disturb: Do not disturb
 dialog_cancel: Cancel
 dialog_no: No
 dialog_yes: Yes
+dialog_confirm: Confirm
 
 # Chat page
 start_call: Start call

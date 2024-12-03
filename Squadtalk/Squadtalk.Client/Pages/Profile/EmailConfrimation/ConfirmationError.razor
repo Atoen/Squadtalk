@@ -1,0 +1,9 @@
+@page "/Profile/ConfirmationError"
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudAlert Elevation="8" Variant="Variant.Filled" Severity="Severity.Error">
+        @LocalizedText.R.error_while_confirming_email
+    </MudAlert>
+</MudContainer>
+
+@inject LocalizedText LocalizedText
