@@ -95,7 +95,7 @@
     private void NavigateOnLogin()
     {
         var returnUrl = ReturnUrl ?? string.Empty;
-        NavigationManager.NavigateTo(Uri.EscapeDataString(returnUrl), forceLoad: true);
+        NavigationManager.NavigateTo(Uri.UnescapeDataString(returnUrl), forceLoad: true);
     }
 
     private void NavigateToRegister()

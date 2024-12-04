@@ -8,6 +8,7 @@ logout: Log out
 users: Users
 settings: Settings
 manage_account: Manage account
+app_appearance: App appearance
 
 unexpected_error: An unhandled error has occurred.
 dialog_remove_avatar_title: Confirm removing avatar
@@ -50,6 +51,10 @@ failed_to_register: There was an issue registering your account.
 new_password: Enter your new password
 failed_to_reset_password: There was an issue resetting your password.
 
+edit: Edit
+change_password: Change password
+show: Show
+hide: Hide
 
 # Home page
 hello_world: Hello world!
@@ -64,10 +69,10 @@ loading_users: Loading...
 no_users_found: No users found
 
 # Settings page
-app_language: App language
+app_language: Language
 english: 🇬🇧 English
 polish: 🇵🇱 Polish
-app_theme: App theme
+app_theme: Theme
 theme_auto: Automatic
 theme_light: Light
 theme_dark: Dark

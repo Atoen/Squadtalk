@@ -1,6 +1,6 @@
 ﻿<MudPaper Width="250px" Class="py-3" Elevation="0" Square="true">
     <MudNavMenu Color="Color.Primary" Bordered="true">
-        <MudText Typo="Typo.h5" Class="px-4">Squadtalk</MudText>
+        <MudText Typo="Typo.h5" Class="px-4" Color="Color.Primary">Squadtalk</MudText>
 
         <AuthorizeView>
             <Authorized>
@@ -19,9 +19,8 @@
 
         <AuthorizeView>
             <Authorized>
-
                 <MudNavGroup Title="@_textTable.settings" Icon="@Icons.Material.Rounded.Settings">
-                    <MudNavLink Href="/Settings" Icon="@Icons.Material.Rounded.DashboardCustomize">
+                    <MudNavLink Href="/Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
                         @_textTable.personalization
                     </MudNavLink>
                     <MudNavLink Href="/Profile/Manage" Icon="@Icons.Material.Rounded.ManageAccounts">
@@ -40,6 +39,9 @@
                 </MudNavGroup>
             </Authorized>
             <NotAuthorized>
+                <MudNavLink Href="/Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
+                    @_textTable.personalization
+                </MudNavLink>
                 <MudNavLink Href="/Profile/Register" Icon="@Icons.Material.Rounded.PersonAdd">
                     @_textTable.register
                 </MudNavLink>

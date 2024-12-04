@@ -8,6 +8,7 @@ logout: Wyloguj się
 users: Użytkownicy
 settings: Ustawienia
 manage_account: Zarządzaj kontem
+app_appearance: Wygląd aplikacji
 
 # Home page
 hello_world: Witaj świecie!
@@ -50,6 +51,10 @@ failed_to_register: Wystąpił problem z rejestracją konta.
 new_password: Wprowadź nowe hasło
 failed_to_reset_password: Wystąpił problem z resetowaniem hasła.
 
+edit: Edytuj
+change_password: Zmień hasło
+show: Pokaż
+hide: Ukryj
 
 # Messages page
 create_channel_tooltip: Utwórz nową grupę
@@ -65,10 +70,10 @@ manage_channel: Zarządzaj grupą
 channel_beginning: To jest początek wiadomości z
 
 # Settings page
-app_language: Język aplikacji
+app_language: Język
 english: 🇬🇧 Angielski
 polish: 🇵🇱 Polski
-app_theme: Motyw aplikacji
+app_theme: Motyw
 theme_auto: Automatyczny
 theme_light: Jasny
 theme_dark: Ciemny

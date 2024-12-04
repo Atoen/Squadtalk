@@ -1,0 +1,171 @@
+@page "/Personalize"
+
+@using Shared.Data.Personalization
+@inherits LocalizedComponent
+
+<h2 class="primary mb-4">@Table.personalization</h2>
+
+<MudContainer MaxWidth="MaxWidth.Small" Gutters="false">
+    <MudPaper Class="pa-4" Elevation="8">
+        <h3>@Table.app_appearance</h3>
+
+        <div class="settings-row">
+            <div class="flex-1 mud-text-primary">
+                @Table.app_language
+            </div>
+            <MudMenu Label="@SelectedLanguage" Variant="Variant.Filled" Color="Color.Primary"
+                     AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
+                <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
+                <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
+            </MudMenu>
+        </div>
+
+        <div class="settings-row">
+            <div class="flex-1 mud-text-primary">
+                @Table.app_theme
+            </div>
+            <MudMenu Label="@SelectedTheme" Variant="Variant.Filled" Color="Color.Primary"
+                     AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
+                <MudMenuItem
+                    Icon="@Icons.Material.Rounded.AutoMode"
+                    OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Auto)">
+                    @Table.theme_auto
+                </MudMenuItem>
+                <MudMenuItem
+                    Icon="@Icons.Material.Rounded.LightMode"
+                    OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Light)">
+                    @Table.theme_light
+                </MudMenuItem>
+                <MudMenuItem
+                    Icon="@Icons.Material.Rounded.DarkMode"
+                    OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Dark)">
+                    @Table.theme_dark
+                </MudMenuItem>
+            </MudMenu>
+        </div>
+
+        <div class="settings-row">
+            <div class="flex-1 mud-text-primary">
+                @Table.app_palette
+            </div>
+            <MudMenu Label="@SelectedPalette" Variant="Variant.Filled" Color="Color.Primary"
+                     AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
+                <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Default)">
+                    <div class="d-flex gap-1">
+                        <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Purple.Default}")"/>
+                        @Table.palette_default
+                    </div>
+                </MudMenuItem>
+                <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Orange)">
+                    <div class="d-flex gap-1">
+                        <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Orange.Default}")"/>
+                        @Table.palette_orange
+                    </div>
+                </MudMenuItem>
+                <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Blue)">
+                    <div class="d-flex gap-1">
+                        <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Blue.Default}")"/>
+                        @Table.palette_blue
+                    </div>
+                </MudMenuItem>
+                <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Green)">
+                    <div class="d-flex gap-1">
+                        <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Green.Default}")"/>
+                        @Table.palette_green
+                    </div>
+                </MudMenuItem>
+            </MudMenu>
+        </div>
+
+        <MudDivider Class="mb-4" DividerType="DividerType.Middle"/>
+
+        <AuthorizeView>
+            <Authorized>
+                <h3 class="mb-4">@Table.profile_settings</h3>
+
+                <div class="flex-1 mud-text-primary mb-2">
+                    @Table.avatar
+                </div>
+                <div class="d-flex gap-2 align-center mb-4">
+                    <MudAvatar Color="Color.Secondary" Size="Size.Large">A</MudAvatar>
+                    <MudSpacer/>
+                    <MudFileUpload T="IBrowserFile" Accept=".png" FilesChanged="FilesChanged">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Rounded.Upload" Disabled="DisableMenu">
+                                @Table.change_avatar
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                               Disabled="DisableMenu" OnClick="OpenDeleteDialog">
+                        @Table.delete_avatar
+                    </MudButton>
+                </div>
+
+                <div class="flex-1 mud-text-primary mb-2">
+                    @Table.username_color
+                </div>
+                <div class="d-flex gap-2 align-center mb-4">
+                    <MudIcon Size="Size.Large" Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{_colorValue}")"/>
+                    <MudColorPicker @bind-Text="_colorValue" Placeholder="Select color" ShowAlpha="false" Disabled="DisableMenu"
+                                    ShowToolbar="true" Adornment="Adornment.Start" Clearable="true" Elevation="6"/>
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
+    </MudPaper>
+</MudContainer>
+
+@inject IUserPreferencesService UserPreferences
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@code
+{
+    private bool DisableMenu => !RendererInfo.IsInteractive;
+    private string? _colorValue;
+
+    private string SelectedLanguage => UserPreferences.Language.Tag switch
+    {
+        ApplicationLanguage.EnglishTag => Table.english,
+        ApplicationLanguage.PolishTag => Table.polish,
+        _ => string.Empty
+    };
+
+    private string SelectedTheme => UserPreferences.Theme.Value switch
+    {
+        ApplicationTheme.AutoValue => Table.theme_auto,
+        ApplicationTheme.LightValue => Table.theme_light,
+        ApplicationTheme.DarkValue => Table.theme_dark,
+        _ => string.Empty
+    };
+
+    private string SelectedPalette => UserPreferences.Palette.Value switch
+    {
+        ApplicationPalette.DefaultValue => Table.palette_default,
+        ApplicationPalette.OrangeValue => Table.palette_orange,
+        ApplicationPalette.BlueValue => Table.palette_blue,
+        ApplicationPalette.GreenValue => Table.palette_green,
+        _ => string.Empty
+    };
+
+    private Task OpenDeleteDialog()
+    {
+        return DialogService.ShowAsync<RemoveAvatarDialog>(Table.dialog_remove_avatar_title);
+    }
+
+    private void FilesChanged(IBrowserFile? file)
+    {
+        if (file is null)
+        {
+            Snackbar.Add(Table.failed_to_upload_snackbar, Severity.Error);
+            return;
+        }
+
+        var template = Table.avatar_uploaded_snackbar_template;
+        var message = string.Format(template, file.Name, file.Size);
+
+        Snackbar.Add(message, Severity.Success);
+    }
+}

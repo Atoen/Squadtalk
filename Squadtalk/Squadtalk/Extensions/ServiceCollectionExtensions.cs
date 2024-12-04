@@ -3,8 +3,10 @@ using Blazored.LocalStorage;
 using Coravel;
 using MailKit.Net.Smtp;
 using MessagePack;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
 using Polly.Registry;
@@ -23,7 +25,7 @@ public static class ServiceCollectionExtensions
 {
     public static WebApplicationBuilder ConfigureAuthentication(this WebApplicationBuilder builder)
     {
-        builder.Services.AddAuthentication(options =>
+        var authenticationBuilder = builder.Services.AddAuthentication(options =>
         {
             options.DefaultScheme = IdentityConstants.ApplicationScheme;
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
@@ -53,7 +55,18 @@ public static class ServiceCollectionExtensions
                     return Task.CompletedTask;
                 }
             };
-        }).AddIdentityCookies();
+        });
+
+        authenticationBuilder.AddCookie(IdentityConstants.ApplicationScheme, options =>
+        {
+            options.LoginPath = new PathString("/Profile/Login");
+            options.Events = new CookieAuthenticationEvents
+            {
+                OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
+            };
+        });
+
+        // authenticationBuilder.AddIdentityCookies();
 
         return builder;
     }

@@ -1,0 +1,78 @@
+@page "/Profile/Manage"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<h2 class="primary mb-4">@LocalizedText.R.manage_account</h2>
+
+<MudContainer MaxWidth="MaxWidth.Small" Gutters="false">
+    <MudPaper Class="pa-4" Elevation="8">
+
+        <div class="d-flex mb-4">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mud-typography-nowrap">
+                    @LocalizedText.R.username
+                </MudText>
+                <MudText Typo="Typo.body1">
+                    @UserAuthenticationService.Username
+                </MudText>
+            </MudStack>
+            <MudSpacer/>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled">@LocalizedText.R.edit</MudButton>
+        </div>
+
+        <div class="d-flex my-4">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mud-typography-nowrap">
+                    @LocalizedText.R.email
+                </MudText>
+                <MudStack Row="true">
+                    <MudText Typo="Typo.body1">@_maskedEmail</MudText>
+                    <MudLink OnClick="ToggleEmailMasking" Class="user-select-none" Color="Color.Primary">@ToggleButtonText</MudLink>
+                </MudStack>
+            </MudStack>
+            <MudSpacer/>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled">@LocalizedText.R.edit</MudButton>
+        </div>
+
+        <MudDivider/>
+
+        <div class="d-flex mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Warning">@LocalizedText.R.change_password</MudButton>
+        </div>
+
+    </MudPaper>
+</MudContainer>
+
+@inject LocalizedText LocalizedText
+@inject IUserAuthenticationService UserAuthenticationService
+
+@code
+{
+    private string _email = "oracz@gmail.com";
+    private string? _maskedEmail;
+    private bool _emailMasked = true;
+
+    private string ToggleButtonText => _emailMasked ? LocalizedText.R.show : LocalizedText.R.hide;
+
+    protected override void OnInitialized()
+    {
+        _maskedEmail = MaskEmail(_email);
+    }
+
+    private void ToggleEmailMasking()
+    {
+        _emailMasked = !_emailMasked;
+        _maskedEmail = _emailMasked ? MaskEmail(_email) : _email;
+    }
+
+    private static string MaskEmail(string email)
+    {
+        var atIndex = email.IndexOf('@');
+        if (atIndex > 0)
+        {
+            return new string('*', atIndex) + email[atIndex..];
+        }
+        return email;
+    }
+}
