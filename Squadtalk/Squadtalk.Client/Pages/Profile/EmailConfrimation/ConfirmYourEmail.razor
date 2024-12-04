@@ -2,9 +2,12 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudAlert Elevation="8" Variant="Variant.Filled" Severity="Severity.Info">
-        Please check your email to confirm the account.
+        @LocalizedText.R.confirm_your_email
     </MudAlert>
 
-    <MudButton Class="ma-4" Color="Color.Info" Variant="Variant.Text">Resend confirmation email</MudButton>
+    <MudButton Class="ma-4" Color="Color.Info" Variant="Variant.Text">
+        @LocalizedText.R.resend_confirmation_email
+    </MudButton>
 </MudContainer>
 
+@inject LocalizedText LocalizedText

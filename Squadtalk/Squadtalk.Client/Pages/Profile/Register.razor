@@ -9,24 +9,30 @@
     <MudPaper Class="pa-4" Elevation="8">
         <MudForm @ref="_form" @bind-IsValid="_success">
 
-            <MudTextField T="string" Label="Username" Required="true" RequiredError="Username is required!" @ref="_usernameField"/>
+            <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
+                          RequiredError="@LocalizedText.R.username_is_required" @ref="_usernameField"/>
 
-            <MudTextField T="string" Label="Email" Required="true" RequiredError="Email is required!" @ref="_emailField"
-                          Validation="@(new EmailAddressAttribute { ErrorMessage = "The email address is invalid!" })"/>
+            <MudTextField T="string" Label="@LocalizedText.R.email" Required="true"
+                          RequiredError="@LocalizedText.R.email_is_required"
+                          Validation="@(new EmailAddressAttribute { ErrorMessage = LocalizedText.R.email_is_invalid })"
+                          @ref="_emailField" />
 
-            <MudTextField T="string" Label="Password" Required="true" RequiredError="Password is required!"
-                          InputType="InputType.Password" @ref="_passwordField"
+            <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
+                          RequiredError="@LocalizedText.R.password_is_required" InputType="InputType.Password"
+                          @ref="_passwordField"
                           Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"/>
 
-            <MudTextField T="string"
-                          Label="Password" HelperText="Repeat the password" InputType="InputType.Password"
+            <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
+                          HelperText="@LocalizedText.R.confirm_password" InputType="InputType.Password"
                           Validation="@(new Func<string, string?>(PasswordMatch))"/>
 
             <MudStack Class="mt-4">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_success)" OnClick="RegisterUser">
-                    Register
+                    @LocalizedText.R.register
                 </MudButton>
-                <MudButton Variant="Variant.Text" OnClick="NavigateToLogin">Login to an existing account</MudButton>
+                <MudButton Variant="Variant.Text" OnClick="NavigateToLogin">
+                    @LocalizedText.R.login_to_existing_account
+                </MudButton>
             </MudStack>
         </MudForm>
     </MudPaper>
@@ -35,6 +41,7 @@
 @inject NavigationManager NavigationManager
 @inject RestClient RestClient
 @inject ISnackbar Snackbar
+@inject LocalizedText LocalizedText
 
 @code
 {
@@ -68,10 +75,16 @@
             {
                 NavigationManager.NavigateTo("/Profile/ConfirmEmail");
             }
+            else
+            {
+                var template = LocalizedText.R.failed_to_register_code_template;
+                var message = string.Format(template, (int) response.StatusCode);
+                Snackbar.Add(message, Severity.Error);
+            }
         }
         catch
         {
-            Snackbar.Add("Failed to log in", Severity.Error);
+            Snackbar.Add(LocalizedText.R.failed_to_register, Severity.Error);
         }
     }
 
@@ -89,30 +102,30 @@
     {
         if (string.IsNullOrWhiteSpace(password))
         {
-            yield return "Password is required!";
+            yield return LocalizedText.R.password_is_required;
             yield break;
         }
 
         if (password.Length < 8)
         {
-            yield return "Password must be at least of length 8";
+            yield return LocalizedText.R.password_length;
         }
         if (!Regex.IsMatch(password, "[A-Z]"))
         {
-            yield return "Password must contain at least one capital letter";
+            yield return LocalizedText.R.password_uppercase;
         }
         if (!Regex.IsMatch(password, "[a-z]"))
         {
-            yield return "Password must contain at least one lowercase letter";
+            yield return LocalizedText.R.password_lowercase;
         }
         if (!Regex.IsMatch(password, "[0-9]"))
         {
-            yield return "Password must contain at least one digit";
+            yield return LocalizedText.R.password_digit;
         }
     }
 
     private string? PasswordMatch(string arg)
     {
-        return _passwordField.Value != arg ? "Passwords don't match" : null;
+        return _passwordField.Value != arg ? LocalizedText.R.passwords_dont_match : null;
     }
 }

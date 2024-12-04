@@ -2,6 +2,8 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudAlert Elevation="8" Variant="Variant.Filled" Severity="Severity.Success">
-        Email confirmed successfully.
+        @LocalizedText.R.email_confirmed
     </MudAlert>
 </MudContainer>
+
+@inject LocalizedText LocalizedText

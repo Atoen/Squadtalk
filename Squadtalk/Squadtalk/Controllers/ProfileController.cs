@@ -152,12 +152,12 @@ public class ProfileController : ControllerBase
 
         var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetPasswordDto.Code));
         var result = await _userManager.ResetPasswordAsync(user, code, resetPasswordDto.NewPassword);
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            return Ok();
+            return BadRequest();
         }
 
-        return BadRequest();
+        return Ok();
     }
 
     [HttpPost("logout")]
