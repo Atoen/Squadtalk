@@ -5,11 +5,11 @@ namespace Shared.DTOs.Account;
 public class UserLoginDto
 {
     [Required]
-    public string Username { get; set; } = default!;
+    public required string Username { get; init; }
 
     [Required]
     [DataType(DataType.Password)]
-    public string Password { get; set; } = default!;
+    public required string Password { get; init; }
 
-    public bool Remember { get; set; }
+    public bool Remember { get; init; }
 }

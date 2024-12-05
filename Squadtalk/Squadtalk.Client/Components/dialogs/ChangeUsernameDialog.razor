@@ -1,0 +1,120 @@
+@using System.Net
+@using RestSharp
+@using Shared
+@using Shared.DTOs.Account
+@using Shared.Extensions
+@using Color = MudBlazor.Color
+
+<MudDialog>
+    <DialogContent>
+
+        @if (_successMessage is not null)
+        {
+            <MudAlert Variant="Variant.Filled" Severity="Severity.Success" Class="mb-2" Dense="true">
+                @_successMessage
+            </MudAlert>
+        }
+        else if (_errorMessage is not null)
+        {
+            <MudAlert Variant="Variant.Filled" Severity="Severity.Error" Class="mb-2" Dense="true">
+                @_errorMessage
+            </MudAlert>
+        }
+
+        @LocalizedText.R.enter_new_username_and_password
+
+        <MudForm @ref="_form" @bind-IsValid="_formValid" Spacing="2">
+            <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
+                          @ref="_usernameField"/>
+
+            <MudTextField T="string" Label="@LocalizedText.R.current_password" Required="true"
+                          @ref="_passwordField" InputType="InputType.Password"/>
+
+            <AntiforgeryToken/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">
+            @LocalizedText.R.dialog_cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ChangeUsername">
+            @LocalizedText.R.dialog_done
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@inject LocalizedText LocalizedText
+@inject ISnackbar Snackbar
+@inject IUserAuthenticationService UserAuthenticationService
+@inject RestClient RestClient
+@inject ILogger<ChangeUsernameDialog> Logger
+
+@code
+{
+    private MudForm _form = default!;
+    private MudTextField<string> _usernameField = default!;
+    private MudTextField<string> _passwordField = default!;
+
+    private string? _successMessage;
+    private string? _errorMessage;
+
+    private bool _formValid;
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task ChangeUsername()
+    {
+        if (!_form.IsValid) return;
+
+        var username = _usernameField.Value!;
+
+        var request = new RestRequest(Endpoints.ChangeUsername)
+            .AddBody(new ChangeUsernameDto
+            {
+                UserId = UserAuthenticationService.UserId.ToString(),
+                NewUsername = username,
+                Password = _passwordField.Value!
+            });
+
+        try
+        {
+            _successMessage = null;
+            _errorMessage = null;
+
+            var response = await RestClient.ExecuteAsync<UsernameChangeResultDto>(request, Method.Post);
+
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK when response.Data is { ChangedUsername: var newUsername }:
+                    Logger.LogInformation("Username changed: {Username}", newUsername);
+                    Snackbar.Add(LocalizedText.R.username_changed, Severity.Success);
+                    MudDialog.Close();
+                    break;
+
+                case HttpStatusCode.NoContent:
+                    _successMessage = LocalizedText.R.username_not_changed;
+                    break;
+
+                case HttpStatusCode.Conflict:
+                    _errorMessage = LocalizedText.R.username_already_exists_template.Format(username);
+                    break;
+
+                case HttpStatusCode.Unauthorized:
+                    _errorMessage = LocalizedText.R.invalid_password;
+                    break;
+
+                default:
+                    _errorMessage = LocalizedText.R.failed_to_change_username_code_template.Format((int) response.StatusCode);
+                    break;
+            }
+        }
+        catch
+        {
+            _errorMessage = LocalizedText.R.failed_to_change_username;
+            Snackbar.Add(LocalizedText.R.failed_to_change_username, Severity.Error);
+        }
+    }
+}

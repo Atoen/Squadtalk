@@ -13,7 +13,7 @@
                           RequiredError="@LocalizedText.R.username_is_required" @ref="_usernameField"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.email" Required="true"
-                          RequiredError="@LocalizedText.R.email_is_required"
+                          RequiredError="@LocalizedText.R.email_is_required" InputMode="InputMode.email"
                           Validation="@(new EmailAddressAttribute { ErrorMessage = LocalizedText.R.email_is_invalid })"
                           @ref="_emailField" />
 

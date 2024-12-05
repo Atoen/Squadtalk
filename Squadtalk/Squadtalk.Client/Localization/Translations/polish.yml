@@ -3,7 +3,7 @@ messages: Wiadomości
 home: Strona główna
 canvas: Płótno
 register: Rejestracja
-login: Logowanie
+login: Zaloguj się
 logout: Wyloguj się
 users: Użytkownicy
 settings: Ustawienia
@@ -55,6 +55,12 @@ edit: Edytuj
 change_password: Zmień hasło
 show: Pokaż
 hide: Ukryj
+
+change_username: Zmień swoją nazwę użytkownika
+enter_new_username_and_password: Wprowadź nową nazwę użytkownika i obecne hasło.
+username_changed: Nazwa użytkownika zmieniona
+current_password: Obecne hasło
+dialog_done: Gotowe
 
 # Messages page
 create_channel_tooltip: Utwórz nową grupę

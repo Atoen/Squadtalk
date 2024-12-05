@@ -1,0 +1,9 @@
+@page "/Profile/InvalidEmailConfirmationLink"
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudAlert Elevation="8" Variant="Variant.Filled" Severity="Severity.Warning">
+        @LocalizedText.R.invalid_email_confirmation_link
+    </MudAlert>
+</MudContainer>
+
+@inject LocalizedText LocalizedText

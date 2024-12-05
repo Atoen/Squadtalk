@@ -37,7 +37,7 @@ failed_to_request_password_reset: There was an issue requesting the password res
 forgot_password: Forgot your password?
 register_as_new_user: Register as a new user
 remember_me: Keep me logged in
-failed_to_log_in_code_template: "Login failed (error code: {0})"
+failed_to_log_in_code_template: "Login failed (error code: {0})."
 failed_to_log_in: Unable to log in. Please check your credentials and try again.
 confirmation_email_resent: The confirmation email has been resent.
 login_to_existing_account: Log in to your existing account
@@ -46,15 +46,38 @@ password_digit: Password must include at least one digit.
 password_length: Password must be at least 8 characters long.
 password_uppercase: Password must contain at least one uppercase letter.
 password_lowercase: Password must contain at least one lowercase letter.
-failed_to_register_code_template: "Failed to register your account (error code: {0})"
+failed_to_register_code_template: "Failed to register your account (error code: {0})."
 failed_to_register: There was an issue registering your account.
 new_password: Enter your new password
 failed_to_reset_password: There was an issue resetting your password.
 
 edit: Edit
-change_password: Change password
+change_password: Change your password
 show: Show
 hide: Hide
+
+change_username: Change your username
+change_email: Change your email
+enter_new_username_and_password: Enter new username and current password.
+username_changed: Username changed successfully.
+failed_to_change_username_code_template: 'Failed to change your username (error code: {0}).'
+failed_to_change_username: Failed to change your username.
+username_not_changed: Your username is unchanged.
+username_already_exists_template: Username {0} already exists.
+current_password: Current password
+dialog_done: Done
+invalid_password: Invalid password
+invalid_email_confirmation_link: The email confirmation link is invalid or expired.
+enter_new_email_and_password: Enter new email address and current password.
+email_changed: Email address changed successfully.
+email_not_changed: Your email is unchanged.
+email_in_use_template: Email address {0} is already in use.
+failed_to_change_email_code_template: 'Failed to change your email address (error code: {0}).'
+failed_to_change_email: Failed to change your email address.
+email_change_confirmation_sent: Confirmation link to change email sent. Please check your email.
+enter_current_and_new_password: Enter you current and new password.
+failed_to_change_password: Failed to change your password.
+password_changed: Password changed successfully.
 
 # Home page
 hello_world: Hello world!

@@ -2,14 +2,14 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Shared.DTOs.Account;
 
-public class UserRegisterDto
+public class ChangeEmailDto
 {
     [Required]
-    public required string Username { get; init; }
+    public required string UserId { get; init; }
 
     [Required]
     [EmailAddress]
-    public required string Email { get; init; }
+    public required string NewEmail { get; init; }
 
     [Required]
     [DataType(DataType.Password)]

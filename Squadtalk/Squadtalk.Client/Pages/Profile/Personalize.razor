@@ -1,6 +1,7 @@
 @page "/Personalize"
 
 @using Shared.Data.Personalization
+@using Squadtalk.Client.Components.dialogs
 @inherits LocalizedComponent
 
 <h2 class="primary mb-4">@Table.personalization</h2>
@@ -9,7 +10,7 @@
     <MudPaper Class="pa-4" Elevation="8">
         <h3>@Table.app_appearance</h3>
 
-        <div class="settings-row">
+        <div class="d-flex align-items-center my-3">
             <div class="flex-1 mud-text-primary">
                 @Table.app_language
             </div>
@@ -20,7 +21,7 @@
             </MudMenu>
         </div>
 
-        <div class="settings-row">
+        <div class="d-flex align-items-center my-3">
             <div class="flex-1 mud-text-primary">
                 @Table.app_theme
             </div>
@@ -44,7 +45,7 @@
             </MudMenu>
         </div>
 
-        <div class="settings-row">
+        <div class="d-flex align-items-center my-3">
             <div class="flex-1 mud-text-primary">
                 @Table.app_palette
             </div>

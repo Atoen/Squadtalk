@@ -27,7 +27,7 @@
                         @_textTable.manage_account
                     </MudNavLink>
                     <div class="mud-nav-item">
-                        <form class="mud-width-full" action="Api/Profile/logout" method="post">
+                        <form class="mud-width-full" action="@Endpoints.LogOut" method="post">
                             <AntiforgeryToken/>
                             <input type="hidden" name="ReturnUrl" value=""/>
                             <button class="mud-nav-link mud-ripple">
@@ -53,6 +53,7 @@
     </MudNavMenu>
 </MudPaper>
 
+@using Shared
 @using Squadtalk.Client.Localization
 @implements IDisposable
 

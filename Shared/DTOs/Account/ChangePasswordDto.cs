@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Shared.DTOs.Account;
 
-public class ResetPasswordDto
+public class ChangePasswordDto
 {
     [Required]
     public required string UserId { get; init; }
@@ -12,5 +12,6 @@ public class ResetPasswordDto
     public required string NewPassword { get; init; }
 
     [Required]
-    public required string Code { get; init; }
+    [DataType(DataType.Password)]
+    public required string CurrentPassword { get; init; }
 }

@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
 {
     public static WebApplicationBuilder ConfigureAuthentication(this WebApplicationBuilder builder)
     {
-        var authenticationBuilder = builder.Services.AddAuthentication(options =>
+        builder.Services.AddAuthentication(options =>
         {
             options.DefaultScheme = IdentityConstants.ApplicationScheme;
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
@@ -55,18 +55,33 @@ public static class ServiceCollectionExtensions
                     return Task.CompletedTask;
                 }
             };
-        });
-
-        authenticationBuilder.AddCookie(IdentityConstants.ApplicationScheme, options =>
+        }).AddCookie(IdentityConstants.ApplicationScheme, options =>
         {
             options.LoginPath = new PathString("/Profile/Login");
             options.Events = new CookieAuthenticationEvents
             {
                 OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
             };
+        }).AddCookie(IdentityConstants.ExternalScheme, o =>
+        {
+            o.Cookie.Name = IdentityConstants.ExternalScheme;
+            o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+        }).AddCookie(IdentityConstants.TwoFactorRememberMeScheme, o =>
+        {
+            o.Cookie.Name = IdentityConstants.TwoFactorRememberMeScheme;
+            o.Events = new CookieAuthenticationEvents
+            {
+                OnValidatePrincipal = SecurityStampValidator.ValidateAsync<ITwoFactorSecurityStampValidator>
+            };
+        }).AddCookie(IdentityConstants.TwoFactorUserIdScheme, o =>
+        {
+            o.Cookie.Name = IdentityConstants.TwoFactorUserIdScheme;
+            o.Events = new CookieAuthenticationEvents
+            {
+                OnRedirectToReturnUrl = _ => Task.CompletedTask
+            };
+            o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
         });
-
-        // authenticationBuilder.AddIdentityCookies();
 
         return builder;
     }

@@ -7,6 +7,26 @@ public static class StringExtensions
 {
     private const int MaxSpanLength = 128;
 
+    public static string Format(this string text, object? arg0)
+    {
+        return string.Format(text, arg0);
+    }
+
+    public static string Format(this string text, object? arg0, object? arg1)
+    {
+        return string.Format(text, arg0, arg1);
+    }
+
+    public static string Format(this string text, object? arg0, object? arg1, object? arg2)
+    {
+        return string.Format(text, arg0, arg1, arg2);
+    }
+
+    public static string Format(this string text, params ReadOnlySpan<object?> args)
+    {
+        return string.Format(text, args);
+    }
+
     public static string ToBase64(this string text, bool urlEncode = false)
     {
         ArgumentNullException.ThrowIfNull(text);
