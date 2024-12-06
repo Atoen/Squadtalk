@@ -12,22 +12,24 @@
 
         <MudDivider Class="my-2"/>
 
-        <MudNavLink Href="/Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.messages</MudNavLink>
-        <MudNavLink Href="/Users" Icon="@Icons.Material.Rounded.People">@_textTable.users</MudNavLink>
-        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">@_textTable.home</MudNavLink>
-        <MudNavLink Href="/Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.canvas</MudNavLink>
+        <MudNavLink Href="@Routes.Pages.Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.messages</MudNavLink>
+        <MudNavLink Href="@Routes.Pages.Users" Icon="@Icons.Material.Rounded.People">@_textTable.users</MudNavLink>
+        <MudNavLink Href="@Routes.Pages.Root" Match="NavLinkMatch.All" Icon="@Icons.Material.Rounded.Home">
+            @_textTable.home
+        </MudNavLink>
+        <MudNavLink Href="@Routes.Pages.Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.canvas</MudNavLink>
 
         <AuthorizeView>
             <Authorized>
                 <MudNavGroup Title="@_textTable.settings" Icon="@Icons.Material.Rounded.Settings">
-                    <MudNavLink Href="/Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
+                    <MudNavLink Href="@Routes.Pages.Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
                         @_textTable.personalization
                     </MudNavLink>
-                    <MudNavLink Href="/Profile/Manage" Icon="@Icons.Material.Rounded.ManageAccounts">
+                    <MudNavLink Href="@Routes.Pages.ManageAccount" Icon="@Icons.Material.Rounded.ManageAccounts">
                         @_textTable.manage_account
                     </MudNavLink>
                     <div class="mud-nav-item">
-                        <form class="mud-width-full" action="@Endpoints.LogOut" method="post">
+                        <form class="mud-width-full" action="@Routes.Endpoints.LogOut" method="post">
                             <AntiforgeryToken/>
                             <input type="hidden" name="ReturnUrl" value=""/>
                             <button class="mud-nav-link mud-ripple">
@@ -39,13 +41,13 @@
                 </MudNavGroup>
             </Authorized>
             <NotAuthorized>
-                <MudNavLink Href="/Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
+                <MudNavLink Href="@Routes.Pages.Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
                     @_textTable.personalization
                 </MudNavLink>
-                <MudNavLink Href="/Profile/Register" Icon="@Icons.Material.Rounded.PersonAdd">
+                <MudNavLink Href="@Routes.Pages.Register" Icon="@Icons.Material.Rounded.PersonAdd">
                     @_textTable.register
                 </MudNavLink>
-                <MudNavLink Href="/Profile/Login" Icon="@Icons.Material.Rounded.Login">
+                <MudNavLink Href="@Routes.Pages.Login" Icon="@Icons.Material.Rounded.Login">
                     @_textTable.login
                 </MudNavLink>
             </NotAuthorized>
@@ -53,7 +55,8 @@
     </MudNavMenu>
 </MudPaper>
 
-@using Shared
+
+@using Shared.Routing
 @using Squadtalk.Client.Localization
 @implements IDisposable
 

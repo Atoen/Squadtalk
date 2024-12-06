@@ -1,8 +1,8 @@
 @using System.Net
 @using RestSharp
-@using Shared
 @using Shared.DTOs.Account
 @using Shared.Extensions
+@using Shared.Routing
 @using Color = MudBlazor.Color
 
 <MudDialog>
@@ -70,7 +70,7 @@
 
         var email = _emailField.Value!;
 
-        var request = new RestRequest(Endpoints.ChangeEmail)
+        var request = new RestRequest(Routes.Endpoints.ChangeEmail)
             .AddBody(new ChangeEmailDto
             {
                 UserId = UserAuthenticationService.UserId.ToString(),

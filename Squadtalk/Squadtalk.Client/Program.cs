@@ -41,10 +41,6 @@ builder.Services.AddScoped<UserVolumeManager>();
 builder.Services.AddScoped<LocalizedText>();
 builder.Services.AddScoped<ITextProviderManager, BrowserTextProviderManager>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
-
-// builder.Services.AddScoped<ILocalizationService, BrowserLocalizationService>();
-
-// builder.Services.AddScoped<ILocalization, Localization>();
 builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();
 
 builder.Services.AddBlazoredLocalStorage();
@@ -60,7 +56,6 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.ShowTransitionDuration = 500;
     config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
 });
-// builder.Services.AddBlazorBootstrap();
 
 var host = builder.Build();
 

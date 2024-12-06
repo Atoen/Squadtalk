@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Shared.DTOs.Account;
+using Shared.Routing;
 using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route(Routes.Endpoints.ProfileController)]
 public class ProfileController : ControllerBase
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -33,7 +34,7 @@ public class ProfileController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("login")]
+    [HttpPost(Routes.RelativeEndpoints.Login)]
     public async Task<IActionResult> LoginUser(UserLoginDto loginDto, [FromQuery] string? returnUrl)
     {
         var result = await _signInManager.PasswordSignInAsync(loginDto.Username, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
@@ -50,7 +51,7 @@ public class ProfileController : ControllerBase
         return LocalRedirect(returnUrl);
     }
 
-    [HttpPost("register")]
+    [HttpPost(Routes.RelativeEndpoints.Register)]
     public async Task<IActionResult> RegisterUser(UserRegisterDto registerDto)
     {
         var alreadyRegistered = await _userManager.FindByEmailAsync(registerDto.Email);
@@ -97,12 +98,12 @@ public class ProfileController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("confirm-email")]
+    [HttpGet(Routes.RelativeEndpoints.ConfirmEmail)]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string? userId, [FromQuery] string? code)
     {
         if (userId is null || code is null)
         {
-            return LocalRedirect("/Profile/InvalidEmailConfirmationLink");
+            return LocalRedirect(Routes.Pages.InvalidEmailConfirmationLink);
         }
 
         var user = await _userManager.FindByIdAsync(userId);
@@ -113,17 +114,17 @@ public class ProfileController : ControllerBase
 
         if (user.EmailConfirmed)
         {
-            return LocalRedirect("/Profile/AlreadyConfirmed");
+            return LocalRedirect(Routes.Pages.EmailAlreadyConfirmed);
         }
 
         var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
         var result = await _userManager.ConfirmEmailAsync(user, decoded);
-        var uri = result.Succeeded ? "/Profile/EmailConfirmed" : "/Profile/ConfirmationError";
+        var uri = result.Succeeded ? Routes.Pages.EmailConfirmed : Routes.Pages.EmailConfirmationError;
 
         return LocalRedirect(uri);
     }
 
-    [HttpPost("forgot-password")]
+    [HttpPost(Routes.RelativeEndpoints.ForgotPassword)]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
     {
         var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
@@ -135,13 +136,13 @@ public class ProfileController : ControllerBase
         var code = await _userManager.GeneratePasswordResetTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-        var callbackUrl = $"{Request.Scheme}://{Request.Host}/ResetPassword?userId={user.Id}&code={code}";
+        var callbackUrl = $"{Request.Scheme}://{Request.Host}/{Routes.Pages.ResetPassword}?userId={user.Id}&code={code}";
         await _emailSender.SendPasswordResetLinkAsync(user, forgotPasswordDto.Email, callbackUrl);
 
         return Ok();
     }
 
-    [HttpPost("reset-password")]
+    [HttpPost(Routes.RelativeEndpoints.ResetPassword)]
     public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
     {
         var user = await _userManager.FindByIdAsync(resetPasswordDto.UserId);
@@ -161,7 +162,7 @@ public class ProfileController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("change-username")]
+    [HttpPost(Routes.RelativeEndpoints.ChangeUsername)]
     public async Task<IActionResult> ChangeUsername(ChangeUsernameDto changeUsernameDto)
     {
         var user = await _userManager.FindByIdAsync(changeUsernameDto.UserId);
@@ -204,7 +205,7 @@ public class ProfileController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("change-email")]
+    [HttpPost(Routes.RelativeEndpoints.ChangeEmail)]
     public async Task<IActionResult> ChangeEmail(ChangeEmailDto changeEmailDto)
     {
         var user = await _userManager.FindByIdAsync(changeEmailDto.UserId);
@@ -251,12 +252,12 @@ public class ProfileController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("confirm-email-change")]
+    [HttpGet(Routes.RelativeEndpoints.ConfirmEmailChange)]
     public async Task<IActionResult> ConfirmEmailChange([FromQuery] string? userId, [FromQuery] string? email, [FromQuery] string? code)
     {
         if (userId is null || email is null || code is null)
         {
-            return LocalRedirect("/Profile/InvalidEmailConfirmationLink");
+            return LocalRedirect(Routes.Pages.InvalidEmailConfirmationLink);
         }
 
         var user = await _userManager.FindByIdAsync(userId);
@@ -269,16 +270,16 @@ public class ProfileController : ControllerBase
         var result = await _userManager.ChangeEmailAsync(user, email, decoded);
         if (!result.Succeeded)
         {
-            return LocalRedirect("/Profile/ConfirmationError");
+            return LocalRedirect(Routes.Pages.EmailConfirmationError);
         }
 
         await _signInManager.RefreshSignInAsync(user);
 
-        return LocalRedirect("/Profile/EmailConfirmed");
+        return LocalRedirect(Routes.Pages.EmailConfirmed);
     }
 
     [Authorize]
-    [HttpPost("change-password")]
+    [HttpPost(Routes.RelativeEndpoints.ChangePassword)]
     public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
     {
         var user = await _userManager.FindByIdAsync(changePasswordDto.UserId);
@@ -298,17 +299,17 @@ public class ProfileController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("logout")]
+    [HttpPost(Routes.RelativeEndpoints.LogOut)]
     public async Task<IActionResult> Logout([FromQuery] string? returnUrl)
     {
         await _signInManager.SignOutAsync();
         return LocalRedirect($"~/{returnUrl}");
     }
 
-    [HttpGet("logout-external")]
+    [HttpGet(Routes.RelativeEndpoints.LogOutExternal)]
     public async Task<IActionResult> LogoutExternal()
     {
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-        return LocalRedirect("/");
+        return LocalRedirect(Routes.Pages.Root);
     }
 }

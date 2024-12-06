@@ -1,7 +1,7 @@
-@page "/Profile/Register"
+@attribute [Route(Routes.Pages.Register)]
+
 @using System.ComponentModel.DataAnnotations
 @using System.Text.RegularExpressions
-@using Shared
 @using Shared.DTOs.Account
 @using RestSharp
 
@@ -59,7 +59,7 @@
     {
         if (!_form.IsValid) return;
 
-        var request = new RestRequest(Endpoints.Register)
+        var request = new RestRequest(Routes.Endpoints.Register)
             .AddBody(new UserRegisterDto
             {
                 Username = _usernameField.Value!,
@@ -73,7 +73,7 @@
             var response = await RestClient.PostAsync(request);
             if (response.IsSuccessful)
             {
-                NavigationManager.NavigateTo("/Profile/ConfirmEmail");
+                NavigationManager.NavigateTo(Routes.Pages.ConfirmEmail);
             }
             else
             {
@@ -90,7 +90,7 @@
 
     private void NavigateToLogin()
     {
-        var uri = NavigationManager.GetUriWithQueryParameters("Profile/Login", new Dictionary<string, object?>
+        var uri = NavigationManager.GetUriWithQueryParameters(Routes.Pages.Login, new Dictionary<string, object?>
         {
             { "ReturnUrl", ReturnUrl }
         });

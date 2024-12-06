@@ -1,6 +1,6 @@
-@page "/Profile/Login"
+@attribute [Route(Routes.Pages.Login)]
+
 @using RestSharp
-@using Shared
 @using Shared.DTOs.Account
 
 <MudContainer MaxWidth="MaxWidth.Small">
@@ -64,7 +64,7 @@
     {
         if (!_form.IsValid) return;
 
-        var request = new RestRequest(Endpoints.Login)
+        var request = new RestRequest(Routes.Endpoints.Login)
             .AddBody(new UserLoginDto
             {
                 Username = _usernameField.Value!,
@@ -100,7 +100,7 @@
 
     private void NavigateToRegister()
     {
-        var uri = NavigationManager.GetUriWithQueryParameters("Profile/Register", new Dictionary<string, object?>
+        var uri = NavigationManager.GetUriWithQueryParameters(Routes.Pages.Register, new Dictionary<string, object?>
         {
             ["ReturnUrl"] = ReturnUrl
         });
@@ -108,7 +108,7 @@
         NavigationManager.NavigateTo(uri);
     }
 
-    private void NavigateToForgotPassword() => NavigationManager.NavigateTo("ForgotPassword");
+    private void NavigateToForgotPassword() => NavigationManager.NavigateTo(Routes.Pages.ForgotPassword);
 
     private void ResendConfirmation()
     {

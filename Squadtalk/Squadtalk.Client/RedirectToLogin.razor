@@ -1,10 +1,11 @@
-﻿@inject NavigationManager NavigationManager
+﻿@using Shared.Routing
+@inject NavigationManager NavigationManager
 
-@code {
+@code
+{
     protected override sealed void OnInitialized()
     {
         var returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.NavigateTo($"Profile/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
-        // NavigationManager.NavigateTo($"Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
+        NavigationManager.NavigateTo($"{Routes.Pages.Login}?returnUrl={Uri.EscapeDataString(returnUrl)}");
     }
 }

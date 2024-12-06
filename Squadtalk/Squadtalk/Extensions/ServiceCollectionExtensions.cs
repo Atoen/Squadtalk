@@ -6,10 +6,10 @@ using MessagePack;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
 using Polly.Registry;
+using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
@@ -25,11 +25,13 @@ public static class ServiceCollectionExtensions
 {
     public static WebApplicationBuilder ConfigureAuthentication(this WebApplicationBuilder builder)
     {
-        builder.Services.AddAuthentication(options =>
+        var authenticationBuilder = builder.Services.AddAuthentication(options =>
         {
             options.DefaultScheme = IdentityConstants.ApplicationScheme;
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-        }).AddJwtBearer(options =>
+        });
+
+        authenticationBuilder.AddJwtBearer(options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {
@@ -55,33 +57,20 @@ public static class ServiceCollectionExtensions
                     return Task.CompletedTask;
                 }
             };
-        }).AddCookie(IdentityConstants.ApplicationScheme, options =>
+        });
+
+        authenticationBuilder.AddCookie(IdentityConstants.ApplicationScheme, options =>
         {
-            options.LoginPath = new PathString("/Profile/Login");
+            options.LoginPath = new PathString(Routes.Pages.Login);
             options.Events = new CookieAuthenticationEvents
             {
                 OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
             };
-        }).AddCookie(IdentityConstants.ExternalScheme, o =>
-        {
-            o.Cookie.Name = IdentityConstants.ExternalScheme;
-            o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
-        }).AddCookie(IdentityConstants.TwoFactorRememberMeScheme, o =>
-        {
-            o.Cookie.Name = IdentityConstants.TwoFactorRememberMeScheme;
-            o.Events = new CookieAuthenticationEvents
-            {
-                OnValidatePrincipal = SecurityStampValidator.ValidateAsync<ITwoFactorSecurityStampValidator>
-            };
-        }).AddCookie(IdentityConstants.TwoFactorUserIdScheme, o =>
-        {
-            o.Cookie.Name = IdentityConstants.TwoFactorUserIdScheme;
-            o.Events = new CookieAuthenticationEvents
-            {
-                OnRedirectToReturnUrl = _ => Task.CompletedTask
-            };
-            o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
         });
+
+        authenticationBuilder.AddExternalCookie();
+        authenticationBuilder.AddTwoFactorRememberMeCookie();
+        authenticationBuilder.AddTwoFactorUserIdCookie();
 
         return builder;
     }
@@ -147,8 +136,6 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<TusHelper>();
         serviceCollection.AddScoped<UserVolumeManager>();
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
-        // serviceCollection.AddScoped<ILocalizationService, ServerLocalizationService>();
-        // serviceCollection.AddScoped<ILocalization, Localization>();/
 
         serviceCollection.AddScoped<IUserPreferencesService, ServerUserPreferencesService>();
         serviceCollection.AddScoped<LocalizedText>();
