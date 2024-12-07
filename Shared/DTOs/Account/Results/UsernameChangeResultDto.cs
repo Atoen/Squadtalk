@@ -1,9 +1,6 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace Shared.DTOs.Account;
+namespace Shared.DTOs.Account.Results;
 
 public class UsernameChangeResultDto
 {
-    [Required]
     public required string ChangedUsername { get; init; }
 }

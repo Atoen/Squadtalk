@@ -10,15 +10,14 @@ public static class Routes
         public const string Chat = "/Channels/{ChannelId}";
         public const string Chats = "/Chats";
         public const string Users = "/Users";
+        public const string Settings = "/Settings";
 
         public const string ForgotPassword = "/ForgotPassword";
         public const string ResetPassword = "/ResetPassword";
-        public const string Personalize = "/Personalize";
 
         public const string Profile = "/Profile";
         public const string Login = Profile + "/Login";
         public const string Register = Profile + "/Register";
-        public const string ManageAccount = Profile + "/Manage";
 
         public const string ConfirmEmail = Profile + "/ConfirmEmail";
         public const string EmailConfirmed = Profile + "/EmailConfirmed";
@@ -47,7 +46,7 @@ public static class Routes
 
     public static class Endpoints
     {
-        private const string ApiRoute = "api/";
+        private const string ApiRoute = "/api/";
         public const string ProfileController = ApiRoute + "profile/";
 
         public const string Login = ProfileController + RelativeEndpoints.Login;

@@ -14,6 +14,8 @@ unexpected_error: An unhandled error has occurred.
 dialog_remove_avatar_title: Confirm removing avatar
 dialog_remove_avatar_body: Are you sure you want to remove your current avatar? This action cannot be undone.
 
+network_error: Network error
+
 reset_password: Reset your password
 password_reset: Your password has been successfully reset.
 log_in: Log in to your account
@@ -50,6 +52,7 @@ failed_to_register_code_template: "Failed to register your account (error code: 
 failed_to_register: There was an issue registering your account.
 new_password: Enter your new password
 failed_to_reset_password: There was an issue resetting your password.
+select_color: Select color
 
 edit: Edit
 change_password: Change your password

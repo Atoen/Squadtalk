@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
+using Refit;
 using RestSharp;
 using Shared.Services;
 using Squadtalk.Client.Localization;
-using Squadtalk.Client.Services;;
+using Squadtalk.Client.Network;
+using Squadtalk.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -24,6 +26,11 @@ builder.Services.AddSingleton(_ => new RestClient(options =>
     options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress)
 ));
 
+builder.Services.AddSingleton(_ => RestService.For<IAccountApi>(builder.HostEnvironment.BaseAddress, new RefitSettings
+{
+    ExceptionFactory = _ => Task.FromResult<Exception?>(null)
+}));
+
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ISignalrService, SignalrService>();
 builder.Services.AddScoped<ICommunicationService, CommunicationService>();
@@ -39,6 +46,9 @@ builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();
 
 builder.Services.AddScoped<LocalizedText>();
+builder.Services.AddScoped<PasswordValidator>();
+builder.Services.AddScoped<IAccountManager, AccountManager>();
+
 builder.Services.AddScoped<ITextProviderManager, BrowserTextProviderManager>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();

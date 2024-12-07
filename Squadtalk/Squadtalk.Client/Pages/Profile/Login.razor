@@ -1,6 +1,5 @@
 @attribute [Route(Routes.Pages.Login)]
-
-@using RestSharp
+@using Shared.Data.Results
 @using Shared.DTOs.Account
 
 <MudContainer MaxWidth="MaxWidth.Small">
@@ -36,9 +35,9 @@
 
 @inject NavigationManager NavigationManager
 @inject IUserAuthenticationService UserAuthenticationService
-@inject RestClient RestClient
 @inject ISnackbar Snackbar
 @inject LocalizedText LocalizedText
+@inject IAccountManager AccountManager
 
 @code
 {
@@ -64,31 +63,26 @@
     {
         if (!_form.IsValid) return;
 
-        var request = new RestRequest(Routes.Endpoints.Login)
-            .AddBody(new UserLoginDto
-            {
-                Username = _usernameField.Value!,
-                Password = _passwordField.Value!,
-                Remember = _rememberCheckBox.Value
-            });
+        var data = new UserLoginDto
+        {
+            Username = _usernameField.Value!,
+            Password = _passwordField.Value!,
+            Remember = _rememberCheckBox.Value
+        };
 
-        try
+        var result = await AccountManager.LoginAsync(data);
+
+        if (result == LoginResult.Success)
         {
-            var response = await RestClient.PostAsync(request);
-            if (response.IsSuccessful)
-            {
-                NavigateOnLogin();
-            }
-            else
-            {
-                var template = LocalizedText.R.failed_to_log_in_code_template;
-                var message = string.Format(template, (int) response.StatusCode);
-                Snackbar.Add(message, Severity.Error);
-            }
+            NavigateOnLogin();
         }
-        catch
+        else if (result == LoginResult.Fail)
         {
-            Snackbar.Add(LocalizedText.R.failed_to_log_in, Severity.Error);
+            Snackbar.Add(LocalizedText.R.failed_to_log_in, Severity.Warning);
+        }
+        else
+        {
+            Snackbar.Add(LocalizedText.R.network_error, Severity.Error);
         }
     }
 

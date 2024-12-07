@@ -18,32 +18,24 @@
             @_textTable.home
         </MudNavLink>
         <MudNavLink Href="@Routes.Pages.Canvas" Icon="@Icons.Material.Rounded.Palette">@_textTable.canvas</MudNavLink>
+        <MudNavLink Href="@Routes.Pages.Settings" Icon="@Icons.Material.Rounded.Settings">
+            @_textTable.settings
+        </MudNavLink>
 
         <AuthorizeView>
             <Authorized>
-                <MudNavGroup Title="@_textTable.settings" Icon="@Icons.Material.Rounded.Settings">
-                    <MudNavLink Href="@Routes.Pages.Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
-                        @_textTable.personalization
-                    </MudNavLink>
-                    <MudNavLink Href="@Routes.Pages.ManageAccount" Icon="@Icons.Material.Rounded.ManageAccounts">
-                        @_textTable.manage_account
-                    </MudNavLink>
-                    <div class="mud-nav-item">
-                        <form class="mud-width-full" action="@Routes.Endpoints.LogOut" method="post">
-                            <AntiforgeryToken/>
-                            <input type="hidden" name="ReturnUrl" value=""/>
-                            <button class="mud-nav-link mud-ripple">
-                                <MudIcon Icon="@Icons.Material.Rounded.Logout" Color="Color.Default" Class="me-3"/>
-                                @_textTable.logout
-                            </button>
-                        </form>
-                    </div>
-                </MudNavGroup>
+                <div class="mud-nav-item">
+                    <form class="mud-width-full" action="@Routes.Endpoints.LogOut" method="post">
+                        <AntiforgeryToken/>
+                        <input type="hidden" name="ReturnUrl" value=""/>
+                        <button class="mud-nav-link mud-ripple">
+                            <MudIcon Icon="@Icons.Material.Rounded.Logout" Color="Color.Default" Class="me-3"/>
+                            @_textTable.logout
+                        </button>
+                    </form>
+                </div>
             </Authorized>
             <NotAuthorized>
-                <MudNavLink Href="@Routes.Pages.Personalize" Icon="@Icons.Material.Rounded.DashboardCustomize">
-                    @_textTable.personalization
-                </MudNavLink>
                 <MudNavLink Href="@Routes.Pages.Register" Icon="@Icons.Material.Rounded.PersonAdd">
                     @_textTable.register
                 </MudNavLink>

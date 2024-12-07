@@ -1,9 +1,10 @@
 @attribute [Route(Routes.Pages.Register)]
 
 @using System.ComponentModel.DataAnnotations
-@using System.Text.RegularExpressions
 @using Shared.DTOs.Account
-@using RestSharp
+@using Squadtalk.Client.Services
+@using Shared.Data.Results
+@using Shared.Extensions
 
 <MudContainer MaxWidth="MaxWidth.Small">
     <MudPaper Class="pa-4" Elevation="8">
@@ -20,7 +21,7 @@
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
                           RequiredError="@LocalizedText.R.password_is_required" InputType="InputType.Password"
                           @ref="_passwordField"
-                          Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"/>
+                          Validation="@PasswordValidator.StrengthValidator"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
                           HelperText="@LocalizedText.R.confirm_password" InputType="InputType.Password"
@@ -39,9 +40,10 @@
 </MudContainer>
 
 @inject NavigationManager NavigationManager
-@inject RestClient RestClient
+@inject IAccountManager AccountManager
 @inject ISnackbar Snackbar
 @inject LocalizedText LocalizedText
+@inject PasswordValidator PasswordValidator
 
 @code
 {
@@ -59,32 +61,37 @@
     {
         if (!_form.IsValid) return;
 
-        var request = new RestRequest(Routes.Endpoints.Register)
-            .AddBody(new UserRegisterDto
-            {
-                Username = _usernameField.Value!,
-                Email = _emailField.Value!,
-                Password = _passwordField.Value!
+        var username = _usernameField.Value!;
+        var email = _emailField.Value!;
 
-            });
-
-        try
+        var data = new UserRegisterDto
         {
-            var response = await RestClient.PostAsync(request);
-            if (response.IsSuccessful)
-            {
-                NavigationManager.NavigateTo(Routes.Pages.ConfirmEmail);
-            }
-            else
-            {
-                var template = LocalizedText.R.failed_to_register_code_template;
-                var message = string.Format(template, (int) response.StatusCode);
-                Snackbar.Add(message, Severity.Error);
-            }
+            Username = _usernameField.Value!,
+            Email = email,
+            Password = _passwordField.Value!
+        };
+
+        var result = await AccountManager.RegisterAsync(data);
+
+        if (result == RegisterResult.Success)
+        {
+            NavigationManager.NavigateTo(Routes.Pages.ConfirmEmail);
         }
-        catch
+        else if (result == RegisterResult.EmailInUse)
         {
-            Snackbar.Add(LocalizedText.R.failed_to_register, Severity.Error);
+            Snackbar.Add(LocalizedText.R.email_in_use_template.Format(email), Severity.Warning);
+        }
+        else if (result == RegisterResult.UsernameInUse)
+        {
+            Snackbar.Add(LocalizedText.R.username_already_exists_template.Format(username), Severity.Warning);
+        }
+        else if (result == RegisterResult.FailedToCreateAccount)
+        {
+            Snackbar.Add(LocalizedText.R.failed_to_log_in, Severity.Warning);
+        }
+        else
+        {
+            Snackbar.Add(LocalizedText.R.network_error, Severity.Error);
         }
     }
 
@@ -96,32 +103,6 @@
         });
 
         NavigationManager.NavigateTo(uri);
-    }
-
-    private IEnumerable<string> PasswordStrength(string password)
-    {
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            yield return LocalizedText.R.password_is_required;
-            yield break;
-        }
-
-        if (password.Length < 8)
-        {
-            yield return LocalizedText.R.password_length;
-        }
-        if (!Regex.IsMatch(password, "[A-Z]"))
-        {
-            yield return LocalizedText.R.password_uppercase;
-        }
-        if (!Regex.IsMatch(password, "[a-z]"))
-        {
-            yield return LocalizedText.R.password_lowercase;
-        }
-        if (!Regex.IsMatch(password, "[0-9]"))
-        {
-            yield return LocalizedText.R.password_digit;
-        }
     }
 
     private string? PasswordMatch(string arg)

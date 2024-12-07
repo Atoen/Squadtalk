@@ -137,6 +137,8 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<UserVolumeManager>();
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
+        serviceCollection.AddScoped<IAccountManager, AccountManager>();
+        serviceCollection.AddScoped<PasswordValidator>();
         serviceCollection.AddScoped<IUserPreferencesService, ServerUserPreferencesService>();
         serviceCollection.AddScoped<LocalizedText>();
         serviceCollection.AddSingleton<ITextProviderManager, ServerTextProviderManager>();

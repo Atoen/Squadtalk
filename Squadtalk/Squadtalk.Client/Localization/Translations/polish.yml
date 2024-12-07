@@ -50,11 +50,14 @@ failed_to_register_code_template: "Nie udało się zarejestrować konta (kod bł
 failed_to_register: Wystąpił problem z rejestracją konta.
 new_password: Wprowadź nowe hasło
 failed_to_reset_password: Wystąpił problem z resetowaniem hasła.
+select_color: Wybierz kolor
 
 edit: Edytuj
 change_password: Zmień hasło
 show: Pokaż
 hide: Ukryj
+
+network_error: Błąd połączenia
 
 change_username: Zmień swoją nazwę użytkownika
 change_email: Zmień swój adres e-mail

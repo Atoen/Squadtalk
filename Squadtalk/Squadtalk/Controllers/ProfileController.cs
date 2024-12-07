@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Shared.DTOs.Account;
+using Shared.DTOs.Account.Results;
 using Shared.Routing;
 using Squadtalk.Data.Entities;
 
@@ -35,29 +36,30 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.Login)]
-    public async Task<IActionResult> LoginUser(UserLoginDto loginDto, [FromQuery] string? returnUrl)
+    public async Task<ActionResult<LoginResultDto>> LoginUser(UserLoginDto loginDto)
     {
         var result = await _signInManager.PasswordSignInAsync(loginDto.Username, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
         if (!result.Succeeded)
         {
-            return Unauthorized("Invalid login attempt");
+            return Unauthorized(LoginResultDto.Fail);
         }
 
-        if (string.IsNullOrEmpty(returnUrl))
-        {
-            return Ok();
-        }
-
-        return LocalRedirect(returnUrl);
+        return Ok(LoginResultDto.Success);
     }
 
     [HttpPost(Routes.RelativeEndpoints.Register)]
-    public async Task<IActionResult> RegisterUser(UserRegisterDto registerDto)
+    public async Task<ActionResult<ResetPasswordResultDto>> RegisterUser(UserRegisterDto registerDto)
     {
-        var alreadyRegistered = await _userManager.FindByEmailAsync(registerDto.Email);
-        if (alreadyRegistered is not null)
+        var alreadyUsingEmail = await _userManager.FindByEmailAsync(registerDto.Email);
+        if (alreadyUsingEmail is not null)
         {
-            return Conflict("Email in use");
+            return Conflict(RegisterResultDto.EmailInUse);
+        }
+
+        var alreadyUsingUsername = await _userManager.FindByNameAsync(registerDto.Username);
+        if (alreadyUsingUsername is not null)
+        {
+            return Conflict(RegisterResultDto.UsernameInUse);
         }
 
         var user = new ApplicationUser();
@@ -71,7 +73,7 @@ public class ProfileController : ControllerBase
         var result = await _userManager.CreateAsync(user, registerDto.Password);
         if (!result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            return BadRequest(RegisterResultDto.FailedToCreateAccount);
         }
 
         var userId = await _userManager.GetUserIdAsync(user);
@@ -95,11 +97,11 @@ public class ProfileController : ControllerBase
 
         await _signInManager.SignInAsync(user, isPersistent: false);
 
-        return Ok();
+        return Ok(RegisterResultDto.Success);
     }
 
     [HttpGet(Routes.RelativeEndpoints.ConfirmEmail)]
-    public async Task<IActionResult> ConfirmEmail([FromQuery] string? userId, [FromQuery] string? code)
+    public async Task<ActionResult> ConfirmEmail([FromQuery] string? userId, [FromQuery] string? code)
     {
         if (userId is null || code is null)
         {
@@ -109,7 +111,7 @@ public class ProfileController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return NotFound();
+            return LocalRedirect(Routes.Pages.InvalidEmailConfirmationLink);
         }
 
         if (user.EmailConfirmed)
@@ -125,7 +127,7 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.ForgotPassword)]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+    public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
     {
         var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
         if (user is null || !user.EmailConfirmed)
@@ -143,92 +145,86 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.ResetPassword)]
-    public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+    public async Task<ActionResult<ResetPasswordResultDto>> ResetPassword(ResetPasswordDto resetPasswordDto)
     {
         var user = await _userManager.FindByIdAsync(resetPasswordDto.UserId);
         if (user is null)
         {
-            return Ok();
+            return Ok(ResetPasswordResultDto.Success);
         }
 
         var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetPasswordDto.Code));
         var result = await _userManager.ResetPasswordAsync(user, code, resetPasswordDto.NewPassword);
         if (!result.Succeeded)
         {
-            return BadRequest();
+            return BadRequest(ResetPasswordResultDto.Fail);
         }
 
-        return Ok();
+        return Ok(ResetPasswordResultDto.Success);
     }
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangeUsername)]
-    public async Task<IActionResult> ChangeUsername(ChangeUsernameDto changeUsernameDto)
+    public async Task<ActionResult<ChangeUsernameResultDto>> ChangeUsername(ChangeUsernameDto changeUsernameDto)
     {
         var user = await _userManager.FindByIdAsync(changeUsernameDto.UserId);
         if (user is null)
         {
-            return NotFound();
+            return NotFound(ChangeUsernameResultDto.NotFound);
         }
 
         if (user.UserName == changeUsernameDto.NewUsername)
         {
-            return NoContent();
+            return Ok(ChangeUsernameResultDto.NotChanged);
         }
 
         var existingUsername = await _userManager.FindByNameAsync(changeUsernameDto.NewUsername);
         if (existingUsername is not null)
         {
-            return Conflict();
+            return Conflict(ChangeUsernameResultDto.UsernameInUse);
         }
 
         var passwordMatches = await _userManager.CheckPasswordAsync(user, changeUsernameDto.Password);
         if (!passwordMatches)
         {
-            return Unauthorized();
+            return Unauthorized(ChangeUsernameResultDto.Unauthorized);
         }
 
         var result =  await _userManager.SetUserNameAsync(user, changeUsernameDto.NewUsername);
         if (!result.Succeeded)
         {
-            return Problem();
+            return BadRequest(ChangeUsernameResultDto.FailedToChange);
         }
 
         await _signInManager.RefreshSignInAsync(user);
-
-        var response = new UsernameChangeResultDto
-        {
-            ChangedUsername = changeUsernameDto.NewUsername
-        };
-
-        return Ok(response);
+        return Ok(ChangeUsernameResultDto.Success(changeUsernameDto.NewUsername));
     }
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangeEmail)]
-    public async Task<IActionResult> ChangeEmail(ChangeEmailDto changeEmailDto)
+    public async Task<ActionResult<EmailChangeResultDto>> ChangeEmail(ChangeEmailDto changeEmailDto)
     {
         var user = await _userManager.FindByIdAsync(changeEmailDto.UserId);
         if (user is null)
         {
-            return NotFound();
-        }
-
-        if (user.Email == changeEmailDto.NewEmail)
-        {
-            return NoContent();
+            return NotFound(EmailChangeResultDto.NotFound);
         }
 
         var existingEmail = await _userManager.FindByEmailAsync(changeEmailDto.NewEmail);
         if (existingEmail is not null)
         {
-            return Conflict();
+            return Conflict(EmailChangeResultDto.EmailInUse);
         }
 
         var passwordMatches = await _userManager.CheckPasswordAsync(user, changeEmailDto.Password);
         if (!passwordMatches)
         {
-            return Unauthorized();
+            return Unauthorized(EmailChangeResultDto.Unauthorized);
+        }
+
+        if (user.Email == changeEmailDto.NewEmail)
+        {
+            return Ok(EmailChangeResultDto.NotChanged);
         }
 
         var code = await _userManager.GenerateChangeEmailTokenAsync(user, changeEmailDto.NewEmail);
@@ -249,7 +245,7 @@ public class ProfileController : ControllerBase
             await _emailSender.SendConfirmationLinkAsync(user, changeEmailDto.NewEmail, callbackUrl);
         }
 
-        return Ok();
+        return Ok(EmailChangeResultDto.ConfirmationSent);
     }
 
     [HttpGet(Routes.RelativeEndpoints.ConfirmEmailChange)]
@@ -263,7 +259,7 @@ public class ProfileController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return NotFound();
+            return LocalRedirect(Routes.Pages.InvalidEmailConfirmationLink);
         }
 
         var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
@@ -280,34 +276,34 @@ public class ProfileController : ControllerBase
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangePassword)]
-    public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
+    public async Task<ActionResult<PasswordChangeResultDto>> ChangePassword(ChangePasswordDto changePasswordDto)
     {
         var user = await _userManager.FindByIdAsync(changePasswordDto.UserId);
         if (user is null)
         {
-            return NotFound();
+            return NotFound(PasswordChangeResultDto.Fail);
         }
 
         var result = await _userManager.ChangePasswordAsync(user, changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
         if (!result.Succeeded)
         {
-            return Unauthorized();
+            return NotFound(PasswordChangeResultDto.Fail);
         }
 
         await _signInManager.RefreshSignInAsync(user);
 
-        return Ok();
+        return NotFound(PasswordChangeResultDto.Success);
     }
 
     [HttpPost(Routes.RelativeEndpoints.LogOut)]
-    public async Task<IActionResult> Logout([FromQuery] string? returnUrl)
+    public async Task<ActionResult> Logout([FromQuery] string? returnUrl)
     {
         await _signInManager.SignOutAsync();
         return LocalRedirect($"~/{returnUrl}");
     }
 
     [HttpGet(Routes.RelativeEndpoints.LogOutExternal)]
-    public async Task<IActionResult> LogoutExternal()
+    public async Task<ActionResult> LogoutExternal()
     {
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         return LocalRedirect(Routes.Pages.Root);
