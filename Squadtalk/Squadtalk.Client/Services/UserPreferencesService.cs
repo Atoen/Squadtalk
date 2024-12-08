@@ -80,17 +80,17 @@ public class UserPreferencesService : IUserPreferencesService
 
     private void SavePreferences()
     {
-        var darkMode = UseDarkMode ? ApplicationTheme.AutoMode.Dark : ApplicationTheme.AutoMode.Light;
+        var darkMode = UseDarkMode ? ApplicationTheme.Automatic.Mode.Dark : ApplicationTheme.Automatic.Mode.Light;
         var preferences = new ApplicationPreferences(Language, Theme, Palette, darkMode);
 
         _invokeArgs[0] = preferences.Serialize();
         _jsRuntime.InvokeVoid(SavePreferencesFunctionName, _invokeArgs);
     }
 
-    private bool ShouldUseDarkMode(ApplicationTheme theme) => theme.Value switch
+    private bool ShouldUseDarkMode(ApplicationTheme theme) => theme switch
     {
-        ApplicationTheme.LightValue => false,
-        ApplicationTheme.DarkValue => true,
+        ApplicationTheme.Light => false,
+        ApplicationTheme.Dark => true,
         _ => _jsRuntime.Invoke<bool>(GetPrefersDarkModeFunctionName)
     };
 }

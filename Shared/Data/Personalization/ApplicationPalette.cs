@@ -1,27 +1,28 @@
 namespace Shared.Data.Personalization;
 
-public sealed record ApplicationPalette
+public abstract record ApplicationPalette(string Value)
 {
-    public const string DefaultValue = "default";
-    public const string OrangeValue = "orange";
-    public const string BlueValue = "blue";
-    public const string GreenValue = "green";
+    private const string DefaultValue = "default";
+    private const string OrangeValue = "orange";
+    private const string BlueValue = "blue";
+    private const string GreenValue = "green";
 
-    public static readonly ApplicationPalette Default = new(DefaultValue);
-    public static readonly ApplicationPalette Orange = new(OrangeValue);
-    public static readonly ApplicationPalette Blue = new(BlueValue);
-    public static readonly ApplicationPalette Green = new(GreenValue);
-
-    public string Value { get; }
-
-    private ApplicationPalette(string value) => Value = value;
+    public static readonly ApplicationPalette DefaultPalette = new Default();
+    public static readonly ApplicationPalette OrangePalette = new Orange();
+    public static readonly ApplicationPalette BluePalette = new Blue();
+    public static readonly ApplicationPalette GreenPalette = new Green();
 
     public static ApplicationPalette ParseValue(ReadOnlySpan<char> value) => value switch
     {
-        DefaultValue => Default,
-        OrangeValue => Orange,
-        BlueValue => Blue,
-        GreenValue => Green,
-        _ => Default
+        DefaultValue => DefaultPalette,
+        OrangeValue => OrangePalette,
+        BlueValue => BluePalette,
+        GreenValue => GreenPalette,
+        _ => DefaultPalette
     };
+
+    public sealed record Default() : ApplicationPalette(DefaultValue);
+    public sealed record Orange() : ApplicationPalette(OrangeValue);
+    public sealed record Blue() : ApplicationPalette(BlueValue);
+    public sealed record Green() : ApplicationPalette(GreenValue);
 }

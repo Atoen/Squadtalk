@@ -16,8 +16,8 @@
         </div>
         <MudMenu Label="@SelectedLanguage" Variant="Variant.Filled" Color="Color.Primary"
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
-            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.English)">@Table.english</MudMenuItem>
-            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.Polish)">@Table.polish</MudMenuItem>
+            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.EnglishLanguage)">@Table.english</MudMenuItem>
+            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.PolishLanguage)">@Table.polish</MudMenuItem>
         </MudMenu>
     </div>
 
@@ -29,17 +29,17 @@
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
             <MudMenuItem
                 Icon="@Icons.Material.Rounded.AutoMode"
-                OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Auto)">
+                OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.AutoTheme)">
                 @Table.theme_auto
             </MudMenuItem>
             <MudMenuItem
                 Icon="@Icons.Material.Rounded.LightMode"
-                OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Light)">
+                OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.LightTheme)">
                 @Table.theme_light
             </MudMenuItem>
             <MudMenuItem
                 Icon="@Icons.Material.Rounded.DarkMode"
-                OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.Dark)">
+                OnClick="() => UserPreferences.ChangeTheme(ApplicationTheme.DarkTheme)">
                 @Table.theme_dark
             </MudMenuItem>
         </MudMenu>
@@ -51,25 +51,25 @@
         </div>
         <MudMenu Label="@SelectedPalette" Variant="Variant.Filled" Color="Color.Primary"
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
-            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Default)">
+            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.DefaultPalette)">
                 <div class="d-flex gap-1">
                     <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Purple.Default}")"/>
                     @Table.palette_default
                 </div>
             </MudMenuItem>
-            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Orange)">
+            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.OrangePalette)">
                 <div class="d-flex gap-1">
                     <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Orange.Default}")"/>
                     @Table.palette_orange
                 </div>
             </MudMenuItem>
-            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Blue)">
+            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.BluePalette)">
                 <div class="d-flex gap-1">
                     <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Blue.Default}")"/>
                     @Table.palette_blue
                 </div>
             </MudMenuItem>
-            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.Green)">
+            <MudMenuItem OnClick="() => UserPreferences.ChangePalette(ApplicationPalette.GreenPalette)">
                 <div class="d-flex gap-1">
                     <MudIcon Icon="@Icons.Material.Rounded.Rectangle" Style="@($"color:{Colors.Green.Default}")"/>
                     @Table.palette_green
@@ -134,27 +134,27 @@
     private bool DisableMenu => !RendererInfo.IsInteractive;
     private string? _colorValue;
 
-    private string SelectedLanguage => UserPreferences.Language.Tag switch
+    private string SelectedLanguage => UserPreferences.Language switch
     {
-        ApplicationLanguage.EnglishTag => Table.english,
-        ApplicationLanguage.PolishTag => Table.polish,
+        ApplicationLanguage.English => Table.english,
+        ApplicationLanguage.Polish => Table.polish,
         _ => string.Empty
     };
 
-    private string SelectedTheme => UserPreferences.Theme.Value switch
+    private string SelectedTheme => UserPreferences.Theme switch
     {
-        ApplicationTheme.AutoValue => Table.theme_auto,
-        ApplicationTheme.LightValue => Table.theme_light,
-        ApplicationTheme.DarkValue => Table.theme_dark,
+        ApplicationTheme.Light => Table.theme_light,
+        ApplicationTheme.Dark => Table.theme_dark,
+        ApplicationTheme.Automatic => Table.theme_auto,
         _ => string.Empty
     };
 
-    private string SelectedPalette => UserPreferences.Palette.Value switch
+    private string SelectedPalette => UserPreferences.Palette switch
     {
-        ApplicationPalette.DefaultValue => Table.palette_default,
-        ApplicationPalette.OrangeValue => Table.palette_orange,
-        ApplicationPalette.BlueValue => Table.palette_blue,
-        ApplicationPalette.GreenValue => Table.palette_green,
+        ApplicationPalette.Default => Table.palette_default,
+        ApplicationPalette.Orange => Table.palette_orange,
+        ApplicationPalette.Blue => Table.palette_blue,
+        ApplicationPalette.Green => Table.palette_green,
         _ => string.Empty
     };
 

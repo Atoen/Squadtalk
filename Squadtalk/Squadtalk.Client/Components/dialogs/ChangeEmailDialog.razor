@@ -1,8 +1,6 @@
-@using System.Net
-@using RestSharp
+@using Shared.Data.Results
 @using Shared.DTOs.Account
 @using Shared.Extensions
-@using Shared.Routing
 @using Color = MudBlazor.Color
 
 <MudDialog>
@@ -44,9 +42,8 @@
 </MudDialog>
 
 @inject LocalizedText LocalizedText
-@inject ISnackbar Snackbar
 @inject IUserAuthenticationService UserAuthenticationService
-@inject RestClient RestClient
+@inject IAccountManager AccountManager
 
 @code
 {
@@ -66,52 +63,51 @@
 
     private async Task ChangeEmail()
     {
+        _successMessage = null;
+        _errorMessage = null;
+
         if (!_form.IsValid) return;
 
         var email = _emailField.Value!;
 
-        var request = new RestRequest(Routes.Endpoints.ChangeEmail)
-            .AddBody(new ChangeEmailDto
-            {
-                UserId = UserAuthenticationService.UserId.ToString(),
-                NewEmail = email,
-                Password = _passwordField.Value!
-            });
-
-        try
+        var data = new ChangeEmailDto
         {
-            _successMessage = null;
-            _errorMessage = null;
+            UserId = UserAuthenticationService.UserId.ToString(),
+            NewEmail = email,
+            Password = _passwordField.Value!
+        };
 
-            var response = await RestClient.PostAsync(request);
+        var result = await AccountManager.ChangeEmailAsync(data);
 
-            switch (response.StatusCode)
-            {
-                case HttpStatusCode.OK:
-                    _successMessage = LocalizedText.R.email_change_confirmation_sent;
-                    break;
-
-                case HttpStatusCode.NoContent:
-                    _successMessage = LocalizedText.R.email_not_changed;
-                    break;
-
-                case HttpStatusCode.Conflict:
-                    _errorMessage = LocalizedText.R.email_in_use_template.Format(email);
-                    break;
-
-                case HttpStatusCode.Unauthorized:
-                    _errorMessage = LocalizedText.R.invalid_password;
-                    break;
-
-                default:
-                    _errorMessage = LocalizedText.R.failed_to_change_email_code_template.Format((int) response.StatusCode);
-                    break;
-            }
-        }
-        catch
+        switch (result)
         {
-            _errorMessage = LocalizedText.R.failed_to_change_email;
-            Snackbar.Add(LocalizedText.R.failed_to_change_email, Severity.Error);
+            case ChangeEmailResult.ConfirmationSent:
+                _successMessage = LocalizedText.R.email_change_confirmation_sent;
+                break;
+
+            case ChangeEmailResult.NotChanged:
+                _successMessage = LocalizedText.R.email_not_changed;
+                break;
+
+            case ChangeEmailResult.EmailInUse:
+                _errorMessage = LocalizedText.R.email_in_use_template.Format(email);
+                break;
+
+            case ChangeEmailResult.NotFound:
+                _errorMessage = LocalizedText.R.failed_to_change_email;
+                break;
+
+            case ChangeEmailResult.Unauthorized:
+                _errorMessage = LocalizedText.R.invalid_password;
+                break;
+
+            case ChangeEmailResult.FailedToChange:
+                _errorMessage = LocalizedText.R.failed_to_change_email;
+                break;
+
+            case ChangeEmailResult.NetworkError:
+                _errorMessage = LocalizedText.R.network_error;
+                break;
         }
     }
 }

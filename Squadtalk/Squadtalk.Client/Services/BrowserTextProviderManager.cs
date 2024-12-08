@@ -7,12 +7,12 @@ namespace Squadtalk.Client.Services;
 
 internal class BrowserTextProviderManager : ITextProviderManager
 {
-    private readonly Lazy<ILocalizedTextProvider> _defaultProvider = new(static () => CreateProvider(ApplicationLanguage.Default));
+    private readonly Lazy<ILocalizedTextProvider> _defaultProvider = new(static () => CreateProvider(ApplicationLanguage.DefaultLanguage));
     private ProviderInfo? _currentProviderInfo;
 
     public ILocalizedTextProvider GetProvider(ApplicationLanguage language)
     {
-        if (language == ApplicationLanguage.Default)
+        if (language == ApplicationLanguage.DefaultLanguage)
         {
             return _defaultProvider.Value;
         }
@@ -28,10 +28,10 @@ internal class BrowserTextProviderManager : ITextProviderManager
         return provider;
     }
 
-    private static ILocalizedTextProvider CreateProvider(ApplicationLanguage language) => language.Tag switch
+    private static ILocalizedTextProvider CreateProvider(ApplicationLanguage language) => language switch
     {
-        ApplicationLanguage.EnglishTag => new EnglishTextProvider(),
-        ApplicationLanguage.PolishTag => new PolishTextProvider(),
+        ApplicationLanguage.English => new EnglishTextProvider(),
+        ApplicationLanguage.Polish => new PolishTextProvider(),
         _ => throw new ArgumentOutOfRangeException(nameof(language))
     };
 

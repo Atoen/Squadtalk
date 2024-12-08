@@ -97,11 +97,11 @@
 
     private void ChangePalette(ApplicationPalette palette)
     {
-        var (light, dark) = palette.Value switch
+        var (light, dark) = palette switch
         {
-            ApplicationPalette.OrangeValue => (new OrangeLightPalette(), new OrangeDarkPalette()),
-            ApplicationPalette.BlueValue => (new BlueLightPalette(), new BlueDarkPalette()),
-            ApplicationPalette.GreenValue => (new GreenLightPalette(), new GreenDarkPalette()),
+            ApplicationPalette.Orange => (new OrangeLightPalette(), new OrangeDarkPalette()),
+            ApplicationPalette.Blue => (new BlueLightPalette(), new BlueDarkPalette()),
+            ApplicationPalette.Green => (new GreenLightPalette(), new GreenDarkPalette()),
             _ => (new PaletteLight(), new PaletteDark()),
         };
 

@@ -29,7 +29,7 @@ public sealed partial class LocalizedText : IDisposable
     }
 
     private ILocalizedTextProvider Provider => _textProviderManager.GetProvider(_userPreferencesService.Language);
-    private ILocalizedTextProvider DefaultProvider => _textProviderManager.GetProvider(ApplicationLanguage.Default);
+    private ILocalizedTextProvider DefaultProvider => _textProviderManager.GetProvider(ApplicationLanguage.DefaultLanguage);
 
     public TextTable GetTextTable(ComponentBase component)
     {

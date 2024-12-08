@@ -1,23 +1,22 @@
 namespace Shared.Data.Personalization;
 
-public sealed record ApplicationLanguage
+public abstract record ApplicationLanguage(string Tag)
 {
-    public const string EnglishTag = "en";
-    public const string PolishTag = "pl";
+    private const string EnglishTag = "en";
+    private const string PolishTag = "pl";
 
-    public static readonly ApplicationLanguage English = new(EnglishTag);
-    public static readonly ApplicationLanguage Polish = new(PolishTag);
+    public static readonly ApplicationLanguage EnglishLanguage = new English();
+    public static readonly ApplicationLanguage PolishLanguage = new Polish();
 
-    public static readonly ApplicationLanguage Default = English;
-
-    public string Tag { get; }
-
-    private ApplicationLanguage(string tag) => Tag = tag;
+    public static readonly ApplicationLanguage DefaultLanguage = EnglishLanguage;
 
     public static ApplicationLanguage ParseLanguageCode(ReadOnlySpan<char> languageCode) => languageCode switch
     {
-        EnglishTag => English,
-        PolishTag => Polish,
-        _ => Default
+        EnglishTag => EnglishLanguage,
+        PolishTag => PolishLanguage,
+        _ => DefaultLanguage
     };
+
+    public sealed record English() : ApplicationLanguage(EnglishTag);
+    public sealed record Polish() : ApplicationLanguage(PolishTag);
 }

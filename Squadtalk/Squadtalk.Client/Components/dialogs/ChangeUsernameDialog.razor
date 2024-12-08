@@ -1,9 +1,6 @@
-@using System.Net
-@using RestSharp
+@using Shared.Data.Results
 @using Shared.DTOs.Account
-@using Shared.DTOs.Account.Results
 @using Shared.Extensions
-@using Shared.Routing
 @using Color = MudBlazor.Color
 
 <MudDialog>
@@ -45,9 +42,8 @@
 </MudDialog>
 
 @inject LocalizedText LocalizedText
-@inject ISnackbar Snackbar
 @inject IUserAuthenticationService UserAuthenticationService
-@inject RestClient RestClient
+@inject IAccountManager AccountManager
 @inject ILogger<ChangeUsernameDialog> Logger
 
 @code
@@ -68,54 +64,59 @@
 
     private async Task ChangeUsername()
     {
+        _successMessage = null;
+        _errorMessage = null;
+
         if (!_form.IsValid) return;
 
         var username = _usernameField.Value!;
 
-        var request = new RestRequest(Routes.Endpoints.ChangeUsername)
-            .AddBody(new ChangeUsernameDto
-            {
-                UserId = UserAuthenticationService.UserId.ToString(),
-                NewUsername = username,
-                Password = _passwordField.Value!
-            });
-
-        try
+        if (username == UserAuthenticationService.Username)
         {
-            _successMessage = null;
-            _errorMessage = null;
-
-            var response = await RestClient.ExecuteAsync<UsernameChangeResultDto>(request, Method.Post);
-
-            switch (response.StatusCode)
-            {
-                case HttpStatusCode.OK when response.Data is { ChangedUsername: var newUsername }:
-                    Logger.LogInformation("Username changed: {Username}", newUsername);
-                    Snackbar.Add(LocalizedText.R.username_changed, Severity.Success);
-                    MudDialog.Close();
-                    break;
-
-                case HttpStatusCode.NoContent:
-                    _successMessage = LocalizedText.R.username_not_changed;
-                    break;
-
-                case HttpStatusCode.Conflict:
-                    _errorMessage = LocalizedText.R.username_already_exists_template.Format(username);
-                    break;
-
-                case HttpStatusCode.Unauthorized:
-                    _errorMessage = LocalizedText.R.invalid_password;
-                    break;
-
-                default:
-                    _errorMessage = LocalizedText.R.failed_to_change_username_code_template.Format((int) response.StatusCode);
-                    break;
-            }
+            _successMessage = LocalizedText.R.username_not_changed;
+            return;
         }
-        catch
+
+        var data = new ChangeUsernameDto
         {
-            _errorMessage = LocalizedText.R.failed_to_change_username;
-            Snackbar.Add(LocalizedText.R.failed_to_change_username, Severity.Error);
+            UserId = UserAuthenticationService.UserId.ToString(),
+            NewUsername = username,
+            Password = _passwordField.Value!
+        };
+
+        var result = await AccountManager.ChangeUsernameAsync(data);
+
+        switch (result)
+        {
+            case ChangeUsernameResult.Success success:
+                Logger.LogInformation("Changed username to {Username}", success.NewUsername);
+                _successMessage = LocalizedText.R.username_changed;
+                break;
+
+            case ChangeUsernameResult.NotChanged:
+                _successMessage = LocalizedText.R.username_not_changed;
+                break;
+
+            case ChangeUsernameResult.NotFound:
+                _errorMessage = LocalizedText.R.failed_to_change_username;
+                break;
+
+            case ChangeUsernameResult.Unauthorized:
+                _errorMessage = LocalizedText.R.invalid_password;
+                break;
+
+            case ChangeUsernameResult.UsernameInUse:
+                _errorMessage = LocalizedText.R.username_already_exists_template.Format(username);
+                break;
+
+            case ChangeUsernameResult.FailedToChange:
+                _errorMessage = LocalizedText.R.failed_to_change_username;
+                break;
+
+            case ChangeUsernameResult.NetworkError:
+                _errorMessage = LocalizedText.R.network_error;
+                break;
+
         }
     }
 }

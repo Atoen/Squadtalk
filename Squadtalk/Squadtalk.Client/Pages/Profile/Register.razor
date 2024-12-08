@@ -73,25 +73,27 @@
 
         var result = await AccountManager.RegisterAsync(data);
 
-        if (result == RegisterResult.Success)
+        switch (result)
         {
-            NavigationManager.NavigateTo(Routes.Pages.ConfirmEmail);
-        }
-        else if (result == RegisterResult.EmailInUse)
-        {
-            Snackbar.Add(LocalizedText.R.email_in_use_template.Format(email), Severity.Warning);
-        }
-        else if (result == RegisterResult.UsernameInUse)
-        {
-            Snackbar.Add(LocalizedText.R.username_already_exists_template.Format(username), Severity.Warning);
-        }
-        else if (result == RegisterResult.FailedToCreateAccount)
-        {
-            Snackbar.Add(LocalizedText.R.failed_to_log_in, Severity.Warning);
-        }
-        else
-        {
-            Snackbar.Add(LocalizedText.R.network_error, Severity.Error);
+            case RegisterResult.Success:
+                NavigationManager.NavigateTo(Routes.Pages.ConfirmEmail);
+                break;
+
+            case RegisterResult.EmailInUse:
+                Snackbar.Add(LocalizedText.R.email_in_use_template.Format(email), Severity.Warning);
+                break;
+
+            case RegisterResult.UsernameInUse:
+                Snackbar.Add(LocalizedText.R.username_already_exists_template.Format(username), Severity.Warning);
+                break;
+
+            case RegisterResult.FailedToCreateAccount:
+                Snackbar.Add(LocalizedText.R.failed_to_create_account, Severity.Error);
+                break;
+
+            case RegisterResult.NetworkError:
+                Snackbar.Add(LocalizedText.R.network_error, Severity.Error);
+                break;
         }
     }
 

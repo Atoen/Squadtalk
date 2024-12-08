@@ -1,52 +1,55 @@
 namespace Shared.Data.Personalization;
 
-public sealed record ApplicationTheme
+public abstract record ApplicationTheme(string Value)
 {
-    public const string AutoValue = "auto";
-    public const string LightValue = "light";
-    public const string DarkValue = "dark";
+    private const string LightValue = "light";
+    private const string DarkValue = "dark";
+    private const string AutoValue = "auto";
 
-    public const string AutoLightValue = "auto-light";
-    public const string AutoDarkValue = "auto-dark";
+    public static readonly ApplicationTheme LightTheme = new Light();
+    public static readonly ApplicationTheme DarkTheme = new Dark();
+    public static readonly ApplicationTheme AutoTheme = new Automatic();
 
-    public static readonly ApplicationTheme Auto = new(AutoValue);
-    public static readonly ApplicationTheme Light = new(LightValue);
-    public static readonly ApplicationTheme Dark = new(DarkValue);
-
-    public static readonly ApplicationTheme Default = Light;
-
-    public string Value { get; }
-
-    private ApplicationTheme(string value) => Value = value;
+    public static readonly ApplicationTheme DefaultTheme = LightTheme;
 
     public static ApplicationTheme ParseValue(ReadOnlySpan<char> value) => value switch
     {
-        AutoValue => Auto,
-        LightValue => Light,
-        DarkValue => Dark,
-        _ => Default
+        LightValue => LightTheme,
+        DarkValue => DarkTheme,
+        AutoValue => AutoTheme,
+        _ => DefaultTheme
     };
 
-    public enum AutoMode
+    public sealed record Light() : ApplicationTheme(LightValue);
+
+    public sealed record Dark() : ApplicationTheme(DarkValue);
+
+    public sealed record Automatic() : ApplicationTheme(AutoValue)
     {
-        Light,
-        Dark
+        internal const string AutoLightValue = "auto-light";
+        internal const string AutoDarkValue = "auto-dark";
+
+        public enum Mode
+        {
+            Light,
+            Dark
+        }
     }
 }
 
 public static class ApplicationThemeExtensions
 {
-    public static string Value(this ApplicationTheme.AutoMode autoMode) => autoMode switch
+    public static string Value(this ApplicationTheme.Automatic.Mode autoMode) => autoMode switch
     {
-        ApplicationTheme.AutoMode.Light => ApplicationTheme.AutoLightValue,
-        ApplicationTheme.AutoMode.Dark => ApplicationTheme.AutoDarkValue,
+        ApplicationTheme.Automatic.Mode.Light => ApplicationTheme.Automatic.AutoLightValue,
+        ApplicationTheme.Automatic.Mode.Dark => ApplicationTheme.Automatic.AutoDarkValue,
         _ => string.Empty
     };
 
-    public static ApplicationTheme.AutoMode ParseAutoModeValue(ReadOnlySpan<char> value) => value switch
+    public static ApplicationTheme.Automatic.Mode ParseAutoModeValue(ReadOnlySpan<char> value) => value switch
     {
-        ApplicationTheme.AutoLightValue => ApplicationTheme.AutoMode.Light,
-        ApplicationTheme.AutoDarkValue => ApplicationTheme.AutoMode.Dark,
+        ApplicationTheme.Automatic.AutoLightValue => ApplicationTheme.Automatic.Mode.Light,
+        ApplicationTheme.Automatic.AutoDarkValue => ApplicationTheme.Automatic.Mode.Dark,
         _ => default
     };
 }

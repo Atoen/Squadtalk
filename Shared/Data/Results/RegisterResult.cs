@@ -1,15 +1,14 @@
 namespace Shared.Data.Results;
 
-public sealed record RegisterResult
+public abstract record RegisterResult
 {
-    private RegisterResult(int value) => Value = value;
+    public sealed record Success : RegisterResult;
 
-    public int Value { get; }
+    public sealed record EmailInUse : RegisterResult;
 
-    public static readonly RegisterResult Success = new(1);
-    public static readonly RegisterResult EmailInUse = new(2);
-    public static readonly RegisterResult UsernameInUse = new(3);
-    public static readonly RegisterResult FailedToCreateAccount = new(4);
-    public static readonly RegisterResult NetworkError = new(5);
+    public sealed record UsernameInUse : RegisterResult;
 
+    public sealed record FailedToCreateAccount : RegisterResult;
+
+    public sealed record NetworkError : RegisterResult;
 }

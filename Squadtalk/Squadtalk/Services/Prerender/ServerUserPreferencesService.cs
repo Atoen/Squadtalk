@@ -37,12 +37,15 @@ public class ServerUserPreferencesService : IUserPreferencesService
 
     public void ChangePalette(ApplicationPalette palette) {}
 
-    private bool ShouldUseDarkMode(ApplicationTheme theme, ApplicationTheme.AutoMode autoMode)
+    private bool ShouldUseDarkMode(ApplicationTheme theme, ApplicationTheme.Automatic.Mode autoMode)
     {
-        if (theme == ApplicationTheme.Light) return false;
-        if (theme == ApplicationTheme.Dark) return true;
+        return theme switch
+        {
+            ApplicationTheme.Light => false,
+            ApplicationTheme.Dark => true,
+            _ => autoMode == ApplicationTheme.Automatic.Mode.Dark
+        };
 
-        return autoMode == ApplicationTheme.AutoMode.Dark;
     }
 
     private string? GetContextValue(string name)

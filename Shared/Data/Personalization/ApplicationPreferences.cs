@@ -5,12 +5,12 @@ public readonly ref struct ApplicationPreferences
     private const char Delimiter = '$';
     private const int MaxStackAllocLength = 128;
 
-    public readonly ApplicationLanguage Language = ApplicationLanguage.Default;
-    public readonly ApplicationTheme Theme = ApplicationTheme.Default;
-    public readonly ApplicationPalette Palette = ApplicationPalette.Default;
-    public readonly ApplicationTheme.AutoMode AutoMode = default;
+    public readonly ApplicationLanguage Language = ApplicationLanguage.DefaultLanguage;
+    public readonly ApplicationTheme Theme = ApplicationTheme.DefaultTheme;
+    public readonly ApplicationPalette Palette = ApplicationPalette.DefaultPalette;
+    public readonly ApplicationTheme.Automatic.Mode AutoMode = default;
 
-    public ApplicationPreferences(ApplicationLanguage language, ApplicationTheme theme, ApplicationPalette palette, ApplicationTheme.AutoMode autoMode)
+    public ApplicationPreferences(ApplicationLanguage language, ApplicationTheme theme, ApplicationPalette palette, ApplicationTheme.Automatic.Mode autoMode)
     {
         Language = language;
         Theme = theme;
@@ -38,8 +38,8 @@ public readonly ref struct ApplicationPreferences
         splitEnumerator.MoveNext();
         var palette = ApplicationPalette.ParseValue(data[splitEnumerator.Current]);
 
-        ApplicationTheme.AutoMode autoMode = default;
-        if (theme == ApplicationTheme.Auto)
+        ApplicationTheme.Automatic.Mode autoMode = default;
+        if (theme is ApplicationTheme.Automatic)
         {
             splitEnumerator.MoveNext();
             autoMode = ApplicationThemeExtensions.ParseAutoModeValue(data[splitEnumerator.Current]);
@@ -55,7 +55,7 @@ public readonly ref struct ApplicationPreferences
         var paletteLength = Palette.Value.Length;
 
         var totalLength = languageLength + themeLength + paletteLength + 2;
-        var usesAutoTheme = Theme == ApplicationTheme.Auto;
+        var usesAutoTheme = Theme is ApplicationTheme.Automatic;
         if (usesAutoTheme)
         {
             totalLength += AutoMode.Value().Length + 1;

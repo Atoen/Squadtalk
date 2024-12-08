@@ -72,17 +72,19 @@
 
         var result = await AccountManager.LoginAsync(data);
 
-        if (result == LoginResult.Success)
+        switch (result)
         {
-            NavigateOnLogin();
-        }
-        else if (result == LoginResult.Fail)
-        {
-            Snackbar.Add(LocalizedText.R.failed_to_log_in, Severity.Warning);
-        }
-        else
-        {
-            Snackbar.Add(LocalizedText.R.network_error, Severity.Error);
+            case LoginResult.Success:
+                NavigateOnLogin();
+                break;
+
+            case LoginResult.Fail:
+                Snackbar.Add(LocalizedText.R.failed_to_log_in, Severity.Warning);
+                break;
+
+            case LoginResult.NetworkError:
+                Snackbar.Add(LocalizedText.R.network_error, Severity.Error);
+                break;
         }
     }
 

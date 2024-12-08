@@ -15,10 +15,10 @@ internal class ServerTextProviderManager : ITextProviderManager
         return _providers.GetOrAdd(language, CreateProvider);
     }
 
-    private static ILocalizedTextProvider CreateProvider(ApplicationLanguage language) => language.Tag switch
+    private static ILocalizedTextProvider CreateProvider(ApplicationLanguage language) => language switch
     {
-        ApplicationLanguage.EnglishTag => new EnglishTextProvider(),
-        ApplicationLanguage.PolishTag => new PolishTextProvider(),
+        ApplicationLanguage.English => new EnglishTextProvider(),
+        ApplicationLanguage.Polish => new PolishTextProvider(),
         _ => throw new ArgumentOutOfRangeException(nameof(language))
     };
 }
