@@ -11,7 +11,8 @@ namespace Squadtalk.Client.Localization;
 [LocalizationTable(
     CurrentProviderAccessor = nameof(Provider),
     DefaultProviderAccessor = nameof(DefaultProvider),
-    TableName = "R"
+    TableName = "R",
+    GenerateDocs = true
 )]
 public sealed partial class LocalizedText : IDisposable
 {

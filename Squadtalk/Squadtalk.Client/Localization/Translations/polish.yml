@@ -3,16 +3,24 @@ messages: Wiadomości
 home: Strona główna
 canvas: Płótno
 register: Rejestracja
+create_account: Utwórz konto
 login: Zaloguj się
 logout: Wyloguj się
 users: Użytkownicy
 settings: Ustawienia
 manage_account: Zarządzaj kontem
 app_appearance: Wygląd aplikacji
+recover_account: Odzyskaj konto
+account_recovering: Odzyskiwanie konta
+set_password_new: Ustaw nowe hasło
 
 # Home page
 hello_world: Witaj świecie!
 welcome_to_app: Witaj w swojej nowej aplikacji.
+
+username_too_long: Nazwa użytkownika jest zbyt długa
+this_email_in_use: Ten adres e-mail jest już w użyciu
+this_username_in_use: Ta nazwa użytkownika jest już zajęta
 
 reset_password: Zresetuj swoje hasło
 password_reset: Twoje hasło zostało pomyślnie zresetowane.
@@ -40,7 +48,7 @@ remember_me: Zapamiętaj mnie
 failed_to_log_in_code_template: "Nie udało się zalogować (kod błędu: {0})"
 failed_to_log_in: Nie udało się zalogować. Proszę sprawdź swoje dane logowania i spróbuj ponownie.
 confirmation_email_resent: E-mail potwierdzający został wysłany ponownie.
-login_to_existing_account: Zaloguj się do swojego istniejącego konta
+login_to_existing_account: Zaloguj się do istniejącego konta
 passwords_dont_match: Podane hasła nie pasują do siebie.
 password_digit: Hasło musi zawierać przynajmniej jedną cyfrę.
 password_length: Hasło musi mieć co najmniej 8 znaków.

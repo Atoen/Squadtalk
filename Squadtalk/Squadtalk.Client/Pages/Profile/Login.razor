@@ -4,7 +4,10 @@
 
 <MudContainer MaxWidth="MaxWidth.Small">
     <MudPaper Class="pa-4" Elevation="8">
-        <MudForm @ref="_form" @bind-IsValid="_formValid">
+        <MudForm @ref="_form" Spacing="1">
+
+            <MudText Typo="Typo.h5" Color="Color.Primary">@LocalizedText.R.login</MudText>
+
             <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
                           RequiredError="@LocalizedText.R.username_is_required" @ref="_usernameField"/>
 
@@ -15,16 +18,27 @@
             <MudCheckBox T="bool" Label="@LocalizedText.R.remember_me" Color="Color.Primary"
                          @ref="_rememberCheckBox"/>
 
-            <MudStack Class="mt-4 px-4">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formValid)" OnClick="LoginUser">
-                    @LocalizedText.R.login
+            <MudStack Class="mt-4 px-4" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px;"
+                           Disabled="_working" OnClick="LoginUser">
+                    @if (_working)
+                    {
+                        <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Small"/>
+                    }
+                    else
+                    {
+                        @LocalizedText.R.login
+                    }
                 </MudButton>
+
                 <MudButton Variant="Variant.Text" OnClick="NavigateToRegister">
-                    @LocalizedText.R.register_as_new_user
+                    @LocalizedText.R.create_account
                 </MudButton>
+
                 <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="NavigateToForgotPassword">
                     @LocalizedText.R.forgot_password
                 </MudButton>
+
                 <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ResendConfirmation">
                     @LocalizedText.R.resend_confirmation_email
                 </MudButton>
@@ -46,7 +60,7 @@
     private MudTextField<string> _passwordField = default!;
     private MudCheckBox<bool> _rememberCheckBox = default!;
 
-    private bool _formValid;
+    private bool _working;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -61,7 +75,9 @@
 
     private async Task LoginUser()
     {
-        if (!_form.IsValid) return;
+        if (!_form.IsValid || _working) return;
+
+        _working = true;
 
         var data = new UserLoginDto
         {
@@ -71,6 +87,8 @@
         };
 
         var result = await AccountManager.LoginAsync(data);
+
+        _working = false;
 
         switch (result)
         {

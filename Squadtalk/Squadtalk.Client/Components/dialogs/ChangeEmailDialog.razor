@@ -21,9 +21,9 @@
 
         @LocalizedText.R.enter_new_email_and_password
 
-        <MudForm @ref="_form" @bind-IsValid="_formValid" Spacing="2">
+        <MudForm @ref="_form" Spacing="2">
             <MudTextField T="string" Label="@LocalizedText.R.email" Required="true"
-                          @ref="_emailField" InputMode="InputMode.email"/>
+                          @ref="_emailField" InputMode="InputMode.email" Immediate="true"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.current_password" Required="true"
                           @ref="_passwordField" InputType="InputType.Password"/>
@@ -35,7 +35,7 @@
         <MudButton Variant="Variant.Text" OnClick="Cancel">
             @LocalizedText.R.dialog_cancel
         </MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ChangeEmail">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_working" OnClick="ChangeEmail">
             @LocalizedText.R.dialog_done
         </MudButton>
     </DialogActions>
@@ -54,7 +54,7 @@
     private string? _successMessage;
     private string? _errorMessage;
 
-    private bool _formValid;
+    private bool _working;
 
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; } = default!;
@@ -66,7 +66,11 @@
         _successMessage = null;
         _errorMessage = null;
 
-        if (!_form.IsValid) return;
+        if (!_form.IsValid || _working) return;
+
+        _working = true;
+        _emailField.Error = false;
+        _passwordField.Error = false;
 
         var email = _emailField.Value!;
 
@@ -79,6 +83,13 @@
 
         var result = await AccountManager.ChangeEmailAsync(data);
 
+        _working = false;
+
+        HandleResult(result);
+    }
+
+    private void HandleResult(ChangeEmailResult result)
+    {
         switch (result)
         {
             case ChangeEmailResult.ConfirmationSent:
@@ -90,17 +101,17 @@
                 break;
 
             case ChangeEmailResult.EmailInUse:
-                _errorMessage = LocalizedText.R.email_in_use_template.Format(email);
-                break;
-
-            case ChangeEmailResult.NotFound:
-                _errorMessage = LocalizedText.R.failed_to_change_email;
+                _emailField.Error = true;
+                _emailField.ErrorText = LocalizedText.R.this_email_in_use;
                 break;
 
             case ChangeEmailResult.Unauthorized:
+                _passwordField.Error = true;
+                _passwordField.ErrorText = LocalizedText.R.invalid_password;
                 _errorMessage = LocalizedText.R.invalid_password;
                 break;
 
+            case ChangeEmailResult.NotFound:
             case ChangeEmailResult.FailedToChange:
                 _errorMessage = LocalizedText.R.failed_to_change_email;
                 break;

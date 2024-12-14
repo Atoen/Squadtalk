@@ -28,7 +28,7 @@
     <PackageReference Include="RestSharp" Version="112.1.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="TextLocalizer.Types" Version="1.0.2" />
+    <PackageReference Include="TextLocalizer.Types" Version="1.0.3" />
     <PackageReference Include="tusdotnet" Version="2.8.0" />
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
     <ProjectReference Include="..\Squadtalk.Client\Squadtalk.Client.csproj" />

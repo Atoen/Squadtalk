@@ -3,13 +3,20 @@ messages: Messages
 home: Home
 canvas: Canvas
 register: Register
+create_account: Create account
 login: Log in
 logout: Log out
 users: Users
 settings: Settings
 manage_account: Manage account
 app_appearance: App appearance
+account_recovering: Account recovering
+recover_account: Recover account
+set_password_new: Set new password
 
+username_too_long: Username is too long
+this_email_in_use: This email is already in use
+this_username_in_use: This username is already in use
 unexpected_error: An unhandled error has occurred.
 dialog_remove_avatar_title: Confirm removing avatar
 dialog_remove_avatar_body: Are you sure you want to remove your current avatar? This action cannot be undone.
