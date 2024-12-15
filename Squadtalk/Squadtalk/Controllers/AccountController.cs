@@ -7,31 +7,35 @@ using Microsoft.AspNetCore.WebUtilities;
 using Shared.DTOs.Account;
 using Shared.DTOs.Account.Results;
 using Shared.Routing;
+using Shared.Services;
 using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Controllers;
 
 [ApiController]
-[Route(Routes.Endpoints.ProfileController)]
-public class ProfileController : ControllerBase
+[Route(Routes.Endpoints.AccountController)]
+public class AccountController : ControllerBase
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserStore<ApplicationUser> _userStore;
     private readonly IEmailSender<ApplicationUser> _emailSender;
-    private readonly ILogger<ProfileController> _logger;
+    private readonly IAccountManager _accountManager;
+    private readonly ILogger<AccountController> _logger;
 
-    public ProfileController(
+    public AccountController(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         IEmailSender<ApplicationUser> emailSender,
-        ILogger<ProfileController> logger)
+        IAccountManager accountManager,
+        ILogger<AccountController> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userStore = userStore;
         _emailSender = emailSender;
+        _accountManager = accountManager;
         _logger = logger;
     }
 
@@ -82,7 +86,7 @@ public class ProfileController : ControllerBase
 
         var callbackUrl = Url.Action(
             action: "ConfirmEmail",
-            controller: "Profile",
+            controller: "Account",
             values: new { userId, code },
             protocol: Request.Scheme);
 
@@ -232,7 +236,7 @@ public class ProfileController : ControllerBase
 
         var callbackUrl = Url.Action(
             action: "ConfirmEmailChange",
-            controller: "Profile",
+            controller: "Account",
             values: new { userId = changeEmailDto.UserId, email = changeEmailDto.NewEmail, code },
             protocol: Request.Scheme);
 

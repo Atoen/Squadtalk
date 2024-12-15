@@ -19,6 +19,8 @@ hello_world: Witaj świecie!
 welcome_to_app: Witaj w swojej nowej aplikacji.
 
 username_too_long: Nazwa użytkownika jest zbyt długa
+username_too_short: Nazwa użytkownika jest zbyt krótka
+username_invalid_character: Nazwa użytkownika zawiera niedozwolone znaki
 this_email_in_use: Ten adres e-mail jest już w użyciu
 this_username_in_use: Ta nazwa użytkownika jest już zajęta
 
@@ -51,7 +53,8 @@ confirmation_email_resent: E-mail potwierdzający został wysłany ponownie.
 login_to_existing_account: Zaloguj się do istniejącego konta
 passwords_dont_match: Podane hasła nie pasują do siebie.
 password_digit: Hasło musi zawierać przynajmniej jedną cyfrę.
-password_length: Hasło musi mieć co najmniej 8 znaków.
+password_too_short: Hasło musi mieć co najmniej {0} znaków.
+password_too_long: Hasło może mieć co najwyżej {0} znaków.
 password_uppercase: Hasło musi zawierać przynajmniej jedną wielką literę.
 password_lowercase: Hasło musi zawierać przynajmniej jedną małą literę.
 failed_to_register_code_template: "Nie udało się zarejestrować konta (kod błędu: {0})"

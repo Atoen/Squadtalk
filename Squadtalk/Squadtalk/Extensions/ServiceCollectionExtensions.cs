@@ -62,9 +62,24 @@ public static class ServiceCollectionExtensions
         authenticationBuilder.AddCookie(IdentityConstants.ApplicationScheme, options =>
         {
             options.LoginPath = new PathString(Routes.Pages.Login);
+            options.SlidingExpiration = true;
+
             options.Events = new CookieAuthenticationEvents
             {
-                OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
+                OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync,
+                OnRedirectToLogin = context =>
+                {
+                    if (context.Request.Path.StartsWithSegments(Routes.Endpoints.ApiBase))
+                    {
+                        context.Response.StatusCode = 401;
+                    }
+                    else
+                    {
+                        context.Response.Redirect(context.RedirectUri);
+                    }
+
+                    return Task.CompletedTask;
+                }
             };
         });
 
@@ -138,7 +153,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
         serviceCollection.AddScoped<IAccountManager, AccountManager>();
-        serviceCollection.AddScoped<PasswordValidator>();
+        serviceCollection.AddScoped<FormValidator>();
         serviceCollection.AddScoped<IUserPreferencesService, ServerUserPreferencesService>();
         serviceCollection.AddScoped<LocalizedText>();
         serviceCollection.AddSingleton<ITextProviderManager, ServerTextProviderManager>();

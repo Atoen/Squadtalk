@@ -1,6 +1,6 @@
 @using Shared.Data.Results
 @using Shared.DTOs.Account
-@using Shared.Extensions
+@using Squadtalk.Client.Services
 @using Color = MudBlazor.Color
 
 <MudDialog>
@@ -23,10 +23,13 @@
 
         <MudForm @ref="_form" Spacing="2">
             <MudTextField T="string" Label="@LocalizedText.R.email" Required="true"
-                          @ref="_emailField" InputMode="InputMode.email" Immediate="true"/>
+                          @ref="_emailField" InputMode="InputMode.email" Immediate="true"
+                          Validation="FormValidator.EmailValidator"
+                          Error="@(_emailError is not null)" ErrorText="@_emailError"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.current_password" Required="true"
-                          @ref="_passwordField" InputType="InputType.Password"/>
+                          @ref="_passwordField" InputType="InputType.Password"
+                          Error="@(_passwordError is not null)" ErrorText="@_passwordError"/>
 
             <AntiforgeryToken/>
         </MudForm>
@@ -36,7 +39,14 @@
             @LocalizedText.R.dialog_cancel
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_working" OnClick="ChangeEmail">
-            @LocalizedText.R.dialog_done
+            @if (_working)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Small"/>
+            }
+            else
+            {
+                @LocalizedText.R.dialog_done
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -44,6 +54,7 @@
 @inject LocalizedText LocalizedText
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IAccountManager AccountManager
+@inject FormValidator FormValidator
 
 @code
 {
@@ -53,6 +64,9 @@
 
     private string? _successMessage;
     private string? _errorMessage;
+
+    private string? _emailError;
+    private string? _passwordError;
 
     private bool _working;
 
@@ -69,8 +83,8 @@
         if (!_form.IsValid || _working) return;
 
         _working = true;
-        _emailField.Error = false;
-        _passwordField.Error = false;
+        _emailError = null;
+        _passwordError = null;
 
         var email = _emailField.Value!;
 
@@ -101,14 +115,11 @@
                 break;
 
             case ChangeEmailResult.EmailInUse:
-                _emailField.Error = true;
-                _emailField.ErrorText = LocalizedText.R.this_email_in_use;
+                _emailError = LocalizedText.R.this_email_in_use;
                 break;
 
             case ChangeEmailResult.Unauthorized:
-                _passwordField.Error = true;
-                _passwordField.ErrorText = LocalizedText.R.invalid_password;
-                _errorMessage = LocalizedText.R.invalid_password;
+                _passwordError = LocalizedText.R.invalid_password;
                 break;
 
             case ChangeEmailResult.NotFound:

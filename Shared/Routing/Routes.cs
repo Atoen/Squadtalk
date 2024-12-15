@@ -46,19 +46,19 @@ public static class Routes
 
     public static class Endpoints
     {
-        private const string ApiRoute = "/api/";
-        public const string ProfileController = ApiRoute + "profile/";
+        public const string ApiBase = "/api/";
+        public const string AccountController = ApiBase + "account/";
 
-        public const string Login = ProfileController + RelativeEndpoints.Login;
-        public const string Register = ProfileController + RelativeEndpoints.Register;
-        public const string LogOut = ProfileController + RelativeEndpoints.LogOut;
-        public const string LogOutExternal = ProfileController + RelativeEndpoints.LogOutExternal;
-        public const string ForgotPassword = ProfileController + RelativeEndpoints.ForgotPassword;
-        public const string ResetPassword = ProfileController + RelativeEndpoints.ResetPassword;
-        public const string ChangeUsername = ProfileController + RelativeEndpoints.ChangeUsername;
-        public const string ConfirmEmail = ProfileController + RelativeEndpoints.ConfirmEmail;
-        public const string ChangeEmail = ProfileController + RelativeEndpoints.ChangeEmail;
-        public const string ChangePassword = ProfileController + RelativeEndpoints.ChangePassword;
-        public const string ConfirmEmailChange = ProfileController + RelativeEndpoints.ConfirmEmailChange;
+        public const string Login = AccountController + RelativeEndpoints.Login;
+        public const string Register = AccountController + RelativeEndpoints.Register;
+        public const string LogOut = AccountController + RelativeEndpoints.LogOut;
+        public const string LogOutExternal = AccountController + RelativeEndpoints.LogOutExternal;
+        public const string ForgotPassword = AccountController + RelativeEndpoints.ForgotPassword;
+        public const string ResetPassword = AccountController + RelativeEndpoints.ResetPassword;
+        public const string ChangeUsername = AccountController + RelativeEndpoints.ChangeUsername;
+        public const string ConfirmEmail = AccountController + RelativeEndpoints.ConfirmEmail;
+        public const string ChangeEmail = AccountController + RelativeEndpoints.ChangeEmail;
+        public const string ChangePassword = AccountController + RelativeEndpoints.ChangePassword;
+        public const string ConfirmEmailChange = AccountController + RelativeEndpoints.ConfirmEmailChange;
     }
 }

@@ -1,10 +1,9 @@
 @attribute [Route(Routes.Pages.Register)]
 
-@using System.ComponentModel.DataAnnotations
+@using Shared.Data.Results
 @using Shared.DTOs.Account
 @using Squadtalk.Client.Services
-@using Shared.Data.Results
-@using Shared.Extensions
+@using Color = MudBlazor.Color
 
 <MudContainer MaxWidth="MaxWidth.Small">
     <MudPaper Class="pa-4" Elevation="8">
@@ -14,20 +13,21 @@
             <MudText Typo="Typo.h5" Color="Color.Primary">@LocalizedText.R.register</MudText>
 
             <MudTextField T="string" Label="@LocalizedText.R.username" Required="true" Immediate="true" InputType="InputType.Text"
-                          InputMode="InputMode.text" Counter="32"
+                          InputMode="InputMode.text" Counter="@FormValidator.MaximumUsernameLength"
+                          Error="@(_usernameError is not null)" ErrorText="@_usernameError"
                           RequiredError="@LocalizedText.R.username_is_required" @ref="_usernameField"
-                          Validation="@(new Func<string, string?>(UsernameLength))"/>
+                          Validation="FormValidator.UsernameValidator"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.email" Required="true" InputType="InputType.Email"
-                          Immediate="true"
+                          Immediate="true" Error="@(_emailError is not null)" ErrorText="@_emailError"
                           RequiredError="@LocalizedText.R.email_is_required" InputMode="InputMode.email"
-                          Validation="@(new EmailAddressAttribute { ErrorMessage = LocalizedText.R.email_is_invalid })"
+                          Validation="FormValidator.EmailValidator"
                           @ref="_emailField"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
                           RequiredError="@LocalizedText.R.password_is_required" InputType="InputType.Password"
                           @ref="_passwordField" Immediate="true"
-                          Validation="@PasswordValidator.StrengthValidator"/>
+                          Validation="FormValidator.PasswordValidator"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
                           HelperText="@LocalizedText.R.confirm_password" InputType="InputType.Password"
@@ -58,7 +58,7 @@
 @inject IAccountManager AccountManager
 @inject ISnackbar Snackbar
 @inject LocalizedText LocalizedText
-@inject PasswordValidator PasswordValidator
+@inject FormValidator FormValidator
 
 @code
 {
@@ -68,6 +68,9 @@
     private MudTextField<string> _passwordField = default!;
 
     private bool _working;
+
+    private string? _usernameError;
+    private string? _emailError;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -79,8 +82,8 @@
         if (!_form.IsValid || _working) return;
 
         _working = true;
-        _emailField.Error = false;
-        _usernameField.Error = false;
+        _usernameError = null;
+        _emailError = null;
 
         var username = _usernameField.Value!;
         var email = _emailField.Value!;
@@ -108,13 +111,11 @@
                 break;
 
             case RegisterResult.EmailInUse:
-                _emailField.Error = true;
-                _emailField.ErrorText = LocalizedText.R.this_email_in_use;
+                _emailError = LocalizedText.R.this_email_in_use;
                 break;
 
             case RegisterResult.UsernameInUse:
-                _usernameField.Error = true;
-                _usernameField.ErrorText = LocalizedText.R.this_username_in_use;
+                _usernameError = LocalizedText.R.this_username_in_use;
                 break;
 
             case RegisterResult.FailedToCreateAccount:
@@ -135,11 +136,6 @@
         });
 
         NavigationManager.NavigateTo(uri);
-    }
-
-    private string? UsernameLength(string? arg)
-    {
-        return arg?.Length > 32 ? LocalizedText.R.username_too_long : null;
     }
 
     private string? PasswordMatch(string? arg)

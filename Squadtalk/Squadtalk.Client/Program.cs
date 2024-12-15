@@ -46,7 +46,7 @@ builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();
 
 builder.Services.AddScoped<LocalizedText>();
-builder.Services.AddScoped<PasswordValidator>();
+builder.Services.AddScoped<FormValidator>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
 
 builder.Services.AddScoped<ITextProviderManager, BrowserTextProviderManager>();

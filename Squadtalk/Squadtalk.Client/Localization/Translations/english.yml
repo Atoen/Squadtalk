@@ -15,6 +15,8 @@ recover_account: Recover account
 set_password_new: Set new password
 
 username_too_long: Username is too long
+username_too_short: Username is too short
+username_invalid_character: Username contains invalid character
 this_email_in_use: This email is already in use
 this_username_in_use: This username is already in use
 unexpected_error: An unhandled error has occurred.
@@ -53,7 +55,8 @@ confirmation_email_resent: The confirmation email has been resent.
 login_to_existing_account: Log in to your existing account
 passwords_dont_match: The passwords you entered do not match.
 password_digit: Password must include at least one digit.
-password_length: Password must be at least 8 characters long.
+password_too_short: Password must be at least {0} characters long.
+password_too_long: Password may be at most {0} characters long.
 password_uppercase: Password must contain at least one uppercase letter.
 password_lowercase: Password must contain at least one lowercase letter.
 failed_to_register_code_template: "Failed to register your account (error code: {0})."

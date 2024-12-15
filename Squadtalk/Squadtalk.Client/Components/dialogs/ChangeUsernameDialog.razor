@@ -1,6 +1,6 @@
 @using Shared.Data.Results
 @using Shared.DTOs.Account
-@using Shared.Extensions
+@using Squadtalk.Client.Services
 @using Color = MudBlazor.Color
 
 <MudDialog>
@@ -23,11 +23,13 @@
 
         <MudForm @ref="_form" Spacing="2">
             <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
-                          @ref="_usernameField" Counter="32" Immediate="true"
-                          Validation="@(new Func<string, string?>(UsernameLength))"/>
+                          @ref="_usernameField" Counter="@FormValidator.MaximumUsernameLength" Immediate="true"
+                          Validation="FormValidator.UsernameValidator"
+                          Error="@(_usernameError is not null)" ErrorText="@_usernameError"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.current_password" Required="true"
-                          @ref="_passwordField" InputType="InputType.Password"/>
+                          @ref="_passwordField" InputType="InputType.Password"
+                          Error="@(_passwordError is not null)" ErrorText="@_passwordError"/>
 
             <AntiforgeryToken/>
         </MudForm>
@@ -37,7 +39,14 @@
             @LocalizedText.R.dialog_cancel
         </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_working" OnClick="ChangeUsername">
-            @LocalizedText.R.dialog_done
+            @if (_working)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Small"/>
+            }
+            else
+            {
+                @LocalizedText.R.dialog_done
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -46,6 +55,7 @@
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IAccountManager AccountManager
 @inject ILogger<ChangeUsernameDialog> Logger
+@inject FormValidator FormValidator
 
 @code
 {
@@ -55,6 +65,9 @@
 
     private string? _successMessage;
     private string? _errorMessage;
+
+    private string? _usernameError;
+    private string? _passwordError;
 
     private bool _working;
 
@@ -71,8 +84,8 @@
         if (!_form.IsValid || _working) return;
 
         _working = true;
-        _usernameField.Error = false;
-        _passwordField.Error = false;
+        _usernameError = null;
+        _passwordError = null;
 
         var username = _usernameField.Value!;
 
@@ -114,13 +127,11 @@
                 break;
 
             case ChangeUsernameResult.Unauthorized:
-                _passwordField.Error = true;
-                _passwordField.ErrorText = LocalizedText.R.invalid_password;
+                _passwordError = LocalizedText.R.invalid_password;
                 break;
 
             case ChangeUsernameResult.UsernameInUse:
-                _usernameField.Error = true;
-                _usernameField.ErrorText = LocalizedText.R.this_username_in_use;
+                _usernameError = LocalizedText.R.this_username_in_use;
                 break;
 
             case ChangeUsernameResult.FailedToChange:
@@ -131,10 +142,5 @@
                 _errorMessage = LocalizedText.R.network_error;
                 break;
         }
-    }
-
-    private string? UsernameLength(string? arg)
-    {
-        return arg?.Length > 32 ? LocalizedText.R.username_too_long : null;
     }
 }
