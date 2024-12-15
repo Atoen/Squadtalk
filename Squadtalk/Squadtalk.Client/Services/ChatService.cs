@@ -8,7 +8,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class ChatService : IChatService
+internal class ChatService : IChatService
 {
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly CreateTextChannelRequestHandler _createTextChannelRequestHandler;

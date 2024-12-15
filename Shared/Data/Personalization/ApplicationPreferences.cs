@@ -1,14 +1,14 @@
 namespace Shared.Data.Personalization;
 
-public readonly ref struct ApplicationPreferences
+public readonly struct ApplicationPreferences
 {
     private const char Delimiter = '$';
     private const int MaxStackAllocLength = 128;
 
-    public readonly ApplicationLanguage Language = ApplicationLanguage.DefaultLanguage;
-    public readonly ApplicationTheme Theme = ApplicationTheme.DefaultTheme;
-    public readonly ApplicationPalette Palette = ApplicationPalette.DefaultPalette;
-    public readonly ApplicationTheme.Automatic.Mode AutoMode = default;
+    public readonly ApplicationLanguage Language;
+    public readonly ApplicationTheme Theme;
+    public readonly ApplicationPalette Palette;
+    public readonly ApplicationTheme.Automatic.Mode AutoMode;
 
     public ApplicationPreferences(ApplicationLanguage language, ApplicationTheme theme, ApplicationPalette palette, ApplicationTheme.Automatic.Mode autoMode)
     {
@@ -18,7 +18,7 @@ public readonly ref struct ApplicationPreferences
         AutoMode = autoMode;
     }
 
-    public static ApplicationPreferences Default => new();
+    public static ApplicationPreferences Default => new(ApplicationLanguage.DefaultLanguage, ApplicationTheme.DefaultTheme, ApplicationPalette.DefaultPalette, default);
 
     public static ApplicationPreferences Parse(ReadOnlySpan<char> data)
     {

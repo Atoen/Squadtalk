@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
 using Refit;
-using RestSharp;
 using Shared.Services;
+using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Network;
 using Squadtalk.Client.Services;
@@ -22,14 +22,7 @@ builder.Services.AddSingleton<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<UserAuthenticationService>());
 
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddSingleton(_ => new RestClient(options =>
-    options.BaseUrl = new Uri(builder.HostEnvironment.BaseAddress)
-));
-
-builder.Services.AddSingleton(_ => RestService.For<IAccountApi>(builder.HostEnvironment.BaseAddress, new RefitSettings
-{
-    ExceptionFactory = _ => Task.FromResult<Exception?>(null)
-}));
+builder.Services.AddNetworking(builder.HostEnvironment.BaseAddress);
 
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ISignalrService, SignalrService>();

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
+using Shared.Routing;
 using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
@@ -10,7 +11,7 @@ namespace Squadtalk.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route(Routes.Endpoints.MessageController)]
 public class MessageController : ControllerBase
 {
     private readonly MessageRepository _messageRepository;
@@ -27,7 +28,7 @@ public class MessageController : ControllerBase
         _channelRepository = channelRepository;
     }
 
-    [HttpGet("{channelId}/{timestamp?}")]
+    [HttpGet(Routes.RelativeEndpoints.GetMessages)]
     public async Task<ActionResult<List<Message>>> GetMessages(ChannelId channelId, string? timestamp)
     {
         var userId = HttpContext.User.GetUserId();
@@ -41,7 +42,7 @@ public class MessageController : ControllerBase
         return messages;
     }
     
-    [HttpPost("createChannel")]
+    [HttpPost(Routes.RelativeEndpoints.CreateChannel)]
     public async Task<ActionResult<ChannelId>> CreateChannel(List<UserId> participantsId)
     {
         var userId = HttpContext.User.GetUserId();

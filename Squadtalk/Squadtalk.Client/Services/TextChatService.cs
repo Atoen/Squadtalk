@@ -6,7 +6,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class TextChatService : ITextChatService
+internal class TextChatService : ITextChatService
 {
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
