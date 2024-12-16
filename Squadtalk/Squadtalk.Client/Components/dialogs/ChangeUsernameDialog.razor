@@ -1,21 +1,14 @@
 @using Shared.Data.Results
 @using Shared.DTOs.Account
-@using Squadtalk.Client.Services
 @using Color = MudBlazor.Color
 
 <MudDialog>
     <DialogContent>
 
-        @if (_successMessage is not null)
+        @if (_alertMessage is not null)
         {
-            <MudAlert Variant="Variant.Filled" Severity="Severity.Success" Class="mb-2" Dense="true">
-                @_successMessage
-            </MudAlert>
-        }
-        else if (_errorMessage is not null)
-        {
-            <MudAlert Variant="Variant.Filled" Severity="Severity.Error" Class="mb-2" Dense="true">
-                @_errorMessage
+            <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mb-2" Dense="true">
+                @_alertMessage.Text
             </MudAlert>
         }
 
@@ -23,13 +16,15 @@
 
         <MudForm @ref="_form" Spacing="2">
             <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
-                          @ref="_usernameField" Counter="@FormValidator.MaximumUsernameLength" Immediate="true"
+                          @ref="_usernameField" Counter="@IFormValidator.MaximumUsernameLength" Immediate="true"
                           Validation="FormValidator.UsernameValidator"
-                          Error="@(_usernameError is not null)" ErrorText="@_usernameError"/>
+                          RequiredError="@LocalizedText.R.username_is_required"
+                          Error="UsernameError" ErrorText="@UsernameErrorText"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.current_password" Required="true"
                           @ref="_passwordField" InputType="InputType.Password"
-                          Error="@(_passwordError is not null)" ErrorText="@_passwordError"/>
+                          RequiredError="@LocalizedText.R.password_is_required"
+                          Error="PasswordError" ErrorText="@PasswordErrorText"/>
 
             <AntiforgeryToken/>
         </MudForm>
@@ -55,19 +50,24 @@
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IAccountManager AccountManager
 @inject ILogger<ChangeUsernameDialog> Logger
-@inject FormValidator FormValidator
+@inject IFormValidator FormValidator
 
 @code
 {
     private MudForm _form = default!;
-    private MudTextField<string> _usernameField = default!;
-    private MudTextField<string> _passwordField = default!;
+    private MudTextField<string>? _usernameField;
+    private MudTextField<string>? _passwordField;
 
-    private string? _successMessage;
-    private string? _errorMessage;
+    private AlertMessage? _alertMessage;
 
-    private string? _usernameError;
-    private string? _passwordError;
+    private string? _serverUsernameError;
+    private string? _serverPasswordError;
+
+    private bool UsernameError => _serverUsernameError is not null || _usernameField?.Error == true;
+    private bool PasswordError => _serverPasswordError is not null || _passwordField?.Error == true;
+
+    private string? UsernameErrorText => _serverUsernameError ?? _usernameField?.ErrorText;
+    private string? PasswordErrorText => _serverPasswordError ?? _passwordField?.ErrorText;
 
     private bool _working;
 
@@ -78,28 +78,29 @@
 
     private async Task ChangeUsername()
     {
-        _successMessage = null;
-        _errorMessage = null;
+        _alertMessage = null;
+        _serverUsernameError = null;
+        _serverPasswordError = null;
+
+        await _form.Validate();
 
         if (!_form.IsValid || _working) return;
 
-        _working = true;
-        _usernameError = null;
-        _passwordError = null;
-
-        var username = _usernameField.Value!;
+        var username = _usernameField?.Value!;
 
         if (username == UserAuthenticationService.Username)
         {
-            _successMessage = LocalizedText.R.username_not_changed;
+            _alertMessage = AlertMessage.Success(LocalizedText.R.username_not_changed);
             return;
         }
+
+        _working = true;
 
         var data = new ChangeUsernameDto
         {
             UserId = UserAuthenticationService.UserId.ToString(),
             NewUsername = username,
-            Password = _passwordField.Value!
+            Password = _passwordField?.Value!
         };
 
         var result = await AccountManager.ChangeUsernameAsync(data);
@@ -115,31 +116,31 @@
         {
             case ChangeUsernameResult.Success success:
                 Logger.LogInformation("Changed username to {Username}", success.NewUsername);
-                _successMessage = LocalizedText.R.username_changed;
+                _alertMessage = AlertMessage.Success(LocalizedText.R.username_changed);
                 break;
 
             case ChangeUsernameResult.NotChanged:
-                _successMessage = LocalizedText.R.username_not_changed;
+                _alertMessage = AlertMessage.Info(LocalizedText.R.username_not_changed);
                 break;
 
             case ChangeUsernameResult.NotFound:
-                _errorMessage = LocalizedText.R.failed_to_change_username;
+                _alertMessage = AlertMessage.Error(LocalizedText.R.failed_to_change_username);
                 break;
 
             case ChangeUsernameResult.Unauthorized:
-                _passwordError = LocalizedText.R.invalid_password;
+                _serverPasswordError = LocalizedText.R.invalid_password;
                 break;
 
             case ChangeUsernameResult.UsernameInUse:
-                _usernameError = LocalizedText.R.this_username_in_use;
+                _serverUsernameError = LocalizedText.R.this_username_in_use;
                 break;
 
             case ChangeUsernameResult.FailedToChange:
-                _errorMessage = LocalizedText.R.failed_to_change_username;
+                _alertMessage = AlertMessage.Error(LocalizedText.R.failed_to_change_username);
                 break;
 
             case ChangeUsernameResult.NetworkError:
-                _errorMessage = LocalizedText.R.network_error;
+                _alertMessage = AlertMessage.Error(LocalizedText.R.network_error);
                 break;
         }
     }

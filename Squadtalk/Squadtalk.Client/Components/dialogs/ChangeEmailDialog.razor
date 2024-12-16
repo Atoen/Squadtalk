@@ -1,21 +1,14 @@
 @using Shared.Data.Results
 @using Shared.DTOs.Account
-@using Squadtalk.Client.Services
 @using Color = MudBlazor.Color
 
 <MudDialog>
     <DialogContent>
 
-        @if (_successMessage is not null)
+        @if (_alertMessage is not null)
         {
-            <MudAlert Variant="Variant.Filled" Severity="Severity.Success" Class="mb-2" Dense="true">
-                @_successMessage
-            </MudAlert>
-        }
-        else if (_errorMessage is not null)
-        {
-            <MudAlert Variant="Variant.Filled" Severity="Severity.Error" Class="mb-2" Dense="true">
-                @_errorMessage
+            <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mb-2" Dense="true">
+                @_alertMessage.Text
             </MudAlert>
         }
 
@@ -23,13 +16,15 @@
 
         <MudForm @ref="_form" Spacing="2">
             <MudTextField T="string" Label="@LocalizedText.R.email" Required="true"
+                          RequiredError="@LocalizedText.R.email_is_required"
                           @ref="_emailField" InputMode="InputMode.email" Immediate="true"
                           Validation="FormValidator.EmailValidator"
-                          Error="@(_emailError is not null)" ErrorText="@_emailError"/>
+                          Error="EmailError" ErrorText="@EmailErrorText"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.current_password" Required="true"
+                          RequiredError="@LocalizedText.R.password_is_required"
                           @ref="_passwordField" InputType="InputType.Password"
-                          Error="@(_passwordError is not null)" ErrorText="@_passwordError"/>
+                          Error="PasswordError" ErrorText="@PasswordErrorText"/>
 
             <AntiforgeryToken/>
         </MudForm>
@@ -54,19 +49,24 @@
 @inject LocalizedText LocalizedText
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IAccountManager AccountManager
-@inject FormValidator FormValidator
+@inject IFormValidator FormValidator
 
 @code
 {
     private MudForm _form = default!;
-    private MudTextField<string> _emailField = default!;
-    private MudTextField<string> _passwordField = default!;
+    private MudTextField<string>? _emailField;
+    private MudTextField<string>? _passwordField;
 
-    private string? _successMessage;
-    private string? _errorMessage;
+    private AlertMessage? _alertMessage;
 
-    private string? _emailError;
-    private string? _passwordError;
+    private string? _serverEmailError;
+    private string? _serverPasswordError;
+
+    private bool EmailError => _serverEmailError is not null || _emailField?.Error == true;
+    private bool PasswordError => _serverPasswordError is not null || _passwordField?.Error == true;
+
+    private string? EmailErrorText => _serverEmailError ?? _emailField?.ErrorText;
+    private string? PasswordErrorText => _serverPasswordError ?? _passwordField?.ErrorText;
 
     private bool _working;
 
@@ -77,22 +77,21 @@
 
     private async Task ChangeEmail()
     {
-        _successMessage = null;
-        _errorMessage = null;
+        _alertMessage = null;
+        _serverEmailError = null;
+        _serverPasswordError = null;
+
+        await _form.Validate();
 
         if (!_form.IsValid || _working) return;
 
         _working = true;
-        _emailError = null;
-        _passwordError = null;
-
-        var email = _emailField.Value!;
 
         var data = new ChangeEmailDto
         {
             UserId = UserAuthenticationService.UserId.ToString(),
-            NewEmail = email,
-            Password = _passwordField.Value!
+            NewEmail = _emailField?.Value!,
+            Password = _passwordField?.Value!
         };
 
         var result = await AccountManager.ChangeEmailAsync(data);
@@ -107,28 +106,28 @@
         switch (result)
         {
             case ChangeEmailResult.ConfirmationSent:
-                _successMessage = LocalizedText.R.email_change_confirmation_sent;
+                _alertMessage = AlertMessage.Success(LocalizedText.R.email_change_confirmation_sent);
                 break;
 
             case ChangeEmailResult.NotChanged:
-                _successMessage = LocalizedText.R.email_not_changed;
+                _alertMessage = AlertMessage.Info(LocalizedText.R.email_not_changed);
                 break;
 
             case ChangeEmailResult.EmailInUse:
-                _emailError = LocalizedText.R.this_email_in_use;
+                _serverEmailError = LocalizedText.R.this_email_in_use;
                 break;
 
             case ChangeEmailResult.Unauthorized:
-                _passwordError = LocalizedText.R.invalid_password;
+                _serverPasswordError = LocalizedText.R.invalid_password;
                 break;
 
             case ChangeEmailResult.NotFound:
             case ChangeEmailResult.FailedToChange:
-                _errorMessage = LocalizedText.R.failed_to_change_email;
+                _alertMessage = AlertMessage.Error(LocalizedText.R.failed_to_change_email);
                 break;
 
             case ChangeEmailResult.NetworkError:
-                _errorMessage = LocalizedText.R.network_error;
+                _alertMessage = AlertMessage.Error(LocalizedText.R.network_error);
                 break;
         }
     }

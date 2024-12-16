@@ -1,25 +1,17 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Shared.Extensions;
+using Shared.Services;
 using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Services;
 
-public partial class FormValidator
+internal partial class FormValidator : IFormValidator
 {
-    public const int MinimumPasswordLength = 8;
-    public const int MaximumPasswordLength = 64;
-
-    public const int MaximumUsernameLength = 32;
-    public const int MinimumUsernameLength = 3;
-
-    public const string AllowedUsernameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-
     private readonly LocalizedText _localizedText;
 
-    public readonly Func<string?, IEnumerable<string>> PasswordValidator;
-    public readonly Func<string?, string?> UsernameValidator;
-    public readonly EmailAddressAttribute EmailValidator;
+    public Func<string?, IEnumerable<string>> PasswordValidator { get; }
+    public Func<string?, string?> UsernameValidator { get; }
+    public Func<string?, string?> EmailValidator { get; }
 
     public FormValidator(LocalizedText localizedText)
     {
@@ -27,10 +19,13 @@ public partial class FormValidator
 
         PasswordValidator = ValidatePassword;
         UsernameValidator = ValidateUsername;
-        EmailValidator = new EmailAddressAttribute
-        {
-            ErrorMessage = _localizedText.R.email_is_invalid
-        };
+        EmailValidator = ValidateEmail;
+    }
+
+    public string? PasswordMatches(string? first, string? second)
+    {
+        var matches = first == second;
+        return matches ? null : _localizedText.R.passwords_dont_match;
     }
 
     public IEnumerable<string> ValidatePassword(string? password)
@@ -41,14 +36,14 @@ public partial class FormValidator
             yield break;
         }
 
-        if (password.Length < MinimumPasswordLength)
+        if (password.Length < IFormValidator.MinimumPasswordLength)
         {
-            yield return _localizedText.R.password_too_short.Format(MinimumPasswordLength);
+            yield return _localizedText.R.password_too_short.Format(IFormValidator.MinimumPasswordLength);
         }
 
-        if (password.Length > MaximumPasswordLength)
+        if (password.Length > IFormValidator.MaximumPasswordLength)
         {
-            yield return _localizedText.R.password_too_long.Format(MaximumPasswordLength);
+            yield return _localizedText.R.password_too_long.Format(IFormValidator.MaximumPasswordLength);
         }
 
         if (!UppercaseRegex().IsMatch(password))
@@ -69,17 +64,17 @@ public partial class FormValidator
 
     public string? ValidateUsername(string? username)
     {
-        if (username is null)
+        if (string.IsNullOrWhiteSpace(username))
         {
             return _localizedText.R.username_is_required;
         }
 
-        if (username.Length < MinimumUsernameLength)
+        if (username.Length < IFormValidator.MinimumUsernameLength)
         {
             return _localizedText.R.username_too_short;
         }
 
-        if (username.Length > MaximumUsernameLength)
+        if (username.Length > IFormValidator.MaximumUsernameLength)
         {
             return _localizedText.R.username_too_long;
         }
@@ -90,6 +85,29 @@ public partial class FormValidator
         }
 
         return null;
+    }
+
+    public string? ValidateEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return _localizedText.R.email_is_required;
+        }
+
+        var span = email.AsSpan();
+
+        if (span.ContainsAny('\r', '\n'))
+        {
+            return _localizedText.R.email_is_invalid;
+        }
+
+        var atIndex = span.IndexOf('@');
+
+        var isValid = atIndex > 0 &&
+                      atIndex != span.Length - 1 &&
+                      atIndex == span.LastIndexOf('@');
+
+        return isValid ? null : _localizedText.R.email_is_invalid;
     }
 
     [GeneratedRegex("[A-Z]")]

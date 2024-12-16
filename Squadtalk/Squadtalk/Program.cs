@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
+using Shared.Services;
 using Squadtalk.Client.Pages;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
@@ -52,13 +53,14 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
 
-        options.Password.RequiredLength = 8;
+        options.Password.RequiredLength = IFormValidator.MinimumPasswordLength;
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = false;
 
         options.User.RequireUniqueEmail = true;
+        options.User.AllowedUserNameCharacters = IFormValidator.AllowedUsernameChars;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()

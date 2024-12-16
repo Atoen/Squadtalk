@@ -25,6 +25,9 @@ dialog_remove_avatar_body: Are you sure you want to remove your current avatar? 
 
 network_error: Network error
 failed_to_create_account: Failed to create account
+password_confirmation_required: Please confirm password
+new_password_required: Please enter new password
+new_password_confirmation_required: Please confirm new password
 
 reset_password: Reset your password
 password_reset: Your password has been successfully reset.

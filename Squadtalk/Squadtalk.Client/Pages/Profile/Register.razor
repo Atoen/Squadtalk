@@ -2,7 +2,6 @@
 
 @using Shared.Data.Results
 @using Shared.DTOs.Account
-@using Squadtalk.Client.Services
 @using Color = MudBlazor.Color
 
 <MudContainer MaxWidth="MaxWidth.Small">
@@ -13,23 +12,22 @@
             <MudText Typo="Typo.h5" Color="Color.Primary">@LocalizedText.R.register</MudText>
 
             <MudTextField T="string" Label="@LocalizedText.R.username" Required="true" Immediate="true" InputType="InputType.Text"
-                          InputMode="InputMode.text" Counter="@FormValidator.MaximumUsernameLength"
-                          Error="@(_usernameError is not null)" ErrorText="@_usernameError"
+                          InputMode="InputMode.text" Counter="@IFormValidator.MaximumUsernameLength"
                           RequiredError="@LocalizedText.R.username_is_required" @ref="_usernameField"
-                          Validation="FormValidator.UsernameValidator"/>
+                          Validation="FormValidator.UsernameValidator"
+                          Error="UsernameError" ErrorText="@UsernameErrorText"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.email" Required="true" InputType="InputType.Email"
-                          Immediate="true" Error="@(_emailError is not null)" ErrorText="@_emailError"
                           RequiredError="@LocalizedText.R.email_is_required" InputMode="InputMode.email"
-                          Validation="FormValidator.EmailValidator"
-                          @ref="_emailField"/>
+                          Validation="FormValidator.EmailValidator" @ref="_emailField"
+                          Immediate="true" Error="EmailError" ErrorText="@EmailErrorText"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
                           RequiredError="@LocalizedText.R.password_is_required" InputType="InputType.Password"
-                          @ref="_passwordField" Immediate="true"
-                          Validation="FormValidator.PasswordValidator"/>
+                          @ref="_passwordField" Immediate="true" Validation="FormValidator.PasswordValidator"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
+                          RequiredError="@LocalizedText.R.password_confirmation_required"
                           HelperText="@LocalizedText.R.confirm_password" InputType="InputType.Password"
                           Validation="@(new Func<string, string?>(PasswordMatch))" Immediate="true"/>
 
@@ -58,41 +56,45 @@
 @inject IAccountManager AccountManager
 @inject ISnackbar Snackbar
 @inject LocalizedText LocalizedText
-@inject FormValidator FormValidator
+@inject IFormValidator FormValidator
 
 @code
 {
     private MudForm _form = default!;
-    private MudTextField<string> _usernameField = default!;
-    private MudTextField<string> _emailField = default!;
-    private MudTextField<string> _passwordField = default!;
+    private MudTextField<string>? _usernameField;
+    private MudTextField<string>? _emailField;
+    private MudTextField<string>? _passwordField;
+
+    private string? _serverUsernameError;
+    private string? _serverEmailError;
+
+    private bool UsernameError => _serverUsernameError is not null || _passwordField?.Error == true;
+    private bool EmailError => _serverEmailError is not null || _emailField?.Error == true;
+
+    private string? UsernameErrorText => _serverUsernameError ?? _passwordField?.ErrorText;
+    private string? EmailErrorText => _serverEmailError ?? _emailField?.ErrorText;
 
     private bool _working;
-
-    private string? _usernameError;
-    private string? _emailError;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
     private async Task RegisterUser()
     {
+        _serverEmailError = null;
+        _serverUsernameError = null;
+
         await _form.Validate();
 
         if (!_form.IsValid || _working) return;
 
         _working = true;
-        _usernameError = null;
-        _emailError = null;
-
-        var username = _usernameField.Value!;
-        var email = _emailField.Value!;
 
         var data = new UserRegisterDto
         {
-            Username = username,
-            Email = email,
-            Password = _passwordField.Value!
+            Username = _usernameField?.Value!,
+            Email = _emailField?.Value!,
+            Password = _passwordField?.Value!
         };
 
         var result = await AccountManager.RegisterAsync(data);
@@ -111,11 +113,11 @@
                 break;
 
             case RegisterResult.EmailInUse:
-                _emailError = LocalizedText.R.this_email_in_use;
+                _serverEmailError = LocalizedText.R.this_email_in_use;
                 break;
 
             case RegisterResult.UsernameInUse:
-                _usernameError = LocalizedText.R.this_username_in_use;
+                _serverUsernameError = LocalizedText.R.this_username_in_use;
                 break;
 
             case RegisterResult.FailedToCreateAccount:
@@ -140,6 +142,6 @@
 
     private string? PasswordMatch(string? arg)
     {
-        return _passwordField.Value != arg ? LocalizedText.R.passwords_dont_match : null;
+        return FormValidator.PasswordMatches(_passwordField?.Value, arg);
     }
 }

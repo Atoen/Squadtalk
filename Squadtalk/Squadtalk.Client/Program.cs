@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
-using Refit;
 using Shared.Services;
 using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Localization;
-using Squadtalk.Client.Network;
 using Squadtalk.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -39,7 +37,7 @@ builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();
 
 builder.Services.AddScoped<LocalizedText>();
-builder.Services.AddScoped<FormValidator>();
+builder.Services.AddScoped<IFormValidator, FormValidator>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
 
 builder.Services.AddScoped<ITextProviderManager, BrowserTextProviderManager>();

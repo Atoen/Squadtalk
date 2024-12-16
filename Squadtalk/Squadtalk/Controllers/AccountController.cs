@@ -177,7 +177,13 @@ public class AccountController : ControllerBase
             return NotFound(ChangeUsernameResultDto.NotFound);
         }
 
-        if (user.UserName == changeUsernameDto.NewUsername)
+        var passwordMatches = await _userManager.CheckPasswordAsync(user, changeUsernameDto.Password);
+        if (!passwordMatches)
+        {
+            return Unauthorized(ChangeUsernameResultDto.Unauthorized);
+        }
+
+        if (user.NormalizedUserName == _userManager.NormalizeName(changeUsernameDto.NewUsername))
         {
             return Ok(ChangeUsernameResultDto.NotChanged);
         }
@@ -186,12 +192,6 @@ public class AccountController : ControllerBase
         if (existingUsername is not null)
         {
             return Conflict(ChangeUsernameResultDto.UsernameInUse);
-        }
-
-        var passwordMatches = await _userManager.CheckPasswordAsync(user, changeUsernameDto.Password);
-        if (!passwordMatches)
-        {
-            return Unauthorized(ChangeUsernameResultDto.Unauthorized);
         }
 
         var result =  await _userManager.SetUserNameAsync(user, changeUsernameDto.NewUsername);
@@ -214,21 +214,21 @@ public class AccountController : ControllerBase
             return NotFound(ChangeEmailResultDto.NotFound);
         }
 
-        var existingEmail = await _userManager.FindByEmailAsync(changeEmailDto.NewEmail);
-        if (existingEmail is not null)
-        {
-            return Conflict(ChangeEmailResultDto.EmailInUse);
-        }
-
         var passwordMatches = await _userManager.CheckPasswordAsync(user, changeEmailDto.Password);
         if (!passwordMatches)
         {
             return Unauthorized(ChangeEmailResultDto.Unauthorized);
         }
 
-        if (user.Email == changeEmailDto.NewEmail)
+        if (user.NormalizedEmail == _userManager.NormalizeEmail(changeEmailDto.NewEmail))
         {
             return Ok(ChangeEmailResultDto.NotChanged);
+        }
+
+        var existingEmail = await _userManager.FindByEmailAsync(changeEmailDto.NewEmail);
+        if (existingEmail is not null && existingEmail.Id != user.Id)
+        {
+            return Conflict(ChangeEmailResultDto.EmailInUse);
         }
 
         var code = await _userManager.GenerateChangeEmailTokenAsync(user, changeEmailDto.NewEmail);

@@ -154,7 +154,7 @@ public static class ServiceCollectionExtensions
         // serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
         serviceCollection.AddScoped<IAccountManager, AccountManager>();
-        serviceCollection.AddScoped<FormValidator>();
+        serviceCollection.AddScoped<IFormValidator, NoOpFormValidator>();
         serviceCollection.AddScoped<IUserPreferencesService, ServerUserPreferencesService>();
         serviceCollection.AddScoped<LocalizedText>();
         serviceCollection.AddSingleton<ITextProviderManager, ServerTextProviderManager>();
