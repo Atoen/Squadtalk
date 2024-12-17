@@ -7,7 +7,7 @@
 
 <PageTitle>Squadtalk | Users</PageTitle>
 
-@foreach (var user in ChatService.Users)
+@foreach (var user in ChannelManager.Users)
 {
     @* <div class="user-card rounded" @onclick="() => OpenChannel(user)"> *@
     @*     <img alt="@user.Username avatar" src="user.png" class="avatar" /> *@
@@ -31,9 +31,9 @@
     </div>
 }
 
-@inject IChatService ChatService
+@inject IChannelManager ChannelManager
 @* @inject ILocalization Localization *@
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 
 @code {
 
@@ -42,15 +42,15 @@
     protected override Task OnInitializedAsync()
     {
         // _table = Localization.GetTextTable(this);
-        ChatService.ConnectedUsersChanged += StateHasChanged;
+        ChannelManager.ConnectedUsersChanged += StateHasChanged;
 
-        return CommunicationService.ConnectAsync();
+        return ConnectionService.ConnectAsync();
     }
 
     private Task OpenChannel(UserModel userModel)
     {
-        return ChatService.OpenOrCreateFakeDirectMessageChannel(userModel);
+        return ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(userModel);
     }
 
-    public void Dispose() => ChatService.ConnectedUsersChanged -= StateHasChanged;
+    public void Dispose() => ChannelManager.ConnectedUsersChanged -= StateHasChanged;
 }

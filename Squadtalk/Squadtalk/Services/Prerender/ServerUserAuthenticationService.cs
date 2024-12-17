@@ -15,6 +15,8 @@ public class ServerUserAuthenticationService : IUserAuthenticationService
 
     public string Username { get; } = string.Empty;
 
+    public string Email { get; } = string.Empty;
+
     public ServerUserAuthenticationService(IHttpContextAccessor httpContextAccessor)
     {
         var user = httpContextAccessor.HttpContext?.User;
@@ -32,6 +34,7 @@ public class ServerUserAuthenticationService : IUserAuthenticationService
         {
             UserId = UserId.Parse(User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
             Username = User.GetRequiredClaimValue(ClaimTypes.Name);
+            Email = user.GetRequiredClaimValue(ClaimTypes.Email);
         }
     }
 }

@@ -3,6 +3,7 @@ using Shared.Data.TypedIds;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
+using Squadtalk.Client.SignalR;
 
 namespace Squadtalk.Client.Services;
 
@@ -11,40 +12,40 @@ internal class TextChatService : ITextChatService
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
     private readonly IMessagePageProvider _messagePageProvider;
-    private readonly ICommunicationService _communicationService;
+    private readonly ISignalrTextService _signalrTextService;
     private readonly IUserAuthenticationService _userAuthenticationService;
-    private readonly IChatService _chatService;
+    private readonly IChannelManager _channelManager;
 
-    public event Func<ChannelId, Task>? MessageReceived;
+    public event Func<ChannelId, MessageModel, Task>? MessageReceived;
 
     public TextChatService(
-        IChatService chatService,
+        IChannelManager channelManager,
         IMessageModelService modelService,
         IMessagePageProvider messagePageProvider,
-        ICommunicationService communicationService,
+        SignalrService signalrTextService,
         IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
-        _chatService = chatService;
+        _channelManager = channelManager;
         _modelService = modelService;
         _messagePageProvider = messagePageProvider;
-        _communicationService = communicationService;
+        _signalrTextService = signalrTextService;
         _userAuthenticationService = userAuthenticationService;
         _logger = logger;
 
-        _communicationService.MessageReceived += HandleIncomingMessage;
+        _signalrTextService.MessageReceived += HandleIncomingMessage;
     }
 
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (_chatService.CurrentChannel is not { Id: var channelId }) return;
+        if (_channelManager.CurrentChannel is not { Id: var channelId }) return;
 
-        await _communicationService.SendMessageAsync(message, channelId, cancellationToken);
+        await _signalrTextService.SendMessageAsync(message, channelId, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
-        var channel = _chatService.GetChannel(id);
+        var channel = _channelManager.GetChannel(id);
         if (channel is null or { State.ReachedEnd: true })
         {
             _logger.LogInformation("channel null");
@@ -52,9 +53,8 @@ internal class TextChatService : ITextChatService
             return Array.Empty<MessageModel>();
         }
 
-
         var channelState = channel.State;
-        var page = await _messagePageProvider.GetPageAsync(id, channelState.Cursor, cancellationToken);
+        var page = await _messagePageProvider.GetPageAsync(id, channelState.Cursor, cancellationToken).ConfigureAwait(false);
 
         if (page.Count == 0)
         {
@@ -67,7 +67,7 @@ internal class TextChatService : ITextChatService
 
     private async Task HandleIncomingMessage(IChatMessage messageDto)
     {
-        var channel = _chatService.GetChannel(messageDto.ChannelId);
+        var channel = _channelManager.GetChannel(messageDto.ChannelId);
         if (channel is null)
         {
             _logger.LogWarning("Received message on nonexistent channel id: {Id}", messageDto.ChannelId);
@@ -81,14 +81,14 @@ internal class TextChatService : ITextChatService
 
         channelState.AddMessage(message);
 
-        await MessageReceived.TryInvoke(messageDto.ChannelId);
+        await MessageReceived.TryInvoke(channel.Id, message).ConfigureAwait(false);
     }
 
     private void UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
     {
         var messageByCurrentUser = message.Author.Id == _userAuthenticationService.UserId;
 
-        if (_chatService.CurrentChannel != channelModel && !messageByCurrentUser)
+        if (_channelManager.CurrentChannel != channelModel && !messageByCurrentUser)
         {
             channelModel.State.UnreadMessages++;
         }

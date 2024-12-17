@@ -36,8 +36,8 @@
 
 @inject ITextChatService TextChatService
 @inject IJSRuntime JSRuntime
-@inject IChatService ChatService
-@inject ICommunicationService CommunicationService
+@inject IChannelManager ChannelManager
+@inject IConnectionService CommunicationService
 @inject IFileTransferService FileTransferService
 
 @code {
@@ -96,15 +96,15 @@
     {
         _preventDefaultOnKeyDown = true;
 
-        if (ChatService.CurrentChannel is null) return;
+        if (ChannelManager.CurrentChannel is null) return;
         
-        if (ChatService.CurrentChannel.IsFake())
+        if (ChannelManager.CurrentChannel.IsTemporary())
         {
-            await ChatService.CreateRealDirectMessageChannel(ChatService.CurrentChannel);
+            await ChannelManager.CreateRealDirectMessageChannel(ChannelManager.CurrentChannel);
         }
 
         var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
-        var channel = ChatService.CurrentChannel;
+        var channel = ChannelManager.CurrentChannel;
 
         if (FileTransferService.IsFileAvailable)
         {

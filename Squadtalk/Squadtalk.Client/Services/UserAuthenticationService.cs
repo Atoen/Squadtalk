@@ -21,6 +21,8 @@ public class UserAuthenticationService : AuthenticationStateProvider, IUserAuthe
 
     public string Username { get; } = string.Empty;
 
+    public string Email { get; } = string.Empty;
+
     public UserAuthenticationService(PersistentComponentState state)
     {
         if (!state.TryTakeFromJson<UserInfo>(nameof(UserInfo), out var userInfo) || userInfo is null)
@@ -31,13 +33,13 @@ public class UserAuthenticationService : AuthenticationStateProvider, IUserAuthe
 
         UserId = UserId.Parse(userInfo.UserId);
         Username = userInfo.Name;
+        Email = userInfo.Email;
 
-        User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
+        User = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, userInfo.UserId),
             new Claim(ClaimTypes.Name, userInfo.Name),
             new Claim(ClaimTypes.Email, userInfo.Email)
-        }, authenticationType: nameof(UserAuthenticationService)));
+        ], authenticationType: nameof(UserAuthenticationService)));
 
         _authenticationStateTask = Task.FromResult(new AuthenticationState(User));
     }

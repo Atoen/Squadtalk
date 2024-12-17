@@ -2,7 +2,7 @@
 @using Shared.Data.TypedIds
 @using Squadtalk.Client.Extensions
 
-@if (ChatService.CurrentChannel is {State.ReachedEnd: true} channel)
+@if (ChannelManager.CurrentChannel is {State.ReachedEnd: true} channel)
 {
     <div class="channel-start">
         <div class="title">@channel.Name</div>
@@ -20,9 +20,9 @@
 @* ReSharper disable once CSharpWarnings::CS8974 *@
 @RenderLastElement
 
-@if (ChatService.CurrentChannelState is not null && ItemTemplate is not null)
+@if (ChannelManager.CurrentChannelState is not null && ItemTemplate is not null)
 {
-    foreach (var item in ChatService.CurrentChannelState.Messages)
+    foreach (var item in ChannelManager.CurrentChannelState.Messages)
     {
         @ItemTemplate(item)
     }
@@ -31,7 +31,7 @@
 @implements IAsyncDisposable
 
 @inject IJSRuntime JsRuntime
-@inject IChatService ChatService
+@inject IChannelManager ChannelManager
 @inject ITextChatService TextChatService
 @* @inject ILocalization Localization *@
 @inject ILogger<InfiniteScrolling> Logger
@@ -59,10 +59,8 @@
 
     protected override void OnInitialized()
     {
-        // _table = Localization.GetTextTable(this);
-
         TextChatService.MessageReceived += UpdateOnTextChat;
-        ChatService.ChannelChangedAsync += ChannelChangedAsync;
+        ChannelManager.ChannelChangedAsync += ChannelChangedAsync;
     }
 
     private async Task ChannelChangedAsync()
@@ -73,9 +71,9 @@
         await _instance!.InvokeVoidAsync("onNewItems");
     }
 
-    private Task UpdateOnTextChat(ChannelId id)
+    private Task UpdateOnTextChat(ChannelId id, MessageModel message)
     {
-        if (id != ChatService.CurrentChannel?.Id)
+        if (id != ChannelManager.CurrentChannel?.Id)
         {
             return Task.CompletedTask;
         }
@@ -88,7 +86,7 @@
     public async Task LoadMoreItems()
     {
         if (_loading) return;
-        if (ChatService.CurrentChannel is not { } channel) return;
+        if (ChannelManager.CurrentChannel is not { } channel) return;
         
         _loading = true;
         
@@ -158,13 +156,13 @@
         _currentComponentReference?.Dispose();
 
         TextChatService.MessageReceived -= UpdateOnTextChat;
-        ChatService.ChannelChangedAsync -= ChannelChangedAsync;
+        ChannelManager.ChannelChangedAsync -= ChannelChangedAsync;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
     {
         builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = ChatService.CurrentChannelState is { ReachedEnd: true }
+        var style = ChannelManager.CurrentChannelState is { ReachedEnd: true }
             ? "height:0;width:0"
             : "height:1px;width:1px;flex-shrink:0";
         

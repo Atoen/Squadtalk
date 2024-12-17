@@ -7,7 +7,7 @@
 
 @attribute [Authorize]
 
-<PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name</PageTitle>
+<PageTitle>Squadtalk | @ChannelManager.CurrentChannel?.Name</PageTitle>
 
 <div class="chat-container">
     @if (_channel is not null)
@@ -37,12 +37,12 @@
     <InputBox/>
 </div>
 
-@inject IChatService ChatService
+@inject IChannelManager ChannelManager
 @* @inject ToastService ToastService *@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 
 @code {
 
@@ -53,11 +53,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await CommunicationService.ConnectAsync();
+        await ConnectionService.ConnectAsync();
 
-        if (ChatService.CurrentChannel is null)
+        if (ChannelManager.CurrentChannel is null)
         {
-            var channel = ChatService.GetChannel(new ChannelId(ChannelId));
+            var channel = ChannelManager.GetChannel(new ChannelId(ChannelId));
             if (channel is null)
             {
                 NavigationManager.NavigateTo("/Channels", replace: true);
@@ -65,11 +65,11 @@
             }
 
             _channel = channel;
-            await ChatService.OpenChannelAsync(_channel, false);
+            await ChannelManager.OpenChannelAsync(_channel, false);
         }
 
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        ChatService.ChannelChanged += StateHasChanged;
+        ChannelManager.ChannelChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
     }
@@ -82,9 +82,9 @@
     public async ValueTask DisposeAsync()
     {
         VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
-        ChatService.ChannelChanged -= StateHasChanged;
+        ChannelManager.ChannelChanged -= StateHasChanged;
 
-        await ChatService.ClearChannelSelectionAsync();
+        await ChannelManager.ClearChannelSelectionAsync();
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 

@@ -33,7 +33,7 @@
 
 @implements IDisposable
 
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 @inject IVoiceChatService VoiceChatService
 @inject IUserPreferencesService UserPreferences
 @inject IUserAuthenticationService UserAuthenticationService
@@ -46,8 +46,10 @@
 
     private readonly MudTheme _theme = new();
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        // Logger.LogCritical("Layout");
+
         _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
         ChangePalette(UserPreferences.Palette);
 
@@ -58,9 +60,10 @@
             UserPreferences.PaletteChanged += PaletteChanged;
         }
 
-        return UserAuthenticationService.IsAuthenticated
-            ? CommunicationService.ConnectAsync()
-            : Task.CompletedTask;
+        if (UserAuthenticationService.IsAuthenticated)
+        {
+            await ConnectionService.ConnectAsync();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -73,15 +76,7 @@
         }
     }
 
-    private Task OnPersisting()
-    {
-        if (CommunicationService is IPersistState persist)
-        {
-            return persist.PersistDataAsync();
-        }
-
-        return Task.CompletedTask;
-    }
+    private Task OnPersisting() => ConnectionService.OnPersisting();
 
     private async Task CallIncoming(ChannelModel channel)
     {

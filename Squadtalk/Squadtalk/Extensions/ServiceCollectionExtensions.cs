@@ -141,16 +141,18 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<IChatService, ChatService>();
-        serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
-        serviceCollection.AddScoped<IChannelManager, ChannelManager>();
+        serviceCollection.AddScoped<IChannelManager, NoOpChannelManager>();
+        serviceCollection.AddScoped<IConnectionService, ConnectionService>();
+        serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
-        serviceCollection.AddScoped<IVoiceChatService, VoiceChatService>();
+        serviceCollection.AddScoped<IVoiceChatService, NoOpVoiceChatService>();
 
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
         serviceCollection.AddScoped<UserVolumeManager>();
+        serviceCollection.AddScoped<PrerenderPersistantState>();
+        serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
         // serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
         serviceCollection.AddScoped<IAccountManager, AccountManager>();

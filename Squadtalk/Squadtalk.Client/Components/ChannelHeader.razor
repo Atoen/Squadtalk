@@ -36,9 +36,8 @@
 
 @implements IDisposable
 
-@inject IChatService ChatService
+@inject IChannelManager ChannelManager
 @inject IVoiceChatService VoiceChatService
-@* @inject ILocalization Localization *@
 @inject ILogger<ChannelHeader> Logger
 
 @code {
@@ -73,8 +72,8 @@
         _modalParameters[nameof(ManageGroupModal.GroupNameChanged)] =
             (Func<GroupChatModel, string?, Task<bool>>) GroupNameChanged;
 
-        ChatService.ConnectedUsersChanged += ConnectedUsersChanged;
-        ChatService.ChannelNameChanged += ChannelNameChanged;
+        ChannelManager.ConnectedUsersChanged += ConnectedUsersChanged;
+        ChannelManager.ChannelNameChanged += ChannelNameChanged;
     }
 
     private void ChannelNameChanged(GroupChatModel groupChat)
@@ -88,7 +87,7 @@
     {
         Logger.LogInformation("New name {NewName}", newName);
 
-        var changedName = await ChatService.ChangeGroupChatNameAsync(groupChat, newName);
+        var changedName = await ChannelManager.ChangeGroupChatNameAsync(groupChat, newName);
 
         return changedName;
     }
@@ -106,7 +105,7 @@
 
     public void Dispose()
     {
-        ChatService.ConnectedUsersChanged -= ConnectedUsersChanged;
-        ChatService.ChannelNameChanged -= ChannelNameChanged;
+        ChannelManager.ConnectedUsersChanged -= ConnectedUsersChanged;
+        ChannelManager.ChannelNameChanged -= ChannelNameChanged;
     }
 }

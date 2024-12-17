@@ -22,16 +22,20 @@ builder.Services.AddSingleton<AuthenticationStateProvider>(provider =>
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddNetworking(builder.HostEnvironment.BaseAddress);
 
-builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<ISignalrService, SignalrService>();
-builder.Services.AddScoped<ICommunicationService, CommunicationService>();
+builder.Services.AddScoped<IChannelManager, ChannelManager>();
+
+builder.Services.AddScoped<SignalrService>();
+builder.Services.AddScoped<IConnectionService>(provider =>
+    provider.GetRequiredService<SignalrService>());
+
 builder.Services.AddScoped<CreateTextChannelRequestHandler>();
 
 builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<IMessageModelService, MessageModelService>();
 builder.Services.AddScoped<IMessagePageProvider, HttpMessagePageProvider>();
+builder.Services.AddScoped<ClientPersistantState>();
 
-builder.Services.AddScoped<IChannelManager, ChannelManager>();
+builder.Services.AddScoped<IChannelSorter, ChannelSorter>();
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
 builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();

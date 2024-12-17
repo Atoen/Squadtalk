@@ -10,9 +10,9 @@ using Squadtalk.Client.SignalR;
 
 namespace Squadtalk.Client.Services;
 
-public sealed class SignalrService : ISignalrService, IAsyncDisposable
+internal sealed partial class SignalrService : IConnectionService, IAsyncDisposable
 {
-    private readonly PersistentComponentState _persistentComponentState;
+    private readonly ClientPersistantState _clientPersistantState;
     private readonly ILogger<SignalrService> _logger;
     private readonly HubConnection _connection;
 
@@ -24,26 +24,19 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
     public event Func<UserDto, Task>? UserDisconnected;
     public event Func<UserDto, Task>? UserConnected;
     public event Func<IEnumerable<UserDto>, bool, Task>? ConnectedUsersReceived;
-    public event Func<MessageDto, Task>? MessageReceived;
     public event Func<ChannelId, string?, Task>? ChannelNameChanged;
-
-    public event Func<ChannelId, UserId, Task>? IncomingCall;
-    public event Func<ChannelId, UserDto, Task>? CallAccepted;
-    public event Func<UserDto, ChannelId, Task>? CallDeclined;
-    public event Func<ChannelId, Task>? CallEnded;
-    public event Func<string, Task>? CallFailed;
 
     private bool _connectionStared;
     public bool Connected { get; private set; }
 
-    public string ConnectionStatus { get; private set; } = ISignalrService.Offline;
+    public string ConnectionStatus { get; private set; } = "Offline";
 
     public SignalrService(
         NavigationManager navigationManager,
-        PersistentComponentState persistentComponentState,
+        ClientPersistantState clientPersistantState,
         ILogger<SignalrService> logger)
     {
-        _persistentComponentState = persistentComponentState;
+        _clientPersistantState = clientPersistantState;
         _logger = logger;
 
         var endpoint = navigationManager.ToAbsoluteUri("/chathub");
@@ -82,25 +75,28 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
         try
         {
-            ConnectionStatus = ISignalrService.Connecting;
+            // ConnectionStatus = ISignalrService.Connecting;
+            ConnectionStatus = "Connecting";
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
             await _connection.StartAsync();
 
             Connected = true;
-            ConnectionStatus = ISignalrService.Online;
+            ConnectionStatus = "Online";
+            // ConnectionStatus = ISignalrService.Online;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
 
         }
         catch (Exception e)
         {
-            ConnectionStatus = ISignalrService.Disconnected;
+            ConnectionStatus = "Disconnected";
+            // ConnectionStatus = ISignalrService.Disconnected;
             _logger.LogError(e, "Failed to connect to chat hub");
         }
 
         await UpdatePersistedDataAsync();
     }
 
-    public async Task<TimeSpan> MeasureClientDelayAsync()
+    public async Task<TimeSpan> MeasureConnectionDelayAsync()
     {
         var start = Stopwatch.GetTimestamp();
 
@@ -108,49 +104,38 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
         return Stopwatch.GetElapsedTime(start);
     }
 
-    Task ISignalrTextService.SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken)
-    {
-        return _connection.SendAsync("SendMessage", message, channelId, cancellationToken);
-    }
+    public Task OnPersisting() => throw new NotImplementedException();
 
-    Task<RoomTokenDto?> ISignalrVoiceService.StartVoiceCallAsync(ChannelId id)
-    {
-        return _connection.InvokeAsync<RoomTokenDto?>("StartCall", id);
-    }
-
-    Task<RoomTokenDto?> ISignalrVoiceService.AcceptCallAsync(ChannelId id)
-    {
-        return _connection.InvokeAsync<RoomTokenDto?>("AcceptCall", id);
-    }
-
-    Task ISignalrVoiceService.DeclineCallAsync(ChannelId id)
-    {
-        return _connection.SendAsync("DeclineCall", id);
-    }
-
-    Task<bool> ISignalrVoiceService.ChannelHasActiveCall(ChannelId id)
-    {
-        return _connection.InvokeAsync<bool>("ChannelHasActiveCall", id);
-    }
-
-    Task<bool> ISignalrTextService.ChangeChannelNameAsync(string? newName, ChannelId channelId)
+    public Task<bool> ChangeChannelNameAsync(string? newName, ChannelId channelId)
     {
         return _connection.InvokeAsync<bool>("ChangeGroupName", newName, channelId);
     }
 
     private async Task TryGetPersistedData()
     {
-        if (_persistentComponentState.TryTakeFromJson<List<UserDto>>(IPersistState.Users, out var persistedUsers) && persistedUsers is not null)
+        if (_clientPersistantState.TryReadUsers(out var users))
         {
             _logger.LogInformation("Retrieved persisted users");
-            await ConnectedUsersReceived.TryInvoke(persistedUsers, true);
+            await ConnectedUsersReceived.TryInvoke(users, true);
         }
 
-        if (_persistentComponentState.TryTakeFromJson<List<ChannelDto>>(IPersistState.Channels, out var persistedChannels) && persistedChannels is not null)
+        if (_clientPersistantState.TryReadChannels(out var channels))
         {
             _logger.LogInformation("Retrieved persisted channels");
-            await ChannelsReceived.TryInvoke(persistedChannels);
+            await ChannelsReceived.TryInvoke(channels);
         }
+
+        // if (_persistentComponentState.TryTakeFromJson<List<UserDto>>(IPersistState.Users, out var persistedUsers) && persistedUsers is not null)
+        // {
+        //     _logger.LogInformation("Retrieved persisted users");
+        //     await ConnectedUsersReceived.TryInvoke(persistedUsers, true);
+        // }
+        //
+        // if (_persistentComponentState.TryTakeFromJson<List<ChannelDto>>(IPersistState.Channels, out var persistedChannels) && persistedChannels is not null)
+        // {
+        //     _logger.LogInformation("Retrieved persisted channels");
+        //     await ChannelsReceived.TryInvoke(persistedChannels);
+        // }
     }
 
     private async Task UpdatePersistedDataAsync()
@@ -163,29 +148,33 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
     private void RegisterHandlers()
     {
+        RegisterBaseHandlers();
+        RegisterTextHandlers();
+        RegisterRTCHandlers();
+    }
+
+    private void RegisterBaseHandlers()
+    {
         _connection.Reconnecting += _ =>
         {
-            ConnectionStatus = ISignalrService.Reconnecting;
+            ConnectionStatus = "Reconnecting";
             Connected = false;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.Reconnected += _ =>
         {
-            ConnectionStatus = ISignalrService.Online;
+            ConnectionStatus = "Online";
             Connected = true;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.Closed += _ =>
         {
-            ConnectionStatus = ISignalrService.Disconnected;
+            ConnectionStatus = "Disconnected";
             Connected = false;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
-
-        _connection.On<MessageDto>("ReceiveMessage", message =>
-            MessageReceived.TryInvoke(message));
 
         _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
             ConnectedUsersReceived.TryInvoke(users, false));
@@ -204,21 +193,6 @@ public sealed class SignalrService : ISignalrService, IAsyncDisposable
 
         _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
             ChannelNameChanged.TryInvoke(channelId, name));
-
-        _connection.On<ChannelId, UserId>("IncomingCall", (channelId, initiatorId) =>
-            IncomingCall.TryInvoke(channelId, initiatorId));
-
-        _connection.On<ChannelId, UserDto>("CallAccepted", (channelId, accepting) =>
-            CallAccepted.TryInvoke(channelId, accepting));
-
-        _connection.On<UserDto, ChannelId>("CallDeclined", (user, channelId) =>
-            CallDeclined.TryInvoke(user, channelId));
-
-        _connection.On<ChannelId>("CallEnded", channelId =>
-            CallEnded.TryInvoke(channelId));
-
-        _connection.On<string>("CallFailed", reason =>
-            CallFailed.TryInvoke(reason));
     }
 
     public ValueTask DisposeAsync()

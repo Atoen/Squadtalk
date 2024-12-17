@@ -5,10 +5,15 @@ namespace Shared.Extensions;
 
 public static class ChannelModelExtensions
 {
-    public static bool IsGlobal(this ChannelModel? channelModel) => channelModel?.Id == GroupChatModel.GlobalChatId;
+    public static bool IsGlobal(this ChannelModel? channelModel)
+    {
+        return channelModel?.Id == GroupChatModel.GlobalChatId;
+    }
 
-    public static bool IsFake(this ChannelModel? channelModel) =>
-        channelModel?.Id.Value.StartsWith(DirectMessageChannelModel.TempChannelIdPrefix) ?? false;
+    public static bool IsTemporary(this ChannelModel? channelModel)
+    {
+        return channelModel?.Id.Value.StartsWith(DirectMessageChannelModel.TempChannelIdPrefix) ?? false;
+    }
 
     public static T WithLastMessage<T>(this T textChannel, IChatMessage? message) where T : ChannelModel
     {
