@@ -8,7 +8,7 @@ public class MessageModelService : IMessageModelService
 {
     public TimeSpan MessageSeparationTimespan { get; } = TimeSpan.FromMinutes(5);
 
-    public IList<MessageModel> CreateModelPage(IList<IChatMessage> inputPage, ChannelState channelState)
+    public IList<MessageModel> CreateModelPage(IReadOnlyList<IChatMessage> inputPage, ChannelState channelState)
     {
         if (inputPage.Count == 0)
         {

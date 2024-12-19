@@ -1,8 +1,10 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
+using Squadtalk.Client.Network;
 using Squadtalk.Client.SignalR;
 
 namespace Squadtalk.Client.Services;
@@ -11,8 +13,8 @@ internal class TextChatService : ITextChatService
 {
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
-    private readonly IMessagePageProvider _messagePageProvider;
     private readonly ISignalrTextService _signalrTextService;
+    private readonly IMessageApi _messageApi;
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IChannelManager _channelManager;
 
@@ -21,15 +23,15 @@ internal class TextChatService : ITextChatService
     public TextChatService(
         IChannelManager channelManager,
         IMessageModelService modelService,
-        IMessagePageProvider messagePageProvider,
         SignalrService signalrTextService,
+        IMessageApi messageApi,
         IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
         _channelManager = channelManager;
         _modelService = modelService;
-        _messagePageProvider = messagePageProvider;
         _signalrTextService = signalrTextService;
+        _messageApi = messageApi;
         _userAuthenticationService = userAuthenticationService;
         _logger = logger;
 
@@ -48,21 +50,27 @@ internal class TextChatService : ITextChatService
         var channel = _channelManager.GetChannel(id);
         if (channel is null or { State.ReachedEnd: true })
         {
-            _logger.LogInformation("channel null");
-
             return Array.Empty<MessageModel>();
         }
 
         var channelState = channel.State;
-        var page = await _messagePageProvider.GetPageAsync(id, channelState.Cursor, cancellationToken).ConfigureAwait(false);
-
-        if (page.Count == 0)
-        {
-            return Array.Empty<MessageModel>();
-        }
+        var page = await FetchPageAsync(id, channelState.Cursor, cancellationToken);
 
         channelState.Cursor = new TextChannelCursor(page[0].Timestamp.UtcTicks);
         return _modelService.CreateModelPage(page, channelState);
+    }
+
+    private async Task<IReadOnlyList<MessageDto>> FetchPageAsync(ChannelId channelId, TextChannelCursor cursor, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _messageApi.GetMessagePage(channelId, cursor, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error while fetching message page");
+            return Array.Empty<MessageDto>();
+        }
     }
 
     private async Task HandleIncomingMessage(IChatMessage messageDto)

@@ -11,6 +11,8 @@ using Squadtalk.Client.Services;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 builder.Services.AddAuthorizationCore();
+builder.Services.AddNetworking(builder.HostEnvironment.BaseAddress);
+
 builder.Services.AddSingleton<UserAuthenticationService>();
 
 builder.Services.AddSingleton<IUserAuthenticationService>(provider =>
@@ -20,7 +22,6 @@ builder.Services.AddSingleton<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<UserAuthenticationService>());
 
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddNetworking(builder.HostEnvironment.BaseAddress);
 
 builder.Services.AddScoped<IChannelManager, ChannelManager>();
 
@@ -32,7 +33,6 @@ builder.Services.AddScoped<CreateTextChannelRequestHandler>();
 
 builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<IMessageModelService, MessageModelService>();
-builder.Services.AddScoped<IMessagePageProvider, HttpMessagePageProvider>();
 builder.Services.AddScoped<ClientPersistantState>();
 
 builder.Services.AddScoped<IChannelSorter, ChannelSorter>();
