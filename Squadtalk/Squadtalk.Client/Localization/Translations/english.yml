@@ -13,6 +13,7 @@ app_appearance: App appearance
 account_recovering: Account recovering
 recover_account: Recover account
 set_password_new: Set new password
+page_not_found: Page not found
 
 username_too_long: Username is too long
 username_too_short: Username is too short

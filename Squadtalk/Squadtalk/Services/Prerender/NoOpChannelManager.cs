@@ -1,5 +1,6 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Services;
 
@@ -8,37 +9,17 @@ namespace Squadtalk.Services.Prerender;
 internal class NoOpChannelManager : IChannelManager
 {
     private static readonly GroupChatModel GlobalChatModel = GroupChatModel.CreateGlobalChat();
+    private static readonly Dictionary<ChannelId, ChannelModel> EmptyChannels = [];
+    private static readonly Dictionary<UserId, UserModel> EmptyUsers = [];
 
     private readonly PrerenderPersistantState _prerenderPersistantState;
     private readonly IUserAuthenticationService _authenticationService;
 
     public GroupChatModel GlobalChat => GlobalChatModel;
-
     public ChannelModel? CurrentChannel => null;
 
-    private Dictionary<UserId, UserModel>? _users;
-    private Dictionary<ChannelId, ChannelModel>? _channels;
-
-    private Dictionary<UserId, UserModel>? LazyUsers => _users ??= CreateUserModels();
-    private Dictionary<ChannelId, ChannelModel>? LazyChannels => _channels ??= CreateChannelModels();
-
-    public IReadOnlyCollection<ChannelModel> Channels
-    {
-        get
-        {
-            if (LazyChannels is null) return [];
-            return LazyChannels.Values;
-        }
-    }
-
-    public IReadOnlyCollection<UserModel> Users
-    {
-        get
-        {
-            if (LazyUsers is null) return [];
-            return LazyUsers.Values;
-        }
-    }
+    public IReadOnlyCollection<UserModel> Users => LazyUsers.Values;
+    public IReadOnlyCollection<ChannelModel> Channels => LazyChannels.Values;
 
     event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
@@ -54,58 +35,85 @@ internal class NoOpChannelManager : IChannelManager
         _authenticationService = authenticationService;
     }
 
-    private Dictionary<UserId, UserModel>? CreateUserModels()
+    private bool _modelsCreated;
+
+    private Dictionary<UserId, UserModel>? _users;
+    private Dictionary<ChannelId, ChannelModel>? _channels;
+
+    private Dictionary<UserId, UserModel> LazyUsers => GetUserModels();
+    private Dictionary<ChannelId, ChannelModel> LazyChannels => GetChannelModels();
+
+    private Dictionary<UserId, UserModel> GetUserModels()
     {
-        if (_prerenderPersistantState.Users is not { Count: > 0 } users)
+        if (!_prerenderPersistantState.ContainsData)
         {
-            return null;
+            return _modelsCreated
+                ? _users ?? EmptyUsers
+                : EmptyUsers;
         }
 
-        var models = new Dictionary<UserId, UserModel>(users.Count);
-
-        foreach (var userDto in users)
+        if (!_modelsCreated)
         {
-            models[userDto.Id] = UserModel.Create(userDto);
+            CreateModels();
         }
 
-        return models;
+        return _users ?? EmptyUsers;
     }
 
-    private UserModel CreateUserModel(IChatUser user)
+    private Dictionary<ChannelId, ChannelModel> GetChannelModels()
     {
-        if (LazyUsers?.TryGetValue(user.Id, out var model) == true)
+        if (!_prerenderPersistantState.ContainsData)
         {
-            return model;
+            return _modelsCreated
+                ? _channels ?? EmptyChannels
+                : EmptyChannels;
         }
 
-        model = UserModel.Create(user);
-        if (LazyUsers is not null)
+        if (!_modelsCreated)
         {
-            LazyUsers[user.Id] = model;
+            CreateModels();
         }
 
-        return model;
+        return _channels ?? EmptyChannels;
     }
 
-    private Dictionary<ChannelId, ChannelModel>? CreateChannelModels()
+    private void CreateModels()
     {
-        if (_prerenderPersistantState.Channels is not { Count: > 0 } channels)
-        {
-            return null;
-        }
+        var onlineUsers = _prerenderPersistantState.OnlineUsers ?? [];
+        var channels = _prerenderPersistantState.Channels ?? [];
 
-        var models = new Dictionary<ChannelId, ChannelModel>(channels.Count);
-        var userFactory = CreateUserModel;
-        var channelModels = channels.Select(x => ChannelModel.Create(x, _authenticationService.UserId, userFactory));
-        foreach (var channelModel in channelModels)
-        {
-            models.Add(channelModel.Id, channelModel);
-        }
+        var currentUserId = _authenticationService.UserId;
 
-        return models;
+        var userModels = onlineUsers
+            .Select(x => UserModel.Create(x, UserStatus.Online))
+            .ToDictionary(x => x.Id, x => x);
+
+        var channelModels = channels
+            .Select(x => ChannelModel.Create(x, currentUserId, UserFactory))
+            .ToDictionary(x => x.Id, x => x);
+
+        _modelsCreated = true;
+
+        _users = userModels;
+        _channels = channelModels;
+
+        return;
+
+        UserModel UserFactory(IChatUser user)
+        {
+            if (userModels.TryGetValue(user.Id, out var model))
+            {
+                return model;
+            }
+
+            var newModel = UserModel.Create(user, UserStatus.Unknown);
+            userModels[user.Id] = newModel;
+
+            return newModel;
+        }
     }
 
-    public ChannelModel? GetChannel(ChannelId channelId) => null;
+    public ChannelModel? GetChannel(ChannelId channelId) => LazyChannels.GetValueOrDefault(channelId);
 
     public ChannelModel GetRequiredChannel(ChannelId channelId) => throw new InvalidOperationException();
 

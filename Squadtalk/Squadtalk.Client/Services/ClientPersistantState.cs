@@ -4,7 +4,7 @@ using Shared.DTOs;
 
 namespace Squadtalk.Client.Services;
 
-public class ClientPersistantState(PersistentComponentState persistentComponentState)
+internal class ClientPersistantState(PersistentComponentState persistentComponentState)
 {
     private const string ChannelsKey = "channels";
     private const string UsersKey = "users";

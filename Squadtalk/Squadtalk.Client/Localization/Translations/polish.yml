@@ -13,6 +13,7 @@ app_appearance: Wygląd aplikacji
 recover_account: Odzyskaj konto
 account_recovering: Odzyskiwanie konta
 set_password_new: Ustaw nowe hasło
+page_not_found: Nie znaleziono strony
 
 # Home page
 hello_world: Witaj świecie!

@@ -48,9 +48,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Logger.LogCritical("Layout");
-
-        _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
+        _subscription = PersistentComponentState.RegisterOnPersisting(ConnectionService.OnPersisting, InteractiveWebAssembly);
         ChangePalette(UserPreferences.Palette);
 
         if (RendererInfo.IsInteractive)
@@ -75,8 +73,6 @@
             await VoiceChatService.InitializeAsync();
         }
     }
-
-    private Task OnPersisting() => ConnectionService.OnPersisting();
 
     private async Task CallIncoming(ChannelModel channel)
     {

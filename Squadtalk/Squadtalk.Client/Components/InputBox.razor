@@ -52,8 +52,8 @@
 
     protected override void OnInitialized()
     {
-        _placeholder = CommunicationService.ConnectionStatus;
-        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
+        // _placeholder = CommunicationService.ConnectionStatus;
+        // CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
         FileTransferService.FileSelected += FileTransferServiceOnFileSelected;
         FileTransferService.SelectionCleared += FileTransferServiceOnSelectionCleared;
     }
@@ -62,13 +62,13 @@
 
     private void FileTransferServiceOnFileSelected(FileModel file) => StateHasChanged();
 
-    private Task ConnectionStatusChanged(string status)
-    {
-        _placeholder = CommunicationService.Connected ? DefaultPlaceholder : status;
-        StateHasChanged();
-
-        return Task.CompletedTask;
-    }
+    // private Task ConnectionStatusChanged(string status)
+    // {
+    //     _placeholder = CommunicationService.Connected ? DefaultPlaceholder : status;
+    //     StateHasChanged();
+    //
+    //     return Task.CompletedTask;
+    // }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -119,7 +119,7 @@
 
     public ValueTask DisposeAsync()
     {
-        CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
+        // CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
         FileTransferService.FileSelected -= FileTransferServiceOnFileSelected;
         FileTransferService.SelectionCleared -= FileTransferServiceOnSelectionCleared;
         

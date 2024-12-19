@@ -1,27 +1,24 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Shared.DTOs;
+using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
-public class PrerenderPersistantState(PersistentComponentState persistentComponentState)
+internal class PrerenderPersistantState(PersistentComponentState persistentComponentState)
 {
     private const string ChannelsKey = "channels";
     private const string UsersKey = "users";
 
-    public event Action? DataStored;
-
     public List<ChannelDto>? Channels { get; private set; }
-    public List<UserDto>? Users { get; private set; }
+    public List<UserDto>? OnlineUsers { get; private set; }
+
+    public bool ContainsData => OnlineUsers is { Count: > 0 } || Channels is { Count: > 0 };
 
     public void AddData(List<ChannelDto>? channels, List<UserDto>? users)
     {
         Channels = channels;
-        Users = users;
-
-        if (channels is not null || users is not null)
-        {
-            DataStored?.Invoke();
-        }
+        OnlineUsers = users;
     }
 
     public void PersistData()
@@ -31,9 +28,9 @@ public class PrerenderPersistantState(PersistentComponentState persistentCompone
             persistentComponentState.PersistAsJson(ChannelsKey, Channels);
         }
 
-        if (Users is { Count: > 0 })
+        if (OnlineUsers is { Count: > 0 })
         {
-            persistentComponentState.PersistAsJson(UsersKey, Users);
+            persistentComponentState.PersistAsJson(UsersKey, OnlineUsers);
         }
     }
 }

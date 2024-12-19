@@ -45,5 +45,5 @@ internal class NoOpVoiceChatService : IVoiceChatService
     public Task ToggleMicrophoneAsync() => throw new NotImplementedException();
     public Task ToggleCameraAsync() => throw new NotImplementedException();
     public Task ToggleScreenShareAsync() => throw new NotImplementedException();
-    public Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel) => throw new NotImplementedException();
+    public Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel) => Task.FromResult(false);
 }

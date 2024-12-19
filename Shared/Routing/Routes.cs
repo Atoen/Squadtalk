@@ -11,6 +11,7 @@ public static class Routes
         public const string Chats = "/Chats";
         public const string Users = "/Users";
         public const string Settings = "/Settings";
+        public const string NotFound = "/NotFound";
 
         public const string ForgotPassword = "/ForgotPassword";
         public const string ResetPassword = "/ResetPassword";

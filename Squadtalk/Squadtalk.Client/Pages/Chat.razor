@@ -60,7 +60,7 @@
             var channel = ChannelManager.GetChannel(new ChannelId(ChannelId));
             if (channel is null)
             {
-                NavigationManager.NavigateTo("/Channels", replace: true);
+                NavigationManager.NavigateTo(Routes.Pages.Chats, replace: true);
                 return;
             }
 

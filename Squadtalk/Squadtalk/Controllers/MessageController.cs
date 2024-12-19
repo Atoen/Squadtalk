@@ -35,13 +35,13 @@ public class MessageController : ControllerBase
         var userParticipates = await _channelRepository.UserParticipatesInChannelAsync(userId, channelId);
         if (!userParticipates)
         {
-            return Unauthorized();
+            return Forbid();
         }
 
         var messages = await _messageRepository.GetPageAsync(channelId, timestamp, HttpContext.RequestAborted);
         return messages;
     }
-    
+
     [HttpPost(Routes.RelativeEndpoints.CreateChannel)]
     public async Task<ActionResult<ChannelId>> CreateChannel(List<UserId> participantsId)
     {

@@ -11,13 +11,10 @@ internal class ConnectionService : IConnectionService
     private readonly UserRepository _userRepository;
     private readonly PrerenderPersistantState _persistState;
     private readonly ChatConnectionManager _chatConnectionManager;
-    private readonly ILogger<ConnectionService> _logger;
 
-    event Func<string, Task>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
+    event Func<ConnectionStatus, Task>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
 
-    public string ConnectionStatus => "Connecting";
-
-    public bool Connected => false;
+    public ConnectionStatus ConnectionStatus => ConnectionStatus.Connecting;
 
     private Task? _connectTask;
 
@@ -25,16 +22,12 @@ internal class ConnectionService : IConnectionService
         AuthenticationStateProvider authenticationStateProvider,
         UserRepository userRepository,
         PrerenderPersistantState persistState,
-        ChatConnectionManager chatConnectionManager,
-        ILogger<ConnectionService> logger)
+        ChatConnectionManager chatConnectionManager)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _userRepository = userRepository;
         _persistState = persistState;
         _chatConnectionManager = chatConnectionManager;
-        _logger = logger;
-
-        _logger.LogInformation("Created connection service");
     }
 
     public Task<TimeSpan> MeasureConnectionDelayAsync() => Task.FromResult<TimeSpan>(default);
@@ -48,16 +41,12 @@ internal class ConnectionService : IConnectionService
 
     public async Task ConnectAsync()
     {
-        _logger.LogInformation("Called");
-
         _connectTask ??= ConnectInternalAsync();
         await _connectTask;
     }
 
     private async Task ConnectInternalAsync()
     {
-        _logger.LogInformation("Storing data");
-
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
         var user = await _userRepository.GetUserAsync(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
         if (user is null)
@@ -71,11 +60,6 @@ internal class ConnectionService : IConnectionService
             .OrderByDescending(x => x.LastMessage?.Timestamp)
             .ToList();
 
-        // _persistState.Channels = channelDtos;
-        // _persistState.Users = users;
-
         _persistState.AddData(channelDtos, users);
-
-        _logger.LogInformation("Finished storing data");
     }
 }

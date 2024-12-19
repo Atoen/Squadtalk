@@ -18,7 +18,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
 
     private bool _handlersRegistered;
 
-    public event Func<string, Task>? ConnectionStatusChanged;
+    public event Func<ConnectionStatus, Task>? ConnectionStatusChanged;
     public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
     public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<UserDto, Task>? UserDisconnected;
@@ -27,9 +27,8 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     public event Func<ChannelId, string?, Task>? ChannelNameChanged;
 
     private bool _connectionStared;
-    public bool Connected { get; private set; }
 
-    public string ConnectionStatus { get; private set; } = "Offline";
+    public ConnectionStatus ConnectionStatus { get; private set; } = ConnectionStatus.Connecting;
 
     public SignalrService(
         NavigationManager navigationManager,
@@ -75,21 +74,16 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
 
         try
         {
-            // ConnectionStatus = ISignalrService.Connecting;
-            ConnectionStatus = "Connecting";
-            await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
             await _connection.StartAsync();
 
-            Connected = true;
-            ConnectionStatus = "Online";
+            ConnectionStatus = ConnectionStatus.Connected;
             // ConnectionStatus = ISignalrService.Online;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
 
         }
         catch (Exception e)
         {
-            ConnectionStatus = "Disconnected";
-            // ConnectionStatus = ISignalrService.Disconnected;
+            ConnectionStatus = ConnectionStatus.Disconnected;
             _logger.LogError(e, "Failed to connect to chat hub");
         }
 
@@ -104,7 +98,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         return Stopwatch.GetElapsedTime(start);
     }
 
-    public Task OnPersisting() => throw new NotImplementedException();
+    public Task OnPersisting() => throw new InvalidOperationException();
 
     public Task<bool> ChangeChannelNameAsync(string? newName, ChannelId channelId)
     {
@@ -124,18 +118,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             _logger.LogInformation("Retrieved persisted channels");
             await ChannelsReceived.TryInvoke(channels);
         }
-
-        // if (_persistentComponentState.TryTakeFromJson<List<UserDto>>(IPersistState.Users, out var persistedUsers) && persistedUsers is not null)
-        // {
-        //     _logger.LogInformation("Retrieved persisted users");
-        //     await ConnectedUsersReceived.TryInvoke(persistedUsers, true);
-        // }
-        //
-        // if (_persistentComponentState.TryTakeFromJson<List<ChannelDto>>(IPersistState.Channels, out var persistedChannels) && persistedChannels is not null)
-        // {
-        //     _logger.LogInformation("Retrieved persisted channels");
-        //     await ChannelsReceived.TryInvoke(persistedChannels);
-        // }
     }
 
     private async Task UpdatePersistedDataAsync()
@@ -157,22 +139,19 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     {
         _connection.Reconnecting += _ =>
         {
-            ConnectionStatus = "Reconnecting";
-            Connected = false;
+            ConnectionStatus = ConnectionStatus.Reconnecting;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.Reconnected += _ =>
         {
-            ConnectionStatus = "Online";
-            Connected = true;
+            ConnectionStatus = ConnectionStatus.Connected;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
         _connection.Closed += _ =>
         {
-            ConnectionStatus = "Disconnected";
-            Connected = false;
+            ConnectionStatus = ConnectionStatus.Disconnected;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
 
