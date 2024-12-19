@@ -140,7 +140,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<IChannelManager, NoOpChannelManager>();
+        serviceCollection.AddScoped<IChannelManager, ChannelManager>();
         serviceCollection.AddScoped<IConnectionService, ConnectionService>();
         serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();

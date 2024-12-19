@@ -1,7 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Shared.DTOs;
-using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
@@ -10,8 +8,8 @@ internal class PrerenderPersistantState(PersistentComponentState persistentCompo
     private const string ChannelsKey = "channels";
     private const string UsersKey = "users";
 
-    public List<ChannelDto>? Channels { get; private set; }
-    public List<UserDto>? OnlineUsers { get; private set; }
+    public IList<ChannelDto>? Channels { get; private set; }
+    public IList<UserDto>? OnlineUsers { get; private set; }
 
     public bool ContainsData => OnlineUsers is { Count: > 0 } || Channels is { Count: > 0 };
 
