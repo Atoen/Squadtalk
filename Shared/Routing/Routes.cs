@@ -7,7 +7,7 @@ public static class Routes
         public const string Root = "/";
         public const string Canvas = "/Canvas";
         public const string Simulation = "/Canvas/Simulation";
-        public const string Chat = "/Channels/{ChannelId}";
+        public const string Chat = "/Chats/{ChannelId}";
         public const string Chats = "/Chats";
         public const string Users = "/Users";
         public const string Settings = "/Settings";
@@ -44,7 +44,8 @@ public static class Routes
         public const string ChangePassword = "change-password";
         public const string ConfirmEmailChange = "confirm-email-change";
 
-        public const string GetMessages = "{channelId}/{timestamp?}";
+        public const string GetMessages = "{channelId}";
+        public const string GetMessagesWithTimestamp = "{channelId}/{timestamp?}";
         public const string CreateChannel = "create-channel";
     }
 
@@ -66,7 +67,6 @@ public static class Routes
         public const string ChangePassword = AccountController + RelativeEndpoints.ChangePassword;
         public const string ConfirmEmailChange = AccountController + RelativeEndpoints.ConfirmEmailChange;
 
-        public const string GetMessages = MessageController + RelativeEndpoints.GetMessages;
         public const string CreateChannel = MessageController + RelativeEndpoints.CreateChannel;
     }
 }

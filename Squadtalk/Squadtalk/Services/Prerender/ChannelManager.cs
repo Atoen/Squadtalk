@@ -27,7 +27,7 @@ internal class ChannelManager(
     public IReadOnlyCollection<ChannelModel> Channels => LazyChannels.Values;
 
     public GroupChatModel GlobalChat => GlobalChatModel;
-    public ChannelModel? CurrentChannel => null;
+    public ChannelModel? CurrentChannel { get; private set; }
 
     event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
@@ -71,6 +71,17 @@ internal class ChannelManager(
         _channels = channelModels;
     }
 
+    public UserModel GetOrCreateUserModel(IChatUser chatUser)
+    {
+        return GetOrCreateUser(chatUser, LazyUsers);
+    }
+
+    public Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true)
+    {
+        CurrentChannel = channelModel;
+        return Task.CompletedTask;
+    }
+
     private static UserModel GetOrCreateUser(IChatUser user, Dictionary<UserId, UserModel> cache)
     {
         if (!cache.TryGetValue(user.Id, out var model))
@@ -84,15 +95,13 @@ internal class ChannelManager(
 
     public ChannelModel? GetChannel(ChannelId channelId) => LazyChannels.GetValueOrDefault(channelId);
 
-    public ChannelModel GetRequiredChannel(ChannelId channelId) => throw new InvalidOperationException();
+    public ChannelModel GetRequiredChannel(ChannelId channelId) => LazyChannels[channelId];
 
     public Task OpenOrCreateTemporaryDirectMessageChannel(UserModel model) => Task.CompletedTask;
 
-    public Task CreateRealDirectMessageChannel(ChannelModel channelModel) => Task.CompletedTask;
+    public Task UpgradeToPersistentChannelAsync(ChannelModel channelModel) => Task.CompletedTask;
 
-    public Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true) => Task.CompletedTask;
-
-    public Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others) => Task.FromResult<ChannelId?>(null);
+    public Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others) => Task.FromResult<ChannelId?>(null);
 
     public Task ClearChannelSelectionAsync() => Task.CompletedTask;
 

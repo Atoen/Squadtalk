@@ -1,3 +1,5 @@
+@using Squadtalk.Client.Extensions
+
 @if (Model.IsSystemMessage)
 {
     <div class="system-message-container">
@@ -11,9 +13,9 @@ else
         @if (Model.IsSeparate)
         {
             <div class="padding"></div>
-            <img class="avatar" src="user.png" alt="Avatar" draggable="false"/>
+            <img class="avatar" src="@Model.Author.AvatarUrl" alt="Avatar" draggable="false"/>
             <div class="label">
-                <div class="me-2">@Model.Author</div>
+                <div class="me-2">@Model.Author.Username</div>
                 <div class="date" data-date="@_longDate">@_date</div>
             </div>
         }
@@ -27,6 +29,7 @@ else
             {
                 <MessageEmbed Model="Model.Embed"/>
             }
+
             @if (!string.IsNullOrWhiteSpace(Model.Content))
             {
                 <div style="white-space: pre-wrap">@Model.Content</div>
@@ -35,10 +38,10 @@ else
     </div>
 }
 
-@* @inject ILocalization Localization *@
+@inject LocalizedText LocalizedText
 
-@code {
-
+@code
+{
     [Parameter, EditorRequired]
     public required MessageModel Model { get; set; }
 
@@ -48,11 +51,9 @@ else
 
     protected override void OnInitialized()
     {
-        // var table = Localization.TextTable;
-        //
-        // _date = Model.Timestamp.ToStringFormat(table);
-        // _longDate = Model.Timestamp.ToStringFormat( table, DateFormatMode.Long);
-        // _shortDate = Model.Timestamp.ToStringFormat(table, DateFormatMode.Short);
+        _date = Model.Timestamp.ToStringFormat(LocalizedText);
+        _longDate = Model.Timestamp.ToStringFormat(LocalizedText, DateFormatMode.Long);
+        _shortDate = Model.Timestamp.ToStringFormat(LocalizedText, DateFormatMode.Short);
     }
 
     protected override bool ShouldRender() => Model.ShouldRender();

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Shared.Data.Personalization;
 
 public abstract record ApplicationLanguage(string Tag)
@@ -9,6 +11,9 @@ public abstract record ApplicationLanguage(string Tag)
     public static readonly ApplicationLanguage PolishLanguage = new Polish();
 
     public static readonly ApplicationLanguage DefaultLanguage = EnglishLanguage;
+
+    public string Tag { get; } = Tag;
+    public CultureInfo CultureInfo { get; } = CultureInfo.GetCultureInfoByIetfLanguageTag(Tag);
 
     public static ApplicationLanguage ParseLanguageCode(ReadOnlySpan<char> languageCode) => languageCode switch
     {

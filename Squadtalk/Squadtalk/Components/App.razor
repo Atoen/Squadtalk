@@ -34,7 +34,7 @@
         window.getPreferences = () => getCookie('ap')
 
         window.savePreferences = (preferences) => {
-            document.cookie = `ap=${preferences}; Max-Age=31536000; SameSite=Strict`;
+            document.cookie = `ap=${preferences}; path=/; Max-Age=31536000; SameSite=Strict`;
         }
     </script>
 </body>

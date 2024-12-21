@@ -1,3 +1,6 @@
+using Shared.Extensions;
+using Squadtalk.Client.Localization;
+
 namespace Squadtalk.Client.Extensions;
 
 using static DateFormatMode;
@@ -14,45 +17,43 @@ public static class TimeStampExtensions
 
     public static string ToStringFormat(
         this DateTimeOffset dateTimeOffset,
-        // TextTable textTable,
+        LocalizedText localizedText,
         DateFormatMode formatMode = Default)
     {
         var localTimestamp = dateTimeOffset.ToLocalTime();
         var date = localTimestamp.Date;
-        // var culture = textTable.CultureInfo;
+        var culture = localizedText.CultureInfo;
 
-        return "Time";
+        return formatMode switch
+        {
+            Short => localTimestamp.ToString(HourMinute, culture),
+            Default when date == DateTime.Today =>
+                localizedText.R.today_time_template.Format(localTimestamp.ToString(HourMinute, culture)),
 
-        // return formatMode switch
-        // {
-        //     Short => localTimestamp.ToString(HourMinute, culture),
-        //     Default when date == DateTime.Today =>
-        //         textTable.TodayTimeTemplate.TryFormat(localTimestamp.ToString(HourMinute), culture),
-        //
-        //     Default when date == DateTime.Today.AddDays(-1) =>
-        //         textTable.YesterdayTimeTemplate.TryFormat(localTimestamp.ToString(HourMinute, culture)),
-        //
-        //     Default => localTimestamp.ToString(DateHourMinute),
-        //
-        //     Long when date == DateTime.Today =>
-        //         textTable.TodayTimeTemplate.TryFormat(localTimestamp.ToString(HourMinuteSecond, culture)),
-        //
-        //     Long when date == DateTime.Today.AddDays(-1) =>
-        //         textTable.YesterdayTimeTemplate.TryFormat(localTimestamp.ToString(HourMinuteSecond, culture)),
-        //
-        //     ChannelStatus when date == DateTime.Today =>
-        //         localTimestamp.ToString(HourMinute, culture),
-        //
-        //     ChannelStatus when DateTime.Today - date < TimeSpan.FromDays(7) =>
-        //         localTimestamp.ToString(DayHourMinute, culture),
-        //
-        //     ChannelStatus when date.Year == DateTime.Today.Year =>
-        //         localTimestamp.ToString(Day, culture),
-        //
-        //     ChannelStatus => localTimestamp.ToString(YearDay, culture),
-        //
-        //     _ => localTimestamp.ToString(DateHourMinuteSecond, culture)
-        // };
+            Default when date == DateTime.Today.AddDays(-1) =>
+                localizedText.R.yesterday_time_template.Format(localTimestamp.ToString(HourMinute, culture)),
+
+            Default => localTimestamp.ToString(DateHourMinute),
+
+            Long when date == DateTime.Today =>
+                localizedText.R.today_time_template.Format(localTimestamp.ToString(HourMinuteSecond, culture)),
+
+            Long when date == DateTime.Today.AddDays(-1) =>
+                localizedText.R.yesterday_time_template.Format(localTimestamp.ToString(HourMinuteSecond, culture)),
+
+            ChannelStatus when date == DateTime.Today =>
+                localTimestamp.ToString(HourMinute, culture),
+
+            ChannelStatus when DateTime.Today - date < TimeSpan.FromDays(7) =>
+                localTimestamp.ToString(DayHourMinute, culture),
+
+            ChannelStatus when date.Year == DateTime.Today.Year =>
+                localTimestamp.ToString(Day, culture),
+
+            ChannelStatus => localTimestamp.ToString(YearDay, culture),
+
+            _ => localTimestamp.ToString(DateHourMinuteSecond, culture)
+        };
     }
 }
 

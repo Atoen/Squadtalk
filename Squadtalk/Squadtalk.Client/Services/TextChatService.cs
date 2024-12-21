@@ -48,13 +48,18 @@ internal class TextChatService : ITextChatService
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken)
     {
         var channel = _channelManager.GetChannel(id);
-        if (channel is null or { State.ReachedEnd: true })
+        if (channel is null or { State.ScrolledToBeginning: true })
         {
             return Array.Empty<MessageModel>();
         }
 
         var channelState = channel.State;
         var page = await FetchPageAsync(id, channelState.Cursor, cancellationToken);
+
+        if (page.Count == 0)
+        {
+            return Array.Empty<MessageModel>();
+        }
 
         channelState.Cursor = new TextChannelCursor(page[0].Timestamp.UtcTicks);
         return _modelService.CreateModelPage(page, channelState);
@@ -64,6 +69,11 @@ internal class TextChatService : ITextChatService
     {
         try
         {
+            if (cursor == default)
+            {
+                return await _messageApi.GetMessagePage(channelId, cancellationToken);
+            }
+
             return await _messageApi.GetMessagePage(channelId, cursor, cancellationToken);
         }
         catch (Exception e)

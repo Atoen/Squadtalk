@@ -8,7 +8,7 @@ export function initialize(lastIndicator, instance)
     listbox = document.getElementById("listbox");
 
     listbox.addEventListener("scroll", () => scrollPositionFromBottom = markScroll());
-    resizeObserver.observe(document.getElementById("textBox"));
+    resizeObserver.observe(document.getElementById("textbox"));
     
     const options = {
         root: findClosestScrollContainer(lastIndicator),

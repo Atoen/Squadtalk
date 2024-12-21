@@ -4,7 +4,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class MessageModelService : IMessageModelService
+public class MessageModelService(IChannelManager channelManager) : IMessageModelService
 {
     public TimeSpan MessageSeparationTimespan { get; } = TimeSpan.FromMinutes(5);
 
@@ -47,7 +47,7 @@ public class MessageModelService : IMessageModelService
     {
         var model = new MessageModel
         {
-            Author = message.Author.Username,
+            Author = channelManager.GetOrCreateUserModel(message.Author),
             Timestamp = message.Timestamp,
             Content = message.Content,
             Embed = message.Embed is { } embed

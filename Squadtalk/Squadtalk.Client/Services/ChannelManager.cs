@@ -53,7 +53,7 @@ internal class ChannelManager : IChannelManager
         _navigationManager = navigationManager;
         _logger = logger;
 
-        _userModelProvider = GetUserModel;
+        _userModelProvider = GetOrCreateUserModel;
 
         _signalrService.UserConnected += user => UserConnected(user, false, false);
         _signalrService.UserDisconnected += UserDisconnected;
@@ -87,7 +87,7 @@ internal class ChannelManager : IChannelManager
 
         if (navigate)
         {
-            _navigationManager.NavigateTo($"Channels/{CurrentChannel?.Id}");
+            _navigationManager.NavigateTo($"Chats/{CurrentChannel?.Id}");
         }
     }
 
@@ -107,16 +107,15 @@ internal class ChannelManager : IChannelManager
         await OpenChannelAsync(DirectMessageChannelModel.CreateTempChannel(model));
     }
 
-    public async Task CreateRealDirectMessageChannel(ChannelModel channelModel)
+    public async Task UpgradeToPersistentChannelAsync(ChannelModel channelModel)
     {
-        var others = channelModel switch
+        if (channelModel is not DirectMessageChannelModel dm)
         {
-            DirectMessageChannelModel directMessageChannelModel => [directMessageChannelModel.Other],
-            GroupChatModel groupChatModel => groupChatModel.Others,
-            _ => throw new ArgumentOutOfRangeException(nameof(channelModel))
-        };
+            _logger.LogError("Only direct message channels can be temporary");
+            return;
+        }
 
-        var channelId = await CreateNewChannel(others);
+        var channelId = await CreateNewChannel(dm.Other);
         if (channelId is not null && GetChannel(channelId) is { } openedChannel)
         {
             await ChangeChannelAsync(openedChannel);
@@ -128,9 +127,11 @@ internal class ChannelManager : IChannelManager
         return _signalrService.ChangeChannelNameAsync(newName, groupChat.Id);
     }
 
-    public async Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others)
+    public async Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others)
     {
-        var participantsId = others.Select(x => x.Id).Append(_userAuthenticationService.UserId);
+        var participantsId = others
+            .Select(x => x.Id)
+            .Append(_userAuthenticationService.UserId);
 
         return await _createTextChannelRequestHandler.CreateTextChannelAsync(participantsId);
     }
@@ -174,10 +175,10 @@ internal class ChannelManager : IChannelManager
         if (_allChannels.ContainsKey(channel.Id)) return;
 
         var model = ChannelModel.Create(channel, _userAuthenticationService.UserId, _userModelProvider);
-        if (!bulk)
-        {
-            model.State.ReachedEnd = true;
-        }
+        // if (!bulk)
+        // {
+        //     model.State.ScrolledToBeginning = true;
+        // }
 
         _allChannels.Add(model.Id, model);
 
@@ -218,7 +219,7 @@ internal class ChannelManager : IChannelManager
         return Task.CompletedTask;
     }
 
-    private UserModel GetUserModel(IChatUser chatUser)
+    public UserModel GetOrCreateUserModel(IChatUser chatUser)
     {
         if (_users.TryGetValue(chatUser.Id, out var model))
         {
@@ -238,7 +239,7 @@ internal class ChannelManager : IChannelManager
             return Task.CompletedTask;
         }
 
-        var model = GetUserModel(connectedUser);
+        var model = GetOrCreateUserModel(connectedUser);
         model.Status = fromPersistedData ? UserStatus.Unknown : UserStatus.Online;
 
         if (!bulkAdd)

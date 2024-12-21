@@ -1,4 +1,7 @@
+@using Shared
 @using Shared.Data
+@using Shared.Extensions
+@using Squadtalk.Client.Extensions
 @using Color = MudBlazor.Color
 
 <MudBadge Content="Model.UnreadMessages" Overlap="true" Color="Color.Error"
@@ -16,16 +19,17 @@
             <div class="channel-status" style="@StatusStyle">
                 <div class="last-message">@FormatLastMessage(message)</div>
                 <div class="separator">|</div>
-                @* <div class="last-message-time">@message.Timestamp.ToStringFormat(Table, DateFormatMode.ChannelStatus)</div> *@
+                <div class="last-message-time">
+                    @message.Timestamp.ToStringFormat(LocalizedText, DateFormatMode.ChannelStatus)
+                </div>
             </div>
         }
     </div>
 </MudBadge>
 
-@inherits LocalizedComponent
-
 @inject IChannelManager ChannelManager
 @inject IUserAuthenticationService UserAuthenticationService
+@inject LocalizedText LocalizedText
 
 @code {
 
@@ -38,78 +42,74 @@
 
     private string FormatLastMessage(IChatMessage message)
     {
-        return "";
+        var messageByCurrentUser = message.Author.Id == UserAuthenticationService.UserId;
+        var isDm = Model is DirectMessageChannelModel;
 
-        // var messageByCurrentUser = message.Author.Id == UserAuthenticationService.UserId;
-        // var isDm = Model is DirectMessageChannelModel;
-        //
-        // var authorPrefix = (messageByCurrentUser, isDm) switch
-        // {
-        //     (true, _) => Table.You,
-        //     (false, true) => string.Empty,
-        //     _ => message.Author.Username
-        // };
-        //
-        // var messageContent = (messageByCurrentUser, message.Embed?.Type) switch
-        // {
-        //     { Type: EmbedType.File } => $"{GetEmbedPrefix(messageByCurrentUser, Table)} {Table.File}",
-        //     { Type: EmbedType.Image } => $"{GetEmbedPrefix(messageByCurrentUser, Table)} {Table.Image}",
-        //     { Type: EmbedType.Video } => $"{GetEmbedPrefix(messageByCurrentUser, Table)} {Table.Video}",
-        //     { Type: EmbedType.SystemMessage } => FormatSystemMessage(message.Embed, messageByCurrentUser),
-        //     _ => message.Content
-        // };
-        //
-        // var useAuthorPrefix = !string.IsNullOrEmpty(authorPrefix) && message.Embed?.Type != EmbedType.SystemMessage;
-        //
-        // return useAuthorPrefix ? $"{authorPrefix}: {messageContent}": messageContent;
-        //
-        // static string GetEmbedPrefix(bool messageByCurrentUser, TextTable table) =>
-        //     messageByCurrentUser ? table.MessageYouSentInfo : table.MessageSentInfo;
+        var authorPrefix = (messageByCurrentUser, isDm) switch
+        {
+            (true, _) => LocalizedText.R.you,
+            (false, true) => string.Empty,
+            _ => message.Author.Username
+        };
+
+        var messageContent = (messageByCurrentUser, message.Embed?.Type) switch
+        {
+            { Type: EmbedType.File } => $"{GetEmbedPrefix(messageByCurrentUser, LocalizedText)} {LocalizedText.R.file}",
+            { Type: EmbedType.Image } => $"{GetEmbedPrefix(messageByCurrentUser, LocalizedText)} {LocalizedText.R.image}",
+            { Type: EmbedType.Video } => $"{GetEmbedPrefix(messageByCurrentUser, LocalizedText)} {LocalizedText.R.video}",
+            { Type: EmbedType.SystemMessage } => FormatSystemMessage(message.Embed, messageByCurrentUser),
+            _ => message.Content
+        };
+
+        var useAuthorPrefix = !string.IsNullOrEmpty(authorPrefix) && message.Embed?.Type != EmbedType.SystemMessage;
+
+        return useAuthorPrefix ? $"{authorPrefix}: {messageContent}": messageContent;
+
+        static string GetEmbedPrefix(bool messageByCurrentUser, LocalizedText localizedText) =>
+            messageByCurrentUser ? localizedText.R.message_you_sent_info : localizedText.R.message_sent_info;
     }
 
     private string FormatSystemMessage(IMessageEmbed embed, bool byCurrentUser)
     {
-        return "";
+        var systemMessageType = SystemMessageTypeHelper.Parse(embed[EmbedData.SystemMessageType]);
 
-        // var systemMessageType = SystemMessageTypeHelper.Parse(embed[EmbedData.SystemMessageType]);
-        //
-        // switch (systemMessageType)
-        // {
-        //     case SystemMessageType.ChannelCreated:
-        //     {
-        //         if (byCurrentUser) return Table.YouCreatedChannel;
-        //
-        //         var username = embed[EmbedData.SystemMessageDataUsername];
-        //         return Table.UserCreatedChannelTemplate.TryFormat(username);
-        //     }
-        //     case SystemMessageType.ChannelNameChanged:
-        //     {
-        //         var newName = embed[EmbedData.SystemMessageDataChannelName];
-        //         if (byCurrentUser) return Table.YouChangedChannelNameTemplate.TryFormat(newName);
-        //
-        //         var username = embed[EmbedData.SystemMessageDataUsername];
-        //         return Table.UserChangedChannelNameTemplate.TryFormat(username, newName);
-        //     }
-        //     case SystemMessageType.ChannelNameCleared:
-        //     {
-        //         if (byCurrentUser) return Table.YouClearedChannelNameTemplate;
-        //
-        //         var username = embed[EmbedData.SystemMessageDataUsername];
-        //         return Table.UserClearedChannelNameTemplate.TryFormat(username);
-        //     }
-        //     case SystemMessageType.CallStarted or SystemMessageType.CallEnded:
-        //     {
-        //         if (byCurrentUser) return Table.YouCalled;
-        //
-        //         var username = embed[EmbedData.SystemMessageDataUsername];
-        //         return Table.UserCalledTemplate.TryFormat(username);
-        //     }
-        //     case SystemMessageType.CallMissed:
-        //         return "CallMissed";
-        //
-        //     case SystemMessageType.None:
-        //     default:
-        //         return string.Empty;
-        // }
+        switch (systemMessageType)
+        {
+            case SystemMessageType.ChannelCreated:
+            {
+                if (byCurrentUser) return LocalizedText.R.you_created_channel;
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return LocalizedText.R.user_created_channel_template.Format(username);
+            }
+            case SystemMessageType.ChannelNameChanged:
+            {
+                var newName = embed[EmbedData.SystemMessageDataChannelName];
+                if (byCurrentUser) return LocalizedText.R.you_changed_channel_name_template.Format(newName);
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return LocalizedText.R.user_changed_channel_name_template.Format(username, newName);
+            }
+            case SystemMessageType.ChannelNameCleared:
+            {
+                if (byCurrentUser) return LocalizedText.R.you_cleared_channel_name;
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return LocalizedText.R.user_cleared_channel_name.Format(username);
+            }
+            case SystemMessageType.CallStarted or SystemMessageType.CallEnded:
+            {
+                if (byCurrentUser) return LocalizedText.R.you_called;
+
+                var username = embed[EmbedData.SystemMessageDataUsername];
+                return LocalizedText.R.user_called_template.Format(username);
+            }
+            case SystemMessageType.CallMissed:
+                return "CallMissed";
+
+            case SystemMessageType.None:
+            default:
+                return string.Empty;
+        }
     }
 }

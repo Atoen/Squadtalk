@@ -1,11 +1,10 @@
+@attribute [Authorize]
 @attribute [Route(Routes.Pages.Chat)]
 
 @using Microsoft.AspNetCore.Authorization
 @using Shared.Data.TypedIds
 
 @implements IAsyncDisposable
-
-@attribute [Authorize]
 
 <PageTitle>Squadtalk | @ChannelManager.CurrentChannel?.Name</PageTitle>
 
@@ -16,29 +15,22 @@
     }
 
     <div class="message-listbox rounded mt-2" id="listbox">
-        @if (OperatingSystem.IsBrowser())
-        {
-            <InfiniteScrolling>
-                <ItemTemplate>
-                    <MessageTemplate Model="context" @key="context"/>
-                </ItemTemplate>
-                <LoadingTemplate>
-                    @* <Spinner Type="SpinnerType.Border" Class="ms-2" /> *@
-                </LoadingTemplate>
-            </InfiniteScrolling>
-        }
-        else
-        {
-            @* <Spinner Type="SpinnerType.Border" Class="ms-2" /> *@
-        }
+        <InfiniteScrolling>
+            <ItemTemplate>
+                <MessageTemplate Model="context" @key="context"/>
+            </ItemTemplate>
+        </InfiniteScrolling>
     </div>
 
     <UploadInfo/>
-    <InputBox/>
+
+    @if (_channel is not null)
+    {
+        <InputBox Channel="_channel"/>
+    }
 </div>
 
 @inject IChannelManager ChannelManager
-@* @inject ToastService ToastService *@
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
@@ -55,7 +47,7 @@
     {
         await ConnectionService.ConnectAsync();
 
-        if (ChannelManager.CurrentChannel is null)
+        if (ChannelManager.CurrentChannel is not { } currentChannel)
         {
             var channel = ChannelManager.GetChannel(new ChannelId(ChannelId));
             if (channel is null)
@@ -66,6 +58,10 @@
 
             _channel = channel;
             await ChannelManager.OpenChannelAsync(_channel, false);
+        }
+        else
+        {
+            _channel = currentChannel;
         }
 
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;

@@ -2,7 +2,7 @@
 @using Color = MudBlazor.Color
 
 <MudContainer MaxWidth="MaxWidth.Small" Gutters="false">
-    <MudPaper Class="pa-4" Elevation="8">
+    <MudPaper Class="pa-4 mx-3 mb-4" Elevation="8">
 
         <div class="d-flex mb-4">
             <MudStack Spacing="0">
@@ -51,7 +51,8 @@
     </MudPaper>
 </MudContainer>
 
-@inject LocalizedText LocalizedText
+@inherits LocalizedComponent
+
 @inject IDialogService DialogService
 @inject IUserAuthenticationService UserAuthenticationService
 
@@ -66,6 +67,8 @@
 
     protected override void OnInitialized()
     {
+        base.OnInitialized();
+
         _email = UserAuthenticationService.Email;
         _maskedEmail = MaskEmail(_email);
     }

@@ -2,19 +2,34 @@
 @using Shared.Data.TypedIds
 @using Squadtalk.Client.Extensions
 
-@if (ChannelManager.CurrentChannel is {State.ReachedEnd: true} channel)
+@if (ChannelManager.CurrentChannel is { State.ScrolledToBeginning: true } channel)
 {
     <div class="channel-start">
         <div class="title">@channel.Name</div>
         <div>
-            ChannelBeginning <span class="fw-bold d-inline">@channel.Name</span>.
+            @LocalizedText.R.channel_beginning <span class="channel-start-name">@channel.Name</span>.
         </div>
     </div>
 }
 
-@if (_loading)
+@if (DisplaySkeleton)
 {
-    @LoadingTemplate
+    <MudStack Row="true" Class="ms-1 mb-1" Spacing="1">
+        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" Animation="Animation.Wave"/>
+        <MudStack Spacing="0">
+            <MudSkeleton Width="100px" Animation="Animation.Wave"/>
+            <MudSkeleton Height="60px" Width="200px" Class="my-n2" Animation="Animation.Wave"/>
+            <MudSkeleton Height="20px" Width="160px" Animation="Animation.Wave"/>
+        </MudStack>
+    </MudStack>
+
+    <MudStack Row="true" Class="ms-1 mb-1" Spacing="1">
+        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" Animation="Animation.Wave"/>
+        <MudStack Spacing="0">
+            <MudSkeleton Width="80px" Animation="Animation.Wave"/>
+            <MudSkeleton Height="40px" Width="200px" Class="my-n2" Animation="Animation.Wave"/>
+        </MudStack>
+    </MudStack>
 }
 
 @* ReSharper disable once CSharpWarnings::CS8974 *@
@@ -28,38 +43,42 @@
     }
 }
 
-@implements IAsyncDisposable
+@implements IDisposable
 
 @inject IJSRuntime JsRuntime
 @inject IChannelManager ChannelManager
 @inject ITextChatService TextChatService
-@* @inject ILocalization Localization *@
+@inject LocalizedText LocalizedText
 @inject ILogger<InfiniteScrolling> Logger
 
-@code {
-
-    // private TextTable _table = default!;
+@code
+{
+    private IJSInProcessRuntime _inProcessRuntime = default!;
 
     private ElementReference _lastItemIndicator;
     private DotNetObjectReference<InfiniteScrolling>? _currentComponentReference;
-    private IJSObjectReference? _jsModule;
-    private IJSObjectReference? _instance;
+    private IJSInProcessObjectReference? _jsModule;
+    private IJSInProcessObjectReference? _instance;
 
+    private bool _beforeFirstLoad = true;
     private bool _loading;
     private bool _changedChannel;
 
-    [Parameter]
+    private bool DisplaySkeleton => _loading || _beforeFirstLoad;
+
+    [Parameter, EditorRequired]
     public RenderFragment<MessageModel>? ItemTemplate { get; set; }
-
-    [Parameter]
-    public RenderFragment? LoadingTemplate { get; set; }
-
-    [Parameter]
-    public string LastItemIndicatorElement { get; set; } = "div";
 
     protected override void OnInitialized()
     {
-        TextChatService.MessageReceived += UpdateOnTextChat;
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        _inProcessRuntime = (IJSInProcessRuntime) JsRuntime;
+
+        TextChatService.MessageReceived += MessageReceived;
         ChannelManager.ChannelChangedAsync += ChannelChangedAsync;
     }
 
@@ -68,10 +87,11 @@
         _changedChannel = true;
         
         await LoadMoreItems();
-        await _instance!.InvokeVoidAsync("onNewItems");
+
+        _instance?.InvokeVoid("onNewItems");
     }
 
-    private Task UpdateOnTextChat(ChannelId id, MessageModel message)
+    private Task MessageReceived(ChannelId id, MessageModel message)
     {
         if (id != ChannelManager.CurrentChannel?.Id)
         {
@@ -79,7 +99,9 @@
         }
 
         StateHasChanged();
-        return _jsModule!.InvokeVoidAsync("scrollToBottom").AsTask();
+        _jsModule?.InvokeVoid("scrollToBottom");
+
+        return Task.CompletedTask;
     }
 
     [JSInvokable]
@@ -89,10 +111,11 @@
         if (ChannelManager.CurrentChannel is not { } channel) return;
         
         _loading = true;
+        _beforeFirstLoad = false;
         
         var channelState = channel.State;
 
-        if (channelState is {ReachedEnd: false} && !_changedChannel)
+        if (channelState is { ScrolledToBeginning: false } && !_changedChannel)
         {
             StateHasChanged();
             
@@ -101,13 +124,13 @@
                 var newItems = await TextChatService.GetMessagePageAsync(channel.Id, CancellationToken.None);
                 if (newItems.Count == 0)
                 {
-                    channelState.ReachedEnd = true;
+                    channelState.ScrolledToBeginning = true;
                 }
                 else
                 {
                     Logger.LogInformation("Loaded {Count} messages", newItems.Count);
                     channelState.Messages.InsertRange(0, newItems);
-                    await _instance!.InvokeVoidAsync("onNewItems");
+                    _instance?.InvokeVoid("onNewItems");
                 }
             }
             catch (Exception e)
@@ -116,7 +139,7 @@
             }
         }
 
-        var scrollPosition = await _jsModule!.InvokeAsync<double>("markScroll", CancellationToken.None);
+        var scrollPosition = _jsModule?.Invoke<double>("markScroll");
         if (_changedChannel)
         {
             scrollPosition = 0;
@@ -126,43 +149,40 @@
         _loading = false;
         
         StateHasChanged();
-        await _jsModule!.InvokeVoidAsync("scrollToMark", CancellationToken.None, scrollPosition);
+        _jsModule?.InvokeVoid("scrollToMark", scrollPosition);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
     
-        _jsModule = await JsRuntime
-            .InvokeAsync<IJSObjectReference>("import", "../Components/InfiniteScrolling.razor.js");
+        _jsModule = await _inProcessRuntime
+            .InvokeAsync<IJSInProcessObjectReference>("import", "../Components/InfiniteScrolling.razor.js");
         
         _currentComponentReference = DotNetObjectReference.Create(this);
-        _instance = await _jsModule
-            .InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
+        _instance = _jsModule
+            .Invoke<IJSInProcessObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
         
-        await _jsModule.InvokeVoidAsync("scrollToMark", 0);
+        _jsModule.InvokeVoid("scrollToMark", 0);
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        if (_instance is not null)
-        {
-            await _instance.InvokeVoidAsync("dispose");
-            await _instance.DisposeAsync();
-        }
+        _instance?.InvokeVoid("dispose");
+        _instance?.Dispose();
 
-        await _jsModule.TryDisposeAsync();
-
+        _jsModule?.Dispose();
         _currentComponentReference?.Dispose();
 
-        TextChatService.MessageReceived -= UpdateOnTextChat;
+        TextChatService.MessageReceived -= MessageReceived;
         ChannelManager.ChannelChangedAsync -= ChannelChangedAsync;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
     {
-        builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = ChannelManager.CurrentChannelState is { ReachedEnd: true }
+        builder.OpenElement(1000, "div");
+
+        var style = ChannelManager.CurrentChannelState is { ScrolledToBeginning: true }
             ? "height:0;width:0"
             : "height:1px;width:1px;flex-shrink:0";
         

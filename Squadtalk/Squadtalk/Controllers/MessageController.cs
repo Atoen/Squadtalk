@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Data.TypedIds;
+using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Routing;
+using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
@@ -28,8 +30,8 @@ public class MessageController : ControllerBase
         _channelRepository = channelRepository;
     }
 
-    [HttpGet(Routes.RelativeEndpoints.GetMessages)]
-    public async Task<ActionResult<List<Message>>> GetMessages(ChannelId channelId, string? timestamp)
+    [HttpGet(Routes.RelativeEndpoints.GetMessagesWithTimestamp)]
+    public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessages(ChannelId channelId, string? timestamp)
     {
         var userId = HttpContext.User.GetUserId();
         var userParticipates = await _channelRepository.UserParticipatesInChannelAsync(userId, channelId);
@@ -39,7 +41,9 @@ public class MessageController : ControllerBase
         }
 
         var messages = await _messageRepository.GetPageAsync(channelId, timestamp, HttpContext.RequestAborted);
-        return messages;
+        var dtos = messages.Select(x => x.ToDto());
+
+        return Ok(dtos);
     }
 
     [HttpPost(Routes.RelativeEndpoints.CreateChannel)]

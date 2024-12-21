@@ -1,128 +1,167 @@
 @using Shared.Extensions
-@using Squadtalk.Client.Extensions
+@using Color = MudBlazor.Color
 
-<div class="input-box" style="@GetStyle()">
-    
-    @if (FileTransferService.SelectedFile is { } file)
-    {
-        <FileToUpload File="file" />
-    }
-    
-    <div class="grow-wrap">
-        <textarea rows="1" placeholder="@_placeholder"
-            @onkeydown="TextareaCallback"
-            @onkeydown:preventDefault="@_preventDefaultOnKeyDown"
-            id="textBox"
-            disabled="@(!CommunicationService.Connected)">
-        </textarea>
+<MudPaper Outlined="true" Class="my-2 d-flex align-center" Style="grid-row: 5">
+    <MudTextField T="string" @ref="_textField" Disabled="Disable"
+                  MaxLines="10" AutoGrow="true" Class="ps-1" Immediate="true"
+                  id="textbox" Underline="false" OnKeyDown="OnKeyDown"
+                  KeyDownPreventDefault="_inputPreventDefault"
+                  Placeholder="@Placeholder" AutoFocus="true"/>
+
+    <MudDivider Vertical="true" Class="mx-1" DividerType="DividerType.FullWidth"/>
+
+    <div>
+        <MudTooltip Text="@LocalizedText.R.send_message" Disabled="Disable">
+            <MudIconButton Icon="@Icons.Material.Rounded.Send" Size="Size.Medium"
+                           Class="pa-2 me-n1" OnClick="Send" Disabled="Disable"
+                           Color="Color.Primary"/>
+        </MudTooltip>
+
+        <MudTooltip Text="@LocalizedText.R.add_attachment" Disabled="Disable">
+            <MudIconButton Icon="@Icons.Material.Rounded.AddCircle" Size="Size.Medium"
+                           Class="pa-2 me-1" HtmlTag="label" for="file-picker"
+                           Disabled="Disable" Color="Color.Primary"/>
+        </MudTooltip>
+
+        <InputFile class="d-none" id="file-picker" multiple/>
     </div>
-    
-    <label class="add-button" for="file-picker">
-        <svg id="Layer_1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1">
-            <path d="m12 0a12 12 0 1 0 12 12 12.013 12.013 0 0 0 -12-12zm0 22a10 10 0 1 1 10-10 10.011 10.011 0 0 1 -10 10zm5-10a1 1 0 0 1 -1 1h-3v3a1 1 0 0 1 -2 0v-3h-3a1 1 0 0 1 0-2h3v-3a1 1 0 0 1 2 0v3h3a1 1 0 0 1 1 1z"/>
-        </svg>
-    </label>
+</MudPaper>
 
-    <label class="send-button" @onclick="SendMessage">
-        <svg xmlns="http://www.w3.org/2000/svg" id="Layer_2" data-name="Layer 1" viewBox="0 0 24 24">
-            <path d="m.172,3.708C-.216,2.646.076,1.47.917.713,1.756-.041,2.951-.211,3.965.282l18.09,8.444c.97.454,1.664,1.283,1.945,2.273H4.048L.229,3.835c-.021-.041-.04-.084-.057-.127Zm3.89,9.292L.309,20.175c-.021.04-.039.08-.054.122-.387,1.063-.092,2.237.749,2.993.521.467,1.179.708,1.841.708.409,0,.819-.092,1.201-.279l18.011-8.438c.973-.456,1.666-1.288,1.945-2.28H4.062Z"/>
-        </svg>
-    </label>
 
-    <InputFile class="d-none" id="file-picker" multiple />
-</div>
-
-@implements IAsyncDisposable
-
-@inject ITextChatService TextChatService
-@inject IJSRuntime JSRuntime
-@inject IChannelManager ChannelManager
 @inject IConnectionService CommunicationService
-@inject IFileTransferService FileTransferService
+@inject ITextChatService TextChatService
+@inject IChannelManager ChannelManager
+@inject ILogger<InputBox> Logger
+@inject LocalizedText LocalizedText
 
-@code {
-    private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";
-    private const string DefaultPlaceholder = "Type message";
+@* @inject IJSRuntime JSRuntime *@
+@* @inject IFileTransferService FileTransferService *@
 
-    private string? _userInput;
-    private string? _placeholder;
-    private bool _preventDefaultOnKeyDown;
-    
-    private IJSObjectReference? _jsModule;
+@code
+{
+    [Parameter, EditorRequired] public ChannelModel Channel { get; set; } = default!;
+
+    private MudTextField<string> _textField = default!;
+    private bool _inputPreventDefault;
+
+    private bool Disable => !CommunicationService.Connected;
+    private string Placeholder { get; set; } = default!;
 
     protected override void OnInitialized()
     {
-        // _placeholder = CommunicationService.ConnectionStatus;
-        // CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
-        FileTransferService.FileSelected += FileTransferServiceOnFileSelected;
-        FileTransferService.SelectionCleared += FileTransferServiceOnSelectionCleared;
+        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
+        Placeholder = LocalizedText.R.write_to_channel.Format(Channel.Name);
     }
 
-    private void FileTransferServiceOnSelectionCleared() => StateHasChanged();
+    private Task OnKeyDown(KeyboardEventArgs e)
+    {
+        _inputPreventDefault = false;
 
-    private void FileTransferServiceOnFileSelected(FileModel file) => StateHasChanged();
+        var shouldSend = e is { Key: "Enter", ShiftKey: false };
+        return shouldSend ? Send() : Task.CompletedTask;
+    }
 
-    // private Task ConnectionStatusChanged(string status)
-    // {
-    //     _placeholder = CommunicationService.Connected ? DefaultPlaceholder : status;
-    //     StateHasChanged();
+    private async Task Send()
+    {
+        _inputPreventDefault = true;
+
+        if (Channel.IsTemporary())
+        {
+            await ChannelManager.UpgradeToPersistentChannelAsync(Channel);
+        }
+
+        var text = _textField.Value;
+        await _textField.Clear();
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            await TextChatService.SendMessageAsync(text);
+        }
+    }
+
+    private Task ConnectionStatusChanged(ConnectionStatus status)
+    {
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
+
+    // private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";
+    // private const string DefaultPlaceholder = "Type message";
+
+    // private string? _userInput;
+    // private string? _placeholder;
+    // private bool _preventDefaultOnKeyDown;
     //
-    //     return Task.CompletedTask;
+    // private IJSObjectReference? _jsModule;
+    //
+    // protected override void OnInitialized()
+    // {
+    //     // _placeholder = CommunicationService.ConnectionStatus;
+    //     // CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
+    //     // FileTransferService.FileSelected += FileTransferServiceOnFileSelected;
+    //     // FileTransferService.SelectionCleared += FileTransferServiceOnSelectionCleared;
     // }
+    //
+    // private void FileTransferServiceOnSelectionCleared() => StateHasChanged();
+    //
+    // private void FileTransferServiceOnFileSelected(FileModel file) => StateHasChanged();
+    //
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
-
-        _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "../Components/InputBox.razor.js");
-        await _jsModule.InvokeVoidAsync("initialize");
-
-        await FileTransferService.InitializeAsync();
-    }
-    
-    private string GetStyle()
-    {
-        return CommunicationService.Connected ? string.Empty : DisabledStyle;
-    }
-
-    private Task TextareaCallback(KeyboardEventArgs e)
-    {
-        _preventDefaultOnKeyDown = false;
-
-        return e is { Key: "Enter", ShiftKey: false } ? SendMessage() : Task.CompletedTask;
-    }
-    
-    private async Task SendMessage()
-    {
-        _preventDefaultOnKeyDown = true;
-
-        if (ChannelManager.CurrentChannel is null) return;
-        
-        if (ChannelManager.CurrentChannel.IsTemporary())
-        {
-            await ChannelManager.CreateRealDirectMessageChannel(ChannelManager.CurrentChannel);
-        }
-
-        var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
-        var channel = ChannelManager.CurrentChannel;
-
-        if (FileTransferService.IsFileAvailable)
-        {
-            await FileTransferService.UploadFileAsync(channel);
-        }
-        
-        if (!string.IsNullOrWhiteSpace(message))
-        {
-           await TextChatService.SendMessageAsync(message);
-        }
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        // CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
-        FileTransferService.FileSelected -= FileTransferServiceOnFileSelected;
-        FileTransferService.SelectionCleared -= FileTransferServiceOnSelectionCleared;
-        
-        return _jsModule.TryDisposeAsync();
-    }
+    //
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     // if (!firstRender) return;
+    //     //
+    //     // _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "../Components/InputBox.razor.js");
+    //     // await _jsModule.InvokeVoidAsync("initialize");
+    //     //
+    //     // await FileTransferService.InitializeAsync();
+    // }
+    //
+    // // private string GetStyle()
+    // // {
+    // //     return CommunicationService.Connected ? string.Empty : DisabledStyle;
+    // // }
+    //
+    // private Task TextareaCallback(KeyboardEventArgs e)
+    // {
+    //     _preventDefaultOnKeyDown = false;
+    //
+    //     return e is { Key: "Enter", ShiftKey: false } ? SendMessage() : Task.CompletedTask;
+    // }
+    //
+    // private async Task SendMessage()
+    // {
+    //     _preventDefaultOnKeyDown = true;
+    //
+    //     if (ChannelManager.CurrentChannel is null) return;
+    //
+    //     if (ChannelManager.CurrentChannel.IsTemporary())
+    //     {
+    //         await ChannelManager.CreateRealDirectMessageChannel(ChannelManager.CurrentChannel);
+    //     }
+    //
+    //     var message = await _jsModule!.InvokeAsync<string>("getAndClearMessage");
+    //     var channel = ChannelManager.CurrentChannel;
+    //
+    //     if (FileTransferService.IsFileAvailable)
+    //     {
+    //         await FileTransferService.UploadFileAsync(channel);
+    //     }
+    //
+    //     if (!string.IsNullOrWhiteSpace(message))
+    //     {
+    //        await TextChatService.SendMessageAsync(message);
+    //     }
+    // }
+    //
+    // public ValueTask DisposeAsync()
+    // {
+    //     // CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
+    //     FileTransferService.FileSelected -= FileTransferServiceOnFileSelected;
+    //     FileTransferService.SelectionCleared -= FileTransferServiceOnSelectionCleared;
+    //
+    //     return _jsModule.TryDisposeAsync();
+    // }
 }

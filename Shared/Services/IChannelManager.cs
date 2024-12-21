@@ -1,4 +1,5 @@
 
+using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Models;
 
@@ -22,17 +23,19 @@ public interface IChannelManager
     event Func<Task>? ChannelChangedAsync;
     event Action? ConnectedUsersChanged;
 
+    UserModel GetOrCreateUserModel(IChatUser chatUser);
+
     ChannelModel? GetChannel(ChannelId channelId);
 
     ChannelModel GetRequiredChannel(ChannelId channelId);
 
     Task OpenOrCreateTemporaryDirectMessageChannel(UserModel model);
     
-    Task CreateRealDirectMessageChannel(ChannelModel channelModel);
+    Task UpgradeToPersistentChannelAsync(ChannelModel channelModel);
 
     Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true);
 
-    Task<ChannelId?> CreateNewChannel(IEnumerable<UserModel> others);
+    Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others);
 
     Task ClearChannelSelectionAsync();
 

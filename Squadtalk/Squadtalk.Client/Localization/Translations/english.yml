@@ -29,6 +29,9 @@ failed_to_create_account: Failed to create account
 password_confirmation_required: Please confirm password
 new_password_required: Please enter new password
 new_password_confirmation_required: Please confirm new password
+you_cleared_channel_name: You cleared channel name
+user_cleared_channel_name: {0} cleared channel name
+write_to_channel: Write to @{0}
 
 reset_password: Reset your password
 password_reset: Your password has been successfully reset.
@@ -68,6 +71,8 @@ failed_to_register: There was an issue registering your account.
 new_password: Enter your new password
 failed_to_reset_password: There was an issue resetting your password.
 select_color: Select color
+send_message: Send message
+add_attachment: Add attachment
 
 edit: Edit
 change_password: Change your password

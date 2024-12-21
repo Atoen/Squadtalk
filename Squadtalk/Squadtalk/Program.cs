@@ -140,7 +140,11 @@ app.MapTus("/Upload", TusConfigurationFactory.GetConfiguration);
 
 app.MapFallback(context =>
 {
-    context.Response.Redirect(Routes.Pages.NotFound);
+    if (HttpMethods.IsGet(context.Request.Method))
+    {
+        context.Response.Redirect(Routes.Pages.NotFound);
+    }
+
     return Task.CompletedTask;
 });
 

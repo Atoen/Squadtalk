@@ -3,21 +3,19 @@
     grid-template-columns: 45px auto;
     grid-template-rows: min-content;
     margin-top: 2px;
-    padding: 0 5px 2px;
-    border-radius: 0.25rem;
+    padding: 0 4px 2px;
 }
 
 .system-message-container {
-    border-radius: 0.25rem;
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 0 5px 2px 15px;
+    gap: 4px;
+    padding: 0 4px 2px 12px;
     margin-top: 2px;
 }
 
 .system-message-container:hover {
-    background: #c7c7c7
+    background: var(--mud-palette-surface);
 }
 
 .avatar {
@@ -50,7 +48,7 @@
     left: 0;
     margin-left: -5px;
     padding: 0 5px;
-    background: #c7c7c7;
+    background: var(--mud-palette-surface);
 }
 
 .content-only-date {
@@ -68,7 +66,7 @@
 }
 
 .message-container:hover {
-    background: #c7c7c7
+    background: var(--mud-palette-surface);
 }
 
 .padding {
