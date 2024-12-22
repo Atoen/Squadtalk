@@ -125,9 +125,14 @@ public class AccountController : ControllerBase
 
         var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
         var result = await _userManager.ConfirmEmailAsync(user, decoded);
-        var uri = result.Succeeded ? Routes.Pages.EmailConfirmed : Routes.Pages.EmailConfirmationError;
+        if (!result.Succeeded)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Description));
+            _logger.LogError("Error while confirming email: {ErrorMessages}", errorMessages);
+            return LocalRedirect(Routes.Pages.EmailConfirmationError);
+        }
 
-        return LocalRedirect(uri);
+        return LocalRedirect(Routes.Pages.EmailConfirmed);
     }
 
     [HttpPost(Routes.RelativeEndpoints.ForgotPassword)]

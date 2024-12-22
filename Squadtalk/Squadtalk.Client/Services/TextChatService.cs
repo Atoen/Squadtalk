@@ -1,6 +1,6 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
@@ -14,7 +14,7 @@ internal class TextChatService : ITextChatService
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
     private readonly ISignalrTextService _signalrTextService;
-    private readonly IMessageApi _messageApi;
+    private readonly IChatApi _chatApi;
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IChannelManager _channelManager;
 
@@ -24,14 +24,14 @@ internal class TextChatService : ITextChatService
         IChannelManager channelManager,
         IMessageModelService modelService,
         SignalrService signalrTextService,
-        IMessageApi messageApi,
+        IChatApi chatApi,
         IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
         _channelManager = channelManager;
         _modelService = modelService;
         _signalrTextService = signalrTextService;
-        _messageApi = messageApi;
+        _chatApi = chatApi;
         _userAuthenticationService = userAuthenticationService;
         _logger = logger;
 
@@ -71,10 +71,10 @@ internal class TextChatService : ITextChatService
         {
             if (cursor == default)
             {
-                return await _messageApi.GetMessagePage(channelId, cancellationToken);
+                return await _chatApi.GetMessagePage(channelId, cancellationToken);
             }
 
-            return await _messageApi.GetMessagePage(channelId, cursor, cancellationToken);
+            return await _chatApi.GetMessagePage(channelId, cursor, cancellationToken);
         }
         catch (Exception e)
         {

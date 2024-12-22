@@ -1,6 +1,7 @@
 using Shared.Data;
+using Shared.Data.Results;
 using Shared.Data.TypedIds;
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 using Shared.Enums;
 using Shared.Models;
 using Shared.Services;
@@ -9,7 +10,7 @@ namespace Squadtalk.Services.Prerender;
 
 internal class ChannelManager(
     PrerenderPersistantState prerenderPersistantState,
-    IUserAuthenticationService authenticationService) : IChannelManager
+    IUserAuthenticationService authenticationService) : IChannelManager, IContactManager
 {
     private static readonly GroupChatModel GlobalChatModel = GroupChatModel.CreateGlobalChat();
     private static readonly Dictionary<ChannelId, ChannelModel> EmptyChannels = [];
@@ -23,17 +24,25 @@ internal class ChannelManager(
     private Dictionary<UserId, UserModel> LazyUsers => TryCreateModels(ref _users, EmptyUsers);
     private Dictionary<ChannelId, ChannelModel> LazyChannels => TryCreateModels(ref _channels, EmptyChannels);
 
-    public IReadOnlyCollection<UserModel> Users => LazyUsers.Values;
     public IReadOnlyCollection<ChannelModel> Channels => LazyChannels.Values;
 
     public GroupChatModel GlobalChat => GlobalChatModel;
     public ChannelModel? CurrentChannel { get; private set; }
 
+    public Func<IChatUser, UserModel> UserModelProvider { get; }
+
+    public IReadOnlyCollection<UserModel> AllContacts => LazyUsers.Values;
+    public IReadOnlyCollection<UserModel> FriendList { get; } = [];
+    public IReadOnlyCollection<UserModel> OtherContacts => LazyUsers.Values;
+
     event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
     event Action? IChannelManager.ChannelChanged { add { } remove { } }
     event Func<Task>? IChannelManager.ChannelChangedAsync { add { } remove { } }
-    event Action? IChannelManager.ConnectedUsersChanged { add { } remove { } }
+
+    event Action? IContactManager.ContactsStateChanged { add { } remove { } }
+    event Action<UserModel>? IContactManager.ContactDisconnected { add { } remove { } }
+    event Action<UserModel>? IContactManager.ContactConnected { add { } remove { } }
 
     private Dictionary<TKey, TValue> TryCreateModels<TKey, TValue>(ref Dictionary<TKey, TValue>? storage, Dictionary<TKey, TValue> empty)
         where TKey : notnull
@@ -75,6 +84,11 @@ internal class ChannelManager(
     {
         return GetOrCreateUser(chatUser, LazyUsers);
     }
+
+    public Task<FriendRequestResult> SendFriendRequestAsync(FriendRequestDto friendRequest) => throw new NotImplementedException();
+    public Task AcceptFriendRequestAsync() => throw new NotImplementedException();
+    public Task DeclineFriendRequestAsync() => throw new NotImplementedException();
+    public Task RemoveFriendAsync() => throw new NotImplementedException();
 
     public Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true)
     {

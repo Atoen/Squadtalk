@@ -138,8 +138,14 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<ChannelCreator>();
 
+        serviceCollection.AddScoped<ChannelManager>();
+        serviceCollection.AddScoped<IChannelManager>(provider => provider.GetRequiredService<ChannelManager>());
+        serviceCollection.AddScoped<IContactManager>(provider => provider.GetRequiredService<ChannelManager>());
+
+        // serviceCollection.AddScoped<IChannelManager, ChannelManager>();
+        // serviceCollection.AddScoped<IContactManager, ContactManager>();
+
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<IChannelManager, ChannelManager>();
         serviceCollection.AddScoped<IConnectionService, ConnectionService>();
         serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();

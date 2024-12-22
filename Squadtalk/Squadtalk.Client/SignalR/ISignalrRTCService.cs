@@ -1,5 +1,6 @@
 using Shared.Data.TypedIds;
 using Shared.DTOs;
+using Shared.DTOs.Chat;
 
 namespace Squadtalk.Client.SignalR;
 

@@ -14,7 +14,7 @@ public static class ServicesExtensions
 
         serviceCollection
             .AddApi<IAccountApi>()
-            .AddApi<IMessageApi>();
+            .AddApi<IChatApi>();
 
         return serviceCollection;
     }

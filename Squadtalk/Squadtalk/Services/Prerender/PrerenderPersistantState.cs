@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 
 namespace Squadtalk.Services.Prerender;
 

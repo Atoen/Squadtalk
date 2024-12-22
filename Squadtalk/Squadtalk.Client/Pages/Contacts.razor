@@ -1,0 +1,82 @@
+@attribute [Authorize]
+@attribute [Route(Routes.Pages.Contacts)]
+
+@using Microsoft.AspNetCore.Authorization
+@using Squadtalk.Client.Components.dialogs
+@using Squadtalk.Client.Extensions
+
+<PageTitle>Squadtalk | @LocalizedText.R.contacts</PageTitle>
+
+<h2 class="mud-primary-text mb-2">@LocalizedText.R.contacts</h2>
+
+<MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="pe-2 overflow-y-auto"
+              Style="height: calc(100dvh - 72px)">
+
+    <MudStack Row="true" Class="align-center mb-2">
+        <h3>@LocalizedText.R.friends</h3>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   EndIcon="@Icons.Material.Rounded.PersonAddAlt1"
+                   OnClick="OpenFriendRequestDialog">
+            @LocalizedText.R.add_friend
+        </MudButton>
+    </MudStack>
+
+    @if (ContactManager.FriendList.Count == 0)
+    {
+        @LocalizedText.R.friend_list_empty
+    }
+
+    <MudDivider Class="my-2"/>
+
+    <h3>@LocalizedText.R.other_users</h3>
+
+    @foreach (var user in ContactManager.OtherContacts)
+    {
+        <div class="user-card mud-paper mud-elevation-1 mud-card mud-ripple" @onclick="() => OpenChannel(user)">
+            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+            {
+                <MudAvatar Class="me-3" Style="grid-row: 1/3" Color="Color.Tertiary">@user.Username[0]</MudAvatar>
+            }
+            else
+            {
+                <MudAvatar Class="me-3" Style="grid-row: 1/3" Color="Color.Transparent">
+                    <MudImage Src="@user.AvatarUrl"/>
+                </MudAvatar>
+            }
+
+            <div class="username">@user.Username</div>
+            <div class="status" style="color: @user.StatusColor()">@user.StatusString(LocalizedText.R)</div>
+        </div>
+    }
+
+</MudContainer>
+
+@inject IContactManager ContactManager
+@inject IChannelManager ChannelManager
+@inject LocalizedText LocalizedText
+@inject IConnectionService ConnectionService
+@inject IDialogService DialogService
+
+@code
+{
+    protected override async Task OnInitializedAsync()
+    {
+        // _table = Localization.GetTextTable(this);
+        // ChannelManager.ConnectedUsersChanged += StateHasChanged;
+
+        await ConnectionService.ConnectAsync();
+    }
+
+    private Task OpenFriendRequestDialog()
+    {
+        return DialogService.ShowAsync<AddFriendDialog>(LocalizedText.R.add_friend);
+    }
+
+    private Task OpenChannel(UserModel userModel)
+    {
+        return ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(userModel);
+    }
+
+    // public void Dispose() => ChannelManager.ConnectedUsersChanged -= StateHasChanged;
+}

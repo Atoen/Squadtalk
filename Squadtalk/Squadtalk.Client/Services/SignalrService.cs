@@ -3,7 +3,7 @@ using MessagePack;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Data.TypedIds;
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 using Shared.Extensions;
 using Shared.Services;
 using Squadtalk.Client.SignalR;

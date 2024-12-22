@@ -1,0 +1,97 @@
+@using Shared.Data.Results
+@using Shared.DTOs.Chat
+@using Color = MudBlazor.Color
+
+<MudDialog>
+    <DialogContent>
+        @if (_alertMessage is not null)
+        {
+            <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mb-2" Dense="true">
+                @_alertMessage.Text
+            </MudAlert>
+        }
+
+        @LocalizedText.R.add_friend
+
+        <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
+                      RequiredError="@LocalizedText.R.username_is_required"
+                      Clearable="true" @ref="_usernameField"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">
+            @LocalizedText.R.dialog_cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_working" OnClick="SendFriendRequest">
+            @if (_working)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Small"/>
+            }
+            else
+            {
+                @LocalizedText.R.dialog_done
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@inject LocalizedText LocalizedText
+@inject IUserAuthenticationService UserAuthenticationService
+@inject IContactManager ContactManager
+
+@code
+{
+    private MudTextField<string> _usernameField = default!;
+
+    private AlertMessage? _alertMessage;
+
+    private bool _working;
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SendFriendRequest()
+    {
+        _alertMessage = null;
+
+        if (_working || _usernameField is not { Value: { } username }) return;
+
+        _working = true;
+
+        var data = new FriendRequestDto
+        {
+            RecipientUsername = username,
+            RequestingUserId = UserAuthenticationService.UserId
+        };
+
+        var result = await ContactManager.SendFriendRequestAsync(data);
+
+        _working = false;
+
+        HandleResult(result);
+    }
+
+    private void HandleResult(FriendRequestResult result)
+    {
+        switch (result)
+        {
+            case FriendRequestResult.Sent sent:
+                _alertMessage = AlertMessage.Success(LocalizedText.R.friend_request_sent);
+                break;
+
+            case FriendRequestResult.NotFound notFound:
+                _alertMessage = AlertMessage.Info("User not found");
+                break;
+
+
+            case FriendRequestResult.UserNotAccepting userNotAccepting:
+                _alertMessage = AlertMessage.Warning("User is not accepting friend requests");
+                break;
+
+            case FriendRequestResult.NetworkError networkError:
+                _alertMessage = AlertMessage.Error(LocalizedText.R.network_error);
+                break;
+        }
+    }
+}
