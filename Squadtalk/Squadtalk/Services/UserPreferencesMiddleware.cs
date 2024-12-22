@@ -52,7 +52,8 @@ public class UserPreferencesMiddleware(RequestDelegate next)
             context.Response.Cookies.Append(PreferencesCookieName, languageTag, new CookieOptions
             {
                 SameSite = SameSiteMode.Strict,
-                Expires = new DateTimeOffset(DateTime.Now + TimeSpan.FromDays(365))
+                Expires = new DateTimeOffset(DateTime.Now + TimeSpan.FromDays(365)),
+                Path = "/"
             });
         }
     }

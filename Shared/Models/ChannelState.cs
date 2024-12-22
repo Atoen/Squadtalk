@@ -6,7 +6,7 @@ namespace Shared.Models;
 public class ChannelState
 {
     public TextChannelCursor Cursor { get; set; }
-    public bool ReachedEnd { get; set; }
+    public bool ScrolledToBeginning { get; set; }
 
     public List<MessageModel> Messages { get; } = [];
     

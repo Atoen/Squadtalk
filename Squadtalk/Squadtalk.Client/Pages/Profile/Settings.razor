@@ -5,9 +5,10 @@
 
 @inherits LocalizedComponent
 
-<h2 class="mud-primary-text">@Table.settings</h2>
+<h2 class="mud-primary-text mb-2">@Table.settings</h2>
 
-<MudContainer MaxWidth="MaxWidth.Small" Gutters="false">
+<MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="pe-2 overflow-y-auto"
+              Style="height: calc(100dvh - 72px)">
     <h3>@Table.app_appearance</h3>
 
     <div class="d-flex align-items-center my-3">

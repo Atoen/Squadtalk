@@ -7,7 +7,7 @@ public interface IMessageModelService
 {
     TimeSpan MessageSeparationTimespan { get; }
     
-    IList<MessageModel> CreateModelPage(IList<IChatMessage> inputPage, ChannelState channelState);
+    IList<MessageModel> CreateModelPage(IReadOnlyList<IChatMessage> inputPage, ChannelState channelState);
 
     MessageModel CreateModel(IChatMessage message, ChannelState channelState, bool isFromPage);
 }

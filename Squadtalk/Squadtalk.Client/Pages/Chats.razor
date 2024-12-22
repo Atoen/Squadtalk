@@ -10,23 +10,18 @@
 @*        UseStaticBackdrop="true" HeaderCssClass="justify-content-between"/> *@
 
 <div class="channels">
-    <div class="mb-n1">
-        @if (ChatService.GlobalChat.State is { UnreadMessages: > 0 and var unread })
-        {
-            <MudBadge Content="unread" Color="Color.Error" Style="max-width: 150px" Overlap="true">
-                <MudButton Size="Size.Large" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Rounded.Public"
-                           OnClick="() => ChatService.OpenChannelAsync(ChatService.GlobalChat)">
-                    Global
-                </MudButton>
-            </MudBadge>
-        }
-        else
-        {
-            <MudButton Size="Size.Large" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Rounded.Public"
-                       OnClick="() => ChatService.OpenChannelAsync(ChatService.GlobalChat)">
+    <div>
+        @{ var globalUnread = ChannelManager.GlobalChat.UnreadMessages; }
+
+        <MudBadge Content="globalUnread" Color="Color.Error" Style="max-width: 150px"
+                  Overlap="true"
+                  Visible="@(globalUnread > 0)">
+            <MudButton Size="Size.Large" Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Rounded.Public"
+                       OnClick="() => ChannelManager.OpenChannelAsync(ChannelManager.GlobalChat)">
                 Global
             </MudButton>
-        }
+        </MudBadge>
     </div>
 
     @* <Button Color="ButtonColor.Primary" @onclick="DisplayGroupModal" TooltipTitle="@_table.CreateChannelTooltip" *@
@@ -34,7 +29,7 @@
     @*     $1$ <Icon Name="IconName.PlusSquare" Size="IconSize.x5"/> #1# *@
     @* </Button> *@
 
-    @foreach (var channel in ChannelManager.Channels)
+    @foreach (var channel in ChannelSorter.SortedChannels)
     {
         <ChatTemplate @key="channel.Id" Model="@channel"/>
     }
@@ -42,25 +37,29 @@
 
 @implements IDisposable
 
-@inject IChatService ChatService
 @inject IChannelManager ChannelManager
+@inject IChannelSorter ChannelSorter
 @inject ILogger<Chats> Logger
 @* @inject ILocalization Localization *@
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 
-@code {
-
+@code
+{
     // private Modal _createGroupModal = default!;
     private readonly Dictionary<string, object> _modalParameters = [];
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("Channel count: {Count}", ChatService.AllChannels.Count());
         // _table = Localization.GetTextTable(this);
 
-        ChatService.ChannelChanged += StateHasChanged;
-        ChatService.ConnectedUsersChanged += StateHasChanged;
-        ChannelManager.ChannelsSorted += StateHasChanged;
+        // Logger.LogInformation("Channel count: {Count}", ChannelManager.Channels.Count());
+
+
+        // Logger.LogCritical("Chats");
+
+        ChannelManager.ChannelChanged += StateHasChanged;
+        ChannelManager.ConnectedUsersChanged += StateHasChanged;
+        ChannelSorter.ChannelsSorted += StateHasChanged;
 
         // var hideModalCallback = EventCallback.Factory.Create(this, HideGroupModal);
         var createGroupCallback = EventCallback.Factory.Create<List<UserModel>>(this, CreateGroupChat);
@@ -68,14 +67,14 @@
         // _modalParameters.Add(nameof(CreateGroupChatModal.CancelCallback), hideModalCallback);
         // _modalParameters.Add(nameof(CreateGroupChatModal.CreateCallback), createGroupCallback);
 
-        return CommunicationService.ConnectAsync();
+        await ConnectionService.ConnectAsync();
     }
 
     public void Dispose()
     {
-        ChatService.ChannelChanged -= StateHasChanged;
-        ChatService.ConnectedUsersChanged -= StateHasChanged;
-        ChannelManager.ChannelsSorted -= StateHasChanged;
+        ChannelManager.ChannelChanged -= StateHasChanged;
+        ChannelManager.ConnectedUsersChanged -= StateHasChanged;
+        ChannelSorter.ChannelsSorted -= StateHasChanged;
     }
 
     private async Task DisplayGroupModal()
@@ -88,7 +87,7 @@
     private async Task CreateGroupChat(List<UserModel> selectedUsers)
     {
         // await _createGroupModal.HideAsync();
-        var id = await ChatService.CreateNewChannel(selectedUsers);
+        var id = await ChannelManager.CreateNewChannel(selectedUsers);
 
         Logger.LogInformation("Created channel id: {Id}", id);
     }

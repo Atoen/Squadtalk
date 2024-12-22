@@ -5,7 +5,7 @@ namespace Shared.Models;
 
 public class MessageModel
 {
-    public string Author { get; set; } = default!;
+    public UserModel Author { get; set; } = default!;
     
     public string Content { get; set; } = default!;
     

@@ -13,6 +13,7 @@ app_appearance: Wygląd aplikacji
 recover_account: Odzyskaj konto
 account_recovering: Odzyskiwanie konta
 set_password_new: Ustaw nowe hasło
+page_not_found: Nie znaleziono strony
 
 # Home page
 hello_world: Witaj świecie!
@@ -26,6 +27,7 @@ this_username_in_use: Ta nazwa użytkownika jest już zajęta
 password_confirmation_required: Proszę powtórzyć hasło
 new_password_required: Proszę podać nowe hasło
 new_password_confirmation_required: Proszę powtórzyć nowe hasło
+write_to_channel: Napisz na @{0}
 
 reset_password: Zresetuj swoje hasło
 password_reset: Twoje hasło zostało pomyślnie zresetowane.
@@ -65,6 +67,8 @@ failed_to_register: Wystąpił problem z rejestracją konta.
 new_password: Wprowadź nowe hasło
 failed_to_reset_password: Wystąpił problem z resetowaniem hasła.
 select_color: Wybierz kolor
+send_message: Wyślij wiadomość
+add_attachment: Dodaj załącznik
 
 edit: Edytuj
 change_password: Zmień hasło

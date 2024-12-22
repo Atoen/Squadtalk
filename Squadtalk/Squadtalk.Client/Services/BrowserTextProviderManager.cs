@@ -7,14 +7,16 @@ namespace Squadtalk.Client.Services;
 
 internal class BrowserTextProviderManager : ITextProviderManager
 {
-    private readonly Lazy<ILocalizedTextProvider> _defaultProvider = new(static () => CreateProvider(ApplicationLanguage.DefaultLanguage));
+    private ILocalizedTextProvider? _defaultProvider;
     private ProviderInfo? _currentProviderInfo;
+
+    private ILocalizedTextProvider DefaultProvider => _defaultProvider ??= CreateProvider(ApplicationLanguage.DefaultLanguage);
 
     public ILocalizedTextProvider GetProvider(ApplicationLanguage language)
     {
         if (language == ApplicationLanguage.DefaultLanguage)
         {
-            return _defaultProvider.Value;
+            return DefaultProvider;
         }
 
         if (_currentProviderInfo is { } providerInfo && providerInfo.Language == language)

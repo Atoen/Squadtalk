@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Shared.Data;
 using Shared.Data.Personalization;
@@ -31,6 +32,8 @@ public sealed partial class LocalizedText : IDisposable
 
     private ILocalizedTextProvider Provider => _textProviderManager.GetProvider(_userPreferencesService.Language);
     private ILocalizedTextProvider DefaultProvider => _textProviderManager.GetProvider(ApplicationLanguage.DefaultLanguage);
+
+    public CultureInfo CultureInfo => _userPreferencesService.Language.CultureInfo;
 
     public TextTable GetTextTable(ComponentBase component)
     {

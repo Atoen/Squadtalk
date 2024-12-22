@@ -134,24 +134,22 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<UserRepository>();
         serviceCollection.AddScoped<ChannelRepository>();
         serviceCollection.AddScoped<FileRepository>();
-        serviceCollection.AddScoped<IMessagePageProvider, LocalMessagePageProvider>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<IChatService, ChatService>();
-        serviceCollection.AddScoped<ICommunicationService, LocalCommunicationService>();
         serviceCollection.AddScoped<IChannelManager, ChannelManager>();
+        serviceCollection.AddScoped<IConnectionService, ConnectionService>();
+        serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
         serviceCollection.AddScoped<IFileTransferService, FileTransferService>();
-        serviceCollection.AddScoped<IVoiceChatService, VoiceChatService>();
+        serviceCollection.AddScoped<IVoiceChatService, NoOpVoiceChatService>();
 
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
-        serviceCollection.AddScoped<UserVolumeManager>();
-        // serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
+        serviceCollection.AddScoped<PrerenderPersistantState>();
+        serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
 
         serviceCollection.AddScoped<IAccountManager, AccountManager>();
         serviceCollection.AddScoped<IFormValidator, NoOpFormValidator>();

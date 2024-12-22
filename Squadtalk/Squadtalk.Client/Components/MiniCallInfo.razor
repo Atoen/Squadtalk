@@ -58,11 +58,11 @@
 
 @implements IDisposable
 
-@inject IChatService ChatService
+@inject IChannelManager ChannelManager
 @inject IVoiceChatService VoiceChatService
 @inject NavigationManager NavigationManager
 @inject ILogger<MiniCallInfo> Logger
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 @inject IMediaQueryService MediaQueryService
 
 @code {
@@ -126,7 +126,7 @@
         NavigationManager.LocationChanged += NavigationChanged;
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
-        ChatService.ChannelNameChanged += ChannelNameChanged;
+        ChannelManager.ChannelNameChanged += ChannelNameChanged;
         MediaQueryService.MediaMatchesChanged += StateHasChanged;
     }
 
@@ -150,7 +150,7 @@
         {
             if (!_measurePing) break;
 
-            var ping = await CommunicationService.MeasureClientDelayAsync();
+            var ping = await ConnectionService.MeasureConnectionDelayAsync();
             if (_ping != ping && _measurePing)
             {
                 _ping = ping;
@@ -170,7 +170,7 @@
     private Task GoToCallChannel()
     {
         return VoiceChatService.CallChannel is { } channel
-            ? ChatService.OpenChannelAsync(channel)
+            ? ChannelManager.OpenChannelAsync(channel)
             : Task.CompletedTask;
     }
 
@@ -183,7 +183,7 @@
         NavigationManager.LocationChanged -= NavigationChanged;
         VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
-        ChatService.ChannelNameChanged -= ChannelNameChanged;
+        ChannelManager.ChannelNameChanged -= ChannelNameChanged;
         MediaQueryService.MediaMatchesChanged -= StateHasChanged;
     }
 }

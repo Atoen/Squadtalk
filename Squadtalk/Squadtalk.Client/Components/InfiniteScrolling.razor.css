@@ -5,6 +5,11 @@
     margin-bottom: 10px;
 }
 
+.channel-start-name {
+    display: inline;
+    font-weight: bold;
+}
+
 .title {
     font-size: 28px;
     font-weight: bold;

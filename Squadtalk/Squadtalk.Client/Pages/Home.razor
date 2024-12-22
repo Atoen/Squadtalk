@@ -1,5 +1,4 @@
-﻿@using Squadtalk.Client.Components.dialogs
-@attribute [Route(Routes.Pages.Root)]
+﻿@attribute [Route(Routes.Pages.Root)]
 
 <PageTitle>Squadtalk | Home</PageTitle>
 
@@ -18,15 +17,4 @@ else
 
 <p>@RendererInfo.Name</p>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Open">Open</MudButton>
-
 @inject LocalizedText Table
-@inject IDialogService DialogService
-
-@code
-{
-    private Task Open()
-    {
-        return DialogService.ShowAsync<ChangeEmailDialog>(Table.R.change_email);
-    }
-}

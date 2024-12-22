@@ -5,7 +5,7 @@ namespace Shared.Services;
 
 public interface ITextChatService
 {
-    event Func<ChannelId, Task>? MessageReceived;
+    event Func<ChannelId, MessageModel, Task>? MessageReceived;
 
     Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken);
 

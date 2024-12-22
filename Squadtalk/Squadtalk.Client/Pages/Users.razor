@@ -1,20 +1,21 @@
 @attribute [Route(Routes.Pages.Users)]
 
 @using Microsoft.AspNetCore.Authorization
+@using Squadtalk.Client.Extensions
 
 @attribute [Authorize]
 @implements IDisposable
 
 <PageTitle>Squadtalk | Users</PageTitle>
 
-@foreach (var user in ChatService.Users)
+@foreach (var user in ChannelManager.Users)
 {
     @* <div class="user-card rounded" @onclick="() => OpenChannel(user)"> *@
     @*     <img alt="@user.Username avatar" src="user.png" class="avatar" /> *@
     @*     <div class="username">@user.Username</div> *@
     @*     <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div> *@
     @* </div> *@
-    <div class="user-card mud-paper mud-elevation-1 mud-card mud-ripple">
+    <div class="user-card mud-paper mud-elevation-1 mud-card mud-ripple" @onclick="() => OpenChannel(user)">
         @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
         {
             <MudAvatar Class="me-3" Style="grid-row: 1/3" Color="Color.Tertiary">@user.Username[0]</MudAvatar>
@@ -27,30 +28,30 @@
         }
 
         <div class="username">@user.Username</div>
-        @* <div class="status" style="color: @user.StatusColor()">@user.StatusString(_table)</div> *@
+        <div class="status" style="color: @user.StatusColor()">@user.StatusString(LocalizedText.R)</div>
     </div>
 }
 
-@inject IChatService ChatService
-@* @inject ILocalization Localization *@
-@inject ICommunicationService CommunicationService
+@inject IChannelManager ChannelManager
+@inject LocalizedText LocalizedText
+@inject IConnectionService ConnectionService
 
 @code {
 
     // private TextTable _table = default!;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         // _table = Localization.GetTextTable(this);
-        ChatService.ConnectedUsersChanged += StateHasChanged;
+        ChannelManager.ConnectedUsersChanged += StateHasChanged;
 
-        return CommunicationService.ConnectAsync();
+        await ConnectionService.ConnectAsync();
     }
 
     private Task OpenChannel(UserModel userModel)
     {
-        return ChatService.OpenOrCreateFakeDirectMessageChannel(userModel);
+        return ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(userModel);
     }
 
-    public void Dispose() => ChatService.ConnectedUsersChanged -= StateHasChanged;
+    public void Dispose() => ChannelManager.ConnectedUsersChanged -= StateHasChanged;
 }

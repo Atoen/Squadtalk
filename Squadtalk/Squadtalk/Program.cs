@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
+using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Client.Pages;
 using Squadtalk.Components;
@@ -28,7 +29,6 @@ builder.WebHost.UseKestrel(options =>
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddControllers();
@@ -126,12 +126,8 @@ app.UseUserPreferences();
 app.MapStaticAssets();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Chat).Assembly);
-
-// Add additional endpoints required by the Identity /Account Razor components.
-app.MapAdditionalIdentityEndpoints();
 
 app.MapControllers();
 
@@ -141,5 +137,15 @@ app.MapHub<ChatHub>("/chathub", options =>
 });
 
 app.MapTus("/Upload", TusConfigurationFactory.GetConfiguration);
+
+app.MapFallback(context =>
+{
+    if (HttpMethods.IsGet(context.Request.Method))
+    {
+        context.Response.Redirect(Routes.Pages.NotFound);
+    }
+
+    return Task.CompletedTask;
+});
 
 app.Run();

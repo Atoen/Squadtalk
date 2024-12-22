@@ -4,7 +4,7 @@ using Shared.Models;
 
 namespace Squadtalk.Client.Services;
 
-public partial class VoiceChatService
+internal partial class VoiceChatService
 {
     [JSInvokable]
     public void DisconnectedCallback(DisconnectReason reason)
@@ -77,7 +77,7 @@ public partial class VoiceChatService
             existingParticipant.IsSpeaking = participant.IsSpeaking;
         }
 
-        ParticipantUpdated?.Invoke(participant.Id, _chatService.GetRequiredChannel(channelId));
+        ParticipantUpdated?.Invoke(participant.Id, _channelManager.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
@@ -88,20 +88,20 @@ public partial class VoiceChatService
             _participants[participant.Id] = participant;
         }
 
-        ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
     public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
         _participants[participant.Id] = participant;
-        ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
     }
 
     [JSInvokable]
     public void ParticipantDisconnectedCallback(CallParticipantModel participant, ChannelId channelId)
     {
         _participants.Remove(participant.Id);
-        ParticipantListUpdated?.Invoke(_chatService.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
     }
 }

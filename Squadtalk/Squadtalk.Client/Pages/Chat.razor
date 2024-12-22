@@ -1,3 +1,4 @@
+@attribute [Authorize]
 @attribute [Route(Routes.Pages.Chat)]
 
 @using Microsoft.AspNetCore.Authorization
@@ -5,9 +6,7 @@
 
 @implements IAsyncDisposable
 
-@attribute [Authorize]
-
-<PageTitle>Squadtalk | @ChatService.CurrentChannel?.Name</PageTitle>
+<PageTitle>Squadtalk | @ChannelManager.CurrentChannel?.Name</PageTitle>
 
 <div class="chat-container">
     @if (_channel is not null)
@@ -16,33 +15,26 @@
     }
 
     <div class="message-listbox rounded mt-2" id="listbox">
-        @if (OperatingSystem.IsBrowser())
-        {
-            <InfiniteScrolling>
-                <ItemTemplate>
-                    <MessageTemplate Model="context" @key="context"/>
-                </ItemTemplate>
-                <LoadingTemplate>
-                    @* <Spinner Type="SpinnerType.Border" Class="ms-2" /> *@
-                </LoadingTemplate>
-            </InfiniteScrolling>
-        }
-        else
-        {
-            @* <Spinner Type="SpinnerType.Border" Class="ms-2" /> *@
-        }
+        <InfiniteScrolling>
+            <ItemTemplate>
+                <MessageTemplate Model="context" @key="context"/>
+            </ItemTemplate>
+        </InfiniteScrolling>
     </div>
 
     <UploadInfo/>
-    <InputBox/>
+
+    @if (_channel is not null)
+    {
+        <InputBox Channel="_channel"/>
+    }
 </div>
 
-@inject IChatService ChatService
-@* @inject ToastService ToastService *@
+@inject IChannelManager ChannelManager
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 
 @code {
 
@@ -53,23 +45,27 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await CommunicationService.ConnectAsync();
+        await ConnectionService.ConnectAsync();
 
-        if (ChatService.CurrentChannel is null)
+        if (ChannelManager.CurrentChannel is not { } currentChannel)
         {
-            var channel = ChatService.GetChannel(new ChannelId(ChannelId));
+            var channel = ChannelManager.GetChannel(new ChannelId(ChannelId));
             if (channel is null)
             {
-                NavigationManager.NavigateTo("/Channels", replace: true);
+                NavigationManager.NavigateTo(Routes.Pages.Chats, replace: true);
                 return;
             }
 
             _channel = channel;
-            await ChatService.OpenChannelAsync(_channel, false);
+            await ChannelManager.OpenChannelAsync(_channel, false);
+        }
+        else
+        {
+            _channel = currentChannel;
         }
 
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        ChatService.ChannelChanged += StateHasChanged;
+        ChannelManager.ChannelChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
     }
@@ -82,9 +78,9 @@
     public async ValueTask DisposeAsync()
     {
         VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
-        ChatService.ChannelChanged -= StateHasChanged;
+        ChannelManager.ChannelChanged -= StateHasChanged;
 
-        await ChatService.ClearChannelSelectionAsync();
+        await ChannelManager.ClearChannelSelectionAsync();
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 

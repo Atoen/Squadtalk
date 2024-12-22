@@ -1,0 +1,9 @@
+@attribute [Route(Routes.Pages.NotFound)]
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudAlert Elevation="8" Variant="Variant.Filled" Severity="Severity.Warning">
+        @LocalizedText.R.page_not_found
+    </MudAlert>
+</MudContainer>
+
+@inject LocalizedText LocalizedText

@@ -14,12 +14,13 @@
 
 <div class="page">
     <div class="sidebar">
+        <div class="background"></div>
         <NavMenu/>
         <MiniCallInfo/>
     </div>
 
     <main>
-        <article class="content px-4">
+        <article class="px-3 pt-2">
             @Body
         </article>
     </main>
@@ -33,7 +34,7 @@
 
 @implements IDisposable
 
-@inject ICommunicationService CommunicationService
+@inject IConnectionService ConnectionService
 @inject IVoiceChatService VoiceChatService
 @inject IUserPreferencesService UserPreferences
 @inject IUserAuthenticationService UserAuthenticationService
@@ -46,9 +47,9 @@
 
     private readonly MudTheme _theme = new();
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        _subscription = PersistentComponentState.RegisterOnPersisting(OnPersisting);
+        _subscription = PersistentComponentState.RegisterOnPersisting(ConnectionService.OnPersisting, InteractiveWebAssembly);
         ChangePalette(UserPreferences.Palette);
 
         if (RendererInfo.IsInteractive)
@@ -58,9 +59,10 @@
             UserPreferences.PaletteChanged += PaletteChanged;
         }
 
-        return UserAuthenticationService.IsAuthenticated
-            ? CommunicationService.ConnectAsync()
-            : Task.CompletedTask;
+        if (UserAuthenticationService.IsAuthenticated)
+        {
+            await ConnectionService.ConnectAsync();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -71,16 +73,6 @@
         {
             await VoiceChatService.InitializeAsync();
         }
-    }
-
-    private Task OnPersisting()
-    {
-        if (CommunicationService is IPersistState persist)
-        {
-            return persist.PersistDataAsync();
-        }
-
-        return Task.CompletedTask;
     }
 
     private async Task CallIncoming(ChannelModel channel)
