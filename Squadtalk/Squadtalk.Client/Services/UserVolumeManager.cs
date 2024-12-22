@@ -4,7 +4,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class UserVolumeManager(ILocalStorageService localStorageService)
+internal class UserVolumeManager(ILocalStorageService localStorageService)
 {
     private readonly Func<UserId, string> _keyGenerator = id => $"v_{id.ToString()}";
 

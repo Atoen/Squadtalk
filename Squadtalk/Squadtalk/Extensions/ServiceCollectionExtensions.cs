@@ -136,7 +136,6 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<FileRepository>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<IMessageModelService, MessageModelService>();
         serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
@@ -149,10 +148,8 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<EmbedService>();
         serviceCollection.AddScoped<ImagePreviewGenerator>();
         serviceCollection.AddScoped<TusHelper>();
-        serviceCollection.AddScoped<UserVolumeManager>();
         serviceCollection.AddScoped<PrerenderPersistantState>();
         serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();
-        // serviceCollection.AddScoped<CreateTextChannelRequestHandler>();
 
         serviceCollection.AddScoped<IAccountManager, AccountManager>();
         serviceCollection.AddScoped<IFormValidator, NoOpFormValidator>();

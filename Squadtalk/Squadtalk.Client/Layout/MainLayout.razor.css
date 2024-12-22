@@ -13,13 +13,24 @@ main {
 }
 
 .sidebar {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100dvh;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(
             var(--mud-palette-surface) 350px,
-            var(--mud-palette-primary));
+            var(--mud-palette-primary)
     );
+    z-index: -1;
+    opacity: 0.5;
 }
 
 #blazor-error-ui {

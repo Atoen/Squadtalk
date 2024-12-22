@@ -4,7 +4,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class UserPreferencesService : IUserPreferencesService
+internal class UserPreferencesService : IUserPreferencesService
 {
     private const string GetPreferencesFunctionName = "getPreferences";
     private const string SavePreferencesFunctionName = "savePreferences";

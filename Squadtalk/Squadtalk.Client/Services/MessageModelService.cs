@@ -4,7 +4,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class MessageModelService(IChannelManager channelManager) : IMessageModelService
+internal class MessageModelService(IChannelManager channelManager) : IMessageModelService
 {
     public TimeSpan MessageSeparationTimespan { get; } = TimeSpan.FromMinutes(5);
 

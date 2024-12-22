@@ -6,7 +6,7 @@ using Shared.Services;
 
 namespace Squadtalk.Client.Services;
 
-public class UserAuthenticationService : AuthenticationStateProvider, IUserAuthenticationService
+internal class UserAuthenticationService : AuthenticationStateProvider, IUserAuthenticationService
 {
     private static readonly Task<AuthenticationState> DefaultUnauthenticatedTask =
         Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));

@@ -15,7 +15,7 @@
 }
 
 .system-message-container:hover {
-    background: var(--mud-palette-surface);
+    background: var(--mud-palette-action-default-hover);
 }
 
 .avatar {
@@ -48,7 +48,7 @@
     left: 0;
     margin-left: -5px;
     padding: 0 5px;
-    background: var(--mud-palette-surface);
+    background: var(--mud-palette-action-default-hover);
 }
 
 .content-only-date {
@@ -66,7 +66,7 @@
 }
 
 .message-container:hover {
-    background: var(--mud-palette-surface);
+    background: var(--mud-palette-action-default-hover);
 }
 
 .padding {

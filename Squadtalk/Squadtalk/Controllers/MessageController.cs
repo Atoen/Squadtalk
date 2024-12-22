@@ -5,7 +5,6 @@ using Shared.DTOs;
 using Shared.Extensions;
 using Shared.Routing;
 using Squadtalk.Data;
-using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 
