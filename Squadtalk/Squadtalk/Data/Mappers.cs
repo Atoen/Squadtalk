@@ -1,4 +1,4 @@
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Data;

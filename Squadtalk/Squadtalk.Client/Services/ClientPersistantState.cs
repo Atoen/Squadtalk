@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 
 namespace Squadtalk.Client.Services;
 

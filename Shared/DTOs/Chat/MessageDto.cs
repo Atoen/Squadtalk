@@ -2,7 +2,7 @@ using MessagePack;
 using Shared.Data;
 using Shared.Data.TypedIds;
 
-namespace Shared.DTOs;
+namespace Shared.DTOs.Chat;
 
 [MessagePackObject]
 public class MessageDto : IChatMessage

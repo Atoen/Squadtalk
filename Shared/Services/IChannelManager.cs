@@ -1,5 +1,3 @@
-
-using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Models;
 
@@ -15,15 +13,15 @@ public interface IChannelManager
 
     IReadOnlyCollection<ChannelModel> Channels { get; }
 
-    IReadOnlyCollection<UserModel> Users { get; }
+    // IReadOnlyCollection<UserModel> Users { get; }
 
     event Action<GroupChatModel>? ChannelNameChanged;
     event Action? ChannelsListChanged;
     event Action? ChannelChanged;
     event Func<Task>? ChannelChangedAsync;
-    event Action? ConnectedUsersChanged;
+    // event Action? ConnectedUsersChanged;
 
-    UserModel GetOrCreateUserModel(IChatUser chatUser);
+    // UserModel GetOrCreateUserModel(IChatUser chatUser);
 
     ChannelModel? GetChannel(ChannelId channelId);
 

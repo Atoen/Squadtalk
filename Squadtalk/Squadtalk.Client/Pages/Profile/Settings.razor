@@ -9,6 +9,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Small" Gutters="false" Class="pe-2 overflow-y-auto"
               Style="height: calc(100dvh - 72px)">
+
     <h3>@Table.app_appearance</h3>
 
     <div class="d-flex align-items-center my-3">
@@ -17,8 +18,12 @@
         </div>
         <MudMenu Label="@SelectedLanguage" Variant="Variant.Filled" Color="Color.Primary"
                  AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Disabled="DisableMenu">
-            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.EnglishLanguage)">@Table.english</MudMenuItem>
-            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.PolishLanguage)">@Table.polish</MudMenuItem>
+            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.EnglishLanguage)">
+                @Table.english
+            </MudMenuItem>
+            <MudMenuItem OnClick="() => UserPreferences.ChangeLanguage(ApplicationLanguage.PolishLanguage)">
+                @Table.polish
+            </MudMenuItem>
         </MudMenu>
     </div>
 

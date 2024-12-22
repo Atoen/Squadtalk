@@ -58,7 +58,7 @@
         // Logger.LogCritical("Chats");
 
         ChannelManager.ChannelChanged += StateHasChanged;
-        ChannelManager.ConnectedUsersChanged += StateHasChanged;
+        // ChannelManager.ConnectedUsersChanged += StateHasChanged;
         ChannelSorter.ChannelsSorted += StateHasChanged;
 
         // var hideModalCallback = EventCallback.Factory.Create(this, HideGroupModal);
@@ -73,7 +73,7 @@
     public void Dispose()
     {
         ChannelManager.ChannelChanged -= StateHasChanged;
-        ChannelManager.ConnectedUsersChanged -= StateHasChanged;
+        // ChannelManager.ConnectedUsersChanged -= StateHasChanged;
         ChannelSorter.ChannelsSorted -= StateHasChanged;
     }
 

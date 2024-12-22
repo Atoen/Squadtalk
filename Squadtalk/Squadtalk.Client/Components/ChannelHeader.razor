@@ -67,7 +67,7 @@
         _modalParameters[nameof(ManageGroupModal.GroupNameChanged)] =
             (Func<GroupChatModel, string?, Task<bool>>) GroupNameChanged;
 
-        ChannelManager.ConnectedUsersChanged += ConnectedUsersChanged;
+        // ChannelManager.ConnectedUsersChanged += ConnectedUsersChanged;
         ChannelManager.ChannelNameChanged += ChannelNameChanged;
     }
 
@@ -100,7 +100,7 @@
 
     public void Dispose()
     {
-        ChannelManager.ConnectedUsersChanged -= ConnectedUsersChanged;
+        // ChannelManager.ConnectedUsersChanged -= ConnectedUsersChanged;
         ChannelManager.ChannelNameChanged -= ChannelNameChanged;
     }
 }

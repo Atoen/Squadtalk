@@ -29,6 +29,16 @@ new_password_required: Proszę podać nowe hasło
 new_password_confirmation_required: Proszę powtórzyć nowe hasło
 write_to_channel: Napisz na @{0}
 
+other_users: Inni użytkownicy
+contacts: Kontakty
+friends: Znajomi
+friend_requests: Zaproszenia do znajomych
+add_friend: Dodaj znajomego
+accept_friend: Przyjmij zaproszenie do znajomych
+decline_friend: Odrzuć zaproszenie do znajomych
+friend_request_sent: Wysłano zaproszenie do znajomych
+friend_list_empty: Lista znajomych jest pusta
+
 reset_password: Zresetuj swoje hasło
 password_reset: Twoje hasło zostało pomyślnie zresetowane.
 log_in: Zaloguj się do swojego konta

@@ -11,7 +11,7 @@ public class ApplicationUser : IdentityUser<UserId>, IChatUser
     public List<Channel> Channels { get; set; } = default!;
 
     [PersonalData]
-    public List<ApplicationUser> Friends { get; set; } = default!;
+    public List<ApplicationUser> Contacts { get; set; } = default!;
 
     public DateTimeOffset LastSeen { get; set; }
     

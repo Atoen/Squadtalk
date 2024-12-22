@@ -24,6 +24,7 @@ builder.Services.AddSingleton<AuthenticationStateProvider>(provider =>
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddScoped<IChannelManager, ChannelManager>();
+builder.Services.AddScoped<IContactManager, ContactManager>();
 
 builder.Services.AddScoped<SignalrService>();
 builder.Services.AddScoped<IConnectionService>(provider =>

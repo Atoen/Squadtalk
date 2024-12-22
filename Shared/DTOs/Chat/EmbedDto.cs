@@ -2,7 +2,7 @@ using MessagePack;
 using Shared.Data;
 using Shared.Enums;
 
-namespace Shared.DTOs;
+namespace Shared.DTOs.Chat;
 
 [MessagePackObject]
 public class EmbedDto : IMessageEmbed

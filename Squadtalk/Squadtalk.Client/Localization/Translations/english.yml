@@ -33,6 +33,16 @@ you_cleared_channel_name: You cleared channel name
 user_cleared_channel_name: {0} cleared channel name
 write_to_channel: Write to @{0}
 
+other_users: Other users
+contacts: Contacts
+friends: Friends
+friend_requests: Friend requests
+add_friend: Add new friend
+accept_friend: Accept friend request
+decline_friend: Decline friend request
+friend_request_sent: Friend request sent
+friend_list_empty: Friend list is empty
+
 reset_password: Reset your password
 password_reset: Your password has been successfully reset.
 log_in: Log in to your account

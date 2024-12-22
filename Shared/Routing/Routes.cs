@@ -9,7 +9,7 @@ public static class Routes
         public const string Simulation = "/Canvas/Simulation";
         public const string Chat = "/Chats/{ChannelId}";
         public const string Chats = "/Chats";
-        public const string Users = "/Users";
+        public const string Contacts = "/Contacts";
         public const string Settings = "/Settings";
         public const string NotFound = "/NotFound";
 
@@ -44,16 +44,17 @@ public static class Routes
         public const string ChangePassword = "change-password";
         public const string ConfirmEmailChange = "confirm-email-change";
 
-        public const string GetMessages = "{channelId}";
-        public const string GetMessagesWithTimestamp = "{channelId}/{timestamp?}";
+        public const string GetMessages = "{channelId}/{timestamp?}";
         public const string CreateChannel = "create-channel";
+        public const string SendFriendRequest = "send-friend-request";
+        public const string RespondFriendRequest = "respond-friend-request";
     }
 
     public static class Endpoints
     {
         public const string ApiBase = "/api";
         public const string AccountController = ApiBase + "/account/";
-        public const string MessageController = ApiBase + "/message/";
+        public const string ChatController = ApiBase + "/chat/";
 
         public const string Login = AccountController + RelativeEndpoints.Login;
         public const string Register = AccountController + RelativeEndpoints.Register;
@@ -67,6 +68,8 @@ public static class Routes
         public const string ChangePassword = AccountController + RelativeEndpoints.ChangePassword;
         public const string ConfirmEmailChange = AccountController + RelativeEndpoints.ConfirmEmailChange;
 
-        public const string CreateChannel = MessageController + RelativeEndpoints.CreateChannel;
+        public const string CreateChannel = ChatController + RelativeEndpoints.CreateChannel;
+        public const string SendFriendRequest = ChatController + RelativeEndpoints.SendFriendRequest;
+        public const string RespondFriendRequest = ChatController + RelativeEndpoints.RespondFriendRequest;
     }
 }

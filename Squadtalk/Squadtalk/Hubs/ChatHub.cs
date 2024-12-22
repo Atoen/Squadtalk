@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Shared.Data.TypedIds;
-using Shared.DTOs;
+using Shared.DTOs.Chat;
 using Shared.Extensions;
 using Shared.Models;
 using Squadtalk.Data;
