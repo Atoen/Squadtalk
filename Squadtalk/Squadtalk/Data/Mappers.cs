@@ -64,4 +64,20 @@ public static class Mappers
             Data = embed.Data
         };
     }
+
+    public static PendingFriendRequestDto ToDto(this FriendRequest friendRequest)
+    {
+        if (friendRequest.IsAccepted is not null)
+        {
+            throw new InvalidOperationException("Friend request is not pending");
+        }
+
+        return new PendingFriendRequestDto
+        {
+            Id = friendRequest.Id,
+            Recipient = friendRequest.Recipient.ToDto(),
+            Requester = friendRequest.Requester.ToDto(),
+            CreatedAt = friendRequest.CreatedAt
+        };
+    }
 }

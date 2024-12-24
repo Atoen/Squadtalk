@@ -40,7 +40,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.Login)]
-    public async Task<ActionResult<LoginResultDto>> LoginUser(UserLoginDto loginDto)
+    public async Task<ActionResult> LoginUser(UserLoginDto loginDto)
     {
         var result = await _signInManager.PasswordSignInAsync(loginDto.Username, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
         if (!result.Succeeded)
@@ -52,7 +52,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.Register)]
-    public async Task<ActionResult<ResetPasswordResultDto>> RegisterUser(UserRegisterDto registerDto)
+    public async Task<ActionResult> RegisterUser(UserRegisterDto registerDto)
     {
         var alreadyUsingEmail = await _userManager.FindByEmailAsync(registerDto.Email);
         if (alreadyUsingEmail is not null)
@@ -154,7 +154,7 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.ResetPassword)]
-    public async Task<ActionResult<ResetPasswordResultDto>> ResetPassword(ResetPasswordDto resetPasswordDto)
+    public async Task<ActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
     {
         var user = await _userManager.FindByIdAsync(resetPasswordDto.UserId);
         if (user is null)
@@ -174,7 +174,7 @@ public class AccountController : ControllerBase
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangeUsername)]
-    public async Task<ActionResult<ChangeUsernameResultDto>> ChangeUsername(ChangeUsernameDto changeUsernameDto)
+    public async Task<ActionResult> ChangeUsername(ChangeUsernameDto changeUsernameDto)
     {
         var user = await _userManager.FindByIdAsync(changeUsernameDto.UserId);
         if (user is null)
@@ -211,7 +211,7 @@ public class AccountController : ControllerBase
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangeEmail)]
-    public async Task<ActionResult<ChangeEmailResultDto>> ChangeEmail(ChangeEmailDto changeEmailDto)
+    public async Task<ActionResult> ChangeEmail(ChangeEmailDto changeEmailDto)
     {
         var user = await _userManager.FindByIdAsync(changeEmailDto.UserId);
         if (user is null)
@@ -285,7 +285,7 @@ public class AccountController : ControllerBase
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangePassword)]
-    public async Task<ActionResult<ChangePasswordResultDto>> ChangePassword(ChangePasswordDto changePasswordDto)
+    public async Task<ActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
     {
         var user = await _userManager.FindByIdAsync(changePasswordDto.UserId);
         if (user is null)

@@ -20,6 +20,16 @@
                    OnClick="OpenFriendRequestDialog">
             @LocalizedText.R.add_friend
         </MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="GetFriends">
+            Load friends
+        </MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="GetRequests">
+            Load requests
+        </MudButton>
     </MudStack>
 
     @if (ContactManager.FriendList.Count == 0)
@@ -79,4 +89,13 @@
     }
 
     // public void Dispose() => ChannelManager.ConnectedUsersChanged -= StateHasChanged;
+    private async Task GetFriends()
+    {
+        var friends = await ContactManager.GetFriendsAsync();
+    }
+
+    private async Task GetRequests()
+    {
+        var requests = await ContactManager.GetPendingFriendRequestsAsync();
+    }
 }

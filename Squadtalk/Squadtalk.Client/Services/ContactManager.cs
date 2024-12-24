@@ -1,9 +1,9 @@
 using Shared.Data;
-using Shared.Data.Results;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Enums;
 using Shared.Models;
+using Shared.Results;
 using Shared.Services;
 using Squadtalk.Client.Network;
 
@@ -55,26 +55,104 @@ internal class ContactManager : IContactManager
         return model;
     }
 
-    public async Task<FriendRequestResult> SendFriendRequestAsync(FriendRequestDto friendRequest)
+    public async Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername)
     {
         try
         {
-            var result = await _chatApi.SendFriendRequest(friendRequest);
-            return result.Successful switch
+            var data = new FriendRequestDto
             {
-                true => new FriendRequestResult.Sent(),
-                false => new FriendRequestResult.NotFound()
+                RecipientUsername = recipientUsername,
+                RequestingUserId = _userAuthenticationService.UserId
             };
+
+            return await _chatApi.SendFriendRequest(data);
         }
         catch
         {
-            return new FriendRequestResult.NetworkError();
+            return null;
         }
     }
 
-    public Task AcceptFriendRequestAsync() => throw new NotImplementedException();
-    public Task DeclineFriendRequestAsync() => throw new NotImplementedException();
-    public Task RemoveFriendAsync() => throw new NotImplementedException();
+    public async Task<CancelFriendRequestResult?> CancelFriendRequest(FriendRequestId requestId)
+    {
+        try
+        {
+            var data = new CancelFriendRequestDto
+            {
+                RequestId = requestId,
+                CancellingUserId = _userAuthenticationService.UserId
+            };
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(FriendRequestId requestId, bool accepted)
+    {
+        try
+        {
+            var data = new FriendRequestResponseDto
+            {
+                RespondingUserId = _userAuthenticationService.UserId,
+                FriendRequestId = requestId,
+                Accepted = accepted
+            };
+
+            return await _chatApi.RespondToFriendRequest(data);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId)
+    {
+        try
+        {
+            var data = new RemoveFriendDto
+            {
+                FriendId = friendId
+            };
+
+            return await _chatApi.RemoveFriend(data);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<List<UserModel>> GetFriendsAsync()
+    {
+        try
+        {
+            var result = await _chatApi.GetFriends();
+            return result.Select(GetOrCreateUserModel).ToList();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error when fetching friend list");
+            return [];
+        }
+    }
+
+    public async Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync()
+    {
+        try
+        {
+            return await _chatApi.GetPendingFriendRequests();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error when fetching pending friend requests");
+            return [];
+        }
+    }
 
     private void SetUserStatus(IChatUser user, UserStatus status)
     {
