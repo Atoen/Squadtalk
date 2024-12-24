@@ -1,8 +1,10 @@
+using Shared.Data.TypedIds;
+
 namespace Squadtalk.Data.Entities;
 
 public class FriendRequest
 {
-    public int Id { get; set; }
+    public FriendRequestId Id { get; set; }
 
     public ApplicationUser Requester { get; set; } = default!;
     public ApplicationUser Recipient { get; set; } = default!;

@@ -42,6 +42,11 @@ accept_friend: Accept friend request
 decline_friend: Decline friend request
 friend_request_sent: Friend request sent
 friend_list_empty: Friend list is empty
+user_not_found: User not found
+friend_request_already_pending: Friend request already pending
+user_is_already_friend: This user is already your friend
+cant_befriend_yourself: You can't send friend requests to yourself
+server_error: Server error
 
 reset_password: Reset your password
 password_reset: Your password has been successfully reset.

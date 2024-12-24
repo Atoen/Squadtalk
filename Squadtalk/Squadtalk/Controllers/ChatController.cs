@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
-using Shared.DTOs.Chat.Results;
 using Shared.Extensions;
+using Shared.Results;
 using Shared.Routing;
 using Squadtalk.Data;
-using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 
@@ -20,19 +18,16 @@ public class ChatController : ControllerBase
 {
     private readonly MessageRepository _messageRepository;
     private readonly ChannelRepository _channelRepository;
-    private readonly ApplicationDbContext _applicationDbContext;
     private readonly ChannelCreator _channelCreator;
 
     public ChatController(
         ChannelCreator channelCreator,
         MessageRepository messageRepository,
-        ChannelRepository channelRepository,
-        ApplicationDbContext applicationDbContext)
+        ChannelRepository channelRepository)
     {
         _channelCreator = channelCreator;
         _messageRepository = messageRepository;
         _channelRepository = channelRepository;
-        _applicationDbContext = applicationDbContext;
     }
 
     [HttpGet(Routes.RelativeEndpoints.GetMessages)]
@@ -62,55 +57,90 @@ public class ChatController : ControllerBase
             : channel.Id;
     }
 
+    [HttpGet(Routes.RelativeEndpoints.Friends)]
+    public async Task<IEnumerable<UserDto>> GetUserFriends(
+        [FromServices] FriendRepository friendRepository)
+    {
+        var userId = HttpContext.User.GetUserId();
+        var friends = await friendRepository.GetUserFriendsAsync(userId);
+
+        return friends.Select(x => x.ToDto());
+    }
+
+    [HttpGet(Routes.RelativeEndpoints.PendingFriendRequests)]
+    public async Task<IEnumerable<PendingFriendRequestDto>> GetPendingFriendRequests(
+        [FromServices] FriendRepository friendRepository)
+    {
+        var userId = HttpContext.User.GetUserId();
+        var requests = await friendRepository.GetUserPendingFriendRequests(userId);
+
+        return requests.Select(x => x.ToDto());
+    }
+
     [HttpPost(Routes.RelativeEndpoints.SendFriendRequest)]
-    public async Task<ActionResult<FriendRequestResultDto>> SendFriendRequest(FriendRequestDto friendRequestDto)
+    public async Task<ActionResult> SendFriendRequest(
+        FriendRequestDto friendRequestDto,
+        [FromServices] FriendRepository friendRepository)
     {
         var userId = HttpContext.User.GetUserId();
 
-        var recipient = await _applicationDbContext.Users
-            .FirstOrDefaultAsync(x => x.UserName == friendRequestDto.RecipientUsername);
-
-        if (recipient is null)
+        if (userId != friendRequestDto.RequestingUserId)
         {
-            return BadRequest("Null recipient");
+            return Forbid();
         }
 
-        var requestExists = await _applicationDbContext.FriendRequests
-            .AnyAsync(x => x.Requester.Id == userId && x.Recipient.Id == recipient.Id);
+        var result = await friendRepository.AddFriendRequest(
+            userId, friendRequestDto.RecipientUsername, HttpContext.RequestAborted);
 
-        if (requestExists)
+        return result switch
         {
-            return BadRequest("request exists");
-        }
-
-        var alreadyFriends = await _applicationDbContext.Friendships
-            .AnyAsync(f =>
-                f.User1.Id == userId && f.User2.Id == recipient.Id ||
-                f.User1.Id == recipient.Id && f.User2.Id == userId);
-
-        if (alreadyFriends)
-        {
-            return BadRequest("Already friends");
-        }
-
-        var requester = await _applicationDbContext.Users
-            .FirstOrDefaultAsync(x => x.Id == userId);
-
-        if (requester is null)
-        {
-            return BadRequest("null requester");
-        }
-
-        var friendRequest = new FriendRequest
-        {
-            Requester = requester,
-            Recipient = recipient,
-            CreatedAt = DateTimeOffset.Now
+            FriendRequestResult.Success => Ok(result),
+            FriendRequestResult.RecipientNotFound => NotFound(result),
+            _ => BadRequest(result)
         };
+    }
 
-        _applicationDbContext.FriendRequests.Add(friendRequest);
-        await _applicationDbContext.SaveChangesAsync();
+    [HttpPost(Routes.RelativeEndpoints.RespondToFriendRequest)]
+    public async Task<ActionResult> RespondToFriendRequest(
+        FriendRequestResponseDto friendRequestResponseDto,
+        [FromServices] FriendRepository friendRepository)
+    {
+        var userId = HttpContext.User.GetUserId();
 
-        return Ok(new FriendRequestResultDto { Successful = true });
+        if (userId != friendRequestResponseDto.RespondingUserId)
+        {
+            return Forbid();
+        }
+
+        var result = await friendRepository.RespondToFriendRequestAsync(
+            userId,
+            friendRequestResponseDto.FriendRequestId,
+            friendRequestResponseDto.Accepted,
+            HttpContext.RequestAborted);
+
+        return result switch
+        {
+            FriendRequestResponseResult.Success => Ok(result),
+            FriendRequestResponseResult.InvalidResponse => BadRequest(result),
+            _ => Problem()
+        };
+    }
+
+    [HttpPost(Routes.RelativeEndpoints.RemoveFriend)]
+    public async Task<ActionResult> RemoveFriend(
+        RemoveFriendDto removeFriendDto,
+        [FromServices] FriendRepository friendRepository)
+    {
+        var userId = HttpContext.User.GetUserId();
+
+        var result = await friendRepository.RemoveFriendAsync(
+            userId, removeFriendDto.FriendId, HttpContext.RequestAborted);
+
+        return result switch
+        {
+            RemoveFriendResult.Success => Ok(result),
+            RemoveFriendResult.BadRequest => BadRequest(result),
+            _ => Problem()
+        };
     }
 }

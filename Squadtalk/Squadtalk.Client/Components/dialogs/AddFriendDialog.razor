@@ -1,5 +1,4 @@
-@using Shared.Data.Results
-@using Shared.DTOs.Chat
+@using Shared.Results
 @using Color = MudBlazor.Color
 
 <MudDialog>
@@ -35,7 +34,6 @@
 </MudDialog>
 
 @inject LocalizedText LocalizedText
-@inject IUserAuthenticationService UserAuthenticationService
 @inject IContactManager ContactManager
 
 @code
@@ -59,39 +57,25 @@
 
         _working = true;
 
-        var data = new FriendRequestDto
-        {
-            RecipientUsername = username,
-            RequestingUserId = UserAuthenticationService.UserId
-        };
-
-        var result = await ContactManager.SendFriendRequestAsync(data);
+        var result = await ContactManager.SendFriendRequestAsync(username);
 
         _working = false;
 
         HandleResult(result);
     }
 
-    private void HandleResult(FriendRequestResult result)
+    private void HandleResult(FriendRequestResult? result)
     {
-        switch (result)
+        _alertMessage = result switch
         {
-            case FriendRequestResult.Sent sent:
-                _alertMessage = AlertMessage.Success(LocalizedText.R.friend_request_sent);
-                break;
-
-            case FriendRequestResult.NotFound notFound:
-                _alertMessage = AlertMessage.Info("User not found");
-                break;
-
-
-            case FriendRequestResult.UserNotAccepting userNotAccepting:
-                _alertMessage = AlertMessage.Warning("User is not accepting friend requests");
-                break;
-
-            case FriendRequestResult.NetworkError networkError:
-                _alertMessage = AlertMessage.Error(LocalizedText.R.network_error);
-                break;
-        }
+            FriendRequestResult.Success => AlertMessage.Success(LocalizedText.R.friend_request_sent),
+            FriendRequestResult.RecipientNotFound => AlertMessage.Info(LocalizedText.R.user_not_found),
+            FriendRequestResult.RequestAlreadyPending => AlertMessage.Warning(LocalizedText.R.friend_request_already_pending),
+            FriendRequestResult.SelfRequest => AlertMessage.Info(LocalizedText.R.cant_befriend_yourself),
+            FriendRequestResult.AlreadyFriends => AlertMessage.Info(LocalizedText.R.user_is_already_friend),
+            FriendRequestResult.Error => AlertMessage.Error(LocalizedText.R.server_error),
+            null => AlertMessage.Error(LocalizedText.R.network_error),
+            _ => _alertMessage
+        };
     }
 }

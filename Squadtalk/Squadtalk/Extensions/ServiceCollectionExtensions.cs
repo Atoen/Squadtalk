@@ -90,6 +90,17 @@ public static class ServiceCollectionExtensions
         return builder;
     }
 
+    public static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddScoped<MessageRepository>();
+        serviceCollection.AddScoped<UserRepository>();
+        serviceCollection.AddScoped<ChannelRepository>();
+        serviceCollection.AddScoped<FileRepository>();
+        serviceCollection.AddScoped<FriendRepository>();
+
+        return serviceCollection;
+    }
+
     public static IServiceCollection AddServerServices(this IServiceCollection serviceCollection,
         IWebHostEnvironment environment)
     {
@@ -103,6 +114,8 @@ public static class ServiceCollectionExtensions
             serviceCollection.AddSingleton<IDnsRecordUpdater, UpdateDnsRecords>();
             serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
         }
+
+        serviceCollection.AddRepositories();
 
         serviceCollection.AddSingleton<DnsRecordUpdaterStateManager>();
         serviceCollection.AddTransient<IPService>();
@@ -129,11 +142,6 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddTransient<LiveKitEventHandler>();
         serviceCollection.AddSingleton<LiveKitService>();
-
-        serviceCollection.AddScoped<MessageRepository>();
-        serviceCollection.AddScoped<UserRepository>();
-        serviceCollection.AddScoped<ChannelRepository>();
-        serviceCollection.AddScoped<FileRepository>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<ChannelCreator>();

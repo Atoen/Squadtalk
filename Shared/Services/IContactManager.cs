@@ -1,7 +1,8 @@
 using Shared.Data;
-using Shared.Data.Results;
+using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Models;
+using Shared.Results;
 
 namespace Shared.Services;
 
@@ -19,11 +20,15 @@ public interface IContactManager
 
     UserModel GetOrCreateUserModel(IChatUser chatUser);
 
-    Task<FriendRequestResult> SendFriendRequestAsync(FriendRequestDto friendRequest);
+    Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername);
 
-    Task AcceptFriendRequestAsync();
+    Task<CancelFriendRequestResult?> CancelFriendRequest(FriendRequestId requestId);
 
-    Task DeclineFriendRequestAsync();
+    Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(FriendRequestId requestId, bool accepted);
 
-    Task RemoveFriendAsync();
+    Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId);
+
+    Task<List<UserModel>> GetFriendsAsync();
+
+    Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync();
 }

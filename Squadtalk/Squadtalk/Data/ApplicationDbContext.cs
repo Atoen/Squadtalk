@@ -25,7 +25,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<FriendRequest> FriendRequests { get; set; } = default!;
 
     public DbSet<Friendship> Friendships { get; set; } = default!;
-    
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -37,6 +37,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         var channelConverter = new ValueConverter<ChannelId, string>(
         x => x.Value,
         x => new ChannelId(x));
+
+        builder.Entity<FriendRequest>()
+            .Property(x => x.Id)
+            .HasConversion(id => id.Value, value => new FriendRequestId(value));
 
         builder.Entity<DbFile>()
             .Property(x => x.ChannelId)

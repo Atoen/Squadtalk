@@ -1,9 +1,9 @@
 using Shared.Data;
-using Shared.Data.Results;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Enums;
 using Shared.Models;
+using Shared.Results;
 using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
@@ -85,10 +85,12 @@ internal class ChannelManager(
         return GetOrCreateUser(chatUser, LazyUsers);
     }
 
-    public Task<FriendRequestResult> SendFriendRequestAsync(FriendRequestDto friendRequest) => throw new NotImplementedException();
-    public Task AcceptFriendRequestAsync() => throw new NotImplementedException();
-    public Task DeclineFriendRequestAsync() => throw new NotImplementedException();
-    public Task RemoveFriendAsync() => throw new NotImplementedException();
+    public Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername) => throw new NotImplementedException();
+    public Task<CancelFriendRequestResult?> CancelFriendRequest(FriendRequestId requestId) => throw new NotImplementedException();
+    public Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(FriendRequestId requestId, bool accepted) => throw new NotImplementedException();
+    public Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId) => throw new NotImplementedException();
+    public Task<List<UserModel>> GetFriendsAsync() => throw new NotImplementedException();
+    public Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync() => throw new NotImplementedException();
 
     public Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true)
     {
