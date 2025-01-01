@@ -155,7 +155,7 @@ public partial class ChatHub : Hub<IChatClient>
         }
 
         var dto = user.ToDto();
-        var isUniqueConnection = await _connectionManager.Add(user, Context.ConnectionId);
+        var isUniqueConnection = await _connectionManager.AddAsync(user, Context.ConnectionId);
         if (isUniqueConnection)
         {
             await TextGroup(GroupChatModel.GlobalChatId).UserConnected(dto);

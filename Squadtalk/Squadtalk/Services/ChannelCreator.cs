@@ -62,7 +62,7 @@ public class ChannelCreator
     {
         foreach (var user in channel.Participants)
         {
-            var userConnections = _connectionManager.GetUserConnections(user);
+            var userConnections = await _connectionManager.GetUserConnectionsAsync(user);
             foreach (var connection in userConnections)
             {
                 await _hubContext.Groups.AddToGroupAsync(connection, channel.Id);

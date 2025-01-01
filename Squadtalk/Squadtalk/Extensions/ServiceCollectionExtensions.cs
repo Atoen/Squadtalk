@@ -1,6 +1,5 @@
 using System.Text;
 using Blazored.LocalStorage;
-using Coravel;
 using MailKit.Net.Smtp;
 using MessagePack;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -17,7 +16,6 @@ using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 using Squadtalk.Services.Prerender;
-using Squadtalk.Services.Scheduling;
 
 namespace Squadtalk.Extensions;
 
@@ -106,21 +104,16 @@ public static class ServiceCollectionExtensions
     {
         if (environment.IsDevelopment())
         {
-            serviceCollection.AddSingleton<IDnsRecordUpdater, NoOpDnsUpdate>();
             serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
         }
         else
         {
-            serviceCollection.AddSingleton<IDnsRecordUpdater, UpdateDnsRecords>();
             serviceCollection.AddSingleton<IEmailSender<ApplicationUser>, EmailSender>();
         }
 
         serviceCollection.AddRepositories();
 
-        serviceCollection.AddSingleton<DnsRecordUpdaterStateManager>();
-        serviceCollection.AddTransient<IPService>();
         serviceCollection.AddTransient<SystemMessageService>();
-        serviceCollection.AddScheduler();
 
         serviceCollection.AddSingleton<TusHelper>();
         serviceCollection.AddSignalR()
