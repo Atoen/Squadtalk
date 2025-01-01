@@ -31,16 +31,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         base.OnModelCreating(builder);
 
         var userConverter = new ValueConverter<UserId, Guid>(
-        x => x.Value,
-        x => new UserId(x));
+            x => x.Value,
+            x => new UserId(x));
 
         var channelConverter = new ValueConverter<ChannelId, string>(
-        x => x.Value,
-        x => new ChannelId(x));
+            x => x.Value,
+            x => new ChannelId(x));
 
         builder.Entity<FriendRequest>()
             .Property(x => x.Id)
-            .HasConversion(id => id.Value, value => new FriendRequestId(value));
+            .HasConversion(id => id.Value, value => new FriendRequestId(value))
+            .ValueGeneratedOnAdd();
 
         builder.Entity<DbFile>()
             .Property(x => x.ChannelId)

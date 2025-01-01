@@ -134,7 +134,9 @@ public partial class ChatHub : Hub<IChatClient>
             return ([], []);
         }
 
-        var connectedUsers = _connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList();
+        // var connectedUsers = _connectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList();
+
+        var connectedUsers = new List<UserDto>();
 
         var unreadMessagesCount = await _messageRepository.GetUnreadMessageCountPerChannelAsync(user.Channels, user.LastSeen);
         var channelDtos = user.Channels.Select(x => x.ToDto()).ToList();
@@ -184,7 +186,7 @@ public partial class ChatHub : Hub<IChatClient>
 
         var dto = user.ToDto();
         
-        var allConnectionsClosed = await _connectionManager.Remove(user, Context.ConnectionId);
+        var allConnectionsClosed = await _connectionManager.RemoveAsync(user, Context.ConnectionId);
         if (!allConnectionsClosed)
         {
             return;

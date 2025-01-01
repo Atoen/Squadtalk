@@ -17,15 +17,22 @@ internal class ContactManager : IContactManager
 
     private readonly Dictionary<UserId, UserModel> _users = [];
 
+    private readonly Dictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
+    private readonly Dictionary<FriendRequestId, OutgoingFriendRequest> _outgoingFriendRequests = [];
+
     public event Action? ContactsStateChanged;
     public event Action<UserModel>? ContactDisconnected;
     public event Action<UserModel>? ContactConnected;
+    public event Action<IncomingFriendRequest>? FriendRequestReceived;
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
     public IReadOnlyCollection<UserModel> AllContacts => _users.Values;
     public IReadOnlyCollection<UserModel> FriendList { get; } = [];
     public IReadOnlyCollection<UserModel> OtherContacts => _users.Values;
+
+    public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests => _incomingFriendRequests.Values;
+    public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests => _outgoingFriendRequests.Values;
 
     public ContactManager(
         SignalrService signalrService,
@@ -42,6 +49,50 @@ internal class ContactManager : IContactManager
         signalrService.UserConnected += UserConnected;
         signalrService.ConnectedUsersReceived += ReceivedConnectedUsers;
         signalrService.UserDisconnected += UserDisconnected;
+
+        _outgoingFriendRequests.Add(new FriendRequestId(7), new OutgoingFriendRequest
+        {
+            Id = new FriendRequestId(7),
+            To = UserModelProvider(new UserDto
+            {
+                Id = UserId.New,
+                Username = "Agent Chaosu #1"
+            }),
+            CreatedAt = DateTimeOffset.Now.AddDays(-2)
+        });
+
+        _incomingFriendRequests.Add(new FriendRequestId(8), new IncomingFriendRequest
+        {
+            Id = new FriendRequestId(8),
+            From = UserModelProvider(new UserDto
+            {
+                Id = UserId.New,
+                Username = "Agent Chaosu #2"
+            }),
+            CreatedAt = DateTimeOffset.Now
+        });
+
+        _incomingFriendRequests.Add(new FriendRequestId(28), new IncomingFriendRequest
+        {
+            Id = new FriendRequestId(28),
+            From = UserModelProvider(new UserDto
+            {
+                Id = UserId.New,
+                Username = "Agent Chaosu #23"
+            }),
+            CreatedAt = DateTimeOffset.Now
+        });
+
+        _incomingFriendRequests.Add(new FriendRequestId(11), new IncomingFriendRequest
+        {
+            Id = new FriendRequestId(11),
+            From = UserModelProvider(new UserDto
+            {
+                Id = UserId.New,
+                Username = "Agent Chaosu #22"
+            }),
+            CreatedAt = DateTimeOffset.Now
+        });
     }
 
     public UserModel GetOrCreateUserModel(IChatUser chatUser)
@@ -73,13 +124,13 @@ internal class ContactManager : IContactManager
         }
     }
 
-    public async Task<CancelFriendRequestResult?> CancelFriendRequest(FriendRequestId requestId)
+    public async Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest)
     {
         try
         {
             var data = new CancelFriendRequestDto
             {
-                RequestId = requestId,
+                RequestId = friendRequest.Id,
                 CancellingUserId = _userAuthenticationService.UserId
             };
 
@@ -91,14 +142,14 @@ internal class ContactManager : IContactManager
         }
     }
 
-    public async Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(FriendRequestId requestId, bool accepted)
+    public async Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted)
     {
         try
         {
             var data = new FriendRequestResponseDto
             {
                 RespondingUserId = _userAuthenticationService.UserId,
-                FriendRequestId = requestId,
+                FriendRequestId = friendRequest.Id,
                 Accepted = accepted
             };
 
@@ -145,7 +196,35 @@ internal class ContactManager : IContactManager
     {
         try
         {
-            return await _chatApi.GetPendingFriendRequests();
+            var result = await _chatApi.GetPendingFriendRequests();
+
+            foreach (var requestDto in result)
+            {
+                if (requestDto.Requester.Id == _userAuthenticationService.UserId)
+                {
+                    var outgoingRequest = new OutgoingFriendRequest
+                    {
+                        Id = requestDto.Id,
+                        CreatedAt = requestDto.CreatedAt,
+                        To = GetOrCreateUserModel(requestDto.Recipient)
+                    };
+
+                    _outgoingFriendRequests.Add(outgoingRequest.Id, outgoingRequest);
+                }
+                else if (requestDto.Recipient.Id == _userAuthenticationService.UserId)
+                {
+                    var incomingRequest = new IncomingFriendRequest
+                    {
+                        Id = requestDto.Id,
+                        CreatedAt = requestDto.CreatedAt,
+                        From = GetOrCreateUserModel(requestDto.Requester)
+                    };
+
+                    _incomingFriendRequests.Add(incomingRequest.Id, incomingRequest);
+                }
+            }
+
+            return result;
         }
         catch (Exception e)
         {
