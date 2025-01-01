@@ -4,6 +4,19 @@ namespace Squadtalk.Extensions;
 
 public static class ConfigurationExtensions
 {
+    public static string GetRequiredConnectionString(this IConfiguration configuration, string name)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var connectionString = configuration.GetConnectionString(name);
+        if (connectionString is null)
+        {
+            ThrowConnectionString(name);
+        }
+
+        return connectionString;
+    }
+
     public static string GetString(this IConfiguration configuration, string key)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -11,19 +24,29 @@ public static class ConfigurationExtensions
         var result = configuration[key];
         if (result is null)
         {
-            Throw(key);
+            ThrowKey(key);
         }
 
         return result;
     }
 
     [DoesNotReturn]
-    private static void Throw(string key)
+    private static void ThrowConnectionString(string name)
     {
-        var factory = LoggerFactory.Create(builder => builder.AddConsole());
+        var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
+        var logger = factory.CreateLogger(typeof(ConfigurationExtensions));
+        logger.LogCritical("Connection string {ConnectionString} not found", name);
+        
+        throw new ArgumentNullException(nameof(name), $"Connection string {name} not found");
+    }
+
+    [DoesNotReturn]
+    private static void ThrowKey(string key)
+    {
+        var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
         var logger = factory.CreateLogger(typeof(ConfigurationExtensions));
         logger.LogCritical("Key {Key} is missing from configuration file", key);
-        
+
         throw new ArgumentNullException(nameof(key), $"Key {key} missing from configuration file");
     }
 }

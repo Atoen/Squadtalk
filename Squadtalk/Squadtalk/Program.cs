@@ -1,10 +1,7 @@
 using System.Net;
-using Coravel;
-using Coravel.Scheduling.Schedule.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using RestSharp;
 using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Client.Pages;
@@ -15,8 +12,8 @@ using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using Squadtalk.Hubs;
 using Squadtalk.Services;
-using Squadtalk.Services.Scheduling;
 using Squadtalk.Tus;
+using StackExchange.Redis;
 using tusdotnet;
 using tusdotnet.Helpers;
 
@@ -35,17 +32,20 @@ builder.Services.AddControllers();
 
 builder.Services.AddResponseCompression();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<IdentityUserAccessor>();
-builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
 
 builder.ConfigureAuthentication();
 
-var connectionString = builder.Configuration.GetConnectionString("Postgres")
-                       ?? throw new InvalidOperationException("Connection string 'Postgres' not found.");
+var postgresConnectionString = builder.Configuration.GetRequiredConnectionString("postgres");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(postgresConnectionString));
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+{
+    var connectionString = builder.Configuration.GetRequiredConnectionString("redis");
+    return ConnectionMultiplexer.Connect(connectionString);
+});
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -70,10 +70,6 @@ builder.Services.AddServerServices(builder.Environment);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 
-builder.Services.AddSingleton(_ => new RestClient(options =>
-    options.BaseUrl = new Uri(builder.Configuration.GetString("Rest:BasePath"))
-));
-
 const string corsPolicy = "cors";
 
 builder.Services.AddCors(options =>
@@ -88,19 +84,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-app.Services.UseScheduler(scheduler =>
-{
-    scheduler.Schedule<IDnsRecordUpdater>()
-        .EveryFifteenMinutes()
-        .RunOnceAtStart()
-        .PreventOverlapping("dns");
-}).OnError(e =>
-    {
-        var logger = app.Services.GetRequiredService<ILogger<IScheduler>>();
-        logger.LogError(e, "Error while running scheduled task");
-    }
-);
 
 app.UseCors(corsPolicy);
 
