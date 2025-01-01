@@ -29,11 +29,14 @@ internal class ChannelManager(
     public GroupChatModel GlobalChat => GlobalChatModel;
     public ChannelModel? CurrentChannel { get; private set; }
 
+    public event Action<IncomingFriendRequest>? FriendRequestReceived;
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
     public IReadOnlyCollection<UserModel> AllContacts => LazyUsers.Values;
     public IReadOnlyCollection<UserModel> FriendList { get; } = [];
     public IReadOnlyCollection<UserModel> OtherContacts => LazyUsers.Values;
+    public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
+    public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
 
     event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
@@ -86,11 +89,13 @@ internal class ChannelManager(
     }
 
     public Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername) => throw new NotImplementedException();
+    public Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest) => throw new NotImplementedException();
+    public Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted) => throw new NotImplementedException();
     public Task<CancelFriendRequestResult?> CancelFriendRequest(FriendRequestId requestId) => throw new NotImplementedException();
     public Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(FriendRequestId requestId, bool accepted) => throw new NotImplementedException();
     public Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId) => throw new NotImplementedException();
     public Task<List<UserModel>> GetFriendsAsync() => throw new NotImplementedException();
-    public Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync() => throw new NotImplementedException();
+    public Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync() => Task.FromResult(new List<PendingFriendRequestDto>());
 
     public Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true)
     {

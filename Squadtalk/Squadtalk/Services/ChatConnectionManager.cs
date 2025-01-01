@@ -15,9 +15,6 @@ public class ChatConnectionManager
         _redisDb = connectionMultiplexer.GetDatabase(2);
     }
 
-    private readonly SemaphoreSlim _semaphore = new(1);
-    private readonly Dictionary<UserId, HashSet<string>> _connections = [];
-
     public List<ApplicationUser> ConnectedUsers { get; } = [];
 
     public async Task<IEnumerable<string>> GetUserConnectionsAsync(ApplicationUser user)
@@ -26,7 +23,7 @@ public class ChatConnectionManager
         var connections = await _redisDb.SetMembersAsync(key);
 
         return connections.Length != 0
-            ? connections.Select(x => (string) x)
+            ? connections.Select(x => (string) x!)
             : [];
     }
 
@@ -36,65 +33,14 @@ public class ChatConnectionManager
         var added = await _redisDb.SetAddAsync(userKey, connectionId);
 
         return added;
-
-        // await _semaphore.WaitAsync();
-        //
-        // try
-        // {
-        //     var id = user.Id;
-        //     var alreadyConnected = _connections.TryGetValue(id, out var existingConnections);
-        //     if (alreadyConnected)
-        //     {
-        //         existingConnections!.Add(connectionId);
-        //     }
-        //     else
-        //     {
-        //         ConnectedUsers.Add(user);
-        //         _connections[id] = [connectionId];
-        //     }
-        //
-        //     return !alreadyConnected;
-        // }
-        // finally
-        // {
-        //     _semaphore.Release();
-        // }
     }
     
-    public async Task<bool> Remove(ApplicationUser user, string connectionId)
+    public async Task<bool> RemoveAsync(ApplicationUser user, string connectionId)
     {
         var userKey = GetUserConnectionsRedisKey(user.Id);
         var removed = await _redisDb.SetRemoveAsync(userKey, connectionId);
 
         return removed;
-
-        // await _semaphore.WaitAsync();
-        //
-        // try
-        // {
-        //     var id = user.Id;
-        //     if (!_connections.TryGetValue(id, out var existingConnections) || existingConnections.Count == 0)
-        //     {
-        //         return false;
-        //     }
-        //
-        //     var isTheOnlyConnection = existingConnections.Count == 1;
-        //     if (isTheOnlyConnection)
-        //     {
-        //         ConnectedUsers.RemoveAll(x => x.Id == id);
-        //         _connections.Remove(id);
-        //     }
-        //     else
-        //     {
-        //         existingConnections.Remove(connectionId);
-        //     }
-        //
-        //     return isTheOnlyConnection;
-        // }
-        // finally
-        // {
-        //     _semaphore.Release();
-        // }
     }
 
     private static string GetUserConnectionsRedisKey(UserId userId)

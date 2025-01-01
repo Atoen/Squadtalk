@@ -1,0 +1,91 @@
+@using Color = MudBlazor.Color
+
+<p class="mud-typography-body1 mud-typography-gutterbottom">
+    @LocalizedText.R.incoming_friend_requests
+</p>
+
+@foreach (var request in ContactManager.IncomingFriendRequests)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center"
+              Class="my-1 mud-button pa-1 mud-ripple">
+        @_avatar(request.From)
+
+        <MudText>@request.From.Username</MudText>
+
+        <div class="ms-auto">
+            <MudTooltip Text="@LocalizedText.R.friend_request_accept"
+                        Placement="Placement.Top" Color="Color.Dark">
+                <MudIconButton Icon="@Icons.Material.Rounded.Check" Color="Color.Success"
+                               OnClick="() => AcceptFriendRequest(request)"/>
+            </MudTooltip>
+
+            <MudTooltip Text="@LocalizedText.R.friend_request_decline"
+                        Placement="Placement.Top" Color="Color.Dark">
+                <MudIconButton Icon="@Icons.Material.Rounded.Close" Color="Color.Error"
+                               OnClick="() => DeclineFriendRequest(request)"/>
+            </MudTooltip>
+        </div>
+
+    </MudStack>
+}
+
+<MudDivider Class="my-4"/>
+
+<MudText GutterBottom="true">@LocalizedText.R.outgoing_friend_requests</MudText>
+
+@foreach (var request in ContactManager.OutgoingFriendRequests)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center"
+              Class="my-1 mud-button pa-1 mud-ripple">
+
+        @_avatar(request.To)
+
+        <MudText>@request.To.Username</MudText>
+
+        <div class="ms-auto">
+            <MudTooltip Text="@LocalizedText.R.dialog_cancel"
+                        Placement="Placement.Top" Color="Color.Dark">
+                <MudIconButton Icon="@Icons.Material.Rounded.Close"
+                               OnClick="() => CancelFriendRequest(request)"/>
+            </MudTooltip>
+        </div>
+
+    </MudStack>
+}
+
+@inject LocalizedText LocalizedText
+@inject IContactManager ContactManager
+
+@code
+{
+    private readonly RenderFragment<UserModel> _avatar = user =>
+        @<div class="d-flex">
+            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+            {
+                <MudAvatar Color="Color.Tertiary">
+                    @user.Username[0]
+                </MudAvatar>
+            }
+            else
+            {
+                <MudAvatar Color="Color.Transparent">
+                    <MudImage Src="@user.AvatarUrl"/>
+                </MudAvatar>
+            }
+        </div>;
+
+    private async Task AcceptFriendRequest(IncomingFriendRequest friendRequest)
+    {
+        var result = await ContactManager.RespondToFriendRequestAsync(friendRequest, true);
+    }
+
+    private async Task DeclineFriendRequest(IncomingFriendRequest friendRequest)
+    {
+        var result = await ContactManager.RespondToFriendRequestAsync(friendRequest, false);
+    }
+
+    private async Task CancelFriendRequest(OutgoingFriendRequest friendRequest)
+    {
+        var result = await ContactManager.CancelFriendRequest(friendRequest);
+    }
+}

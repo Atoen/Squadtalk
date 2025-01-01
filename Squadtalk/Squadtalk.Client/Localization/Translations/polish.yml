@@ -32,7 +32,7 @@ write_to_channel: Napisz na @{0}
 other_users: Inni użytkownicy
 contacts: Kontakty
 friends: Znajomi
-friend_requests: Zaproszenia do znajomych
+friend_requests: Zaproszenia
 add_friend: Dodaj znajomego
 accept_friend: Przyjmij zaproszenie do znajomych
 decline_friend: Odrzuć zaproszenie do znajomych
@@ -43,6 +43,11 @@ friend_request_already_pending: Wysłano już próbę o dodanie do znajomych
 user_is_already_friend: Ten użytkownik jest już Twoim znajomym
 cant_befriend_yourself: Nie możesz wysłać prośby o dodanie do znajomych do siebie samego
 server_error: Błąd serwera
+
+incoming_friend_requests: Zaproszenia przychodzące
+outgoing_friend_requests: Zaproszenia wychodzące
+friend_request_accept: Przyjmij
+friend_request_decline: Odrzuć
 
 reset_password: Zresetuj swoje hasło
 password_reset: Twoje hasło zostało pomyślnie zresetowane.

@@ -1,37 +1,34 @@
 @using Shared.Results
 @using Color = MudBlazor.Color
 
-<MudDialog>
-    <DialogContent>
-        @if (_alertMessage is not null)
-        {
-            <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mb-2" Dense="true">
-                @_alertMessage.Text
-            </MudAlert>
-        }
+<p class="mud-typography-body1 mud-typography-gutterbottom">@LocalizedText.R.add_friend</p>
 
-        @LocalizedText.R.add_friend
+@if (_alertMessage is not null)
+{
+    <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mb-2" Dense="true">
+        @_alertMessage.Text
+    </MudAlert>
+}
 
-        <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
-                      RequiredError="@LocalizedText.R.username_is_required"
-                      Clearable="true" @ref="_usernameField"/>
-    </DialogContent>
-    <DialogActions>
-        <MudButton Variant="Variant.Text" OnClick="Cancel">
-            @LocalizedText.R.dialog_cancel
-        </MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_working" OnClick="SendFriendRequest">
+<div class="d-flex">
+    <MudTextField T="string" Label="@LocalizedText.R.username"
+                  Clearable="true" @ref="_usernameField"/>
+
+    <div class="align-self-center ms-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="_working" OnClick="SendFriendRequest">
             @if (_working)
             {
-                <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Small"/>
+                <MudProgressCircular Indeterminate="true"
+                                     Color="Color.Default" Size="Size.Small"/>
             }
             else
             {
                 @LocalizedText.R.dialog_done
             }
         </MudButton>
-    </DialogActions>
-</MudDialog>
+    </div>
+</div>
 
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
@@ -43,11 +40,6 @@
     private AlertMessage? _alertMessage;
 
     private bool _working;
-
-    [CascadingParameter]
-    private MudDialogInstance MudDialog { get; set; } = default!;
-
-    private void Cancel() => MudDialog.Cancel();
 
     private async Task SendFriendRequest()
     {
