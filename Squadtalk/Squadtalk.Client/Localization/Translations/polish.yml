@@ -32,6 +32,8 @@ write_to_channel: Napisz na @{0}
 other_users: Inni użytkownicy
 contacts: Kontakty
 friends: Znajomi
+online_friends: Znajomi online
+all_friends: Wszyscy znajomi
 friend_requests: Zaproszenia
 add_friend: Dodaj znajomego
 accept_friend: Przyjmij zaproszenie do znajomych
@@ -48,6 +50,11 @@ incoming_friend_requests: Zaproszenia przychodzące
 outgoing_friend_requests: Zaproszenia wychodzące
 friend_request_accept: Przyjmij
 friend_request_decline: Odrzuć
+
+message: Wiadomość
+more: Więcej
+start_voice_call: Rozpocznij rozmowę głosową
+remove_friend: Usuń znajomego
 
 reset_password: Zresetuj swoje hasło
 password_reset: Twoje hasło zostało pomyślnie zresetowane.

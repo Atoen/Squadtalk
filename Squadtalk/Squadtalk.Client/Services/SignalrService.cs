@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Extensions;
 using Shared.Services;
 using Squadtalk.Client.SignalR;
@@ -19,12 +20,20 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     private bool _handlersRegistered;
 
     public event Func<ConnectionStatus, Task>? ConnectionStatusChanged;
-    public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
+
     public event Func<ChannelDto, Task>? AddedToChannel;
-    public event Func<UserDto, Task>? UserDisconnected;
-    public event Func<UserDto, Task>? UserConnected;
-    public event Func<IEnumerable<UserDto>, bool, Task>? ConnectedUsersReceived;
+    public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
     public event Func<ChannelId, string?, Task>? ChannelNameChanged;
+
+    public event Action<UserDto, UserStatus>? FriendStatusChanged;
+    public event Action<PendingFriendRequestDto>? FriendRequestReceived;
+
+    public event Action<List<UserDto>>? FriendListReceived;
+    public event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
+
+    [Obsolete] public event Func<UserDto, Task>? UserConnected;
+    [Obsolete] public event Func<UserDto, Task>? UserDisconnected;
+    [Obsolete] public event Func<IEnumerable<UserDto>, bool, Task>? ConnectedUsersReceived;
 
     private bool _connectionStared;
 
@@ -110,18 +119,19 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         if (_clientPersistantState.TryReadFriends(out var friends))
         {
             _logger.LogInformation("Retrieved persisted friends");
-            // await ConnectedUsersReceived.TryInvoke(friend, true);
+            FriendListReceived?.Invoke(friends);
+        }
+
+        if (_clientPersistantState.TryReadFriendRequests(out var friendRequests))
+        {
+            _logger.LogInformation("Retrieved persisted friend requests");
+            FriendRequestsReceived?.Invoke(friendRequests);
         }
 
         if (_clientPersistantState.TryReadChannels(out var channels))
         {
             _logger.LogInformation("Retrieved persisted channels");
             await ChannelsReceived.TryInvoke(channels);
-        }
-
-        if (_clientPersistantState.TryReadFriendRequests(out var friendRequests))
-        {
-            _logger.LogInformation("Retrieved persisted friend requests");
         }
     }
 

@@ -19,7 +19,7 @@ internal class ClientPersistantState(PersistentComponentState persistentComponen
         return read && users is not null;
     }
 
-    public bool TryReadFriendRequests([NotNullWhen(true)] out List<FriendRequestDto>? friendRequests)
+    public bool TryReadFriendRequests([NotNullWhen(true)] out List<PendingFriendRequestDto>? friendRequests)
     {
         var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.FriendRequests, out friendRequests);
         return read && friendRequests is not null;

@@ -14,14 +14,14 @@ internal class ChannelManager(
 {
     private static readonly GroupChatModel GlobalChatModel = GroupChatModel.CreateGlobalChat();
     private static readonly Dictionary<ChannelId, ChannelModel> EmptyChannels = [];
-    private static readonly Dictionary<UserId, UserModel> EmptyUsers = [];
+    private static readonly Dictionary<UserId, UserModel> EmptyFriends = [];
 
     private bool _modelsCreated;
 
-    private Dictionary<UserId, UserModel>? _users;
+    private Dictionary<UserId, UserModel>? _friends;
     private Dictionary<ChannelId, ChannelModel>? _channels;
 
-    private Dictionary<UserId, UserModel> LazyUsers => TryCreateModels(ref _users, EmptyUsers);
+    private Dictionary<UserId, UserModel> LazyFriends => TryCreateModels(ref _friends, EmptyFriends);
     private Dictionary<ChannelId, ChannelModel> LazyChannels => TryCreateModels(ref _channels, EmptyChannels);
 
     public IReadOnlyCollection<ChannelModel> Channels => LazyChannels.Values;
@@ -32,9 +32,9 @@ internal class ChannelManager(
     public event Action<IncomingFriendRequest>? FriendRequestReceived;
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
-    public IReadOnlyCollection<UserModel> AllContacts => LazyUsers.Values;
-    public IReadOnlyCollection<UserModel> FriendList { get; } = [];
-    public IReadOnlyCollection<UserModel> OtherContacts => LazyUsers.Values;
+    public IReadOnlyCollection<UserModel> AllContacts { get; } = [];
+    public IReadOnlyCollection<UserModel> FriendList => LazyFriends.Values;
+    public IReadOnlyCollection<UserModel> OtherContacts => LazyFriends.Values;
     public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
     public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
 
@@ -65,27 +65,28 @@ internal class ChannelManager(
 
     private void CreateModels()
     {
-        var onlineUsers = prerenderPersistantState.Friends ?? Array.Empty<UserDto>();
+        var friends = prerenderPersistantState.Friends ?? Array.Empty<UserDto>();
         var channels = prerenderPersistantState.Channels ?? Array.Empty<ChannelDto>();
 
         var currentUserId = authenticationService.UserId;
 
-        var userModels = onlineUsers
-            .Select(x => UserModel.Create(x, UserStatus.Online))
+        var friendModels = friends
+            .Select(x => UserModel.Create(x))
             .ToDictionary(x => x.Id, x => x);
 
         var channelModels = channels
-            .Select(x => ChannelModel.Create(x, currentUserId, user => GetOrCreateUser(user, userModels)))
+            .Select(x => ChannelModel.Create(x, currentUserId, user => GetOrCreateUser(user, friendModels)))
             .ToDictionary(x => x.Id, x => x);
 
         _modelsCreated = true;
-        _users = userModels;
+
+        _friends = friendModels;
         _channels = channelModels;
     }
 
     public UserModel GetOrCreateUserModel(IChatUser chatUser)
     {
-        return GetOrCreateUser(chatUser, LazyUsers);
+        return GetOrCreateUser(chatUser, LazyFriends);
     }
 
     public Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername) => throw new NotImplementedException();
