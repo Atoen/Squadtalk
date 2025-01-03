@@ -16,6 +16,7 @@ internal class ContactManager : IContactManager
     private readonly ILogger<ContactManager> _logger;
 
     private readonly Dictionary<UserId, UserModel> _users = [];
+    private readonly Dictionary<UserId, UserModel> _friends = [];
 
     private readonly Dictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
     private readonly Dictionary<FriendRequestId, OutgoingFriendRequest> _outgoingFriendRequests = [];
@@ -28,7 +29,7 @@ internal class ContactManager : IContactManager
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
     public IReadOnlyCollection<UserModel> AllContacts => _users.Values;
-    public IReadOnlyCollection<UserModel> FriendList { get; } = [];
+    public IReadOnlyCollection<UserModel> FriendList => _friends.Values;
     public IReadOnlyCollection<UserModel> OtherContacts => _users.Values;
 
     public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests => _incomingFriendRequests.Values;
@@ -45,6 +46,8 @@ internal class ContactManager : IContactManager
         _logger = logger;
 
         UserModelProvider = GetOrCreateUserModel;
+
+        signalrService.FriendListReceived += FriendListReceived;
 
         signalrService.UserConnected += UserConnected;
         signalrService.ConnectedUsersReceived += ReceivedConnectedUsers;
@@ -278,5 +281,16 @@ internal class ContactManager : IContactManager
         }
 
         return Task.CompletedTask;
+    }
+
+    private void FriendListReceived(List<UserDto> friends)
+    {
+        foreach (var friend in friends)
+        {
+            var model = GetOrCreateUserModel(friend);
+            _friends[model.Id] = model;
+        }
+
+        ContactsStateChanged?.Invoke();
     }
 }

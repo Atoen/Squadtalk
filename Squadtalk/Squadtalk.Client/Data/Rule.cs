@@ -6,19 +6,19 @@ public record Rule
 {
     [JsonPropertyName("a")]
     public string Attacker { get; }
-    
+
     [JsonPropertyName("b")]
     public string Attacked { get; }
     
-    public Rule(Color attacker, Color attacked)
+    public Rule()
     {
-        if (attacker == attacked)
-        {
-            throw new InvalidOperationException("Attacker cannot be the same as attacked.");
-        }
-
-        Attacker = attacker.ToString();
-        Attacked = attacked.ToString();
+        // if (attacker == attacked)
+        // {
+        //     throw new InvalidOperationException("Attacker cannot be the same as attacked.");
+        // }
+        //
+        Attacker = string.Empty;
+        Attacked = string.Empty;
     }
     
     [JsonConstructor]
@@ -46,5 +46,5 @@ public record Rule
         Attacked = attacked;
     }
 
-    public static string[] AvailableColors { get; } = Enum.GetNames(typeof(Color));
+    public static string[] AvailableColors { get; } = [];
 }

@@ -1,5 +1,3 @@
-@using Color = MudBlazor.Color
-
 <p class="mud-typography-body1 mud-typography-gutterbottom">
     @LocalizedText.R.incoming_friend_requests
 </p>
@@ -8,9 +6,9 @@
 {
     <MudStack Row="true" AlignItems="AlignItems.Center"
               Class="my-1 mud-button pa-1 mud-ripple">
-        @_avatar(request.From)
+        @FriendList.UserAvatar(request.From)
 
-        <MudText>@request.From.Username</MudText>
+        <p class="mud-typography-body1">@request.From.Username</p>
 
         <div class="ms-auto">
             <MudTooltip Text="@LocalizedText.R.friend_request_accept"
@@ -41,7 +39,7 @@
     <MudStack Row="true" AlignItems="AlignItems.Center"
               Class="my-1 mud-button pa-1 mud-ripple">
 
-        @_avatar(request.To)
+        @FriendList.UserAvatar(request.To)
 
         <MudText>@request.To.Username</MudText>
 
@@ -61,22 +59,6 @@
 
 @code
 {
-    private readonly RenderFragment<UserModel> _avatar = user =>
-        @<div class="d-flex">
-            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
-            {
-                <MudAvatar Color="Color.Tertiary">
-                    @user.Username[0]
-                </MudAvatar>
-            }
-            else
-            {
-                <MudAvatar Color="Color.Transparent">
-                    <MudImage Src="@user.AvatarUrl"/>
-                </MudAvatar>
-            }
-        </div>;
-
     private async Task AcceptFriendRequest(IncomingFriendRequest friendRequest)
     {
         var result = await ContactManager.RespondToFriendRequestAsync(friendRequest, true);

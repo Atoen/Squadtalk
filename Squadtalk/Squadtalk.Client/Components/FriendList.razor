@@ -1,0 +1,93 @@
+@using Squadtalk.Client.Extensions
+
+@if (ContactManager.FriendList.Count == 0)
+{
+    <p class="mud-typography-body1 mud-typography-gutterbottom">
+        @LocalizedText.R.friend_list_empty
+    </p>
+}
+else
+{
+    <p class="mud-typography-body1 mud-typography-gutterbottom">
+        @LocalizedText.R.all_friends - @ContactManager.FriendList.Count
+    </p>
+
+    foreach (var friend in ContactManager.FriendList)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center"
+                  Class="my-1 mud-button pa-1 mud-ripple"
+                  @onclick="() => MessageFriend(friend)">
+            @UserAvatar(friend)
+
+            <div>
+                <p class="mud-typography-body1">@friend.Username</p>
+                <p class="mud-typography-caption">@friend.StatusString(LocalizedText.R)</p>
+            </div>
+
+            <div class="ms-auto d-flex">
+                <MudTooltip Text="@LocalizedText.R.message"
+                            Placement="Placement.Top" Color="Color.Dark">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Message"
+                                   OnClick="() => MessageFriend(friend)"/>
+                </MudTooltip>
+
+                <MudTooltip Text="@LocalizedText.R.more"
+                            Placement="Placement.Top" Color="Color.Dark">
+                    <MudMenu Icon="@Icons.Material.Rounded.MoreVert" Dense="true">
+                        <MudMenuItem OnClick="() => StartVoiceCall(friend)">
+                            @LocalizedText.R.start_voice_call
+                        </MudMenuItem>
+                        <MudMenuItem Class="mud-error-text" OnClick="() => RemoveFriend(friend)">
+                            @LocalizedText.R.remove_friend
+                        </MudMenuItem>
+                    </MudMenu>
+                </MudTooltip>
+            </div>
+
+        </MudStack>
+    }
+}
+
+@inject LocalizedText LocalizedText
+@inject IContactManager ContactManager
+@inject IConnectionService ConnectionService
+@inject ILogger<FriendList> Logger
+
+@code
+{
+    public static readonly RenderFragment<UserModel> UserAvatar = user =>
+        @<div class="d-flex">
+            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+            {
+                <MudAvatar Color="Color.Tertiary">
+                    @user.Username[0]
+                </MudAvatar>
+            }
+            else
+            {
+                <MudAvatar Color="Color.Transparent">
+                    <MudImage Src="@user.AvatarUrl"/>
+                </MudAvatar>
+            }
+        </div>;
+
+    protected override Task OnInitializedAsync()
+    {
+        return !RendererInfo.IsInteractive ? ConnectionService.ConnectAsync() : Task.CompletedTask;
+    }
+
+    private async Task MessageFriend(UserModel friend)
+    {
+        Logger.LogInformation("Messaging friend");
+    }
+
+    private async Task StartVoiceCall(UserModel friend)
+    {
+        Logger.LogInformation("Staring voice call");
+    }
+
+    private async Task RemoveFriend(UserModel friend)
+    {
+        Logger.LogInformation("Removing friend");
+    }
+}
