@@ -41,6 +41,7 @@ builder.Services.AddScoped<IFileTransferService, FileTransferService>();
 builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 builder.Services.AddScoped<UserVolumeManager>();
 
+builder.Services.AddScoped<ContactTabState>();
 builder.Services.AddScoped<LocalizedText>();
 builder.Services.AddScoped<IFormValidator, FormValidator>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();

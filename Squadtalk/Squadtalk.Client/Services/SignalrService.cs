@@ -107,16 +107,21 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
 
     private async Task TryGetPersistedData()
     {
-        if (_clientPersistantState.TryReadUsers(out var users))
+        if (_clientPersistantState.TryReadFriends(out var friends))
         {
-            _logger.LogInformation("Retrieved persisted users");
-            await ConnectedUsersReceived.TryInvoke(users, true);
+            _logger.LogInformation("Retrieved persisted friends");
+            // await ConnectedUsersReceived.TryInvoke(friend, true);
         }
 
         if (_clientPersistantState.TryReadChannels(out var channels))
         {
             _logger.LogInformation("Retrieved persisted channels");
             await ChannelsReceived.TryInvoke(channels);
+        }
+
+        if (_clientPersistantState.TryReadFriendRequests(out var friendRequests))
+        {
+            _logger.LogInformation("Retrieved persisted friend requests");
         }
     }
 

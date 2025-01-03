@@ -1,34 +1,41 @@
 using Microsoft.AspNetCore.Components;
+using Shared;
 using Shared.DTOs.Chat;
 
 namespace Squadtalk.Services.Prerender;
 
 internal class PrerenderPersistantState(PersistentComponentState persistentComponentState)
 {
-    private const string ChannelsKey = "channels";
-    private const string UsersKey = "users";
-
     public IList<ChannelDto>? Channels { get; private set; }
-    public IList<UserDto>? OnlineUsers { get; private set; }
+    public IList<UserDto>? Friends { get; private set; }
+    public IList<PendingFriendRequestDto>? FriendRequests { get; private set; }
 
-    public bool ContainsData => OnlineUsers is { Count: > 0 } || Channels is { Count: > 0 };
+    public bool ContainsData => Channels is { Count: > 0 } ||
+                                Friends is { Count: > 0 } ||
+                                FriendRequests is { Count: > 0 };
 
-    public void AddData(List<ChannelDto>? channels, List<UserDto>? users)
+    public void AddData(List<ChannelDto>? channels, List<UserDto>? friends, List<PendingFriendRequestDto>? friendRequests)
     {
         Channels = channels;
-        OnlineUsers = users;
+        Friends = friends;
+        FriendRequests = friendRequests;
     }
 
     public void PersistData()
     {
         if (Channels is { Count: > 0 })
         {
-            persistentComponentState.PersistAsJson(ChannelsKey, Channels);
+            persistentComponentState.PersistAsJson(PersistentStateKeys.Channels, Channels);
         }
 
-        if (OnlineUsers is { Count: > 0 })
+        if (Friends is { Count: > 0 })
         {
-            persistentComponentState.PersistAsJson(UsersKey, OnlineUsers);
+            persistentComponentState.PersistAsJson(PersistentStateKeys.Friends, Friends);
+        }
+
+        if (FriendRequests is { Count: > 0 })
+        {
+            persistentComponentState.PersistAsJson(PersistentStateKeys.FriendRequests, FriendRequests);
         }
     }
 }

@@ -146,6 +146,7 @@ public static class ServiceCollectionExtensions
         // serviceCollection.AddScoped<IChannelManager, ChannelManager>();
         // serviceCollection.AddScoped<IContactManager, ContactManager>();
 
+        serviceCollection.AddScoped<ContactTabState>();
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
         serviceCollection.AddScoped<IConnectionService, ConnectionService>();
         serviceCollection.AddScoped<IChannelSorter, ChannelSorter>();

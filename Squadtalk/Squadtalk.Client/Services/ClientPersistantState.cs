@@ -1,25 +1,27 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
+using Shared;
 using Shared.DTOs.Chat;
 
 namespace Squadtalk.Client.Services;
 
 internal class ClientPersistantState(PersistentComponentState persistentComponentState)
 {
-    private const string ChannelsKey = "channels";
-    private const string UsersKey = "users";
-
     public bool TryReadChannels([NotNullWhen(true)] out List<ChannelDto>? channels)
     {
-        var read = persistentComponentState.TryTakeFromJson(ChannelsKey, out channels);
-
+        var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.Channels, out channels);
         return read && channels is not null;
     }
 
-    public bool TryReadUsers([NotNullWhen(true)] out List<UserDto>? users)
+    public bool TryReadFriends([NotNullWhen(true)] out List<UserDto>? users)
     {
-        var read = persistentComponentState.TryTakeFromJson(UsersKey, out users);
-
+        var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.Friends, out users);
         return read && users is not null;
+    }
+
+    public bool TryReadFriendRequests([NotNullWhen(true)] out List<FriendRequestDto>? friendRequests)
+    {
+        var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.FriendRequests, out friendRequests);
+        return read && friendRequests is not null;
     }
 }

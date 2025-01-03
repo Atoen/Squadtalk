@@ -9,8 +9,8 @@ internal class ConnectionService : IConnectionService
 {
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly UserRepository _userRepository;
+    private readonly FriendRepository _friendRepository;
     private readonly PrerenderPersistantState _persistState;
-    private readonly ChatConnectionManager _chatConnectionManager;
 
     event Func<ConnectionStatus, Task>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
 
@@ -21,13 +21,13 @@ internal class ConnectionService : IConnectionService
     public ConnectionService(
         AuthenticationStateProvider authenticationStateProvider,
         UserRepository userRepository,
-        PrerenderPersistantState persistState,
-        ChatConnectionManager chatConnectionManager)
+        FriendRepository friendRepository,
+        PrerenderPersistantState persistState)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _userRepository = userRepository;
+        _friendRepository = friendRepository;
         _persistState = persistState;
-        _chatConnectionManager = chatConnectionManager;
     }
 
     public Task<TimeSpan> MeasureConnectionDelayAsync() => Task.FromResult<TimeSpan>(default);
@@ -54,12 +54,22 @@ internal class ConnectionService : IConnectionService
             return;
         }
 
-        var users = _chatConnectionManager.ConnectedUsers.Select(x => x.ToDto()).ToList();
+        var friends = await _friendRepository.GetUserFriendsAsync(user.Id);
+        var friendRequests = await _friendRepository.GetUserPendingFriendRequests(user.Id);
+
         var channelDtos = user.Channels
             .Select(x => x.ToDto())
             .OrderByDescending(x => x.LastMessage?.Timestamp)
             .ToList();
 
-        _persistState.AddData(channelDtos, users);
+        var friendDtos = friends
+            .Select(x => x.ToDto())
+            .ToList();
+
+        var friendRequestDtos = friendRequests
+            .Select(x => x.ToDto())
+            .ToList();
+
+        _persistState.AddData(channelDtos, friendDtos, friendRequestDtos);
     }
 }
