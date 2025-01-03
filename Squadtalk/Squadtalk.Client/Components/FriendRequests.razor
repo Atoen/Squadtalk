@@ -29,9 +29,12 @@
     </MudStack>
 }
 
-<MudDivider Class="my-4"/>
-
-<MudText GutterBottom="true">@LocalizedText.R.outgoing_friend_requests</MudText>
+<div class="d-flex my-2">
+    <p class="mud-typography-body1" style="white-space: nowrap">
+        @LocalizedText.R.outgoing_friend_requests
+    </p>
+    <MudDivider DividerType="DividerType.Middle" Class="ms-2 align-self-center flex-1"/>
+</div>
 
 @foreach (var request in ContactManager.OutgoingFriendRequests)
 {

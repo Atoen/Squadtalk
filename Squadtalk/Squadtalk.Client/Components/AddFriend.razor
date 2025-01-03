@@ -46,6 +46,7 @@
         _alertMessage = null;
 
         if (_working || _usernameField is not { Value: { } username }) return;
+        if (username.Length == 0) return;
 
         _working = true;
 

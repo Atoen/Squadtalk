@@ -2,13 +2,13 @@
 @attribute [Route(Routes.Pages.Contacts)]
 
 @using Microsoft.AspNetCore.Authorization
-@using Squadtalk.Client.Components.dialogs
+@using Squadtalk.Client.Services
 
 <PageTitle>Squadtalk | @LocalizedText.R.contacts</PageTitle>
 
 <h2 class="mud-primary-text mb-2">@LocalizedText.R.contacts</h2>
 
-<MudTabs PanelClass="pa-4" ActivePanelIndex="2">
+<MudTabs PanelClass="pa-4" Rounded="true" @bind-ActivePanelIndex="TabState.SelectedTabIndex">
     <MudTabPanel Text="@LocalizedText.R.friends">
         @if (ContactManager.FriendList.Count == 0)
         {
@@ -72,8 +72,7 @@
 @inject IContactManager ContactManager
 @inject IChannelManager ChannelManager
 @inject LocalizedText LocalizedText
-@inject IConnectionService ConnectionService
-@inject IDialogService DialogService
+@inject ContactTabState TabState
 
 @code
 {
@@ -85,7 +84,6 @@
         // _table = Localization.GetTextTable(this);
         // ChannelManager.ConnectedUsersChanged += StateHasChanged;
 
-        await ConnectionService.ConnectAsync();
         await ContactManager.GetPendingFriendRequestsAsync();
     }
 

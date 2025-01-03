@@ -65,7 +65,7 @@ internal class ChannelManager(
 
     private void CreateModels()
     {
-        var onlineUsers = prerenderPersistantState.OnlineUsers ?? Array.Empty<UserDto>();
+        var onlineUsers = prerenderPersistantState.Friends ?? Array.Empty<UserDto>();
         var channels = prerenderPersistantState.Channels ?? Array.Empty<ChannelDto>();
 
         var currentUserId = authenticationService.UserId;
