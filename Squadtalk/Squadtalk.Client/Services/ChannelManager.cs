@@ -4,6 +4,7 @@ using Shared.Data.TypedIds;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
+using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
 
@@ -16,14 +17,10 @@ internal class ChannelManager : IChannelManager
     private readonly ILogger<ChannelManager> _logger;
     private readonly NavigationManager _navigationManager;
 
-    // private readonly Func<IChatUser, UserModel> _userModelProvider;
-    // private readonly Dictionary<UserId, UserModel> _users = [];
     private readonly Dictionary<ChannelId, ChannelModel> _allChannels = [];
-
     private readonly List<GroupChatModel> _groupChats = [];
     private readonly List<DirectMessageChannelModel> _directMessageChannels = [];
 
-    // public IReadOnlyCollection<UserModel> Users => _users.Values;
     public IReadOnlyCollection<ChannelModel> Channels => _allChannels.Values;
 
     public IEnumerable<GroupChatModel> GroupChats => _groupChats;

@@ -1,18 +1,18 @@
 using System.Net;
+using MessagePack;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Client.Pages;
-using Squadtalk.Client.Services;
 using Squadtalk.Components;
 using Squadtalk.Components.Account;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
-using Squadtalk.Hubs;
 using Squadtalk.Services;
+using Squadtalk.Signalr.Hubs;
 using Squadtalk.Tus;
 using StackExchange.Redis;
 using tusdotnet;
@@ -42,11 +42,10 @@ var postgresConnectionString = builder.Configuration.GetRequiredConnectionString
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(postgresConnectionString));
 
+var redisConnectionString = builder.Configuration.GetRequiredConnectionString("redis");
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-{
-    var connectionString = builder.Configuration.GetRequiredConnectionString("redis");
-    return ConnectionMultiplexer.Connect(connectionString);
-});
+    ConnectionMultiplexer.Connect(redisConnectionString));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -70,6 +69,18 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 builder.Services.AddServerServices(builder.Environment);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
+
+builder.Services.AddSignalR()
+    .AddMessagePackProtocol(options =>
+    {
+        options.SerializerOptions = MessagePackSerializerOptions.Standard
+            .WithCompression(MessagePackCompression.Lz4BlockArray)
+            .WithCompressionMinLength(256)
+            .WithSecurity(MessagePackSecurity.UntrustedData);
+    }).AddStackExchangeRedis(redisConnectionString, options =>
+    {
+        options.Configuration.DefaultDatabase = 1;
+    });
 
 const string corsPolicy = "cors";
 
@@ -115,7 +126,7 @@ app.MapRazorComponents<App>()
 
 app.MapControllers();
 
-app.MapHub<ChatHub>("/chathub", options =>
+app.MapHub<AppHub>("/chathub", options =>
 {
     options.AllowStatefulReconnects = true;
 });

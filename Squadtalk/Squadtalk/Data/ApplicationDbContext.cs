@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Shared.Data.TypedIds;
 using Squadtalk.Data.Entities;
+using Squadtalk.Data.Sql;
 using Squadtalk.Data.TypedIds;
-
 
 namespace Squadtalk.Data;
 
@@ -26,9 +26,27 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     public DbSet<Friendship> Friendships { get; set; } = default!;
 
+    public IQueryable<FriendRequestOutput> AddFriendRequest(Guid senderId, string recipientUsername) =>
+        FromExpression(() => AddFriendRequest(senderId, recipientUsername));
+
+    public IQueryable<FriendRequestResponseOutput> RespondToFriendRequest(Guid acceptingId, int requestId, bool accepted) =>
+        FromExpression(() => RespondToFriendRequest(acceptingId, requestId, accepted));
+
+    public IQueryable<RemoveFriendOutput> RemoveFriend(Guid removingUserId, Guid friendId) =>
+        FromExpression(() => RemoveFriend(removingUserId, friendId));
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.HasDbFunction(() => AddFriendRequest(default, default!))
+            .HasName("send_friend_request");
+
+        builder.HasDbFunction(() => RespondToFriendRequest(default, default, default))
+            .HasName("respond_to_friend_request");
+
+        builder.HasDbFunction(() => RemoveFriend(default, default))
+            .HasName("remove_friend");
 
         var userConverter = new ValueConverter<UserId, Guid>(
             x => x.Value,
@@ -89,61 +107,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<ApplicationUser>()
             .Navigation(x => x.Channels)
             .AutoInclude(false);
-
-        // base.OnModelCreating(builder);
-        //
-        // var userIdConverter = new ValueConverter<UserId, Guid>(
-        //     x => x.Value,
-        //     x => new UserId(x));
-        //
-        // var channelIdConverter = new ValueConverter<ChannelId, string>(
-        //     x => x.Value,
-        //     x => new ChannelId(x));
-        //
-        // builder.Entity<IdentityRole<UserId>>()
-        //     .Property(x => x.Id)
-        //     .HasConversion(userIdConverter);
-        //
-        // builder.Entity<Message>()
-        //     .Property(x => x.ChannelId)
-        //     .HasConversion(channelIdConverter);
-        //
-        // builder.Entity<DbFile>(entity =>
-        // {
-        //     entity.Property(x => x.ChannelId)
-        //         .HasConversion(id => id.Value, value => new ChannelId(value));
-        //
-        //     entity.Property(x => x.TusId)
-        //         .HasConversion(id => id.Value, value => new TusFileId(value));
-        // });
-        //
-        // builder.Entity<ApplicationUser>(entity =>
-        // {
-        //     entity.Property(x => x.Id)
-        //         .HasConversion(userIdConverter);
-        //
-        //     entity.Navigation(x => x.Channels)
-        //         .AutoInclude(false);
-        //
-        //     entity.Navigation(x => x.Contacts)
-        //         .AutoInclude(false);
-        // });
-        //
-        // builder.Entity<Channel>(entity =>
-        // {
-        //     entity.Property(x => x.Id)
-        //         .HasConversion(channelIdConverter);
-        //
-        //     entity.OwnsOne(x => x.LastMessage)
-        //         .Property(x => x.AuthorId)
-        //         .HasConversion(userIdConverter);
-        //
-        //     entity.OwnsOne(x => x.LastMessage)
-        //         .Property(x => x.ChannelId)
-        //         .HasConversion(channelIdConverter);
-        //
-        //     entity.HasMany(x => x.Participants)
-        //         .WithMany(x => x.Channels);
-        // });
     }
 }

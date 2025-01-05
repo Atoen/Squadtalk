@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Extensions;
-using Shared.Results;
 using Shared.Routing;
 using Squadtalk.Data;
 using Squadtalk.Repositories;
@@ -75,72 +74,5 @@ public class ChatController : ControllerBase
         var requests = await friendRepository.GetUserPendingFriendRequests(userId);
 
         return requests.Select(x => x.ToDto());
-    }
-
-    [HttpPost(Routes.RelativeEndpoints.SendFriendRequest)]
-    public async Task<ActionResult> SendFriendRequest(
-        FriendRequestDto friendRequestDto,
-        [FromServices] FriendRepository friendRepository)
-    {
-        var userId = HttpContext.User.GetUserId();
-
-        if (userId != friendRequestDto.RequestingUserId)
-        {
-            return Forbid();
-        }
-
-        var result = await friendRepository.AddFriendRequest(
-            userId, friendRequestDto.RecipientUsername, HttpContext.RequestAborted);
-
-        return result switch
-        {
-            FriendRequestResult.Success => Ok(result),
-            FriendRequestResult.RecipientNotFound => NotFound(result),
-            _ => BadRequest(result)
-        };
-    }
-
-    [HttpPost(Routes.RelativeEndpoints.RespondToFriendRequest)]
-    public async Task<ActionResult> RespondToFriendRequest(
-        FriendRequestResponseDto friendRequestResponseDto,
-        [FromServices] FriendRepository friendRepository)
-    {
-        var userId = HttpContext.User.GetUserId();
-
-        if (userId != friendRequestResponseDto.RespondingUserId)
-        {
-            return Forbid();
-        }
-
-        var result = await friendRepository.RespondToFriendRequestAsync(
-            userId,
-            friendRequestResponseDto.FriendRequestId,
-            friendRequestResponseDto.Accepted,
-            HttpContext.RequestAborted);
-
-        return result switch
-        {
-            FriendRequestResponseResult.Success => Ok(result),
-            FriendRequestResponseResult.InvalidResponse => BadRequest(result),
-            _ => Problem()
-        };
-    }
-
-    [HttpPost(Routes.RelativeEndpoints.RemoveFriend)]
-    public async Task<ActionResult> RemoveFriend(
-        RemoveFriendDto removeFriendDto,
-        [FromServices] FriendRepository friendRepository)
-    {
-        var userId = HttpContext.User.GetUserId();
-
-        var result = await friendRepository.RemoveFriendAsync(
-            userId, removeFriendDto.FriendId, HttpContext.RequestAborted);
-
-        return result switch
-        {
-            RemoveFriendResult.Success => Ok(result),
-            RemoveFriendResult.BadRequest => BadRequest(result),
-            _ => Problem()
-        };
     }
 }

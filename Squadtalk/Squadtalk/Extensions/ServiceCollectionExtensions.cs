@@ -1,7 +1,6 @@
 using System.Text;
 using Blazored.LocalStorage;
 using MailKit.Net.Smtp;
-using MessagePack;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -116,21 +115,13 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddTransient<SystemMessageService>();
 
         serviceCollection.AddSingleton<TusHelper>();
-        serviceCollection.AddSignalR()
-            .AddMessagePackProtocol(options =>
-            {
-                options.SerializerOptions = MessagePackSerializerOptions.Standard
-                    .WithCompression(MessagePackCompression.Lz4BlockArray)
-                    .WithCompressionMinLength(256)
-                    .WithSecurity(MessagePackSecurity.UntrustedData);
-            });
 
         serviceCollection.AddBlazoredLocalStorage();
         serviceCollection.AddMudServices();
 
         serviceCollection.AddSingleton<SmtpClient>();
         serviceCollection.AddSingleton<ResiliencePipelineRegistry<string>>();
-        serviceCollection.AddSingleton<ChatConnectionManager>();
+        serviceCollection.AddSingleton<HubConnectionManager>();
         serviceCollection.AddSingleton<VoiceCallManager>();
 
         serviceCollection.AddTransient<LiveKitEventHandler>();

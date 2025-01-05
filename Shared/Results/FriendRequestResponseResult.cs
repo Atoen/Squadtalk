@@ -3,6 +3,7 @@ namespace Shared.Results;
 public enum FriendRequestResponseResult
 {
     Error = -1,
-    Success = 0,
-    InvalidResponse
+    SuccessRejected = 0,
+    SuccessAccepted = 1,
+    InvalidResponse = 2
 }

@@ -4,18 +4,19 @@ using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Extensions;
 using Shared.Models;
+using Shared.Signalr.Clients;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 
-namespace Squadtalk.Hubs;
+namespace Squadtalk.Signalr;
 
 [Authorize]
-public partial class ChatHub : Hub<IChatClient>
+public partial class ChatHub : Hub<IChatClientOld>
 {
-    private readonly ChatConnectionManager _connectionManager;
+    private readonly HubConnectionManager _connectionManager;
     private readonly ILogger<ChatHub> _logger;
     private readonly VoiceCallManager _voiceCallManager;
     private readonly UserRepository _userRepository;
@@ -24,7 +25,7 @@ public partial class ChatHub : Hub<IChatClient>
     private readonly LiveKitService _liveKitService;
 
     public ChatHub(
-        ChatConnectionManager connectionManager,
+        HubConnectionManager connectionManager,
         VoiceCallManager voiceCallManager,
         UserRepository userRepository,
         MessageRepository messageRepository,
@@ -46,13 +47,13 @@ public partial class ChatHub : Hub<IChatClient>
     private IVoiceChatClient OthersInVoiceGroup(string groupName) => Clients.OthersInGroup(groupName);
     private IVoiceChatClient VoiceCaller => Clients.Caller;
     
-    private ITextChatClient TextGroup(string groupName) => Clients.Group(groupName);
-    private ITextChatClient TextClient(string connectionId) => Clients.Client(connectionId);
-    private ITextChatClient TextCaller => Clients.Caller;
+    private ITextChatClientOld TextGroup(string groupName) => Clients.Group(groupName);
+    private ITextChatClientOld TextClient(string connectionId) => Clients.Client(connectionId);
+    private ITextChatClientOld TextCaller => Clients.Caller;
 
     private async Task<ApplicationUser?> GetChannelParticipantAsync(ChannelId channelId, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.Include)
     {
-        var user = await _userRepository.GetUserAsync(Context.User, channelsInclusionOption);
+        var user = await _userRepository.FindUserByid(Context.User, channelsInclusionOption);
         if (user is null || !user.ParticipatesInChannel(channelId))
         {
             return null;
@@ -128,7 +129,7 @@ public partial class ChatHub : Hub<IChatClient>
 
     public async Task<(IEnumerable<UserDto>, IEnumerable<ChannelDto>)> GetUsersAndChannels()
     {
-        var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.IncludeWithParticipants);
+        var user = await _userRepository.FindUserByid(Context.User, ChannelsInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
             return ([], []);
@@ -138,19 +139,19 @@ public partial class ChatHub : Hub<IChatClient>
 
         var connectedUsers = new List<UserDto>();
 
-        var unreadMessagesCount = await _messageRepository.GetUnreadMessageCountPerChannelAsync(user.Channels, user.LastSeen);
+        // var unreadMessagesCount = await _messageRepository.GetUnreadMessageCountPerChannelAsync(user.Channels, user.LastSeen);
         var channelDtos = user.Channels.Select(x => x.ToDto()).ToList();
-        foreach (var channelDto in channelDtos)
-        {
-            channelDto.MessagesSince = unreadMessagesCount.GetValueOrDefault(channelDto.Id, 0);
-        }
+        // foreach (var channelDto in channelDtos)
+        // {
+            // channelDto.MessagesSince = unreadMessagesCount.GetValueOrDefault(channelDto.Id, 0);
+        // }
 
         return (connectedUsers, channelDtos);
     }
 
     public override async Task OnConnectedAsync()
     {
-        var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserByid(Context.User, ChannelsInclusionOption.Include);
         if (user is null)
         {
             return;
@@ -170,13 +171,13 @@ public partial class ChatHub : Hub<IChatClient>
             return;
         }
 
-        await AddUserToPrivateChannelsAsync(dto, user.Channels, isUniqueConnection);
+        // await AddUserToPrivateChannelsAsync(dto, user.Channels, isUniqueConnection);
         await _userRepository.SetLastSeen(user, DateTimeOffset.UtcNow);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = await _userRepository.GetUserAsync(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserByid(Context.User, ChannelsInclusionOption.Include);
         if (user is null)
         {
             return;

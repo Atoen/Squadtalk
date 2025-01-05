@@ -1,5 +1,4 @@
 using Shared.Data;
-using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Models;
 using Shared.Results;
@@ -8,10 +7,8 @@ namespace Shared.Services;
 
 public interface IContactManager
 {
-    event Action? ContactsStateChanged;
-    event Action<UserModel>? ContactDisconnected;
-    event Action<UserModel>? ContactConnected;
-
+    event Action? FriendListChanged;
+    event Action? FriendRequestsChanged;
     event Action<IncomingFriendRequest>? FriendRequestReceived;
 
     Func<IChatUser, UserModel> UserModelProvider { get; }
@@ -31,7 +28,7 @@ public interface IContactManager
 
     Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted);
 
-    Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId);
+    Task<RemoveFriendResult?> RemoveFriendAsync(UserModel userModel);
 
     Task<List<UserModel>> GetFriendsAsync();
 

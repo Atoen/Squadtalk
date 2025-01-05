@@ -3,9 +3,8 @@ using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.DTOs.Chat;
 using Shared.Extensions;
-using Squadtalk.Client.SignalR;
 
-namespace Squadtalk.Client.Services;
+namespace Squadtalk.Client.Services.SignalR;
 
 internal sealed partial class SignalrService : ISignalrRTCService
 {

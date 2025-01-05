@@ -1,13 +1,10 @@
-using System.ComponentModel.DataAnnotations;
-using Shared.Data.TypedIds;
+using MessagePack;
 
 namespace Shared.DTOs.Chat;
 
+[MessagePackObject]
 public class FriendRequestDto
 {
-    [Required]
+    [Key(0)]
     public required string RecipientUsername { get; set; }
-
-    [Required]
-    public required UserId RequestingUserId { get; set; }
 }

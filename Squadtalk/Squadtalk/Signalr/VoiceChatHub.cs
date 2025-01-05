@@ -3,7 +3,7 @@ using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Squadtalk.Data;
 
-namespace Squadtalk.Hubs;
+namespace Squadtalk.Signalr;
 
 [Authorize]
 public partial class ChatHub

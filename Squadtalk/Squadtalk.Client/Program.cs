@@ -7,6 +7,7 @@ using Shared.Services;
 using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
+using Squadtalk.Client.Services.SignalR;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -46,6 +47,7 @@ builder.Services.AddScoped<LocalizedText>();
 builder.Services.AddScoped<IFormValidator, FormValidator>();
 builder.Services.AddScoped<IAccountManager, AccountManager>();
 
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ITextProviderManager, BrowserTextProviderManager>();
 builder.Services.AddScoped<IUserPreferencesService, UserPreferencesService>();
 builder.Services.AddScoped<IMediaQueryService, MediaQueryService>();

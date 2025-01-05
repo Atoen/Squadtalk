@@ -59,6 +59,11 @@
 
 @code
 {
+    protected override void OnInitialized()
+    {
+        ContactManager.FriendRequestsChanged += StateHasChanged;
+    }
+
     private async Task AcceptFriendRequest(IncomingFriendRequest friendRequest)
     {
         var result = await ContactManager.RespondToFriendRequestAsync(friendRequest, true);

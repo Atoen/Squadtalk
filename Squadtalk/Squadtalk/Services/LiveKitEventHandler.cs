@@ -3,12 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Squadtalk.Data;
 using Squadtalk.Data.LiveKit.Events;
-using Squadtalk.Hubs;
+using Squadtalk.Signalr;
 
 namespace Squadtalk.Services;
 
 public class LiveKitEventHandler(
-    IHubContext<ChatHub, IChatClient> hubContext,
+    IHubContext<ChatHub, IChatClientOld> hubContext,
     VoiceCallManager voiceCallManager,
     SystemMessageService systemMessageService,
     ApplicationDbContext dbContext,

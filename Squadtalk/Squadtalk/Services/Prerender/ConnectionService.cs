@@ -48,7 +48,7 @@ internal class ConnectionService : IConnectionService
     private async Task ConnectInternalAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userRepository.GetUserAsync(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
+        var user = await _userRepository.FindUserByid(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
             return;

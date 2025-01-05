@@ -31,8 +31,8 @@
     private object? RequestTabBadgeData =>
         ContactManager.IncomingFriendRequests is { Count: > 0 and var count } ? count : null;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await ContactManager.GetPendingFriendRequestsAsync();
+        ContactManager.FriendRequestsChanged += StateHasChanged;
     }
 }

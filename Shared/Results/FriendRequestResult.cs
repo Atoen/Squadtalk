@@ -1,11 +1,18 @@
+using Shared.Data.TypedIds;
+
 namespace Shared.Results;
 
-public enum FriendRequestResult
+public abstract record SendFriendRequestResult(FriendRequestResult Value)
 {
-    Error = -1,
-    Success = 0,
-    RecipientNotFound,
-    SelfRequest,
-    RequestAlreadyPending,
-    AlreadyFriends,
+    public sealed record Success(FriendRequestId RequestId) : SendFriendRequestResult(FriendRequestResult.Success);
+
+    public sealed record RecipientNotFound() : SendFriendRequestResult(FriendRequestResult.RecipientNotFound);
+
+    public sealed record SelfRequest() : SendFriendRequestResult(FriendRequestResult.SelfRequest);
+
+    public sealed record RequestAlreadyPending() : SendFriendRequestResult(FriendRequestResult.RequestAlreadyPending);
+
+    public sealed record AlreadyFriends() : SendFriendRequestResult(FriendRequestResult.AlreadyFriends);
+
+    public sealed record Error() : SendFriendRequestResult(FriendRequestResult.Error);
 }

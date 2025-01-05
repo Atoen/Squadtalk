@@ -1,7 +1,7 @@
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 
-namespace Squadtalk.Hubs;
+namespace Shared.Signalr.Clients;
 
 public interface IVoiceChatClient
 {

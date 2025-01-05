@@ -4,18 +4,16 @@ using StackExchange.Redis;
 
 namespace Squadtalk.Services;
 
-public class ChatConnectionManager
+public class HubConnectionManager
 {
     private const string UserConnectionsKey = "user:connections";
 
     private readonly IDatabase _redisDb;
 
-    public ChatConnectionManager(IConnectionMultiplexer connectionMultiplexer)
+    public HubConnectionManager(IConnectionMultiplexer connectionMultiplexer)
     {
         _redisDb = connectionMultiplexer.GetDatabase(2);
     }
-
-    public List<ApplicationUser> ConnectedUsers { get; } = [];
 
     public async Task<IEnumerable<string>> GetUserConnectionsAsync(ApplicationUser user)
     {
