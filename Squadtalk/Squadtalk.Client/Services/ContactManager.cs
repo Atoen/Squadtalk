@@ -1,18 +1,20 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
-using Shared.Enums;
 using Shared.Models;
 using Shared.Results;
 using Shared.Services;
 using Squadtalk.Client.Network;
+using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
 
 internal class ContactManager : IContactManager
 {
+    private readonly SignalrService _signalrService;
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IChatApi _chatApi;
+    private readonly NotificationService _notificationService;
     private readonly ILogger<ContactManager> _logger;
 
     private readonly Dictionary<UserId, UserModel> _users = [];
@@ -21,9 +23,8 @@ internal class ContactManager : IContactManager
     private readonly Dictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
     private readonly Dictionary<FriendRequestId, OutgoingFriendRequest> _outgoingFriendRequests = [];
 
-    public event Action? ContactsStateChanged;
-    public event Action<UserModel>? ContactDisconnected;
-    public event Action<UserModel>? ContactConnected;
+    public event Action? FriendListChanged;
+    public event Action? FriendRequestsChanged;
     public event Action<IncomingFriendRequest>? FriendRequestReceived;
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
@@ -39,63 +40,24 @@ internal class ContactManager : IContactManager
         SignalrService signalrService,
         IUserAuthenticationService userAuthenticationService,
         IChatApi chatApi,
+        NotificationService notificationService,
         ILogger<ContactManager> logger)
     {
+        _signalrService = signalrService;
         _userAuthenticationService = userAuthenticationService;
         _chatApi = chatApi;
+        _notificationService = notificationService;
         _logger = logger;
 
         UserModelProvider = GetOrCreateUserModel;
 
-        signalrService.FriendListReceived += FriendListReceived;
+        notificationService.FriendRequestAcceptedFromNotification += FriendAcceptedFromNotification;
 
-        signalrService.UserConnected += UserConnected;
-        signalrService.ConnectedUsersReceived += ReceivedConnectedUsers;
-        signalrService.UserDisconnected += UserDisconnected;
-
-        _outgoingFriendRequests.Add(new FriendRequestId(7), new OutgoingFriendRequest
-        {
-            Id = new FriendRequestId(7),
-            To = UserModelProvider(new UserDto
-            {
-                Id = UserId.New,
-                Username = "Agent Chaosu #1"
-            }),
-            CreatedAt = DateTimeOffset.Now.AddDays(-2)
-        });
-
-        _incomingFriendRequests.Add(new FriendRequestId(8), new IncomingFriendRequest
-        {
-            Id = new FriendRequestId(8),
-            From = UserModelProvider(new UserDto
-            {
-                Id = UserId.New,
-                Username = "Agent Chaosu #2"
-            }),
-            CreatedAt = DateTimeOffset.Now
-        });
-
-        _incomingFriendRequests.Add(new FriendRequestId(28), new IncomingFriendRequest
-        {
-            Id = new FriendRequestId(28),
-            From = UserModelProvider(new UserDto
-            {
-                Id = UserId.New,
-                Username = "Agent Chaosu #23"
-            }),
-            CreatedAt = DateTimeOffset.Now
-        });
-
-        _incomingFriendRequests.Add(new FriendRequestId(11), new IncomingFriendRequest
-        {
-            Id = new FriendRequestId(11),
-            From = UserModelProvider(new UserDto
-            {
-                Id = UserId.New,
-                Username = "Agent Chaosu #22"
-            }),
-            CreatedAt = DateTimeOffset.Now
-        });
+        signalrService.FriendRequestReceived += ReceivedFriendRequest;
+        signalrService.FriendAdded += FriendAdded;
+        signalrService.FriendRemoved += FriendRemoved;
+        signalrService.FriendRequestCancelled += FriendRequestCancelled;
+        signalrService.FriendRequestResponded += FriendRequestResponded;
     }
 
     public UserModel GetOrCreateUserModel(IChatUser chatUser)
@@ -111,74 +73,74 @@ internal class ContactManager : IContactManager
 
     public async Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername)
     {
-        try
+        var result = await _signalrService.SendFriendRequestAsync(recipientUsername);
+        if (result.Status != FriendRequestResult.Success)
         {
-            var data = new FriendRequestDto
-            {
-                RecipientUsername = recipientUsername,
-                RequestingUserId = _userAuthenticationService.UserId
-            };
+            return result.Status;
+        }
 
-            return await _chatApi.SendFriendRequest(data);
-        }
-        catch
+        if (result.FriendRequest is not { } pendingFriendRequestDto)
         {
-            return null;
+            _notificationService.ShowFailedToSendFriendRequestNotification(recipientUsername);
+            return FriendRequestResult.Error;
         }
-    }
 
-    public async Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest)
-    {
-        try
+        var outgoingRequest = new OutgoingFriendRequest
         {
-            var data = new CancelFriendRequestDto
-            {
-                RequestId = friendRequest.Id,
-                CancellingUserId = _userAuthenticationService.UserId
-            };
+            CreatedAt = pendingFriendRequestDto.CreatedAt,
+            To = GetOrCreateUserModel(pendingFriendRequestDto.Recipient),
+            Id = pendingFriendRequestDto.Id
+        };
 
-            return null;
-        }
-        catch
-        {
-            return null;
-        }
+        _outgoingFriendRequests.Add(outgoingRequest.Id, outgoingRequest);
+
+        return FriendRequestResult.Success;
     }
 
     public async Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted)
     {
-        try
+        var result = await _signalrService.RespondToFriendRequestAsync(friendRequest.Id, accepted);
+        if (result is FriendRequestResponseResult.SuccessAccepted or FriendRequestResponseResult.SuccessRejected)
         {
-            var data = new FriendRequestResponseDto
-            {
-                RespondingUserId = _userAuthenticationService.UserId,
-                FriendRequestId = friendRequest.Id,
-                Accepted = accepted
-            };
+            _incomingFriendRequests.Remove(friendRequest.Id);
+            FriendRequestsChanged?.Invoke();
+        }
+        else
+        {
+            _notificationService.ShowFailedToRespondToFriendRequestNotification(friendRequest);
+        }
 
-            return await _chatApi.RespondToFriendRequest(data);
-        }
-        catch
-        {
-            return null;
-        }
+        return result;
     }
 
-    public async Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId)
+    public async Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest)
     {
-        try
+        var ok = await _signalrService.CancelFriendRequestAsync(friendRequest.Id);
+        if (ok)
         {
-            var data = new RemoveFriendDto
-            {
-                FriendId = friendId
-            };
+            _outgoingFriendRequests.Remove(friendRequest.Id);
+        }
+        else
+        {
+            _notificationService.ShowFailedToCancelFriendRequestNotification(friendRequest);
+        }
 
-            return await _chatApi.RemoveFriend(data);
-        }
-        catch
+        return ok ? CancelFriendRequestResult.Success : CancelFriendRequestResult.InvalidRequest;
+    }
+
+    public async Task<RemoveFriendResult?> RemoveFriendAsync(UserModel friend)
+    {
+        var result = await _signalrService.RemoveFriendAsync(friend.Id);
+        if (result == RemoveFriendResult.Success)
         {
-            return null;
+            _friends.Remove(friend.Id);
         }
+        else
+        {
+            _notificationService.ShowFailedToRemoveFriendNotification(friend);
+        }
+
+        return result;
     }
 
     public async Task<List<UserModel>> GetFriendsAsync()
@@ -236,51 +198,69 @@ internal class ContactManager : IContactManager
         }
     }
 
-    private void SetUserStatus(IChatUser user, UserStatus status)
+    private async Task FriendAcceptedFromNotification(IncomingFriendRequest incomingFriendRequest)
     {
-        var model = GetOrCreateUserModel(user);
-        model.Status = status;
+        var result = await RespondToFriendRequestAsync(incomingFriendRequest, true);
+        if (result is FriendRequestResponseResult.SuccessAccepted or FriendRequestResponseResult.SuccessRejected)
+        {
+            _incomingFriendRequests.Remove(incomingFriendRequest.Id);
+            FriendRequestsChanged?.Invoke();
+        }
     }
 
-    private Task UserConnected(UserDto user)
+    private void FriendAdded(UserDto friend)
     {
-        if (user.Id == _userAuthenticationService.UserId)
-        {
-            _logger.LogWarning("Connected user id is the same");
-            return Task.CompletedTask;
-        }
-
-        SetUserStatus(user, UserStatus.Online);
-
-        ContactsStateChanged?.Invoke();
-
-        return Task.CompletedTask;
+        var friendModel = GetOrCreateUserModel(friend);
+        _friends.Add(friendModel.Id, friendModel);
+        FriendListChanged?.Invoke();
     }
 
-    private Task ReceivedConnectedUsers(IEnumerable<UserDto> users, bool fromPersistedData)
+    private void FriendRemoved(UserId friendId)
     {
-        foreach (var user in users)
+        if (_friends.Remove(friendId))
         {
-            UserConnected(user);
+            FriendListChanged?.Invoke();
         }
-
-        return Task.CompletedTask;
     }
 
-    private Task UserDisconnected(UserDto user)
+    private void ReceivedFriendRequest(PendingFriendRequestDto friendRequest)
     {
-        if (user.Id == _userAuthenticationService.UserId)
+        var incomingFriendRequest = new IncomingFriendRequest
         {
-            _logger.LogWarning("Disconnected user id is the same");
-            return Task.CompletedTask;
+            Id = friendRequest.Id,
+            CreatedAt = friendRequest.CreatedAt,
+            From = GetOrCreateUserModel(friendRequest.Requester)
+        };
+
+        _incomingFriendRequests.Add(incomingFriendRequest.Id, incomingFriendRequest);
+        _notificationService.ShowIncomingFriendRequestNotification(incomingFriendRequest);
+
+        FriendRequestReceived?.Invoke(incomingFriendRequest);
+        FriendRequestsChanged?.Invoke();
+    }
+
+    private void FriendRequestCancelled(FriendRequestId friendRequestId)
+    {
+        if (_incomingFriendRequests.Remove(friendRequestId) ||
+            _outgoingFriendRequests.Remove(friendRequestId))
+        {
+            FriendRequestsChanged?.Invoke();
+        }
+    }
+
+    private void FriendRequestResponded(FriendRequestResponseDto response)
+    {
+        if (!_outgoingFriendRequests.Remove(response.FriendRequestId, out var request))
+        {
+            return;
         }
 
-        if (_users.Remove(user.Id, out var disconnected))
+        if (response.Accepted)
         {
-            ContactDisconnected?.Invoke(disconnected);
+            _notificationService.ShowUserAcceptedFriendRequestNotification(request);
         }
 
-        return Task.CompletedTask;
+        FriendRequestsChanged?.Invoke();
     }
 
     private void FriendListReceived(List<UserDto> friends)
@@ -291,6 +271,6 @@ internal class ContactManager : IContactManager
             _friends[model.Id] = model;
         }
 
-        ContactsStateChanged?.Invoke();
+        FriendListChanged?.Invoke();
     }
 }

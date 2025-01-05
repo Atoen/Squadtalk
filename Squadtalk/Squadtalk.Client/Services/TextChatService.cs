@@ -5,7 +5,7 @@ using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Network;
-using Squadtalk.Client.SignalR;
+using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
 

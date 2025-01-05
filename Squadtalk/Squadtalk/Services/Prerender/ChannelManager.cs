@@ -29,23 +29,22 @@ internal class ChannelManager(
     public GroupChatModel GlobalChat => GlobalChatModel;
     public ChannelModel? CurrentChannel { get; private set; }
 
-    public event Action<IncomingFriendRequest>? FriendRequestReceived;
+    event Action? IContactManager.FriendListChanged { add { } remove { } }
+    event Action? IContactManager.FriendRequestsChanged { add { } remove { } }
+    event Action<IncomingFriendRequest>? IContactManager.FriendRequestReceived { add { } remove { } }
+
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
     public IReadOnlyCollection<UserModel> AllContacts { get; } = [];
     public IReadOnlyCollection<UserModel> FriendList => LazyFriends.Values;
     public IReadOnlyCollection<UserModel> OtherContacts => LazyFriends.Values;
-    public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
-    public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
+    public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; } = [];
+    public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; } = [];
 
     event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
     event Action? IChannelManager.ChannelChanged { add { } remove { } }
     event Func<Task>? IChannelManager.ChannelChangedAsync { add { } remove { } }
-
-    event Action? IContactManager.ContactsStateChanged { add { } remove { } }
-    event Action<UserModel>? IContactManager.ContactDisconnected { add { } remove { } }
-    event Action<UserModel>? IContactManager.ContactConnected { add { } remove { } }
 
     private Dictionary<TKey, TValue> TryCreateModels<TKey, TValue>(ref Dictionary<TKey, TValue>? storage, Dictionary<TKey, TValue> empty)
         where TKey : notnull
@@ -92,10 +91,8 @@ internal class ChannelManager(
     public Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername) => throw new NotImplementedException();
     public Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest) => throw new NotImplementedException();
     public Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted) => throw new NotImplementedException();
-    public Task<CancelFriendRequestResult?> CancelFriendRequest(FriendRequestId requestId) => throw new NotImplementedException();
-    public Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(FriendRequestId requestId, bool accepted) => throw new NotImplementedException();
-    public Task<RemoveFriendResult?> RemoveFriendAsync(UserId friendId) => throw new NotImplementedException();
-    public Task<List<UserModel>> GetFriendsAsync() => throw new NotImplementedException();
+    public Task<RemoveFriendResult?> RemoveFriendAsync(UserModel userModel) => throw new NotImplementedException();
+    public Task<List<UserModel>> GetFriendsAsync() => Task.FromResult(new List<UserModel>());
     public Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync() => Task.FromResult(new List<PendingFriendRequestDto>());
 
     public Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true)

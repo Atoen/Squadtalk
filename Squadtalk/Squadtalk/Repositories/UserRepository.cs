@@ -7,9 +7,11 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Repositories;
 
-public class UserRepository(ApplicationDbContext dbContext, ILogger<UserRepository> logger)  : RepositoryBase(dbContext, logger)
+public class UserRepository(
+    ApplicationDbContext dbContext,
+    ILogger<UserRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    public Task<ApplicationUser?> GetUserAsync(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ApplicationUser?> FindUserByid(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
     {
         if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
         {
@@ -17,11 +19,11 @@ public class UserRepository(ApplicationDbContext dbContext, ILogger<UserReposito
         }
 
         return UserId.TryParse(claim, out var userId)
-            ? GetUserAsync(userId, channelsInclusionOption)
+            ? FindUserById(userId, channelsInclusionOption)
             : Task.FromResult<ApplicationUser?>(null);
     }
 
-    public Task<ApplicationUser?> GetUserAsync(UserId userId,  ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ApplicationUser?> FindUserById(UserId userId, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
     {
         return channelsInclusionOption switch
         {
@@ -30,6 +32,12 @@ public class UserRepository(ApplicationDbContext dbContext, ILogger<UserReposito
             ChannelsInclusionOption.IncludeWithParticipants => UserByIdWithFullChannelsAsync(DbContext, userId),
             _ => throw new ArgumentOutOfRangeException(nameof(channelsInclusionOption), channelsInclusionOption, null)
         };
+    }
+
+    public async Task<ApplicationUser?> FindUserByNameAsync(string username)
+    {
+        var normalizedUsername = username.ToUpperInvariant();
+        return await UserByNormalizedNameAsync(DbContext, normalizedUsername);
     }
 
     public async Task SetLastSeen(ApplicationUser user, DateTimeOffset lastSeen)
@@ -70,6 +78,11 @@ public class UserRepository(ApplicationDbContext dbContext, ILogger<UserReposito
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, List<UserId> userIds) => context.Users
                 .Where(x => userIds.Contains(x.Id)));
+
+    private static readonly Func<ApplicationDbContext, string, Task<ApplicationUser?>> UserByNormalizedNameAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, string normalizedUsername) => context.Users
+                .FirstOrDefault(x => x.NormalizedUserName == normalizedUsername));
 }
 
 public enum ChannelsInclusionOption

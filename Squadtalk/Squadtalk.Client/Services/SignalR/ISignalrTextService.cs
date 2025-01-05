@@ -1,7 +1,7 @@
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 
-namespace Squadtalk.Client.SignalR;
+namespace Squadtalk.Client.Services.SignalR;
 
 public interface ISignalrTextService
 {

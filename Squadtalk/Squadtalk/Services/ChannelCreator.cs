@@ -2,22 +2,22 @@ using Microsoft.AspNetCore.SignalR;
 using Shared.Data.TypedIds;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
-using Squadtalk.Hubs;
 using Squadtalk.Repositories;
+using Squadtalk.Signalr;
 
 namespace Squadtalk.Services;
 
 public class ChannelCreator
 {
-    private readonly IHubContext<ChatHub, IChatClient> _hubContext;
-    private readonly ChatConnectionManager _connectionManager;
+    private readonly IHubContext<ChatHub, IChatClientOld> _hubContext;
+    private readonly HubConnectionManager _connectionManager;
     private readonly SystemMessageService _systemMessageService;
     private readonly ChannelRepository _channelRepository;
     private readonly UserRepository _userRepository;
 
     public ChannelCreator(
-        IHubContext<ChatHub, IChatClient> hubContext,
-        ChatConnectionManager connectionManager,
+        IHubContext<ChatHub, IChatClientOld> hubContext,
+        HubConnectionManager connectionManager,
         SystemMessageService systemMessageService,
         ChannelRepository channelRepository,
         UserRepository userRepository)

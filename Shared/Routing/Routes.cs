@@ -46,9 +46,6 @@ public static class Routes
 
         public const string GetMessages = "{channelId}/{timestamp?}";
         public const string CreateChannel = "create-channel";
-        public const string SendFriendRequest = "send-friend-request";
-        public const string RespondToFriendRequest = "respond-friend-request";
-        public const string RemoveFriend = "remove-friend";
         public const string Friends = "friends";
         public const string PendingFriendRequests = "friend-requests";
     }
@@ -72,9 +69,6 @@ public static class Routes
         public const string ConfirmEmailChange = AccountController + RelativeEndpoints.ConfirmEmailChange;
 
         public const string CreateChannel = ChatController + RelativeEndpoints.CreateChannel;
-        public const string SendFriendRequest = ChatController + RelativeEndpoints.SendFriendRequest;
-        public const string RespondFriendRequest = ChatController + RelativeEndpoints.RespondToFriendRequest;
-        public const string RemoveFriend = ChatController + RelativeEndpoints.RemoveFriend;
 
         public const string Friends = ChatController + RelativeEndpoints.Friends;
         public const string PendingFriendRequests = ChatController + RelativeEndpoints.PendingFriendRequests;

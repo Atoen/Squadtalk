@@ -2,9 +2,8 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Extensions;
-using Squadtalk.Client.SignalR;
 
-namespace Squadtalk.Client.Services;
+namespace Squadtalk.Client.Services.SignalR;
 
 internal sealed partial class SignalrService : ISignalrTextService
 {

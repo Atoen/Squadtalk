@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.Results;
@@ -9,8 +8,6 @@ namespace Squadtalk.Repositories;
 
 public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    private static readonly object ErrorValue = -1;
-
     public async Task<List<ApplicationUser>> GetUserFriendsAsync(UserId userId)
     {
         return await UserFriendsAsync(DbContext, userId).ToListAsync();
@@ -21,56 +18,73 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
         return await UserPendingFriendRequests(DbContext, userId).ToListAsync();
     }
 
-    public async Task<FriendRequestResult> AddFriendRequest(
-        UserId senderId, string recipientUsername, CancellationToken cancellationToken)
+    public async Task<FriendRequest?> FindFriendRequestByIdAsync(FriendRequestId friendRequestId)
     {
-        await using var connection = DbContext.Database.GetDbConnection();
-        await connection.OpenAsync(cancellationToken);
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT send_friend_request(@requesterId, @recipientUsername)";
-
-        command.AddParameter("@requesterId", senderId.Value)
-               .AddParameter("@recipientUsername", recipientUsername);
-
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-
-        return (FriendRequestResult) (result ?? ErrorValue);
+        return await FriendRequestByIdAsync(DbContext, friendRequestId);
     }
 
-    public async Task<FriendRequestResponseResult> RespondToFriendRequestAsync(
+    public async Task<Friendship?> FindFriendshipById(int friendshipId)
+    {
+        return await FriendshipByIdAsync(DbContext, friendshipId);
+    }
+
+    public async Task<SendFriendRequestResult> AddFriendRequestAsync(
+        UserId senderId, string recipientUsername, CancellationToken cancellationToken)
+    {
+        var output = await DbContext.AddFriendRequest(senderId.Value, recipientUsername).SingleAsync(cancellationToken);
+        if (output is { Status: FriendRequestResult.Success, AddedRequestId: { } id })
+        {
+            return new SendFriendRequestResult.Success(new FriendRequestId(id));
+        }
+
+        return output.Status switch
+        {
+            FriendRequestResult.RecipientNotFound => new SendFriendRequestResult.RecipientNotFound(),
+            FriendRequestResult.RequestAlreadyPending => new SendFriendRequestResult.RequestAlreadyPending(),
+            FriendRequestResult.AlreadyFriends => new SendFriendRequestResult.AlreadyFriends(),
+            FriendRequestResult.SelfRequest => new SendFriendRequestResult.SelfRequest(),
+            _ => new SendFriendRequestResult.Error()
+        };
+    }
+
+    public async Task<FriendRequest?> CancelFriendRequestAsync(UserId cancellingUserId, FriendRequestId friendRequestId, CancellationToken cancellationToken)
+    {
+        var friendRequest = await FriendRequestByIdAsync(DbContext, friendRequestId);
+        if (friendRequest is null || friendRequest.Requester.Id != cancellingUserId)
+        {
+            return null;
+        }
+
+        await CancelFriendRequestById(DbContext, friendRequestId);
+
+        return friendRequest;
+    }
+
+    public async Task<RespondToFriendRequestResult> RespondToFriendRequestAsync(
         UserId respondingId, FriendRequestId friendRequestId, bool isAccepted, CancellationToken cancellationToken)
     {
-        await using var connection = DbContext.Database.GetDbConnection();
-        await connection.OpenAsync(cancellationToken);
+        var output = await DbContext.RespondToFriendRequest(respondingId.Value, friendRequestId.Value, isAccepted).SingleAsync(cancellationToken);
+        var requestingUserId = UserId.From(output.RequesterId ?? Guid.Empty);
 
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT respond_to_friend_request(@respondingId, @friendRequestId, @isAccepted)";
+        if (output is { Status: FriendRequestResponseResult.SuccessAccepted, AddedFriendshipId: { } friendshipId })
+        {
+            FriendRequestId? otherWayRequestId = output.OtherWayRequestId is { } value ? new FriendRequestId(value) : null;
+            return new RespondToFriendRequestResult.Accepted(requestingUserId, friendshipId, otherWayRequestId);
+        }
 
-        command.AddParameter("@respondingId", respondingId.Value)
-               .AddParameter("@friendRequestId", friendRequestId.Value)
-               .AddParameter("@isAccepted", isAccepted);
-
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-
-        return (FriendRequestResponseResult) (result ?? ErrorValue);
+        return output.Status switch
+        {
+            FriendRequestResponseResult.SuccessRejected => new RespondToFriendRequestResult.Rejected(requestingUserId),
+            FriendRequestResponseResult.InvalidResponse => new RespondToFriendRequestResult.InvalidResponse(),
+            _ => new RespondToFriendRequestResult.Error()
+        };
     }
 
     public async Task<RemoveFriendResult> RemoveFriendAsync(
         UserId removingUser, UserId friendToRemove, CancellationToken cancellationToken)
     {
-        await using var connection = DbContext.Database.GetDbConnection();
-        await connection.OpenAsync(cancellationToken);
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT remove_friend(@removingUserId, @friendId)";
-
-        command.AddParameter("@removingUserId", removingUser.Value)
-               .AddParameter("@friendId", friendToRemove.Value);
-
-        var result = await command.ExecuteScalarAsync(cancellationToken);
-
-        return (RemoveFriendResult) (result ?? ErrorValue);
+        var output = await DbContext.RemoveFriend(removingUser.Value, friendToRemove.Value).SingleAsync(cancellationToken);
+        return output.Success ? RemoveFriendResult.Success : RemoveFriendResult.BadRequest;
     }
 
     private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<ApplicationUser>> UserFriendsAsync =
@@ -87,18 +101,25 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
                 .Where(x => x.Recipient.Id == userId || x.Requester.Id == userId)
                 .Include(x => x.Requester)
                 .Include(x => x.Recipient));
-}
 
-file static class DbCommandExtensions
-{
-    public static DbCommand AddParameter(this DbCommand command, string name, object? value)
-    {
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = name;
-        parameter.Value = value;
+    private static readonly Func<ApplicationDbContext, FriendRequestId, Task<FriendRequest?>> FriendRequestByIdAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, FriendRequestId friendRequestId) => context.FriendRequests
+                .Include(x => x.Recipient)
+                .Include(x => x.Requester)
+                .SingleOrDefault(x => x.Id == friendRequestId));
 
-        command.Parameters.Add(parameter);
+    private static readonly Func<ApplicationDbContext, int, Task<Friendship?>> FriendshipByIdAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, int friendshipId) => context.Friendships
+                .AsNoTracking()
+                .Include(x => x.User1)
+                .Include(x => x.User2)
+                .SingleOrDefault(x => x.Id == friendshipId));
 
-        return command;
-    }
+    private static readonly Func<ApplicationDbContext, FriendRequestId, Task> CancelFriendRequestById =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, FriendRequestId friendRequestId) => context.FriendRequests
+                .Where(x => x.Id == friendRequestId)
+                .ExecuteDelete());
 }

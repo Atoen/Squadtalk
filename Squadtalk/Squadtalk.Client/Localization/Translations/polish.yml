@@ -46,10 +46,17 @@ user_is_already_friend: Ten użytkownik jest już Twoim znajomym
 cant_befriend_yourself: Nie możesz wysłać prośby o dodanie do znajomych do siebie samego
 server_error: Błąd serwera
 
+user_accepted_friend_request: {0} zaakceptował zaproszenie do znajomych
+failed_to_respond_to_friend_request: Nie udało się odpowiedzieć na zaproszenie od {0}
+failed_to_send_friend_request_to: Nie udało się wysłać zaproszenia do {0}
+failed_to_cancel_friend_request_from: Nie udało się anulować zaproszenia dla {0}
+failed_to_remove_friend: Nie udało się usunąć {0} z listy znajomych
+
 incoming_friend_requests: Zaproszenia przychodzące
 outgoing_friend_requests: Zaproszenia wychodzące
 friend_request_accept: Przyjmij
 friend_request_decline: Odrzuć
+friend_request_from: Zaproszenie do znajomych od {0}
 
 message: Wiadomość
 more: Więcej

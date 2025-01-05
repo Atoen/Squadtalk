@@ -2,7 +2,6 @@ using Refit;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
-using Shared.Results;
 using Shared.Routing;
 
 namespace Squadtalk.Client.Network;
@@ -17,15 +16,6 @@ public interface IChatApi
 
     [Post(Routes.Endpoints.CreateChannel)]
     Task<ChannelId?> CreateChannel(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
-
-    [Post(Routes.Endpoints.SendFriendRequest)]
-    Task<FriendRequestResult> SendFriendRequest(FriendRequestDto friendRequestDto);
-
-    [Post(Routes.Endpoints.RespondFriendRequest)]
-    Task<FriendRequestResponseResult> RespondToFriendRequest(FriendRequestResponseDto friendRequestResponseDto);
-
-    [Post(Routes.Endpoints.RemoveFriend)]
-    Task<RemoveFriendResult> RemoveFriend(RemoveFriendDto removeFriendDto);
 
     [Get(Routes.Endpoints.Friends)]
     Task<List<UserDto>> GetFriends();

@@ -73,6 +73,8 @@ else
 
     protected override Task OnInitializedAsync()
     {
+        ContactManager.FriendListChanged += StateHasChanged;
+
         return !RendererInfo.IsInteractive ? ConnectionService.ConnectAsync() : Task.CompletedTask;
     }
 
@@ -89,5 +91,6 @@ else
     private async Task RemoveFriend(UserModel friend)
     {
         Logger.LogInformation("Removing friend");
+        await ContactManager.RemoveFriendAsync(friend);
     }
 }

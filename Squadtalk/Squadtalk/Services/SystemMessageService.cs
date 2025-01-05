@@ -5,21 +5,21 @@ using Shared.Enums;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
-using Squadtalk.Hubs;
 using Squadtalk.Repositories;
+using Squadtalk.Signalr;
 using tusdotnet.Interfaces;
 
 namespace Squadtalk.Services;
 
 public class SystemMessageService
 {
-    private readonly IHubContext<ChatHub, IChatClient> _hubContext;
+    private readonly IHubContext<ChatHub, IChatClientOld> _hubContext;
     private readonly FileRepository _fileRepository;
     private readonly MessageRepository _messageRepository;
     private readonly EmbedService _embedService;
 
     public SystemMessageService(
-        IHubContext<ChatHub, IChatClient> hubContext,
+        IHubContext<ChatHub, IChatClientOld> hubContext,
         FileRepository fileRepository,
         MessageRepository messageRepository,
         EmbedService embedService)

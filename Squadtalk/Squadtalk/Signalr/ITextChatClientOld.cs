@@ -1,9 +1,9 @@
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 
-namespace Squadtalk.Hubs;
+namespace Squadtalk.Signalr;
 
-public interface ITextChatClient
+public interface ITextChatClientOld
 {
     Task ReceiveMessage(MessageDto messageDto);
     

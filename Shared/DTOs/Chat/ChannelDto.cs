@@ -4,7 +4,7 @@ using Shared.Data.TypedIds;
 
 namespace Shared.DTOs.Chat;
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public class ChannelDto : IChatChannel
 {
     [Key(0)]

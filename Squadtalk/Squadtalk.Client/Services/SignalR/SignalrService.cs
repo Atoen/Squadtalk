@@ -4,12 +4,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
-using Shared.Enums;
 using Shared.Extensions;
 using Shared.Services;
-using Squadtalk.Client.SignalR;
 
-namespace Squadtalk.Client.Services;
+namespace Squadtalk.Client.Services.SignalR;
 
 internal sealed partial class SignalrService : IConnectionService, IAsyncDisposable
 {
@@ -24,16 +22,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
     public event Func<ChannelId, string?, Task>? ChannelNameChanged;
-
-    public event Action<UserDto, UserStatus>? FriendStatusChanged;
-    public event Action<PendingFriendRequestDto>? FriendRequestReceived;
-
-    public event Action<List<UserDto>>? FriendListReceived;
-    public event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
-
-    [Obsolete] public event Func<UserDto, Task>? UserConnected;
-    [Obsolete] public event Func<UserDto, Task>? UserDisconnected;
-    [Obsolete] public event Func<IEnumerable<UserDto>, bool, Task>? ConnectedUsersReceived;
 
     private bool _connectionStared;
 
@@ -95,8 +83,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             ConnectionStatus = ConnectionStatus.Disconnected;
             _logger.LogError(e, "Failed to connect to chat hub");
         }
-
-        await UpdatePersistedDataAsync();
     }
 
     public async Task<TimeSpan> MeasureConnectionDelayAsync()
@@ -119,13 +105,13 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         if (_clientPersistantState.TryReadFriends(out var friends))
         {
             _logger.LogInformation("Retrieved persisted friends");
-            FriendListReceived?.Invoke(friends);
+            // FriendListReceived?.Invoke(friends);
         }
 
         if (_clientPersistantState.TryReadFriendRequests(out var friendRequests))
         {
             _logger.LogInformation("Retrieved persisted friend requests");
-            FriendRequestsReceived?.Invoke(friendRequests);
+            // FriendRequestsReceived?.Invoke(friendRequests);
         }
 
         if (_clientPersistantState.TryReadChannels(out var channels))
@@ -135,17 +121,10 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
     }
 
-    private async Task UpdatePersistedDataAsync()
-    {
-        var (users, channels) = await _connection.InvokeAsync<(IEnumerable<UserDto>, IEnumerable<ChannelDto>)>("GetUsersAndChannels");
-
-        await ConnectedUsersReceived.TryInvoke(users, false);
-        await ChannelsReceived.TryInvoke(channels);
-    }
-
     private void RegisterHandlers()
     {
         RegisterBaseHandlers();
+        RegisterFriendHandlers();
         RegisterTextHandlers();
         RegisterRTCHandlers();
     }
@@ -169,25 +148,38 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             ConnectionStatus = ConnectionStatus.Disconnected;
             return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
         };
-
-        _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
-            ConnectedUsersReceived.TryInvoke(users, false));
-
-        _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
-            ChannelsReceived.TryInvoke(channels));
-
-        _connection.On<ChannelDto>("AddedToChannel", channel =>
-            AddedToChannel.TryInvoke(channel));
-
-        _connection.On<UserDto>("UserDisconnected", user =>
-            UserDisconnected.TryInvoke(user));
-
-        _connection.On<UserDto>("UserConnected", user =>
-            UserConnected.TryInvoke(user));
-
-        _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
-            ChannelNameChanged.TryInvoke(channelId, name));
     }
+
+    // _connection.On<PendingFriendRequestDto>("FriendRequestReceived", friendRequest =>
+        // {
+        //     _logger.LogInformation("Received friend request, id: {Id}", friendRequest.Id);
+        //     FriendRequestReceived?.Invoke(friendRequest);
+        // });
+        //
+        // _connection.On<UserDto>("FriendAdded", friend =>
+        // {
+        //     _logger.LogInformation("Friend added, name: {Name}", friend.Username);
+        //     FriendAdded?.Invoke(friend);
+        // });
+        //
+        // _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
+        //     ConnectedUsersReceived.TryInvoke(users, false));
+        //
+        // _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
+        //     ChannelsReceived.TryInvoke(channels));
+        //
+        // _connection.On<ChannelDto>("AddedToChannel", channel =>
+        //     AddedToChannel.TryInvoke(channel));
+        //
+        // _connection.On<UserDto>("UserDisconnected", user =>
+        //     UserDisconnected.TryInvoke(user));
+        //
+        // _connection.On<UserDto>("UserConnected", user =>
+        //     UserConnected.TryInvoke(user));
+        //
+        // _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
+        //     ChannelNameChanged.TryInvoke(channelId, name));
+    // }
 
     public ValueTask DisposeAsync()
     {
