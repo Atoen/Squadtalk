@@ -9,17 +9,17 @@ namespace Squadtalk.Client.Services.SignalR;
 
 internal sealed partial class SignalrService
 {
-    public event Action<PendingFriendRequestDto>? FriendRequestReceived;
+    public event Action<PendingFriendRequestDto>? FriendRequestCreated;
     public event Action<FriendRequestId>? FriendRequestCancelled;
     public event Action<FriendRequestResponseDto>? FriendRequestResponded;
 
     public event Action<UserDto>? FriendAdded;
     public event Action<UserId>? FriendRemoved;
 
-    public async Task<FriendRequestResultDto> SendFriendRequestAsync(string recipientUsername)
+    public async Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername)
     {
         var data = new FriendRequestDto { RecipientUsername = recipientUsername };
-        return await _connection.InvokeAsync<FriendRequestResultDto>(HubMethods.SendFriendRequest, data);
+        return await _connection.InvokeAsync<FriendRequestResult>(HubMethods.SendFriendRequest, data);
     }
 
     public async Task<bool> CancelFriendRequestAsync(FriendRequestId friendRequestId)
@@ -47,8 +47,8 @@ internal sealed partial class SignalrService
 
     private void RegisterFriendHandlers()
     {
-        _connection.On<PendingFriendRequestDto>(nameof(IChatClient.FriendRequestReceived), friendRequest =>
-            FriendRequestReceived?.Invoke(friendRequest));
+        _connection.On<PendingFriendRequestDto>(nameof(IChatClient.FriendRequestCreated), friendRequest =>
+            FriendRequestCreated?.Invoke(friendRequest));
 
         _connection.On<FriendRequestId>(nameof(IChatClient.FriendRequestCancelled), friendRequestId =>
             FriendRequestCancelled?.Invoke(friendRequestId));

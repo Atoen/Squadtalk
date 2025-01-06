@@ -5,7 +5,7 @@ namespace Shared.Signalr.Clients;
 
 public interface IChatClient : ITextChatClient, IVoiceChatClient
 {
-    Task FriendRequestReceived(PendingFriendRequestDto friendRequestDto);
+    Task FriendRequestCreated(PendingFriendRequestDto friendRequestDto);
 
     Task FriendRequestCancelled(FriendRequestId friendRequestId);
 
