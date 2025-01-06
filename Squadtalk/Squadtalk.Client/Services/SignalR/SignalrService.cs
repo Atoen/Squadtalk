@@ -74,7 +74,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             await _connection.StartAsync();
 
             ConnectionStatus = ConnectionStatus.Connected;
-            // ConnectionStatus = ISignalrService.Online;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
 
         }
@@ -89,7 +88,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     {
         var start = Stopwatch.GetTimestamp();
 
-        await _connection.InvokeAsync("Ping");
+        await _connection.InvokeAsync<bool>("Ping");
         return Stopwatch.GetElapsedTime(start);
     }
 
@@ -150,18 +149,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         };
     }
 
-    // _connection.On<PendingFriendRequestDto>("FriendRequestReceived", friendRequest =>
-        // {
-        //     _logger.LogInformation("Received friend request, id: {Id}", friendRequest.Id);
-        //     FriendRequestReceived?.Invoke(friendRequest);
-        // });
-        //
-        // _connection.On<UserDto>("FriendAdded", friend =>
-        // {
-        //     _logger.LogInformation("Friend added, name: {Name}", friend.Username);
-        //     FriendAdded?.Invoke(friend);
-        // });
-        //
         // _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
         //     ConnectedUsersReceived.TryInvoke(users, false));
         //
@@ -170,12 +157,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         //
         // _connection.On<ChannelDto>("AddedToChannel", channel =>
         //     AddedToChannel.TryInvoke(channel));
-        //
-        // _connection.On<UserDto>("UserDisconnected", user =>
-        //     UserDisconnected.TryInvoke(user));
-        //
-        // _connection.On<UserDto>("UserConnected", user =>
-        //     UserConnected.TryInvoke(user));
         //
         // _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
         //     ChannelNameChanged.TryInvoke(channelId, name));

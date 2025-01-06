@@ -11,7 +11,7 @@ namespace Squadtalk.Signalr.Hubs;
 partial class AppHub
 {
     [HubMethodName(HubMethods.SendFriendRequest)]
-    public async Task<FriendRequestResultDto> SendFriendRequest(
+    public async Task<FriendRequestResult> SendFriendRequest(
         FriendRequestDto friendRequest, FriendRepository friendRepository)
     {
         var userId = Context.User!.GetUserId();
@@ -22,26 +22,17 @@ partial class AppHub
         if (result is SendFriendRequestResult.Success success)
         {
             var request = await friendRepository.FindFriendRequestByIdAsync(success.RequestId);
-            var friendRequestDto = request?.ToDto();
-
-            if (friendRequestDto is not null)
+            if (request is null)
             {
-                var recipientId = friendRequestDto.Recipient.Id;
-                await Clients.User(recipientId.ToString()).FriendRequestReceived(friendRequestDto);
+                return FriendRequestResult.Error;
             }
 
-            return new FriendRequestResultDto
-            {
-                Status = FriendRequestResult.Success,
-                FriendRequest = friendRequestDto
-            };
+            var recipientId = request.Recipient.Id.ToString();
+            var requesterId = userId.ToString();
+            await Clients.Users(requesterId, recipientId).FriendRequestCreated(request.ToDto());
         }
 
-        return new FriendRequestResultDto
-        {
-            Status = result.Value,
-            FriendRequest = null
-        };
+        return result.Value;
     }
 
     [HubMethodName(HubMethods.CancelFriendRequest)]
@@ -89,15 +80,14 @@ partial class AppHub
                     return FriendRequestResponseResult.Error;
                 }
 
-                var respondingUserId = userId.ToString();
-                var requestingUserId = accepted.RequesterId.ToString();
+                var userIds = new[] { userId.ToString(), accepted.RequesterId.ToString() };
 
                 if (accepted.OtherWayRequestId is { } otherWayRequestId)
                 {
-                    await Clients.Users(respondingUserId, requestingUserId).FriendRequestCancelled(otherWayRequestId);
+                    await Clients.Users(userIds).FriendRequestCancelled(otherWayRequestId);
                 }
 
-                await Clients.User(requestingUserId).FriendRequestResponded(requestResponseDto);
+                await Clients.Users(userIds).FriendRequestResponded(requestResponseDto);
 
                 await Clients.User(friendship.User1.Id.ToString()).FriendAdded(friendship.User2.ToDto());
                 await Clients.User(friendship.User2.Id.ToString()).FriendAdded(friendship.User1.ToDto());
@@ -105,8 +95,11 @@ partial class AppHub
             }
 
             case RespondToFriendRequestResult.Rejected rejected:
-                await Clients.User(rejected.RequesterId.ToString()).FriendRequestResponded(requestResponseDto);
+            {
+                var userIds = new[] { userId.ToString(), rejected.RequesterId.ToString() };
+                await Clients.Users(userIds).FriendRequestResponded(requestResponseDto);
                 break;
+            }
         }
 
         return result.Value;
