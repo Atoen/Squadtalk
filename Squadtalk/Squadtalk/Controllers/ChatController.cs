@@ -55,24 +55,4 @@ public class ChatController : ControllerBase
             ? BadRequest()
             : channel.Id;
     }
-
-    [HttpGet(Routes.RelativeEndpoints.Friends)]
-    public async Task<IEnumerable<UserDto>> GetUserFriends(
-        [FromServices] FriendRepository friendRepository)
-    {
-        var userId = HttpContext.User.GetUserId();
-        var friends = await friendRepository.GetUserFriendsAsync(userId);
-
-        return friends.Select(x => x.ToDto());
-    }
-
-    [HttpGet(Routes.RelativeEndpoints.PendingFriendRequests)]
-    public async Task<IEnumerable<PendingFriendRequestDto>> GetPendingFriendRequests(
-        [FromServices] FriendRepository friendRepository)
-    {
-        var userId = HttpContext.User.GetUserId();
-        var requests = await friendRepository.GetUserPendingFriendRequests(userId);
-
-        return requests.Select(x => x.ToDto());
-    }
 }

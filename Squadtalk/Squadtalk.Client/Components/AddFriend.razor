@@ -1,21 +1,23 @@
 @using Shared.Results
 
-<p class="mud-typography-body1 mud-typography-gutterbottom">@LocalizedText.R.add_friend</p>
+<p class="mud-typography-body1 mud-typography-gutterbottom">
+    @LocalizedText.R.add_friend
+</p>
 
 @if (_alertMessage is not null)
 {
-    <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mb-2" Dense="true">
+    <MudAlert Variant="Variant.Filled"Severity="_alertMessage.Severity"
+              Class="mb-2" Dense="true">
         @_alertMessage.Text
     </MudAlert>
 }
 
-<div class="d-flex">
+<form @onsubmit="SendFriendRequest" class="d-flex flex-grow-1">
     <MudTextField T="string" Label="@LocalizedText.R.username"
-                  Clearable="true" @ref="_usernameField"/>
-
+                  Clearable="true" @ref="_usernameField" autocomplete="off"/>
     <div class="align-self-center ms-2">
         <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                   Disabled="_working" OnClick="SendFriendRequest">
+                   Disabled="_working" ButtonType="ButtonType.Submit">
             @if (_working)
             {
                 <MudProgressCircular Indeterminate="true"
@@ -23,11 +25,11 @@
             }
             else
             {
-                @LocalizedText.R.dialog_done
+                @LocalizedText.R.send_friend_invite
             }
         </MudButton>
     </div>
-</div>
+</form>
 
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager

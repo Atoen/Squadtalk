@@ -16,16 +16,19 @@ internal sealed partial class SignalrService
     public event Action<UserDto>? FriendAdded;
     public event Action<UserId>? FriendRemoved;
 
+    public event Action<List<UserDto>>? FriendListReceived;
+    public event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
+
     public async Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername)
     {
         var data = new FriendRequestDto { RecipientUsername = recipientUsername };
-        return await _connection.InvokeAsync<FriendRequestResult>(HubMethods.SendFriendRequest, data);
+        return await InvokeAsync<FriendRequestResult>(HubMethods.SendFriendRequest, data);
     }
 
     public async Task<bool> CancelFriendRequestAsync(FriendRequestId friendRequestId)
     {
         var data = new CancelFriendRequestDto { RequestId = friendRequestId };
-        return await _connection.InvokeAsync<bool>(HubMethods.CancelFriendRequest, data);
+        return await InvokeAsync<bool>(HubMethods.CancelFriendRequest, data);
     }
 
     public async Task<FriendRequestResponseResult> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted)
@@ -36,13 +39,23 @@ internal sealed partial class SignalrService
             Accepted = isAccepted
         };
 
-        return await _connection.InvokeAsync<FriendRequestResponseResult>(HubMethods.RespondToFriendRequest, data);
+        return await InvokeAsync<FriendRequestResponseResult>(HubMethods.RespondToFriendRequest, data);
     }
 
     public async Task<RemoveFriendResult> RemoveFriendAsync(UserId friendId)
     {
         var data = new RemoveFriendDto { FriendId = friendId };
-        return await _connection.InvokeAsync<RemoveFriendResult>(HubMethods.RemoveFriend, data);
+        return await InvokeAsync<RemoveFriendResult>(HubMethods.RemoveFriend, data);
+    }
+
+    public async Task<List<UserDto>?> GetFriendListAsync()
+    {
+        return await InvokeAsync<List<UserDto>>(HubMethods.GetFriendList);
+    }
+
+    public async Task<List<PendingFriendRequestDto>?> GetFriendRequestsAsync()
+    {
+        return await InvokeAsync<List<PendingFriendRequestDto>>(HubMethods.GetFriendRequests);
     }
 
     private void RegisterFriendHandlers()
