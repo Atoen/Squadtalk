@@ -45,6 +45,9 @@ friend_request_already_pending: Wysłano już próbę o dodanie do znajomych
 user_is_already_friend: Ten użytkownik jest już Twoim znajomym
 cant_befriend_yourself: Nie możesz wysłać prośby o dodanie do znajomych do siebie samego
 server_error: Błąd serwera
+no_friend_requests: Brak oczekujących zaproszeń do znajomych
+send_friend_invite: Wyślij zaproszenie
+unable_to_connect_to_the_server: Nie można połączyć się z serwerem
 
 user_accepted_friend_request: {0} zaakceptował zaproszenie do znajomych
 failed_to_respond_to_friend_request: Nie udało się odpowiedzieć na zaproszenie od {0}

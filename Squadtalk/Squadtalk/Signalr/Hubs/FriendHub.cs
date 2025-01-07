@@ -124,4 +124,22 @@ partial class AppHub
 
         return result;
     }
+
+    [HubMethodName(HubMethods.GetFriendList)]
+    public async Task<List<UserDto>> GetFriendList(FriendRepository friendRepository)
+    {
+        var userId = Context.User!.GetUserId();
+        var friends = await friendRepository.GetUserFriendsAsync(userId);
+
+        return friends.Select(x => x.ToDto()).ToList();
+    }
+
+    [HubMethodName(HubMethods.GetFriendRequests)]
+    public async Task<List<PendingFriendRequestDto>> GetFriendRequests(FriendRepository friendRepository)
+    {
+        var userId = Context.User!.GetUserId();
+        var requests = await friendRepository.GetUserPendingFriendRequests(userId);
+
+        return requests.Select(x => x.ToDto()).ToList();
+    }
 }

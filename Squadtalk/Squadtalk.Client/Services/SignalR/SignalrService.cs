@@ -12,6 +12,7 @@ namespace Squadtalk.Client.Services.SignalR;
 internal sealed partial class SignalrService : IConnectionService, IAsyncDisposable
 {
     private readonly ClientPersistantState _clientPersistantState;
+    private readonly NotificationService _notificationService;
     private readonly ILogger<SignalrService> _logger;
     private readonly HubConnection _connection;
 
@@ -30,9 +31,11 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     public SignalrService(
         NavigationManager navigationManager,
         ClientPersistantState clientPersistantState,
+        NotificationService notificationService,
         ILogger<SignalrService> logger)
     {
         _clientPersistantState = clientPersistantState;
+        _notificationService = notificationService;
         _logger = logger;
 
         var endpoint = navigationManager.ToAbsoluteUri("/chathub");
@@ -104,13 +107,13 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         if (_clientPersistantState.TryReadFriends(out var friends))
         {
             _logger.LogInformation("Retrieved persisted friends");
-            // FriendListReceived?.Invoke(friends);
+            FriendListReceived?.Invoke(friends);
         }
 
         if (_clientPersistantState.TryReadFriendRequests(out var friendRequests))
         {
             _logger.LogInformation("Retrieved persisted friend requests");
-            // FriendRequestsReceived?.Invoke(friendRequests);
+            FriendRequestsReceived?.Invoke(friendRequests);
         }
 
         if (_clientPersistantState.TryReadChannels(out var channels))
@@ -161,6 +164,45 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         // _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
         //     ChannelNameChanged.TryInvoke(channelId, name));
     // }
+
+    private async Task<T?> InvokeAsync<T>(string methodName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _connection.InvokeAsync<T>(methodName, cancellationToken);
+        }
+        catch
+        {
+            _notificationService.ShowUnableToConnectNotification();
+            return default;
+        }
+    }
+
+    private async Task<T?> InvokeAsync<T>(string methodName, object? arg, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _connection.InvokeAsync<T>(methodName, arg, cancellationToken);
+        }
+        catch
+        {
+            _notificationService.ShowUnableToConnectNotification();
+            return default;
+        }
+    }
+
+    private async Task<T?> InvokeAsync<T>(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _connection.InvokeAsync<T>(methodName, arg1, arg2, cancellationToken);
+        }
+        catch
+        {
+            _notificationService.ShowUnableToConnectNotification();
+            return default;
+        }
+    }
 
     public ValueTask DisposeAsync()
     {

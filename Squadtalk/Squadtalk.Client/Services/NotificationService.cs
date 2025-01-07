@@ -61,6 +61,11 @@ internal class NotificationService
         _snackbarHost.Add(message, Severity.Error);
     }
 
+    public void ShowUnableToConnectNotification()
+    {
+        _snackbarHost.Add(_localizedText.R.unable_to_connect_to_the_server, Severity.Error);
+    }
+
     private Task FriendRequestAcceptedFromSnackbar(Snackbar snackbar, IncomingFriendRequest incomingFriendRequest)
     {
         _snackbarHost.Remove(snackbar);

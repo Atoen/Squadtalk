@@ -1,5 +1,4 @@
 using Shared.Data;
-using Shared.DTOs.Chat;
 using Shared.Models;
 using Shared.Results;
 
@@ -13,9 +12,7 @@ public interface IContactManager
 
     Func<IChatUser, UserModel> UserModelProvider { get; }
 
-    IReadOnlyCollection<UserModel> AllContacts { get; }
     IReadOnlyCollection<UserModel> FriendList { get; }
-    IReadOnlyCollection<UserModel> OtherContacts { get; }
 
     IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
     IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
@@ -30,7 +27,7 @@ public interface IContactManager
 
     Task<RemoveFriendResult?> RemoveFriendAsync(UserModel userModel);
 
-    Task<List<UserModel>> GetFriendsAsync();
+    Task RefreshFriendListAsync();
 
-    Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync();
+    Task RefreshFriendRequestsAsync();
 }

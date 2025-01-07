@@ -10,18 +10,18 @@ internal class ClientPersistantState(PersistentComponentState persistentComponen
     public bool TryReadChannels([NotNullWhen(true)] out List<ChannelDto>? channels)
     {
         var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.Channels, out channels);
-        return read && channels is not null;
+        return read && channels is { Count: > 0 };
     }
 
     public bool TryReadFriends([NotNullWhen(true)] out List<UserDto>? users)
     {
         var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.Friends, out users);
-        return read && users is not null;
+        return read && users is { Count: > 0 };
     }
 
     public bool TryReadFriendRequests([NotNullWhen(true)] out List<PendingFriendRequestDto>? friendRequests)
     {
         var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.FriendRequests, out friendRequests);
-        return read && friendRequests is not null;
+        return read && friendRequests is { Count: > 0 };
     }
 }

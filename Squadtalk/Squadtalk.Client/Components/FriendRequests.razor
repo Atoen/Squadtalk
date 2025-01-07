@@ -1,57 +1,81 @@
-<p class="mud-typography-body1 mud-typography-gutterbottom">
-    @LocalizedText.R.incoming_friend_requests
-</p>
-
-@foreach (var request in ContactManager.IncomingFriendRequests)
+@if (!FriendRequestsAvailable)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center"
-              Class="my-1 mud-button pa-1 mud-ripple">
-        @FriendList.UserAvatar(request.From)
+    <p class="mud-typography-body1">
+        @LocalizedText.R.no_friend_requests
+    </p>
 
-        <p class="mud-typography-body1">@request.From.Username</p>
-
-        <div class="ms-auto">
-            <MudTooltip Text="@LocalizedText.R.friend_request_accept"
-                        Placement="Placement.Top" Color="Color.Dark">
-                <MudIconButton Icon="@Icons.Material.Rounded.Check" Color="Color.Success"
-                               OnClick="() => AcceptFriendRequest(request)"/>
-            </MudTooltip>
-
-            <MudTooltip Text="@LocalizedText.R.friend_request_decline"
-                        Placement="Placement.Top" Color="Color.Dark">
-                <MudIconButton Icon="@Icons.Material.Rounded.Close" Color="Color.Error"
-                               OnClick="() => DeclineFriendRequest(request)"/>
-            </MudTooltip>
-        </div>
-
-    </MudStack>
+    return;
 }
 
-<div class="d-flex my-2">
-    <p class="mud-typography-body1" style="white-space: nowrap">
-        @LocalizedText.R.outgoing_friend_requests
-    </p>
-    <MudDivider DividerType="DividerType.Middle" Class="ms-2 align-self-center flex-1"/>
-</div>
-
-@foreach (var request in ContactManager.OutgoingFriendRequests)
+@if (IncomingRequestsAvailable)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center"
-              Class="my-1 mud-button pa-1 mud-ripple">
+    <p class="mud-typography-body1 mud-typography-gutterbottom">
+        @LocalizedText.R.incoming_friend_requests
+    </p>
 
-        @FriendList.UserAvatar(request.To)
+    foreach (var request in ContactManager.IncomingFriendRequests)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center"
+                  Class="my-1 mud-button pa-1 mud-ripple">
+            @FriendList.UserAvatar(request.From)
 
-        <MudText>@request.To.Username</MudText>
+            <p class="mud-typography-body1">@request.From.Username</p>
 
-        <div class="ms-auto">
-            <MudTooltip Text="@LocalizedText.R.dialog_cancel"
-                        Placement="Placement.Top" Color="Color.Dark">
-                <MudIconButton Icon="@Icons.Material.Rounded.Close"
-                               OnClick="() => CancelFriendRequest(request)"/>
-            </MudTooltip>
+            <div class="ms-auto">
+                <MudTooltip Text="@LocalizedText.R.friend_request_accept"
+                            Placement="Placement.Top" Color="Color.Dark">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Check" Color="Color.Success"
+                                   OnClick="() => AcceptFriendRequest(request)"/>
+                </MudTooltip>
+
+                <MudTooltip Text="@LocalizedText.R.friend_request_decline"
+                            Placement="Placement.Top" Color="Color.Dark">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Close" Color="Color.Error"
+                                   OnClick="() => DeclineFriendRequest(request)"/>
+                </MudTooltip>
+            </div>
+
+        </MudStack>
+    }
+}
+
+@if (OutgoingRequestsAvailable)
+{
+    if (IncomingRequestsAvailable)
+    {
+        <div class="d-flex my-2">
+            <p class="mud-typography-body1" style="white-space: nowrap">
+                @LocalizedText.R.outgoing_friend_requests
+            </p>
+            <MudDivider DividerType="DividerType.Middle" Class="ms-2 align-self-center flex-1"/>
         </div>
+    }
+    else
+    {
+        <p class="mud-typography-body1 mud-typography-gutterbottom">
+            @LocalizedText.R.outgoing_friend_requests
+        </p>
+    }
 
-    </MudStack>
+    foreach (var request in ContactManager.OutgoingFriendRequests)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center"
+                  Class="my-1 mud-button pa-1 mud-ripple">
+
+            @FriendList.UserAvatar(request.To)
+
+            <MudText>@request.To.Username</MudText>
+
+            <div class="ms-auto">
+                <MudTooltip Text="@LocalizedText.R.dialog_cancel"
+                            Placement="Placement.Top" Color="Color.Dark">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Close"
+                                   OnClick="() => CancelFriendRequest(request)"/>
+                </MudTooltip>
+            </div>
+
+        </MudStack>
+    }
 }
 
 @inject LocalizedText LocalizedText
@@ -59,6 +83,10 @@
 
 @code
 {
+    private bool OutgoingRequestsAvailable => ContactManager.OutgoingFriendRequests.Count != 0;
+    private bool IncomingRequestsAvailable => ContactManager.IncomingFriendRequests.Count != 0;
+    private bool FriendRequestsAvailable => OutgoingRequestsAvailable || IncomingRequestsAvailable;
+
     protected override void OnInitialized()
     {
         ContactManager.FriendRequestsChanged += StateHasChanged;

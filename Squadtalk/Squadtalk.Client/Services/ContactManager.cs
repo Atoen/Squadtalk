@@ -4,7 +4,6 @@ using Shared.DTOs.Chat;
 using Shared.Models;
 using Shared.Results;
 using Shared.Services;
-using Squadtalk.Client.Network;
 using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
@@ -13,11 +12,10 @@ internal class ContactManager : IContactManager
 {
     private readonly SignalrService _signalrService;
     private readonly IUserAuthenticationService _userAuthenticationService;
-    private readonly IChatApi _chatApi;
     private readonly NotificationService _notificationService;
     private readonly ILogger<ContactManager> _logger;
 
-    private readonly Dictionary<UserId, UserModel> _users = [];
+    private readonly Dictionary<UserId, UserModel> _userModels = [];
     private readonly Dictionary<UserId, UserModel> _friends = [];
 
     private readonly Dictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
@@ -29,9 +27,7 @@ internal class ContactManager : IContactManager
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
-    public IReadOnlyCollection<UserModel> AllContacts => _users.Values;
     public IReadOnlyCollection<UserModel> FriendList => _friends.Values;
-    public IReadOnlyCollection<UserModel> OtherContacts => _users.Values;
 
     public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests => _incomingFriendRequests.Values;
     public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests => _outgoingFriendRequests.Values;
@@ -39,13 +35,11 @@ internal class ContactManager : IContactManager
     public ContactManager(
         SignalrService signalrService,
         IUserAuthenticationService userAuthenticationService,
-        IChatApi chatApi,
         NotificationService notificationService,
         ILogger<ContactManager> logger)
     {
         _signalrService = signalrService;
         _userAuthenticationService = userAuthenticationService;
-        _chatApi = chatApi;
         _notificationService = notificationService;
         _logger = logger;
 
@@ -58,16 +52,18 @@ internal class ContactManager : IContactManager
         signalrService.FriendRemoved += FriendRemoved;
         signalrService.FriendRequestCancelled += FriendRequestCancelled;
         signalrService.FriendRequestResponded += FriendRequestResponded;
+        signalrService.FriendListReceived += FriendListReceived;
+        signalrService.FriendRequestsReceived += FriendRequestsReceived;
     }
 
     #region PublicMethods
 
     public UserModel GetOrCreateUserModel(IChatUser chatUser)
     {
-        if (!_users.TryGetValue(chatUser.Id, out var model))
+        if (!_userModels.TryGetValue(chatUser.Id, out var model))
         {
             model = UserModel.Create(chatUser);
-            _users[chatUser.Id] = model;
+            _userModels[chatUser.Id] = model;
         }
 
         return model;
@@ -97,27 +93,19 @@ internal class ContactManager : IContactManager
 
     public async Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest)
     {
-        var ok = await _signalrService.CancelFriendRequestAsync(friendRequest.Id);
-        if (ok)
-        {
-            _outgoingFriendRequests.Remove(friendRequest.Id);
-        }
-        else
+        var cancelled = await _signalrService.CancelFriendRequestAsync(friendRequest.Id);
+        if (!cancelled)
         {
             _notificationService.ShowFailedToCancelFriendRequestNotification(friendRequest);
         }
 
-        return ok ? CancelFriendRequestResult.Success : CancelFriendRequestResult.InvalidRequest;
+        return cancelled ? CancelFriendRequestResult.Success : CancelFriendRequestResult.InvalidRequest;
     }
 
     public async Task<RemoveFriendResult?> RemoveFriendAsync(UserModel friend)
     {
         var result = await _signalrService.RemoveFriendAsync(friend.Id);
-        if (result == RemoveFriendResult.Success)
-        {
-            _friends.Remove(friend.Id);
-        }
-        else
+        if (result != RemoveFriendResult.Success)
         {
             _notificationService.ShowFailedToRemoveFriendNotification(friend);
         }
@@ -125,38 +113,36 @@ internal class ContactManager : IContactManager
         return result;
     }
 
-    public async Task<List<UserModel>> GetFriendsAsync()
+    public async Task RefreshFriendListAsync()
     {
-        try
+        var friends = await _signalrService.GetFriendListAsync();
+        if (friends is null) return;
+
+        var models = friends.Select(UserModelProvider).ToList();
+
+        _friends.Clear();
+        foreach (var model in models)
         {
-            var result = await _chatApi.GetFriends();
-            return result.Select(GetOrCreateUserModel).ToList();
+            _friends.TryAdd(model.Id, model);
         }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error when fetching friend list");
-            return [];
-        }
+
+        FriendListChanged?.Invoke();
     }
 
-    public async Task<List<PendingFriendRequestDto>> GetPendingFriendRequestsAsync()
+    public async Task RefreshFriendRequestsAsync()
     {
-        try
-        {
-            var result = await _chatApi.GetPendingFriendRequests();
+        var requests = await _signalrService.GetFriendRequestsAsync();
+        if (requests is null) return;
 
-            foreach (var requestDto in result)
-            {
-                AddFriendRequest(requestDto);
-            }
+        _incomingFriendRequests.Clear();
+        _outgoingFriendRequests.Clear();
 
-            return result;
-        }
-        catch (Exception e)
+        foreach (var request in requests)
         {
-            _logger.LogError(e, "Error when fetching pending friend requests");
-            return [];
+            AddFriendRequest(request);
         }
+
+        FriendRequestsChanged?.Invoke();
     }
 
     #endregion
@@ -231,6 +217,16 @@ internal class ContactManager : IContactManager
         }
 
         FriendListChanged?.Invoke();
+    }
+
+    private void FriendRequestsReceived(List<PendingFriendRequestDto> friendRequests)
+    {
+        foreach (var friendRequest in friendRequests)
+        {
+            AddFriendRequest(friendRequest);
+        }
+
+        FriendRequestsChanged?.Invoke();
     }
 
     #endregion

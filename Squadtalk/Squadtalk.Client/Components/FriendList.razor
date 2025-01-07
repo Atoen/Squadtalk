@@ -2,7 +2,7 @@
 
 @if (ContactManager.FriendList.Count == 0)
 {
-    <p class="mud-typography-body1 mud-typography-gutterbottom">
+    <p class="mud-typography-body1">
         @LocalizedText.R.friend_list_empty
     </p>
 }
@@ -73,9 +73,14 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        ContactManager.FriendListChanged += StateHasChanged;
+        return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
+    }
 
-        return !RendererInfo.IsInteractive ? ConnectionService.ConnectAsync() : Task.CompletedTask;
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        ContactManager.FriendListChanged += StateHasChanged;
     }
 
     private async Task MessageFriend(UserModel friend)

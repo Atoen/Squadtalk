@@ -25,14 +25,22 @@
 @inject IContactManager ContactManager
 @inject LocalizedText LocalizedText
 @inject ContactTabState TabState
+@inject IConnectionService ConnectionService
 
 @code
 {
     private object? RequestTabBadgeData =>
         ContactManager.IncomingFriendRequests is { Count: > 0 and var count } ? count : null;
 
-    protected override void OnInitialized()
+    protected override Task OnInitializedAsync()
     {
+        return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
+
         ContactManager.FriendRequestsChanged += StateHasChanged;
     }
 }
