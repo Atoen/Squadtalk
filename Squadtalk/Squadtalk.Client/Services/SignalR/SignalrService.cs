@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Extensions;
 using Shared.Services;
+using Shared.Signalr;
 
 namespace Squadtalk.Client.Services.SignalR;
 
@@ -78,6 +80,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
 
             ConnectionStatus = ConnectionStatus.Connected;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+
+            var userStatus = await _connection.InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
+            _logger.LogInformation("Connected with status: {Status}", userStatus);
 
         }
         catch (Exception e)

@@ -21,7 +21,9 @@ else
 
             <div>
                 <p class="mud-typography-body1">@friend.Username</p>
-                <p class="mud-typography-caption">@friend.StatusString(LocalizedText.R)</p>
+                <p class="mud-typography-caption" style="@friend.StatusColorStyle()">
+                    @friend.StatusString(LocalizedText.R)
+                </p>
             </div>
 
             <div class="ms-auto d-flex">

@@ -59,5 +59,20 @@ local function connection_ended(_, args)
     return {1, 4} -- true, Offline
 end
 
+local function set_user_status(_, args)
+    local userId = args[1]
+    local newStatus = tonumber(args[2])
+
+    local currentStatus = tonumber(redis.call('HGET', USER_STATUS_KEY, userId) or -1)
+    if (currentStatus == newStatus) then
+        return {0, currentStatus}
+    end
+
+    redis.call('HSET', USER_STATUS_KEY, userId, newStatus)
+
+    return {1, newStatus}
+end
+
 redis.register_function('connection_started', connection_started)
 redis.register_function('connection_ended', connection_ended)
+redis.register_function('set_user_status', set_user_status)

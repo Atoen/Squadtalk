@@ -2,9 +2,9 @@
 
 <PageTitle>Squadtalk | Home</PageTitle>
 
-<h1>@Table.R.hello_world</h1>
+<h1>@LocalizedText.R.hello_world</h1>
 
-@Table.R.welcome_to_app
+@LocalizedText.R.welcome_to_app
 
 @if (!RendererInfo.IsInteractive)
 {
@@ -17,4 +17,32 @@ else
 
 <p>@RendererInfo.Name</p>
 
-@inject LocalizedText Table
+<p class="d-flex">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               OnClick="() => ChangeStatus(UserStatus.Online)">
+        @LocalizedText.R.online
+    </MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               OnClick="() => ChangeStatus(UserStatus.Away)">
+        @LocalizedText.R.away
+    </MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               OnClick="() => ChangeStatus(UserStatus.DoNotDisturb)">
+        @LocalizedText.R.do_not_disturb
+    </MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               OnClick="() => ChangeStatus(UserStatus.Offline)">
+        @LocalizedText.R.offline
+    </MudButton>
+</p>
+
+@inject LocalizedText LocalizedText
+@inject IContactManager ContactManager
+
+@code
+{
+    private async Task ChangeStatus(UserStatus status)
+    {
+        await ContactManager.SetStatusAsync(status);
+    }
+}

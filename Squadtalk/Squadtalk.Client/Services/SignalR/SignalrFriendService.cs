@@ -60,6 +60,11 @@ internal sealed partial class SignalrService
         return await InvokeAsync<List<PendingFriendRequestDto>>(HubMethods.GetFriendRequests);
     }
 
+    public async Task SetStatusAsync(UserStatus status)
+    {
+        await _connection.SendAsync(HubMethods.ChangeStatus, status);
+    }
+
     private void RegisterFriendHandlers()
     {
         _connection.On<PendingFriendRequestDto>(nameof(IFriendChatClient.FriendRequestCreated), friendRequest =>
@@ -79,5 +84,10 @@ internal sealed partial class SignalrService
 
         _connection.On<UserId, UserStatus>(nameof(IFriendChatClient.FriendStatusChanged), (friendId, status) =>
             FriendStatusChanged?.Invoke(friendId, status));
+
+        _connection.On<UserStatus>(nameof(IFriendChatClient.SelfStatusChanged), status =>
+        {
+            _logger.LogInformation("Current status: {Status}", status);
+        });
     }
 }

@@ -8,15 +8,13 @@ namespace Shared.Data.TypedIds;
 [MessagePackObject]
 [JsonConverter(typeof(UserIdConverter))]
 [TypeConverter(typeof(GuidIdConverter<UserId>))]
-public readonly record struct UserId([property: Key(0)] Guid Value) : IGuidIdRecord<UserId>
+public record struct UserId([property: Key(0)] Guid Value) : IGuidIdRecord<UserId>
 {
     public static UserId New => new(Guid.NewGuid());
 
     public static UserId Empty => default;
 
     public static UserId From(Guid value) => new(value);
-    
-    public override string ToString() => Value.ToString();
 
     public static UserId Parse(ReadOnlySpan<char> span) => new(Guid.Parse(span));
 
@@ -27,4 +25,8 @@ public readonly record struct UserId([property: Key(0)] Guid Value) : IGuidIdRec
 
         return success;
     }
+
+    public override string ToString() => _string ??= Value.ToString();
+
+    private string? _string;
 }

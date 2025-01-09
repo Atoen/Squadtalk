@@ -1,4 +1,5 @@
 using Shared.Data;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Results;
 
@@ -30,4 +31,6 @@ public interface IContactManager
     Task RefreshFriendListAsync();
 
     Task RefreshFriendRequestsAsync();
+
+    Task SetStatusAsync(UserStatus status);
 }

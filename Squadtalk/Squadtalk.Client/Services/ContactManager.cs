@@ -147,6 +147,11 @@ internal class ContactManager : IContactManager
         FriendRequestsChanged?.Invoke();
     }
 
+    public async Task SetStatusAsync(UserStatus status)
+    {
+        await _signalrService.SetStatusAsync(status);
+    }
+
     #endregion
 
     #region EventHandlers

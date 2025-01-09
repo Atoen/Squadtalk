@@ -1,6 +1,7 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Results;
 using Shared.Services;
@@ -90,4 +91,6 @@ internal class ContactManager : LazyModelCreator, IContactManager
     public Task RefreshFriendListAsync() => Task.CompletedTask;
 
     public Task RefreshFriendRequestsAsync() => Task.CompletedTask;
+
+    public Task SetStatusAsync(UserStatus status) => Task.CompletedTask;
 }
