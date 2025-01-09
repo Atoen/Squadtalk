@@ -1,6 +1,7 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Results;
 using Shared.Services;
@@ -54,6 +55,7 @@ internal class ContactManager : IContactManager
         signalrService.FriendRequestResponded += FriendRequestResponded;
         signalrService.FriendListReceived += FriendListReceived;
         signalrService.FriendRequestsReceived += FriendRequestsReceived;
+        signalrService.FriendStatusChanged += FriendStatusChanged;
     }
 
     #region PublicMethods
@@ -227,6 +229,22 @@ internal class ContactManager : IContactManager
         }
 
         FriendRequestsChanged?.Invoke();
+    }
+
+    private void FriendStatusChanged(UserId friendId, UserStatus status)
+    {
+        _logger.LogInformation("Friend status changed");
+
+        if (!_friends.TryGetValue(friendId, out var friend))
+        {
+            return;
+        }
+
+        _logger.LogInformation("Changing status of {User} to {Status}", friend.Username, status);
+
+        friend.Status = status;
+
+        FriendListChanged?.Invoke();
     }
 
     #endregion

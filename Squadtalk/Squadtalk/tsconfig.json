@@ -12,6 +12,6 @@
     "newLine": "crlf"
   },
   "include": [
-    "Scripts/**/*"
+    "Scripts/ts/**/*"
   ]
 }

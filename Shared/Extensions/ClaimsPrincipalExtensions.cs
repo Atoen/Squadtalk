@@ -22,10 +22,17 @@ public static class ClaimsPrincipalExtensions
         return claim.Value;
     }
 
-    public static UserId GetUserId(this ClaimsPrincipal principal)
+    public static UserId GetRequiredUserId(this ClaimsPrincipal principal)
     {
         var claim = principal.GetRequiredClaimValue(ClaimTypes.NameIdentifier);
 
         return UserId.Parse(claim);
+    }
+
+    public static UserId? GetUserId(this ClaimsPrincipal principal)
+    {
+        var claim = principal.GetClaimValue(ClaimTypes.NameIdentifier);
+
+        return claim is null ? null : UserId.Parse(claim);
     }
 }

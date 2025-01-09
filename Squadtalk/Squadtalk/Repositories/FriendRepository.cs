@@ -13,6 +13,11 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
         return await UserFriendsAsync(DbContext, userId).ToListAsync();
     }
 
+    public async Task<List<UserId>> GetUserFriendIdsAsync(UserId userId)
+    {
+        return await UserFriendIdsAsync(DbContext, userId).ToListAsync();
+    }
+
     public async Task<List<FriendRequest>> GetUserPendingFriendRequests(UserId userId)
     {
         return await UserPendingFriendRequests(DbContext, userId).ToListAsync();
@@ -93,6 +98,13 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
                 .AsNoTracking()
                 .Where(x => x.User1.Id == userId || x.User2.Id == userId)
                 .Select(x => x.User1.Id == userId ? x.User2 : x.User1));
+
+    private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<UserId>> UserFriendIdsAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, UserId userId) => context.Friendships
+                .AsNoTracking()
+                .Where(x => x.User1.Id == userId || x.User2.Id == userId)
+                .Select(x => x.User1.Id == userId ? x.User2.Id : x.User1.Id));
 
     private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<FriendRequest>> UserPendingFriendRequests =
         EF.CompileAsyncQuery(

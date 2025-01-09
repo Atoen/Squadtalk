@@ -32,7 +32,7 @@ public class ChatController : ControllerBase
     [HttpGet(Routes.RelativeEndpoints.GetMessages)]
     public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessages(ChannelId channelId, string? timestamp)
     {
-        var userId = HttpContext.User.GetUserId();
+        var userId = HttpContext.User.GetRequiredUserId();
         var userParticipates = await _channelRepository.UserParticipatesInChannelAsync(userId, channelId);
         if (!userParticipates)
         {
@@ -48,7 +48,7 @@ public class ChatController : ControllerBase
     [HttpPost(Routes.RelativeEndpoints.CreateChannel)]
     public async Task<ActionResult<ChannelId>> CreateChannel(List<UserId> participantsId)
     {
-        var userId = HttpContext.User.GetUserId();
+        var userId = HttpContext.User.GetRequiredUserId();
         var channel = await _channelCreator.CreateChannelAsync(userId, participantsId);
 
         return channel is null
