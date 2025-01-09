@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Shared.Routing
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -13,17 +14,17 @@
     <link href="manifest.webmanifest" rel="manifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-    <HeadOutlet @rendermode="InteractiveWebAssembly"/>
+    <HeadOutlet @rendermode="RenderModeForPage"/>
 </head>
 
 <body>
-    <AppRouter @rendermode="InteractiveWebAssembly" />
-    <script src="_framework/blazor.web.js"></script>
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-    <script src="js/tus.min.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
-    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
-    <script>
+<AppRouter @rendermode="RenderModeForPage" />
+<script src="_framework/blazor.web.js"></script>
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
+<script src="js/tus.min.js"></script>
+<script>navigator.serviceWorker.register('service-worker.js');</script>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+<script>
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -39,3 +40,13 @@
 </body>
 
 </html>
+
+@code
+{
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private bool UseSSR => HttpContext.Request.Path == Routes.Pages.NotFound;
+
+    private IComponentRenderMode? RenderModeForPage => UseSSR ? null : InteractiveWebAssembly;
+}

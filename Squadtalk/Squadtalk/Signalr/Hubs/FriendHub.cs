@@ -142,14 +142,24 @@ partial class AppHub
     [HubMethodName(HubMethods.ChangeStatus)]
     public async Task ChangeStatus(UserStatus newStatus, FriendRepository friendRepository)
     {
-        // var userId = UserId;
-        // var (changed, currentStatus) = await _connectionManager.SetUserStatusAsync(UserId, newStatus);
-        //
-        // if (!changed) return;
-        //
-        // var friends = await friendRepository.GetUserFriendsAsync(userId);
-        // var idsToNotify = friends.Select(x => x.Id.ToString());
-        //
-        // await Clients.Users(idsToNotify).FriendStatusChanged(userId, currentStatus);
+        var userId = UserId;
+        var (statusChanged, currentStatus) = await _connectionManager.SetUserStatusAsync(userId, newStatus);
+
+        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", userId, statusChanged, currentStatus);
+
+        if (!statusChanged) return;
+
+        var friendsId = await friendRepository.GetUserFriendIdsAsync(userId);
+        var idStrings = friendsId.Select(x => x.ToString());
+
+        await Clients.User(userId.ToString()).SelfStatusChanged(currentStatus);
+
+        await Clients.Users(idStrings).FriendStatusChanged(userId, currentStatus);
+    }
+
+    [HubMethodName(HubMethods.GetSelfStatus)]
+    public async Task<UserStatus> GetSelfStatus()
+    {
+        return await _connectionManager.GetUserStatusAsync(UserId);
     }
 }

@@ -22,5 +22,5 @@
     [Parameter, EditorRequired]
     public GroupChatModel GroupChat { get; set; } = default!;
 
-    private string GetStyle => $"background-color: {GroupChat.StatusColor()}";
+    private string GetStyle => $"background-color: {GroupChat.StatusColorStyle()}";
 }

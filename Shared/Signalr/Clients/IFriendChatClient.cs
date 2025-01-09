@@ -16,5 +16,7 @@ public interface IFriendChatClient
 
     Task FriendRemoved(UserId friendId);
 
+    Task SelfStatusChanged(UserStatus status);
+
     Task FriendStatusChanged(UserId friendId, UserStatus status);
 }

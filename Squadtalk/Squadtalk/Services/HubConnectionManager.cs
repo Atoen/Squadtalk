@@ -7,6 +7,9 @@ namespace Squadtalk.Services;
 
 public class HubConnectionManager
 {
+    private const string FCALL = "FCALL";
+    private static readonly object ZeroKeys = 0;
+
     private readonly IDatabase _redisDb;
 
     public HubConnectionManager(IConnectionMultiplexer connectionMultiplexer)
@@ -27,7 +30,7 @@ public class HubConnectionManager
     public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionStartedAsync(ApplicationUser user, string connectionId)
     {
         var result = await _redisDb.ExecuteAsync(
-        "FCALL", "connection_started", 0, user.Id.ToString(), connectionId);
+        FCALL, "connection_started", ZeroKeys, user.Id.ToString(), connectionId);
 
         return ReadRedisResult(result);
     }
@@ -35,15 +38,23 @@ public class HubConnectionManager
     public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionClosedAsync(ApplicationUser user, string connectionId)
     {
         var result = await _redisDb.ExecuteAsync(
-            "FCALL", "connection_ended", 0, user.Id.ToString(), connectionId);
+            FCALL, "connection_ended", ZeroKeys, user.Id.ToString(), connectionId);
 
         return ReadRedisResult(result);
     }
 
     public async Task<UserStatus> GetUserStatusAsync(UserId userId)
     {
-        var result = await _redisDb.HashGetAsync("user:status", userId.Value.ToString());
+        var result = await _redisDb.HashGetAsync("user:status", userId.ToString());
         return (UserStatus) (int) result;
+    }
+
+    public async Task<(bool changed, UserStatus userStatus)> SetUserStatusAsync(UserId userId, UserStatus userStatus)
+    {
+        var result = await _redisDb.ExecuteAsync(
+            FCALL, "set_user_status", ZeroKeys, userId.ToString(), (int) userStatus);
+
+        return ReadRedisResult(result);
     }
 
     private (bool, UserStatus) ReadRedisResult(RedisResult redisResult)

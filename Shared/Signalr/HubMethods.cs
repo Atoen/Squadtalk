@@ -10,4 +10,5 @@ public static class HubMethods
     public const string GetFriendRequests = nameof(GetFriendRequests);
 
     public const string ChangeStatus = nameof(ChangeStatus);
+    public const string GetSelfStatus = nameof(GetSelfStatus);
 }
