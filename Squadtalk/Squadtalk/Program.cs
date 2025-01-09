@@ -11,6 +11,7 @@ using Squadtalk.Components.Account;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
+using Squadtalk.Redis;
 using Squadtalk.Services;
 using Squadtalk.Signalr.Hubs;
 using Squadtalk.Tus;
@@ -96,6 +97,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.SetupRedisData();
 
 app.UseCors(corsPolicy);
 

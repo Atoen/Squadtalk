@@ -1,9 +1,10 @@
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 
 namespace Shared.Signalr.Clients;
 
-public interface IChatClient : ITextChatClient, IVoiceChatClient
+public interface IFriendChatClient
 {
     Task FriendRequestCreated(PendingFriendRequestDto friendRequestDto);
 
@@ -14,4 +15,6 @@ public interface IChatClient : ITextChatClient, IVoiceChatClient
     Task FriendAdded(UserDto friend);
 
     Task FriendRemoved(UserId friendId);
+
+    Task FriendStatusChanged(UserId friendId, UserStatus status);
 }

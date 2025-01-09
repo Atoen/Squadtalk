@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Results;
 using Shared.Signalr;
 using Shared.Signalr.Clients;
@@ -18,6 +19,7 @@ internal sealed partial class SignalrService
 
     public event Action<List<UserDto>>? FriendListReceived;
     public event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
+    public event Action<UserId, UserStatus>? FriendStatusChanged;
 
     public async Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername)
     {
@@ -60,19 +62,22 @@ internal sealed partial class SignalrService
 
     private void RegisterFriendHandlers()
     {
-        _connection.On<PendingFriendRequestDto>(nameof(IChatClient.FriendRequestCreated), friendRequest =>
+        _connection.On<PendingFriendRequestDto>(nameof(IFriendChatClient.FriendRequestCreated), friendRequest =>
             FriendRequestCreated?.Invoke(friendRequest));
 
-        _connection.On<FriendRequestId>(nameof(IChatClient.FriendRequestCancelled), friendRequestId =>
+        _connection.On<FriendRequestId>(nameof(IFriendChatClient.FriendRequestCancelled), friendRequestId =>
             FriendRequestCancelled?.Invoke(friendRequestId));
 
-        _connection.On<FriendRequestResponseDto>(nameof(IChatClient.FriendRequestResponded), response =>
+        _connection.On<FriendRequestResponseDto>(nameof(IFriendChatClient.FriendRequestResponded), response =>
             FriendRequestResponded?.Invoke(response));
 
-        _connection.On<UserDto>(nameof(IChatClient.FriendAdded), friend =>
+        _connection.On<UserDto>(nameof(IFriendChatClient.FriendAdded), friend =>
             FriendAdded?.Invoke(friend));
 
-        _connection.On<UserId>(nameof(IChatClient.FriendRemoved), friendId =>
+        _connection.On<UserId>(nameof(IFriendChatClient.FriendRemoved), friendId =>
             FriendRemoved?.Invoke(friendId));
+
+        _connection.On<UserId, UserStatus>(nameof(IFriendChatClient.FriendStatusChanged), (friendId, status) =>
+            FriendStatusChanged?.Invoke(friendId, status));
     }
 }

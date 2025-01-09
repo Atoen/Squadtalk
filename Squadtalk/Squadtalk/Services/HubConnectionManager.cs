@@ -1,4 +1,5 @@
 using Shared.Data.TypedIds;
+using Shared.Enums;
 using Squadtalk.Data.Entities;
 using StackExchange.Redis;
 
@@ -6,8 +7,6 @@ namespace Squadtalk.Services;
 
 public class HubConnectionManager
 {
-    private const string UserConnectionsKey = "user:connections";
-
     private readonly IDatabase _redisDb;
 
     public HubConnectionManager(IConnectionMultiplexer connectionMultiplexer)
@@ -17,7 +16,7 @@ public class HubConnectionManager
 
     public async Task<IEnumerable<string>> GetUserConnectionsAsync(ApplicationUser user)
     {
-        var key = GetUserConnectionsRedisKey(user.Id);
+        var key = $"user:connections:{user.Id}";
         var connections = await _redisDb.SetMembersAsync(key);
 
         return connections.Length != 0
@@ -25,24 +24,39 @@ public class HubConnectionManager
             : [];
     }
 
-    public async Task<bool> AddAsync(ApplicationUser user, string connectionId)
+    public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionStartedAsync(ApplicationUser user, string connectionId)
     {
-        var userKey = GetUserConnectionsRedisKey(user.Id);
-        var added = await _redisDb.SetAddAsync(userKey, connectionId);
+        var result = await _redisDb.ExecuteAsync(
+        "FCALL", "connection_started", 0, user.Id.ToString(), connectionId);
 
-        return added;
+        return ReadRedisResult(result);
     }
     
-    public async Task<bool> RemoveAsync(ApplicationUser user, string connectionId)
+    public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionClosedAsync(ApplicationUser user, string connectionId)
     {
-        var userKey = GetUserConnectionsRedisKey(user.Id);
-        var removed = await _redisDb.SetRemoveAsync(userKey, connectionId);
+        var result = await _redisDb.ExecuteAsync(
+            "FCALL", "connection_ended", 0, user.Id.ToString(), connectionId);
 
-        return removed;
+        return ReadRedisResult(result);
     }
 
-    private static string GetUserConnectionsRedisKey(UserId userId)
+    public async Task<UserStatus> GetUserStatusAsync(UserId userId)
     {
-        return $"{UserConnectionsKey}:{userId}";
+        var result = await _redisDb.HashGetAsync("user:status", userId.Value.ToString());
+        return (UserStatus) (int) result;
+    }
+
+    private (bool, UserStatus) ReadRedisResult(RedisResult redisResult)
+    {
+        var data = (RedisResult[]?) redisResult;
+        if (data is not null)
+        {
+            var statusChanged = (int) data[0] == 1;
+            var currentStatus = (UserStatus) (int) data[1];
+
+            return (statusChanged, currentStatus);
+        }
+
+        return (false, UserStatus.Unknown);
     }
 }

@@ -77,7 +77,7 @@ public partial class ChatHub : Hub<IChatClientOld>
 
     public async Task<bool> ChangeGroupName(string? newName, ChannelId channelId, SystemMessageService systemMessageService)
     {
-        var userId = Context.User!.GetUserId();
+        var userId = Context.User!.GetRequiredUserId();
         var channel = await _channelRepository.GetChannelAsync(channelId);
         if (channel is null || !channel.UserParticipatesInChannel(userId))
         {
@@ -158,11 +158,11 @@ public partial class ChatHub : Hub<IChatClientOld>
         }
 
         var dto = user.ToDto();
-        var isUniqueConnection = await _connectionManager.AddAsync(user, Context.ConnectionId);
-        if (isUniqueConnection)
-        {
-            await TextGroup(GroupChatModel.GlobalChatId).UserConnected(dto);
-        }
+        // var isUniqueConnection = await _connectionManager.ConnectionStartedAsync(user, Context.ConnectionId);
+        // if (isUniqueConnection)
+        // {
+        //     await TextGroup(GroupChatModel.GlobalChatId).UserConnected(dto);
+        // }
         
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupChatModel.GlobalChatId);
 
@@ -187,11 +187,11 @@ public partial class ChatHub : Hub<IChatClientOld>
 
         var dto = user.ToDto();
         
-        var allConnectionsClosed = await _connectionManager.RemoveAsync(user, Context.ConnectionId);
-        if (!allConnectionsClosed)
-        {
-            return;
-        }
+        // var allConnectionsClosed = await _connectionManager.ConnectionClosedAsync(user, Context.ConnectionId);
+        // if (!allConnectionsClosed)
+        // {
+        //     return;
+        // }
 
         await TextGroup(GroupChatModel.GlobalChatId).UserDisconnected(dto);
         if (user.Channels is not { Count: > 0 })

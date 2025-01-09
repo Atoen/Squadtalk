@@ -67,7 +67,7 @@ public static class TusConfigurationFactory
 
         if (context.HasFailed || channelIdMetadata is null) return;
 
-        var userId = context.HttpContext.User.GetUserId();
+        var userId = context.HttpContext.User.GetRequiredUserId();
         var channelId = ChannelId.From(channelIdMetadata);
 
         var channelRepository = context.HttpContext.RequestServices.GetRequiredService<ChannelRepository>();

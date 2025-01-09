@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Shared.DTOs.Chat;
-using Shared.Extensions;
+using Shared.Enums;
 using Shared.Results;
 using Shared.Signalr;
 using Squadtalk.Data;
@@ -14,7 +14,7 @@ partial class AppHub
     public async Task<FriendRequestResult> SendFriendRequest(
         FriendRequestDto friendRequest, FriendRepository friendRepository)
     {
-        var userId = Context.User!.GetUserId();
+        var userId = UserId;
 
         var result = await friendRepository.AddFriendRequestAsync(
             userId, friendRequest.RecipientUsername, Context.ConnectionAborted);
@@ -39,7 +39,7 @@ partial class AppHub
     public async Task<bool> CancelFriendRequest(
         CancelFriendRequestDto cancelFriendRequestDto, FriendRepository friendRepository)
     {
-        var userId = Context.User!.GetUserId();
+        var userId = UserId;
         var requestId = cancelFriendRequestDto.RequestId;
 
         var cancelledRequest = await friendRepository.CancelFriendRequestAsync(
@@ -62,7 +62,7 @@ partial class AppHub
     public async Task<FriendRequestResponseResult> RespondToFriendRequest(
         FriendRequestResponseDto requestResponseDto, FriendRepository friendRepository)
     {
-        var userId = Context.User!.GetUserId();
+        var userId = UserId;
 
         var result = await friendRepository.RespondToFriendRequestAsync(
             userId,
@@ -109,7 +109,7 @@ partial class AppHub
     public async Task<RemoveFriendResult> RemoveFriend(
         RemoveFriendDto removeFriendDto, FriendRepository friendRepository)
     {
-        var userId = Context.User!.GetUserId();
+        var userId = UserId;
 
         var result = await friendRepository.RemoveFriendAsync(
             userId, removeFriendDto.FriendId, Context.ConnectionAborted);
@@ -128,18 +128,28 @@ partial class AppHub
     [HubMethodName(HubMethods.GetFriendList)]
     public async Task<List<UserDto>> GetFriendList(FriendRepository friendRepository)
     {
-        var userId = Context.User!.GetUserId();
-        var friends = await friendRepository.GetUserFriendsAsync(userId);
-
+        var friends = await friendRepository.GetUserFriendsAsync(UserId);
         return friends.Select(x => x.ToDto()).ToList();
     }
 
     [HubMethodName(HubMethods.GetFriendRequests)]
     public async Task<List<PendingFriendRequestDto>> GetFriendRequests(FriendRepository friendRepository)
     {
-        var userId = Context.User!.GetUserId();
-        var requests = await friendRepository.GetUserPendingFriendRequests(userId);
-
+        var requests = await friendRepository.GetUserPendingFriendRequests(UserId);
         return requests.Select(x => x.ToDto()).ToList();
+    }
+
+    [HubMethodName(HubMethods.ChangeStatus)]
+    public async Task ChangeStatus(UserStatus newStatus, FriendRepository friendRepository)
+    {
+        // var userId = UserId;
+        // var (changed, currentStatus) = await _connectionManager.SetUserStatusAsync(UserId, newStatus);
+        //
+        // if (!changed) return;
+        //
+        // var friends = await friendRepository.GetUserFriendsAsync(userId);
+        // var idsToNotify = friends.Select(x => x.Id.ToString());
+        //
+        // await Clients.Users(idsToNotify).FriendStatusChanged(userId, currentStatus);
     }
 }
