@@ -19,16 +19,17 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     private readonly HubConnection _connection;
 
     private bool _handlersRegistered;
+    private bool _connectionStared;
 
     public event Func<ConnectionStatus, Task>? ConnectionStatusChanged;
+    public event Action? UserStatusChanged;
 
     public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
     public event Func<ChannelId, string?, Task>? ChannelNameChanged;
 
-    private bool _connectionStared;
-
     public ConnectionStatus ConnectionStatus { get; private set; } = ConnectionStatus.Connecting;
+    public UserStatus UserStatus { get; private set; } = UserStatus.Unknown;
 
     public SignalrService(
         NavigationManager navigationManager,
@@ -81,9 +82,10 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             ConnectionStatus = ConnectionStatus.Connected;
             await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
 
-            var userStatus = await _connection.InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
-            _logger.LogInformation("Connected with status: {Status}", userStatus);
+            UserStatus = await _connection.InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
+            _logger.LogInformation("Connected with status: {Status}", UserStatus);
 
+            UserStatusChanged?.Invoke();
         }
         catch (Exception e)
         {

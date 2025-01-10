@@ -73,6 +73,17 @@ local function set_user_status(_, args)
     return {1, newStatus}
 end
 
+local function clear_connections(_, _)
+    local connectionKeys = redis.call('KEYS', CONNECTION_KEY .. '*')
+
+    for _, key in ipairs(connectionKeys) do
+        redis.call('DEL', key)
+    end
+
+    redis.call('DEL', USER_STATUS_KEY)
+end
+
 redis.register_function('connection_started', connection_started)
 redis.register_function('connection_ended', connection_ended)
 redis.register_function('set_user_status', set_user_status)
+redis.register_function('clear_connections', clear_connections)

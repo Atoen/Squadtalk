@@ -87,7 +87,8 @@ internal sealed partial class SignalrService
 
         _connection.On<UserStatus>(nameof(IFriendChatClient.SelfStatusChanged), status =>
         {
-            _logger.LogInformation("Current status: {Status}", status);
+            UserStatus = status;
+            UserStatusChanged?.Invoke();
         });
     }
 }

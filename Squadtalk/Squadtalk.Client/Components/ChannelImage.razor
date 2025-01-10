@@ -49,6 +49,6 @@
         }
     }
 
-    private string GetStyle => $"background-color: {Channel.StatusColor()}";
+    private string GetStyle => $"background-color: {Channel.Status.StatusColor()}";
     private string InlineClass => Inline ? "inline" : "";
 }

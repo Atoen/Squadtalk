@@ -2,17 +2,38 @@ using StackExchange.Redis;
 
 namespace Squadtalk.Redis;
 
-public static class RedisExtensions
+public static partial class RedisExtensions
 {
     public static WebApplication SetupRedisData(this WebApplication application)
     {
-        var mux = application.Services.GetRequiredService<IConnectionMultiplexer>();
-        var db = mux.GetDatabase(2);
+        var logger = application.Services.GetRequiredService<ILogger<Program>>();
+        LogStart(logger);
 
-        var script = File.ReadAllText("./Scripts/lua/userConnections.lua");
-        db.Execute("FUNCTION", "LOAD", "REPLACE", script);
-        db.Execute("DEL", "user:connection", "user:status");
+        try
+        {
+            var mux = application.Services.GetRequiredService<IConnectionMultiplexer>();
+            var db = mux.GetDatabase(2);
 
-        return application;
+            var script = File.ReadAllText("./Scripts/lua/userConnections.lua");
+            db.Execute("FUNCTION", "LOAD", "REPLACE", script);
+            db.Execute("FCALL", "clear_connections", 0);
+
+            LogSuccess(logger);
+            return application;
+        }
+        catch (Exception e)
+        {
+            LogFailure(logger, e);
+            throw;
+        }
     }
+
+    [LoggerMessage(LogLevel.Information, "Starting Redis setup...")]
+    private static partial void LogStart(ILogger logger);
+
+    [LoggerMessage(LogLevel.Information, "Successfully setup Redis")]
+    private static partial void LogSuccess(ILogger logger);
+
+    [LoggerMessage(LogLevel.Critical, "Failed to setup Redis")]
+    private static partial void LogFailure(ILogger logger, Exception exception);
 }
