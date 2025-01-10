@@ -25,6 +25,13 @@ internal class ContactManager : IContactManager
     public event Action? FriendListChanged;
     public event Action? FriendRequestsChanged;
     public event Action<IncomingFriendRequest>? FriendRequestReceived;
+    public event Action? StatusChanged
+    {
+        add => _signalrService.UserStatusChanged += value;
+        remove => _signalrService.UserStatusChanged -= value;
+    }
+
+    public UserStatus UserStatus => _signalrService.UserStatus;
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 

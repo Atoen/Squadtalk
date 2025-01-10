@@ -24,6 +24,7 @@ unexpected_error: An unhandled error has occurred.
 dialog_remove_avatar_title: Confirm removing avatar
 dialog_remove_avatar_body: Are you sure you want to remove your current avatar? This action cannot be undone.
 
+connecting: Connecting
 network_error: Network error
 failed_to_create_account: Failed to create account
 password_confirmation_required: Please confirm password

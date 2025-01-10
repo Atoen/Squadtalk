@@ -1,16 +1,14 @@
-﻿<MudPaper Width="250px" Class="py-3" Elevation="0" Square="true">
+﻿<MudPaper Width="250px" Class="py-1" Elevation="0" Square="true">
     <MudNavMenu Color="Color.Primary" Bordered="true">
-        <MudText Typo="Typo.h5" Class="px-4" Color="Color.Primary">Squadtalk</MudText>
+        <MudText Typo="Typo.h5" Class="px-4 pt-2" Color="Color.Primary">Squadtalk</MudText>
 
         <AuthorizeView>
             <Authorized>
-                <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary mud-typography-nowrap">
-                    @context.User.Identity?.Name
-                </MudText>
+                <StatusDisplay/>
             </Authorized>
         </AuthorizeView>
 
-        <MudDivider Class="my-2"/>
+        <MudDivider Class="my-1"/>
 
         <MudNavLink Href="@Routes.Pages.Chats" Icon="@Icons.Material.Rounded.Chat">@_textTable.messages</MudNavLink>
         <MudNavLink Href="@Routes.Pages.Contacts" Icon="@Icons.Material.Rounded.People">@_textTable.contacts</MudNavLink>
@@ -50,6 +48,7 @@
 
 @using Shared.Routing
 @using Squadtalk.Client.Localization
+@using Squadtalk.Client.Components
 @implements IDisposable
 
 @inject NavigationManager NavigationManager

@@ -17,32 +17,4 @@ else
 
 <p>@RendererInfo.Name</p>
 
-<p class="d-flex">
-    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-               OnClick="() => ChangeStatus(UserStatus.Online)">
-        @LocalizedText.R.online
-    </MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-               OnClick="() => ChangeStatus(UserStatus.Away)">
-        @LocalizedText.R.away
-    </MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-               OnClick="() => ChangeStatus(UserStatus.DoNotDisturb)">
-        @LocalizedText.R.do_not_disturb
-    </MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary"
-               OnClick="() => ChangeStatus(UserStatus.Offline)">
-        @LocalizedText.R.offline
-    </MudButton>
-</p>
-
 @inject LocalizedText LocalizedText
-@inject IContactManager ContactManager
-
-@code
-{
-    private async Task ChangeStatus(UserStatus status)
-    {
-        await ContactManager.SetStatusAsync(status);
-    }
-}

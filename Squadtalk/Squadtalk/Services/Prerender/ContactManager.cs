@@ -30,6 +30,9 @@ internal class ContactManager : LazyModelCreator, IContactManager
     event Action? IContactManager.FriendListChanged { add { } remove { } }
     event Action? IContactManager.FriendRequestsChanged { add { } remove { } }
     event Action<IncomingFriendRequest>? IContactManager.FriendRequestReceived { add { } remove { } }
+    event Action? IContactManager.StatusChanged { add { } remove { } }
+
+    public UserStatus UserStatus => UserStatus.Unknown;
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 

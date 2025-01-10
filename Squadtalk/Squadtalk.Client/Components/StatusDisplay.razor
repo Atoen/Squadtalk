@@ -1,0 +1,81 @@
+@using Squadtalk.Client.Extensions
+
+@if (ContactManager.UserStatus == UserStatus.Unknown)
+{
+    <div class="d-flex gap-2 px-3 py-0 flex-grow-1 mx-1">
+        <MudIcon Icon="@Icons.Material.Rounded.Wifi" Color="Color.Info"
+                 Class="align-self-center"/>
+
+        <div>
+            <div class="mb-n1 mud-typography-body1">@UserAuthenticationService.Username</div>
+            <div class="mud-typography-body2 mud-text-secondary">@LocalizedText.R.connecting</div>
+        </div>
+    </div>
+}
+else
+{
+    <MudMenu @ref="_mudMenu" ListClass="pa-1" Class="mud-width-full" PositionAtCursor="true">
+        <ActivatorContent>
+            <div class="d-flex gap-2 px-3 py-0 flex-grow-1 mx-1
+                        mud-button mud-ripple">
+                <MudIcon Icon="@Status.Icon()" Color="Status.PaletteColor()"
+                         Class="align-self-center"/>
+                <div>
+                    <div class="mb-n1 mud-typography-body1">@UserAuthenticationService.Username</div>
+                    <div class="mud-typography-body2 mud-text-secondary">@Status.Name(LocalizedText.R)</div>
+                </div>
+            </div>
+        </ActivatorContent>
+        <ChildContent>
+            <div class="@ListDivClass" @onclick="() => SetStatusAsync(UserStatus.Online)">
+                <MudIcon Icon="@UserStatus.Online.Icon()" Color="Color.Success" Size="Size.Small"/>
+                @LocalizedText.R.online
+            </div>
+
+            <div class="@ListDivClass" @onclick="() => SetStatusAsync(UserStatus.Away)">
+                <MudIcon Icon="@UserStatus.Away.Icon()" Color="Color.Warning" Size="Size.Small"/>
+                @LocalizedText.R.away
+            </div>
+
+            <div class="@ListDivClass" @onclick="() => SetStatusAsync(UserStatus.DoNotDisturb)">
+                <MudIcon Icon="@UserStatus.DoNotDisturb.Icon()" Color="Color.Error" Size="Size.Small"/>
+                @LocalizedText.R.do_not_disturb
+            </div>
+
+            <div class="@ListDivClass" @onclick="() => SetStatusAsync(UserStatus.Offline)">
+                <MudIcon Icon="@UserStatus.Offline.Icon()" Color="Color.Dark" Size="Size.Small"/>
+                @LocalizedText.R.offline
+            </div>
+        </ChildContent>
+    </MudMenu>
+}
+
+@inject IUserAuthenticationService UserAuthenticationService
+@inject IContactManager ContactManager
+@inject LocalizedText LocalizedText
+
+@code
+{
+    private const string ListDivClass = "mud-list-item-clickable d-flex pa-2 gap-2";
+
+    private MudMenu? _mudMenu;
+
+    private UserStatus Status => ContactManager.UserStatus;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        ContactManager.StatusChanged += StateHasChanged;
+    }
+
+    private async Task SetStatusAsync(UserStatus status)
+    {
+        if (_mudMenu is not null)
+        {
+            await _mudMenu.CloseMenuAsync();
+        }
+
+        await ContactManager.SetStatusAsync(status);
+    }
+}

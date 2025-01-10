@@ -10,6 +10,9 @@ public interface IContactManager
     event Action? FriendListChanged;
     event Action? FriendRequestsChanged;
     event Action<IncomingFriendRequest>? FriendRequestReceived;
+    event Action? StatusChanged;
+
+    UserStatus UserStatus { get; }
 
     Func<IChatUser, UserModel> UserModelProvider { get; }
 

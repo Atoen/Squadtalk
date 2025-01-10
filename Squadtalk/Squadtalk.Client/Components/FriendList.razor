@@ -21,8 +21,10 @@ else
 
             <div>
                 <p class="mud-typography-body1">@friend.Username</p>
-                <p class="mud-typography-caption" style="@friend.StatusColorStyle()">
-                    @friend.StatusString(LocalizedText.R)
+                <p class="mud-typography-caption d-flex align-center gap-1">
+                    <MudIcon Icon="@friend.Status.Icon()" Color="@friend.Status.PaletteColor()"
+                             Size="Size.Small"/>
+                    @friend.Status.Name(LocalizedText.R)
                 </p>
             </div>
 
