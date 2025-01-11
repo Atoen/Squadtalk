@@ -49,6 +49,23 @@ public class HubConnectionManager
         return (UserStatus) (int) result;
     }
 
+    public async Task<Dictionary<UserId, UserStatus>> GetUsersStatusAsync(IEnumerable<UserId> userIds)
+    {
+        var userIdsArray = userIds.ToArray();
+        var redisKeys = userIdsArray.Select(id => (RedisValue) id.ToString()).ToArray();
+
+        var results = await _redisDb.HashGetAsync("user:status", redisKeys);
+
+        var statuses = new Dictionary<UserId, UserStatus>();
+        for (var i = 0; i < userIdsArray.Length; i++)
+        {
+            var id = userIdsArray[i];
+            statuses[id] = results[i].HasValue ? (UserStatus) (int) results[i] : UserStatus.Offline;
+        }
+
+        return statuses;
+    }
+
     public async Task<(bool changed, UserStatus userStatus)> SetUserStatusAsync(UserId userId, UserStatus userStatus)
     {
         var result = await _redisDb.ExecuteAsync(
@@ -62,7 +79,7 @@ public class HubConnectionManager
         var data = (RedisResult[]?) redisResult;
         if (data is not null)
         {
-            var statusChanged = (int) data[0] == 1;
+            var statusChanged = (bool) data[0];
             var currentStatus = (UserStatus) (int) data[1];
 
             return (statusChanged, currentStatus);

@@ -29,6 +29,7 @@ new_password_required: Proszę podać nowe hasło
 new_password_confirmation_required: Proszę powtórzyć nowe hasło
 write_to_channel: Napisz na @{0}
 connecting: Łączenie
+loading: Ładowanie
 
 other_users: Inni użytkownicy
 contacts: Kontakty

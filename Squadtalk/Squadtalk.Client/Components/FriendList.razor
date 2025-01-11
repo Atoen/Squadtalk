@@ -5,52 +5,59 @@
     <p class="mud-typography-body1">
         @LocalizedText.R.friend_list_empty
     </p>
+
+    return;
 }
-else
+
+<p class="mud-typography-body1 mud-typography-gutterbottom">
+    @LocalizedText.R.all_friends - @ContactManager.FriendList.Count
+</p>
+
+@foreach (var friend in ContactManager.FriendList)
 {
-    <p class="mud-typography-body1 mud-typography-gutterbottom">
-        @LocalizedText.R.all_friends - @ContactManager.FriendList.Count
-    </p>
+    <MudStack Row="true" AlignItems="AlignItems.Center"
+              Class="my-1 mud-button pa-1 mud-ripple"
+              @onclick="() => MessageFriend(friend)">
+        @UserAvatar(friend)
 
-    foreach (var friend in ContactManager.FriendList)
-    {
-        <MudStack Row="true" AlignItems="AlignItems.Center"
-                  Class="my-1 mud-button pa-1 mud-ripple"
-                  @onclick="() => MessageFriend(friend)">
-            @UserAvatar(friend)
+        <div>
+            <p class="mud-typography-body1">@friend.Username</p>
 
-            <div>
-                <p class="mud-typography-body1">@friend.Username</p>
+            @if (friend.Status != UserStatus.Unknown)
+            {
                 <p class="mud-typography-caption d-flex align-center gap-1">
-                    <MudIcon Icon="@friend.Status.Icon()" Color="@friend.Status.PaletteColor()"
-                             Size="Size.Small"/>
+                    <MudIcon Icon="@friend.Status.Icon()" Size="Size.Small"
+                             Color="@friend.Status.PaletteColor()"/>
                     @friend.Status.Name(LocalizedText.R)
                 </p>
-            </div>
+            }
+        </div>
 
-            <div class="ms-auto d-flex">
-                <MudTooltip Text="@LocalizedText.R.message"
-                            Placement="Placement.Top" Color="Color.Dark">
-                    <MudIconButton Icon="@Icons.Material.Rounded.Message"
-                                   OnClick="() => MessageFriend(friend)"/>
-                </MudTooltip>
+        <div class="ms-auto d-flex">
+            <MudTooltip Text="@LocalizedText.R.message"
+                        Placement="Placement.Top" Color="Color.Dark">
+                <MudIconButton Icon="@Icons.Material.Rounded.Message"
+                               OnClick="() => MessageFriend(friend)"/>
+            </MudTooltip>
 
-                <MudTooltip Text="@LocalizedText.R.more"
-                            Placement="Placement.Top" Color="Color.Dark">
-                    <MudMenu Icon="@Icons.Material.Rounded.MoreVert" Dense="true">
-                        <MudMenuItem OnClick="() => StartVoiceCall(friend)">
-                            @LocalizedText.R.start_voice_call
-                        </MudMenuItem>
-                        <MudMenuItem Class="mud-error-text" OnClick="() => RemoveFriend(friend)">
-                            @LocalizedText.R.remove_friend
-                        </MudMenuItem>
-                    </MudMenu>
-                </MudTooltip>
-            </div>
+            <MudTooltip Text="@LocalizedText.R.more"
+                        Placement="Placement.Top" Color="Color.Dark">
+                <MudMenu Icon="@Icons.Material.Rounded.MoreVert" Dense="true">
+                    <MudMenuItem OnClick="() => StartVoiceCall(friend)">
+                        @LocalizedText.R.start_voice_call
+                    </MudMenuItem>
+                    <MudMenuItem Class="mud-error-text"
+                                 OnClick="() => RemoveFriend(friend)">
+                        @LocalizedText.R.remove_friend
+                    </MudMenuItem>
+                </MudMenu>
+            </MudTooltip>
+        </div>
 
-        </MudStack>
-    }
+    </MudStack>
 }
+
+@implements IDisposable
 
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
@@ -101,5 +108,10 @@ else
     {
         Logger.LogInformation("Removing friend");
         await ContactManager.RemoveFriendAsync(friend);
+    }
+
+    public void Dispose()
+    {
+        ContactManager.FriendListChanged -= StateHasChanged;
     }
 }

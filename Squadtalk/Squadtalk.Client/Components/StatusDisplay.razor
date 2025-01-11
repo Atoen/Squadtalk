@@ -2,13 +2,17 @@
 
 @if (ContactManager.UserStatus == UserStatus.Unknown)
 {
+    var (icon, text) = RendererInfo.IsInteractive
+        ? (Icons.Material.Rounded.Wifi, LocalizedText.R.connecting)
+        : (Icons.Material.Rounded.Sync, LocalizedText.R.loading);
+
     <div class="d-flex gap-2 px-3 py-0 flex-grow-1 mx-1">
-        <MudIcon Icon="@Icons.Material.Rounded.Wifi" Color="Color.Info"
+        <MudIcon Icon="@icon" Color="Color.Info"
                  Class="align-self-center"/>
 
         <div>
             <div class="mb-n1 mud-typography-body1">@UserAuthenticationService.Username</div>
-            <div class="mud-typography-body2 mud-text-secondary">@LocalizedText.R.connecting</div>
+            <div class="mud-typography-body2 mud-text-secondary">@text</div>
         </div>
     </div>
 }
