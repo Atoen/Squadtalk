@@ -22,6 +22,8 @@
     </MudTabPanel>
 </MudTabs>
 
+@implements IDisposable
+
 @inject IContactManager ContactManager
 @inject LocalizedText LocalizedText
 @inject ContactTabState TabState
@@ -37,10 +39,18 @@
         return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
         ContactManager.FriendRequestsChanged += StateHasChanged;
+
+        await ContactManager.RefreshFriendListAsync();
+        await ContactManager.RefreshFriendRequestsAsync();
+    }
+
+    public void Dispose()
+    {
+        ContactManager.FriendRequestsChanged -= StateHasChanged;
     }
 }

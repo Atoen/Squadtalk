@@ -11,16 +11,17 @@ public class UserModel : IStatus
     public string AvatarUrl { get; set; } = default!;
 
     public UserId Id { get; set; }
+
     public UserStatus Status { get; set; }
 
-    public static UserModel Create(IChatUser chatUser, UserStatus status = UserStatus.Offline)
+    public static UserModel Create(IChatUser chatUser)
     {
         return new UserModel
         {
             Username = chatUser.Username,
             Id = chatUser.Id,
             AvatarUrl = "user.png",
-            Status = status
+            Status = chatUser.Status
         };
     }
 }

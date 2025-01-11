@@ -3,7 +3,8 @@
 --!strict
 
 local CONNECTION_KEY = 'user:connections:'
-local USER_STATUS_KEY = 'user:status'
+local CURRENT_USER_STATUS_KEY = 'user:status'
+local SELECTED_USER_STATUS_KEY = 'user:set_status'
 
 -- enum UserStatus
 -- {
@@ -14,24 +15,42 @@ local USER_STATUS_KEY = 'user:status'
 --     Offline = 4
 -- }
 
+local ONLINE = 1
+local OFFLINE = 4
+
+-- For sending redis response
+local TRUE = 1
+local FALSE = 0
+
 -- If user has set custom status, reuse it
 -- Online and Away (caused by inactivity only) are overriden by default
 local function connection_started(_, args)
     local userId = args[1]
     local connectionId = args[2]
 
-    redis.call('SADD', CONNECTION_KEY..userId, connectionId)
+    local userConnectionsKey = CONNECTION_KEY..userId
 
-    local statusChanged = 0
-    local currentStatus = tonumber(redis.call('HGET', USER_STATUS_KEY, userId) or -1)
+    local existingConnectionCount = redis.call('SCARD', userConnectionsKey)
+    redis.call('SADD', userConnectionsKey, connectionId)
 
-    if currentStatus == -1 then
-        statusChanged = 1
-        currentStatus = 1
-        redis.call('HSET', USER_STATUS_KEY, userId, currentStatus)
+    local selectedStatus = tonumber(redis.call('HGET', SELECTED_USER_STATUS_KEY, userId) or -1)
+    local statusChanged = FALSE
+
+    -- Current connection is the only one
+    -- Add user current status, if it is not selected as 'Offline'
+    if existingConnectionCount == 0 then
+        if selectedStatus == -1 then
+            selectedStatus = ONLINE
+            statusChanged = TRUE
+            redis.call('HSET', CURRENT_USER_STATUS_KEY, userId, selectedStatus)
+        end
+        if selectedStatus ~= OFFLINE then
+            statusChanged = TRUE
+            redis.call('HSET', CURRENT_USER_STATUS_KEY, userId, selectedStatus)
+        end
     end
 
-    return {statusChanged, currentStatus}
+    return { statusChanged, selectedStatus }
 end
 
 local function connection_ended(_, args)
@@ -42,35 +61,40 @@ local function connection_ended(_, args)
     redis.call('SREM', userConnectionsKey, connectionId)
     local remainingConnectionCount = redis.call('SCARD', userConnectionsKey)
 
-    local currentStatus = tonumber(redis.call('HGET', USER_STATUS_KEY, userId) or -1)
+    local currentStatus = tonumber(redis.call('HGET', SELECTED_USER_STATUS_KEY, userId) or -1)
 
-    -- Other connections exist or user set their status as 'Offline'?
-    if remainingConnectionCount > 0 or currentStatus == 4 then
+    if remainingConnectionCount > 0 or currentStatus == OFFLINE then
         -- No visible change in status
-        return {0, currentStatus}
+        return {FALSE, currentStatus}
     end
 
     -- Preserve manually set status that is not 'Online'
-    -- If status if 'Online', remove it and return 'Offline'
-    if currentStatus == 1 then
-        redis.call('HDEL', USER_STATUS_KEY, userId)
+    if currentStatus == ONLINE then
+        redis.call('HDEL', SELECTED_USER_STATUS_KEY, userId)
     end
 
-    return {1, 4} -- true, Offline
+    redis.call('HDEL', CURRENT_USER_STATUS_KEY, userId)
+
+    return {TRUE, OFFLINE}
 end
 
 local function set_user_status(_, args)
     local userId = args[1]
     local newStatus = tonumber(args[2])
 
-    local currentStatus = tonumber(redis.call('HGET', USER_STATUS_KEY, userId) or -1)
+    local currentStatus = tonumber(redis.call('HGET', CURRENT_USER_STATUS_KEY, userId) or -1)
     if (currentStatus == newStatus) then
-        return {0, currentStatus}
+        return {FALSE, currentStatus}
     end
 
-    redis.call('HSET', USER_STATUS_KEY, userId, newStatus)
+    redis.call('HSET', CURRENT_USER_STATUS_KEY, userId, newStatus)
+    if newStatus == ONLINE then
+        redis.call('HDEL', SELECTED_USER_STATUS_KEY, userId)
+    else
+        redis.call('HSET', SELECTED_USER_STATUS_KEY, userId, newStatus)
+    end
 
-    return {1, newStatus}
+    return {TRUE, newStatus}
 end
 
 local function clear_connections(_, _)
@@ -80,7 +104,8 @@ local function clear_connections(_, _)
         redis.call('DEL', key)
     end
 
-    redis.call('DEL', USER_STATUS_KEY)
+    redis.call('DEL', CURRENT_USER_STATUS_KEY)
+    redis.call('DEL', SELECTED_USER_STATUS_KEY)
 end
 
 redis.register_function('connection_started', connection_started)

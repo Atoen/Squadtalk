@@ -75,6 +75,8 @@ internal class ContactManager : IContactManager
             _userModels[chatUser.Id] = model;
         }
 
+        model.Status = chatUser.Status;
+
         return model;
     }
 

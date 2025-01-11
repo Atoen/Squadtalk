@@ -51,13 +51,6 @@
         _subscription = PersistentComponentState.RegisterOnPersisting(ConnectionService.OnPersisting, InteractiveWebAssembly);
         ChangePalette(UserPreferences.Palette);
 
-        if (RendererInfo.IsInteractive)
-        {
-            VoiceChatService.CallIncoming += CallIncoming;
-            UserPreferences.UseDarkModeChanged += StateHasChanged;
-            UserPreferences.PaletteChanged += PaletteChanged;
-        }
-
         if (UserAuthenticationService.IsAuthenticated)
         {
             await ConnectionService.ConnectAsync();
@@ -68,8 +61,13 @@
     {
         if (!firstRender) return;
 
+        VoiceChatService.CallIncoming += CallIncoming;
+        UserPreferences.UseDarkModeChanged += StateHasChanged;
+        UserPreferences.PaletteChanged += PaletteChanged;
+
         if (UserAuthenticationService.IsAuthenticated)
         {
+
             await VoiceChatService.InitializeAsync();
         }
     }

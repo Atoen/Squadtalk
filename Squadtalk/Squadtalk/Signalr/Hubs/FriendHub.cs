@@ -129,7 +129,17 @@ partial class AppHub
     public async Task<List<UserDto>> GetFriendList(FriendRepository friendRepository)
     {
         var friends = await friendRepository.GetUserFriendsAsync(UserId);
-        return friends.Select(x => x.ToDto()).ToList();
+        var friendIds = friends.Select(x => x.Id);
+
+        var friendStatuses = await _connectionManager.GetUsersStatusAsync(friendIds);
+
+        var dtos = friends.Select(friend =>
+        {
+            var friendStatus = friendStatuses.GetValueOrDefault(friend.Id, UserStatus.Unknown);
+            return friend.ToDto(friendStatus);
+        });
+
+        return dtos.ToList();
     }
 
     [HubMethodName(HubMethods.GetFriendRequests)]

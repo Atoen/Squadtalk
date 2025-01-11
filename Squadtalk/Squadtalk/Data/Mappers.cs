@@ -1,4 +1,5 @@
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Data;
@@ -18,12 +19,13 @@ public static class Mappers
         };
     }
 
-    public static UserDto ToDto(this ApplicationUser user)
+    public static UserDto ToDto(this ApplicationUser user, UserStatus status = UserStatus.Unknown)
     {
         return new UserDto
         {
             Username = user.UserName!,
-            Id = user.Id
+            Id = user.Id,
+            Status = status
         };
     }
 
