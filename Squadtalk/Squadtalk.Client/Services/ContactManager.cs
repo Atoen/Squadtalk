@@ -83,51 +83,54 @@ internal class ContactManager : IContactManager
     public async Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername)
     {
         var result = await _signalrService.SendFriendRequestAsync(recipientUsername);
-        if (result == FriendRequestResult.Error)
+        if (result.ErrorOrValueIs(FriendRequestResult.Error))
         {
             _notificationService.ShowFailedToSendFriendRequestNotification(recipientUsername);
         }
 
-        return result;
+        return result.Value;
     }
 
     public async Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted)
     {
         var result = await _signalrService.RespondToFriendRequestAsync(friendRequest.Id, accepted);
-        if (result is FriendRequestResponseResult.Error or FriendRequestResponseResult.InvalidResponse)
+        if (result.ErrorOrValueIs(FriendRequestResponseResult.Error))
         {
             _notificationService.ShowFailedToRespondToFriendRequestNotification(friendRequest);
         }
 
-        return result;
+        return result.Value;
     }
 
     public async Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest)
     {
-        var cancelled = await _signalrService.CancelFriendRequestAsync(friendRequest.Id);
-        if (!cancelled)
+        var result = await _signalrService.CancelFriendRequestAsync(friendRequest.Id);
+        if (result.ErrorOrValueIs(false))
         {
             _notificationService.ShowFailedToCancelFriendRequestNotification(friendRequest);
         }
 
-        return cancelled ? CancelFriendRequestResult.Success : CancelFriendRequestResult.InvalidRequest;
+        return result.Value ? CancelFriendRequestResult.Success : CancelFriendRequestResult.InvalidRequest;
     }
 
     public async Task<RemoveFriendResult?> RemoveFriendAsync(UserModel friend)
     {
         var result = await _signalrService.RemoveFriendAsync(friend.Id);
-        if (result != RemoveFriendResult.Success)
+        if (result.ErrorOrValueIsNot(RemoveFriendResult.Error))
         {
             _notificationService.ShowFailedToRemoveFriendNotification(friend);
         }
 
-        return result;
+        return result.Value;
     }
 
     public async Task RefreshFriendListAsync()
     {
-        var friends = await _signalrService.GetFriendListAsync();
-        if (friends is null) return;
+        var result = await _signalrService.GetFriendListAsync();
+        if (result.IsError || result.Value is not { Count: > 0 } friends)
+        {
+            return;
+        }
 
         var models = friends.Select(UserModelProvider).ToList();
 
@@ -142,8 +145,11 @@ internal class ContactManager : IContactManager
 
     public async Task RefreshFriendRequestsAsync()
     {
-        var requests = await _signalrService.GetFriendRequestsAsync();
-        if (requests is null) return;
+        var result = await _signalrService.GetFriendRequestsAsync();
+        if (result.IsError || result.Value is not { Count: > 0 } requests)
+        {
+            return;
+        }
 
         _incomingFriendRequests.Clear();
         _outgoingFriendRequests.Clear();

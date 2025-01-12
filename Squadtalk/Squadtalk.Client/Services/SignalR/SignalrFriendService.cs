@@ -5,11 +5,15 @@ using Shared.Enums;
 using Shared.Results;
 using Shared.Signalr;
 using Shared.Signalr.Clients;
+using Squadtalk.Client.Data;
+using Squadtalk.Client.Services.SignalR.Interfaces;
 
 namespace Squadtalk.Client.Services.SignalR;
 
-internal sealed partial class SignalrService
+internal sealed partial class SignalrService : ISignalrFriendService
 {
+    public event Action? UserStatusChanged;
+
     public event Action<PendingFriendRequestDto>? FriendRequestCreated;
     public event Action<FriendRequestId>? FriendRequestCancelled;
     public event Action<FriendRequestResponseDto>? FriendRequestResponded;
@@ -21,19 +25,19 @@ internal sealed partial class SignalrService
     public event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
     public event Action<UserId, UserStatus>? FriendStatusChanged;
 
-    public async Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername)
+    public Task<SignalrResult<FriendRequestResult>> SendFriendRequestAsync(string recipientUsername)
     {
         var data = new FriendRequestDto { RecipientUsername = recipientUsername };
-        return await InvokeAsync<FriendRequestResult>(HubMethods.SendFriendRequest, data);
+        return InvokeAsync<FriendRequestResult>(HubMethods.SendFriendRequest, data);
     }
 
-    public async Task<bool> CancelFriendRequestAsync(FriendRequestId friendRequestId)
+    public Task<SignalrResult<bool>> CancelFriendRequestAsync(FriendRequestId friendRequestId)
     {
         var data = new CancelFriendRequestDto { RequestId = friendRequestId };
-        return await InvokeAsync<bool>(HubMethods.CancelFriendRequest, data);
+        return InvokeAsync<bool>(HubMethods.CancelFriendRequest, data);
     }
 
-    public async Task<FriendRequestResponseResult> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted)
+    public Task<SignalrResult<FriendRequestResponseResult>> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted)
     {
         var data = new FriendRequestResponseDto
         {
@@ -41,28 +45,28 @@ internal sealed partial class SignalrService
             Accepted = isAccepted
         };
 
-        return await InvokeAsync<FriendRequestResponseResult>(HubMethods.RespondToFriendRequest, data);
+        return InvokeAsync<FriendRequestResponseResult>(HubMethods.RespondToFriendRequest, data);
     }
 
-    public async Task<RemoveFriendResult> RemoveFriendAsync(UserId friendId)
+    public Task<SignalrResult<RemoveFriendResult>> RemoveFriendAsync(UserId friendId)
     {
         var data = new RemoveFriendDto { FriendId = friendId };
-        return await InvokeAsync<RemoveFriendResult>(HubMethods.RemoveFriend, data);
+        return InvokeAsync<RemoveFriendResult>(HubMethods.RemoveFriend, data);
     }
 
-    public async Task<List<UserDto>?> GetFriendListAsync()
+    public Task<SignalrResult<List<UserDto>>> GetFriendListAsync()
     {
-        return await InvokeAsync<List<UserDto>>(HubMethods.GetFriendList);
+        return InvokeAsync<List<UserDto>>(HubMethods.GetFriendList);
     }
 
-    public async Task<List<PendingFriendRequestDto>?> GetFriendRequestsAsync()
+    public Task<SignalrResult<List<PendingFriendRequestDto>>> GetFriendRequestsAsync()
     {
-        return await InvokeAsync<List<PendingFriendRequestDto>>(HubMethods.GetFriendRequests);
+        return InvokeAsync<List<PendingFriendRequestDto>>(HubMethods.GetFriendRequests);
     }
 
-    public async Task SetStatusAsync(UserStatus status)
+    public Task<SignalrResult> SetStatusAsync(UserStatus status)
     {
-        await _connection.SendAsync(HubMethods.ChangeStatus, status);
+        return SendAsync(HubMethods.ChangeStatus, status);
     }
 
     private void RegisterFriendHandlers()

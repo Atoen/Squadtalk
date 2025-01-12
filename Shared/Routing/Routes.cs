@@ -43,18 +43,12 @@ public static class Routes
         public const string ChangeEmail = "change-email";
         public const string ChangePassword = "change-password";
         public const string ConfirmEmailChange = "confirm-email-change";
-
-        public const string GetMessages = "{channelId}/{timestamp?}";
-        public const string CreateChannel = "create-channel";
-        public const string Friends = "friends";
-        public const string PendingFriendRequests = "friend-requests";
     }
 
     public static class Endpoints
     {
         public const string ApiBase = "/api";
         public const string AccountController = ApiBase + "/account/";
-        public const string ChatController = ApiBase + "/chat/";
 
         public const string Login = AccountController + RelativeEndpoints.Login;
         public const string Register = AccountController + RelativeEndpoints.Register;
@@ -67,10 +61,5 @@ public static class Routes
         public const string ChangeEmail = AccountController + RelativeEndpoints.ChangeEmail;
         public const string ChangePassword = AccountController + RelativeEndpoints.ChangePassword;
         public const string ConfirmEmailChange = AccountController + RelativeEndpoints.ConfirmEmailChange;
-
-        public const string CreateChannel = ChatController + RelativeEndpoints.CreateChannel;
-
-        public const string Friends = ChatController + RelativeEndpoints.Friends;
-        public const string PendingFriendRequests = ChatController + RelativeEndpoints.PendingFriendRequests;
     }
 }

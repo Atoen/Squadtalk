@@ -9,7 +9,7 @@ using Squadtalk.Extensions;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 
-namespace Squadtalk.Signalr.Hubs;
+namespace Squadtalk.Signalr;
 
 public interface IChatClient : ITextChatClient, IVoiceChatClient, IFriendChatClient;
 
@@ -35,7 +35,7 @@ public partial class AppHub : Hub<IChatClient>
 
     public override async Task OnConnectedAsync()
     {
-        var user = await _userRepository.FindUserByid(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserById(Context.User, ChannelsInclusionOption.Include);
         if (user is null)
         {
             Context.Abort();
@@ -66,7 +66,7 @@ public partial class AppHub : Hub<IChatClient>
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = await _userRepository.FindUserByid(Context.User);
+        var user = await _userRepository.FindUserById(Context.User);
         if (user is null)
         {
             return;
@@ -86,7 +86,7 @@ public partial class AppHub : Hub<IChatClient>
 
     private async Task<ApplicationUser?> GetChannelParticipantAsync(ChannelId channelId)
     {
-        var user = await _userRepository.FindUserByid(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserById(Context.User, ChannelsInclusionOption.Include);
         if (user is null || !user.ParticipatesInChannel(channelId))
         {
             return null;

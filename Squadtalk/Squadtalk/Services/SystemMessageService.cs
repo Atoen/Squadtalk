@@ -13,13 +13,13 @@ namespace Squadtalk.Services;
 
 public class SystemMessageService
 {
-    private readonly IHubContext<ChatHub, IChatClientOld> _hubContext;
+    private readonly IHubContext<AppHub, IChatClient> _hubContext;
     private readonly FileRepository _fileRepository;
     private readonly MessageRepository _messageRepository;
     private readonly EmbedService _embedService;
 
     public SystemMessageService(
-        IHubContext<ChatHub, IChatClientOld> hubContext,
+        IHubContext<AppHub, IChatClient> hubContext,
         FileRepository fileRepository,
         MessageRepository messageRepository,
         EmbedService embedService)
@@ -100,7 +100,7 @@ public class SystemMessageService
         var addedMessage = await _messageRepository.AddMessageAsync(user, string.Empty, channelId, embed);
         if (addedMessage is not null)
         {
-            await _hubContext.Clients.Group(channelId).ReceiveMessage(addedMessage.ToDto());
+            await _hubContext.Clients.Group(channelId).ReceivedMessage(addedMessage.ToDto());
         }
     }
 
@@ -116,7 +116,7 @@ public class SystemMessageService
         var addedMessage = await _messageRepository.AddMessageAsync(user, string.Empty, channelId, embed, cancellationToken);
         if (addedMessage is not null)
         {
-            await _hubContext.Clients.Group(channelId).ReceiveMessage(addedMessage.ToDto());
+            await _hubContext.Clients.Group(channelId).ReceivedMessage(addedMessage.ToDto());
         }
     }
 }

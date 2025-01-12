@@ -128,7 +128,6 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<LiveKitService>();
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
-        serviceCollection.AddScoped<ChannelCreator>();
 
         serviceCollection.AddScoped<IChannelManager, ChannelManager>();
         serviceCollection.AddScoped<IContactManager, ContactManager>();

@@ -6,7 +6,7 @@ namespace Squadtalk.Services.Prerender;
 
 internal class TextChatService : ITextChatService
 {
-    event Func<ChannelId, MessageModel, Task>? ITextChatService.MessageReceived { add { } remove { } }
+    event Action<ChannelId, MessageModel>? ITextChatService.MessageReceived { add { } remove { } }
 
     public Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken) => throw new NotImplementedException();
 

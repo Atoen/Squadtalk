@@ -12,9 +12,7 @@ public static class ServicesExtensions
             BaseAddress = new Uri(baseAddress)
         });
 
-        serviceCollection
-            .AddApi<IAccountApi>()
-            .AddApi<IChatApi>();
+        serviceCollection.AddApi<IAccountApi>();
 
         return serviceCollection;
     }

@@ -3,6 +3,8 @@ using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.DTOs.Chat;
 using Shared.Extensions;
+using Squadtalk.Client.Data;
+using Squadtalk.Client.Services.SignalR.Interfaces;
 
 namespace Squadtalk.Client.Services.SignalR;
 
@@ -14,24 +16,24 @@ internal sealed partial class SignalrService : ISignalrRTCService
     public event Func<ChannelId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
 
-    Task<RoomTokenDto?> ISignalrRTCService.StartVoiceCallAsync(ChannelId id)
+    public Task<SignalrResult<RoomTokenDto?>> StartVoiceCallAsync(ChannelId id)
     {
-        return _connection.InvokeAsync<RoomTokenDto?>("StartCall", id);
+        return InvokeAsync<RoomTokenDto?>("StartCall", id);
     }
 
-    Task<RoomTokenDto?> ISignalrRTCService.AcceptCallAsync(ChannelId id)
+    public Task<SignalrResult<RoomTokenDto?>> AcceptCallAsync(ChannelId id)
     {
-        return _connection.InvokeAsync<RoomTokenDto?>("AcceptCall", id);
+        return InvokeAsync<RoomTokenDto?>("AcceptCall", id);
     }
 
-    Task ISignalrRTCService.DeclineCallAsync(ChannelId id)
+    public Task<SignalrResult> DeclineCallAsync(ChannelId id)
     {
-        return _connection.SendAsync("DeclineCall", id);
+        return SendAsync("DeclineCall", id);
     }
 
-    Task<bool> ISignalrRTCService.ChannelHasActiveCall(ChannelId id)
+    public Task<SignalrResult<bool>> ChannelHasActiveCall(ChannelId id)
     {
-        return _connection.InvokeAsync<bool>("ChannelHasActiveCall", id);
+        return InvokeAsync<bool>("ChannelHasActiveCall", id);
     }
 
     private void RegisterRTCHandlers()

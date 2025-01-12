@@ -12,7 +12,7 @@ public static class ChannelModelExtensions
 
     public static bool IsTemporary(this ChannelModel? channelModel)
     {
-        return channelModel?.Id.Value.StartsWith(DirectMessageChannelModel.TempChannelIdPrefix) ?? false;
+        return channelModel is DirectMessageChannelModel { IsTemporary: true };
     }
 
     public static T WithLastMessage<T>(this T textChannel, IChatMessage? message) where T : ChannelModel

@@ -62,6 +62,7 @@
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
 @inject IConnectionService ConnectionService
+@inject IChannelManager ChannelManager
 @inject ILogger<FriendList> Logger
 
 @code
@@ -96,7 +97,7 @@
 
     private async Task MessageFriend(UserModel friend)
     {
-        Logger.LogInformation("Messaging friend");
+        await ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(friend);
     }
 
     private async Task StartVoiceCall(UserModel friend)

@@ -9,9 +9,14 @@ public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelM
 
     public static DirectMessageChannelModel CreateTempChannel(UserModel other)
     {
-        var id = ChannelId.From($"{TempChannelIdPrefix}{ChannelId.New()}");
-        return new DirectMessageChannelModel(other, id);
+        var id = ChannelId.From(other.Username);
+        return new DirectMessageChannelModel(other, id)
+        {
+            IsTemporary = true
+        };
     }
+
+    public bool IsTemporary { get; init; }
 
     public UserModel Other { get; } = other;
 

@@ -4,7 +4,7 @@ using Shared.Data.TypedIds;
 
 namespace Shared.DTOs.Chat;
 
-[MessagePackObject]
+[MessagePackObject(AllowPrivate = true)]
 public class MessageDto : IChatMessage
 {
     [Key(0)] public UserDto Author { get; set; } = default!;

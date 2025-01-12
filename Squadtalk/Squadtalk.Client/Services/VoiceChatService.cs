@@ -10,6 +10,7 @@ using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Services.SignalR;
+using Squadtalk.Client.Services.SignalR.Interfaces;
 
 namespace Squadtalk.Client.Services;
 
@@ -94,7 +95,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
     public async Task StartCallAsync(ChannelId channelId)
     {
         var roomToken = await _signalrRTCService.StartVoiceCallAsync(channelId);
-        if (roomToken is null)
+        if (roomToken.IsError)
         {
             Error?.Invoke("Error while initiating call", "Failed to create room token");
             _logger.LogError("Call offer id is null");
@@ -109,13 +110,13 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
             return;
         }
 
-        await JoinRoomAsync(roomToken, currentChannel);
+        await JoinRoomAsync(roomToken.Value, currentChannel);
     }
 
     public async Task AcceptCallAsync(ChannelId id)
     {
         var token = await _signalrRTCService.AcceptCallAsync(id);
-        if (token is null)
+        if (token.IsError)
         {
             Error?.Invoke("Error while joining the call", "Failed to create room token");
             _logger.LogInformation("Null token from accepting");
@@ -123,7 +124,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         }
 
         var channel = _channelManager.GetChannel(id)!;
-        await JoinRoomAsync(token, channel);
+        await JoinRoomAsync(token.Value, channel);
     }
 
     public Task DeclineCallAsync(ChannelId id)
@@ -245,13 +246,18 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
     {
         var hasCall = await _signalrRTCService.ChannelHasActiveCall(channel.Id);
 
-        channel.State.HasActiveCall = hasCall;
-        if (hasCall)
+        if (hasCall.IsError)
+        {
+            return false;
+        }
+
+        channel.State.HasActiveCall = hasCall.Value;
+        if (hasCall.Value)
         {
             CurrentChannelCallChanged?.Invoke();
         }
 
-        return hasCall;
+        return hasCall.Value;
     }
 
     private async Task JoinRoomAsync(RoomTokenDto token, ChannelModel channel)

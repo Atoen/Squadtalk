@@ -10,13 +10,13 @@
     <MudDivider Vertical="true" Class="mx-1" DividerType="DividerType.FullWidth"/>
 
     <div>
-        <MudTooltip Text="@LocalizedText.R.send_message" Disabled="Disable">
+        <MudTooltip Text="@LocalizedText.R.send_message" Disabled="Disable" Placement="Placement.Top">
             <MudIconButton Icon="@Icons.Material.Rounded.Send" Size="Size.Medium"
                            Class="pa-2 me-n1" OnClick="Send" Disabled="Disable"
                            Color="Color.Primary"/>
         </MudTooltip>
 
-        <MudTooltip Text="@LocalizedText.R.add_attachment" Disabled="Disable">
+        <MudTooltip Text="@LocalizedText.R.add_attachment" Disabled="Disable" Placement="Placement.Top">
             <MudIconButton Icon="@Icons.Material.Rounded.AddCircle" Size="Size.Medium"
                            Class="pa-2 me-1" HtmlTag="label" for="file-picker"
                            Disabled="Disable" Color="Color.Primary"/>
@@ -78,11 +78,9 @@
         }
     }
 
-    private Task ConnectionStatusChanged(ConnectionStatus status)
+    private void ConnectionStatusChanged(ConnectionStatus status)
     {
         StateHasChanged();
-
-        return Task.CompletedTask;
     }
 
     // private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";

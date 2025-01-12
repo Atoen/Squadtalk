@@ -6,7 +6,7 @@ using Shared.Signalr;
 using Squadtalk.Data;
 using Squadtalk.Repositories;
 
-namespace Squadtalk.Signalr.Hubs;
+namespace Squadtalk.Signalr;
 
 partial class AppHub
 {

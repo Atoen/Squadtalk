@@ -8,7 +8,7 @@ using Squadtalk.Signalr;
 namespace Squadtalk.Services;
 
 public class LiveKitEventHandler(
-    IHubContext<ChatHub, IChatClientOld> hubContext,
+    IHubContext<AppHub, IChatClient> hubContext,
     VoiceCallManager voiceCallManager,
     SystemMessageService systemMessageService,
     ApplicationDbContext dbContext,
