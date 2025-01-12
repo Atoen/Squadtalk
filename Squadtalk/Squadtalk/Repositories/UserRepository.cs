@@ -11,7 +11,7 @@ public class UserRepository(
     ApplicationDbContext dbContext,
     ILogger<UserRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    public Task<ApplicationUser?> FindUserByid(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ApplicationUser?> FindUserById(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
     {
         if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
         {

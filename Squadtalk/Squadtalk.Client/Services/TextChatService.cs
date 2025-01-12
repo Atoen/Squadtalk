@@ -4,7 +4,6 @@ using Shared.DTOs.Chat;
 using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
-using Squadtalk.Client.Network;
 using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
@@ -13,25 +12,22 @@ internal class TextChatService : ITextChatService
 {
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
-    private readonly ISignalrTextService _signalrTextService;
-    private readonly IChatApi _chatApi;
+    private readonly SignalrService _signalrTextService;
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IChannelManager _channelManager;
 
-    public event Func<ChannelId, MessageModel, Task>? MessageReceived;
+    public event Action<ChannelId, MessageModel>? MessageReceived;
 
     public TextChatService(
         IChannelManager channelManager,
         IMessageModelService modelService,
         SignalrService signalrTextService,
-        IChatApi chatApi,
         IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
         _channelManager = channelManager;
         _modelService = modelService;
         _signalrTextService = signalrTextService;
-        _chatApi = chatApi;
         _userAuthenticationService = userAuthenticationService;
         _logger = logger;
 
@@ -67,23 +63,17 @@ internal class TextChatService : ITextChatService
 
     private async Task<IReadOnlyList<MessageDto>> FetchPageAsync(ChannelId channelId, TextChannelCursor cursor, CancellationToken cancellationToken)
     {
-        try
+        var result = await _signalrTextService.GetMessagePageAsync(channelId, cursor, cancellationToken);
+        if (result.IsError)
         {
-            if (cursor == default)
-            {
-                return await _chatApi.GetMessagePage(channelId, cancellationToken);
-            }
+            _logger.LogError("Failed to fetch message page");
+            return [];
+        }
 
-            return await _chatApi.GetMessagePage(channelId, cursor, cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error while fetching message page");
-            return Array.Empty<MessageDto>();
-        }
+        return result.Value;
     }
 
-    private async Task HandleIncomingMessage(IChatMessage messageDto)
+    private void HandleIncomingMessage(IChatMessage messageDto)
     {
         var channel = _channelManager.GetChannel(messageDto.ChannelId);
         if (channel is null)
@@ -99,7 +89,7 @@ internal class TextChatService : ITextChatService
 
         channelState.AddMessage(message);
 
-        await MessageReceived.TryInvoke(channel.Id, message).ConfigureAwait(false);
+        MessageReceived?.Invoke(channel.Id, message);
     }
 
     private void UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)

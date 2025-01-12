@@ -12,7 +12,7 @@ internal class ConnectionService : IConnectionService
     private readonly FriendRepository _friendRepository;
     private readonly PrerenderPersistantState _persistState;
 
-    event Func<ConnectionStatus, Task>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
+    event Action<ConnectionStatus>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
 
     public ConnectionStatus ConnectionStatus => ConnectionStatus.Connecting;
 
@@ -48,7 +48,7 @@ internal class ConnectionService : IConnectionService
     private async Task ConnectInternalAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userRepository.FindUserByid(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
+        var user = await _userRepository.FindUserById(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
             return;

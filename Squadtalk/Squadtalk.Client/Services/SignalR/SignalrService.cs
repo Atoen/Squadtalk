@@ -2,12 +2,11 @@ using System.Diagnostics;
 using MessagePack;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-using Shared.Data.TypedIds;
-using Shared.DTOs.Chat;
 using Shared.Enums;
 using Shared.Extensions;
 using Shared.Services;
 using Shared.Signalr;
+using Squadtalk.Client.Data;
 
 namespace Squadtalk.Client.Services.SignalR;
 
@@ -21,12 +20,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     private bool _handlersRegistered;
     private bool _connectionStared;
 
-    public event Func<ConnectionStatus, Task>? ConnectionStatusChanged;
-    public event Action? UserStatusChanged;
-
-    public event Func<ChannelDto, Task>? AddedToChannel;
-    public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
-    public event Func<ChannelId, string?, Task>? ChannelNameChanged;
+    public event Action<ConnectionStatus>? ConnectionStatusChanged;
 
     public ConnectionStatus ConnectionStatus { get; private set; } = ConnectionStatus.Connecting;
     public UserStatus UserStatus { get; private set; } = UserStatus.Unknown;
@@ -67,7 +61,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         if (_connectionStared) return;
         _connectionStared = true;
 
-        await TryGetPersistedData();
+        TryGetPersistedData();
 
         if (!_handlersRegistered)
         {
@@ -80,7 +74,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             await _connection.StartAsync();
 
             ConnectionStatus = ConnectionStatus.Connected;
-            await ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+            ConnectionStatusChanged?.Invoke(ConnectionStatus);
 
             UserStatus = await _connection.InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
             _logger.LogInformation("Connected with status: {Status}", UserStatus);
@@ -104,12 +98,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
 
     public Task OnPersisting() => throw new InvalidOperationException();
 
-    public Task<bool> ChangeChannelNameAsync(string? newName, ChannelId channelId)
-    {
-        return _connection.InvokeAsync<bool>("ChangeGroupName", newName, channelId);
-    }
-
-    private async Task TryGetPersistedData()
+    private void TryGetPersistedData()
     {
         if (_clientPersistantState.TryReadFriends(out var friends))
         {
@@ -126,7 +115,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         if (_clientPersistantState.TryReadChannels(out var channels))
         {
             _logger.LogInformation("Retrieved persisted channels");
-            await ChannelsReceived.TryInvoke(channels);
+            ChannelsReceived?.Invoke(channels);
         }
     }
 
@@ -143,36 +132,35 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         _connection.Reconnecting += _ =>
         {
             ConnectionStatus = ConnectionStatus.Reconnecting;
-            return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+            UserStatus = UserStatus.Unknown;
+
+            ConnectionStatusChanged?.Invoke(ConnectionStatus);
+            UserStatusChanged?.Invoke();
+
+            return Task.CompletedTask;
         };
 
         _connection.Reconnected += _ =>
         {
             ConnectionStatus = ConnectionStatus.Connected;
-            return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+            ConnectionStatusChanged?.Invoke(ConnectionStatus);
+
+            return Task.CompletedTask;
         };
 
         _connection.Closed += _ =>
         {
             ConnectionStatus = ConnectionStatus.Disconnected;
-            return ConnectionStatusChanged.TryInvoke(ConnectionStatus);
+            UserStatus = UserStatus.Unknown;
+
+            ConnectionStatusChanged?.Invoke(ConnectionStatus);
+            UserStatusChanged?.Invoke();
+
+            return Task.CompletedTask;
         };
     }
 
-        // _connection.On<IEnumerable<UserDto>>("GetConnectedUsers", users =>
-        //     ConnectedUsersReceived.TryInvoke(users, false));
-        //
-        // _connection.On<IEnumerable<ChannelDto>>("GetChannels", channels =>
-        //     ChannelsReceived.TryInvoke(channels));
-        //
-        // _connection.On<ChannelDto>("AddedToChannel", channel =>
-        //     AddedToChannel.TryInvoke(channel));
-        //
-        // _connection.On<ChannelId, string>("ChannelNameChanged", (channelId, name) =>
-        //     ChannelNameChanged.TryInvoke(channelId, name));
-    // }
-
-    private async Task<T?> InvokeAsync<T>(string methodName, CancellationToken cancellationToken = default)
+    private async Task<SignalrResult<T>> InvokeAsync<T>(string methodName, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -181,11 +169,11 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         catch
         {
             _notificationService.ShowUnableToConnectNotification();
-            return default;
+            return SignalrResult<T>.Error;
         }
     }
 
-    private async Task<T?> InvokeAsync<T>(string methodName, object? arg, CancellationToken cancellationToken = default)
+    private async Task<SignalrResult<T>> InvokeAsync<T>(string methodName, object? arg, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -194,11 +182,11 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         catch
         {
             _notificationService.ShowUnableToConnectNotification();
-            return default;
+            return SignalrResult<T>.Error;
         }
     }
 
-    private async Task<T?> InvokeAsync<T>(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
+    private async Task<SignalrResult<T>> InvokeAsync<T>(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -207,7 +195,49 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         catch
         {
             _notificationService.ShowUnableToConnectNotification();
-            return default;
+            return SignalrResult<T>.Error;
+        }
+    }
+
+    private async Task<SignalrResult> SendAsync(string methodName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _connection.SendAsync(methodName, cancellationToken);
+            return SignalrResult.Ok;
+        }
+        catch
+        {
+            _notificationService.ShowUnableToConnectNotification();
+            return SignalrResult.Error;
+        }
+    }
+
+    private async Task<SignalrResult> SendAsync(string methodName, object? arg, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _connection.SendAsync(methodName, arg, cancellationToken);
+            return SignalrResult.Ok;
+        }
+        catch
+        {
+            _notificationService.ShowUnableToConnectNotification();
+            return SignalrResult.Error;
+        }
+    }
+
+    private async Task<SignalrResult> SendAsync(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _connection.SendAsync(methodName, arg1, arg2, cancellationToken);
+            return SignalrResult.Ok;
+        }
+        catch
+        {
+            _notificationService.ShowUnableToConnectNotification();
+            return SignalrResult.Error;
         }
     }
 

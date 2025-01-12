@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
 using Shared.Models;
@@ -16,13 +17,13 @@ public class MessageRepository(
 {
     private const int PageSize = 20;
 
-    public async Task<List<Message>> GetPageAsync(ChannelId channelId, string? timestamp = null, CancellationToken cancellationToken = default)
+    public async Task<List<Message>> GetPageAsync(ChannelId channelId, TextChannelCursor cursor, CancellationToken cancellationToken = default)
     {
-        var cursor = CreateCursor(timestamp);
+        var timestamp = new DateTimeOffset(cursor.Value, TimeSpan.Zero);
 
         var page = cursor == default
             ? MessageFirstPageAsync(DbContext, channelId)
-            : MessagePageByCursorAsync(DbContext, channelId, cursor);
+            : MessagePageByCursorAsync(DbContext, channelId, timestamp);
 
         return await page.ToListAsync(cancellationToken);
     }
@@ -50,7 +51,6 @@ public class MessageRepository(
             Timestamp = DateTimeOffset.Now,
             Embed = embed
         };
-
 
         var added = await AddMessageAsync(message, cancellationToken);
 

@@ -1,0 +1,36 @@
+using System.Diagnostics.CodeAnalysis;
+
+namespace Squadtalk.Client.Data;
+
+public readonly record struct SignalrResult<T>(
+    T? Value,                                         // nameof() needs explicit prop to work
+    [property: MemberNotNullWhen(true, "Value")] bool IsSuccess)
+{
+    public static SignalrResult<T> Ok(T value) => new(value, true);
+
+    public static readonly SignalrResult<T> Error = new(default, false);
+
+    public static implicit operator SignalrResult<T>(T value) => new(value, true);
+
+    public T ValueOr(T other) => IsSuccess ? Value : other;
+
+    [MemberNotNullWhen(false, nameof(Value))]
+    public bool IsError => !IsSuccess;
+
+    public bool ErrorOrValueIs(T value) => IsError || EqualityComparer<T>.Default.Equals(Value, value);
+
+    public bool ErrorOrValueIsNot(T value) => IsError || !EqualityComparer<T>.Default.Equals(Value, value);
+
+    public bool SuccessAndValueIs(T value) => IsSuccess && EqualityComparer<T>.Default.Equals(Value, value);
+
+    public bool SuccessAndValueIsNot(T value) => IsSuccess && !EqualityComparer<T>.Default.Equals(Value, value);
+}
+
+public readonly record struct SignalrResult(bool IsSuccess)
+{
+    public static readonly SignalrResult Ok = new(true);
+
+    public static readonly SignalrResult Error = new(false);
+
+    public bool IsError => !IsSuccess;
+}

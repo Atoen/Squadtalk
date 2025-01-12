@@ -31,8 +31,6 @@ builder.Services.AddScoped<SignalrService>();
 builder.Services.AddScoped<IConnectionService>(provider =>
     provider.GetRequiredService<SignalrService>());
 
-builder.Services.AddScoped<CreateTextChannelRequestHandler>();
-
 builder.Services.AddScoped<ITextChatService, TextChatService>();
 builder.Services.AddScoped<IMessageModelService, MessageModelService>();
 builder.Services.AddScoped<ClientPersistantState>();

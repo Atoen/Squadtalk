@@ -8,7 +8,11 @@ public static class HubMethods
     public const string RemoveFriend = nameof(RemoveFriend);
     public const string GetFriendList = nameof(GetFriendList);
     public const string GetFriendRequests = nameof(GetFriendRequests);
-
     public const string ChangeStatus = nameof(ChangeStatus);
     public const string GetSelfStatus = nameof(GetSelfStatus);
+
+    public const string SendMessage = nameof(SendMessage);
+    public const string GetMessagePage = nameof(GetMessagePage);
+    public const string CreateChannel = nameof(CreateChannel);
+    public const string ChangeChannelName = nameof(ChangeChannelName);
 }

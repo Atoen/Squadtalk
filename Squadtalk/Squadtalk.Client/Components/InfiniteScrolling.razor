@@ -90,17 +90,15 @@
         _instance?.InvokeVoid("onNewItems");
     }
 
-    private Task MessageReceived(ChannelId id, MessageModel message)
+    private void MessageReceived(ChannelId id, MessageModel message)
     {
         if (id != ChannelManager.CurrentChannel?.Id)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         StateHasChanged();
         _jsModule?.InvokeVoid("scrollToBottom");
-
-        return Task.CompletedTask;
     }
 
     [JSInvokable]

@@ -53,7 +53,7 @@ internal class ChannelSorter : IChannelSorter
         _logger.LogInformation("Channels sorted");
     }
 
-    private Task MessageReceived(ChannelId channelId, MessageModel model)
+    private void MessageReceived(ChannelId channelId, MessageModel model)
     {
         if (channelId != GroupChatModel.GlobalChatId &&
             _channels is [var first, ..] && first.Id != channelId)
@@ -62,7 +62,5 @@ internal class ChannelSorter : IChannelSorter
         }
 
         ChannelsSorted?.Invoke();
-
-        return Task.CompletedTask;
     }
 }

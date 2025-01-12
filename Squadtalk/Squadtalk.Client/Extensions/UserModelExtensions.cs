@@ -1,6 +1,5 @@
 using MudBlazor;
 using Shared.Enums;
-using Shared.Models;
 using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Extensions;

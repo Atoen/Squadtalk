@@ -13,7 +13,7 @@ using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 using Squadtalk.Redis;
 using Squadtalk.Services;
-using Squadtalk.Signalr.Hubs;
+using Squadtalk.Signalr;
 using Squadtalk.Tus;
 using StackExchange.Redis;
 using tusdotnet;

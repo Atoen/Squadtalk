@@ -11,7 +11,6 @@ namespace Squadtalk.Client.Services;
 internal class ChannelManager : IChannelManager
 {
     private readonly IUserAuthenticationService _userAuthenticationService;
-    private readonly CreateTextChannelRequestHandler _createTextChannelRequestHandler;
     private readonly SignalrService _signalrService;
     private readonly IContactManager _contactManager;
     private readonly ILogger<ChannelManager> _logger;
@@ -32,31 +31,22 @@ internal class ChannelManager : IChannelManager
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
 
-    public event Action? ConnectedUsersChanged;
-
     public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
     public ChannelModel? CurrentChannel { get; private set; }
 
     public ChannelManager(
         IUserAuthenticationService userAuthenticationService,
-        CreateTextChannelRequestHandler createTextChannelRequestHandler,
         SignalrService signalrService,
         IContactManager contactManager,
         ILogger<ChannelManager> logger,
         NavigationManager navigationManager)
     {
         _userAuthenticationService = userAuthenticationService;
-        _createTextChannelRequestHandler = createTextChannelRequestHandler;
         _signalrService = signalrService;
         _contactManager = contactManager;
         _navigationManager = navigationManager;
         _logger = logger;
 
-        // _userModelProvider = GetOrCreateUserModel;
-
-        // _signalrService.UserConnected += user => UserConnected(user, false, false);
-        // _signalrService.UserDisconnected += UserDisconnected;
-        // _signalrService.ConnectedUsersReceived += ReceivedConnectedUsers;
         _signalrService.ChannelsReceived += ChannelsReceived;
         _signalrService.AddedToChannel += AddedToChannel;
         _signalrService.ChannelNameChanged += OnChannelNameChanged;
@@ -121,9 +111,10 @@ internal class ChannelManager : IChannelManager
         }
     }
 
-    public Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName)
+    public async Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName)
     {
-        return _signalrService.ChangeChannelNameAsync(newName, groupChat.Id);
+        var result = await _signalrService.ChangeChannelNameAsync(groupChat.Id, newName);
+        return result.ValueOr(false);
     }
 
     public async Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others)
@@ -132,7 +123,8 @@ internal class ChannelManager : IChannelManager
             .Select(x => x.Id)
             .Append(_userAuthenticationService.UserId);
 
-        return await _createTextChannelRequestHandler.CreateTextChannelAsync(participantsId);
+        var result = await _signalrService.CreateChannelAsync(participantsId);
+        return result.Value;
     }
 
     private Task ChangeChannelAsync(ChannelModel? channel)
@@ -169,9 +161,12 @@ internal class ChannelManager : IChannelManager
         ChannelsListChanged?.Invoke();
     }
 
-    private async Task AddChannel(IChatChannel channel, bool bulk)
+    private Task AddChannel(IChatChannel channel, bool bulk)
     {
-        if (_allChannels.ContainsKey(channel.Id)) return;
+        if (_allChannels.ContainsKey(channel.Id))
+        {
+            return Task.CompletedTask;
+        }
 
         var model = ChannelModel.Create(channel, _userAuthenticationService.UserId, _contactManager.UserModelProvider);
         // if (!bulk)
@@ -184,14 +179,13 @@ internal class ChannelManager : IChannelManager
         if (model is GroupChatModel groupChat)
         {
             _groupChats.Add(groupChat);
+            return Task.CompletedTask;
         }
-        else
-        {
-            var directMessageChannel = (DirectMessageChannelModel) model;
-            _directMessageChannels.Add(directMessageChannel);
 
-            await UpgradeFakeChanelIfNeeded(directMessageChannel);
-        }
+        var directMessageChannel = (DirectMessageChannelModel) model;
+        _directMessageChannels.Add(directMessageChannel);
+
+        return UpgradeFakeChanelIfNeeded(directMessageChannel);
     }
 
     private Task UpgradeFakeChanelIfNeeded(DirectMessageChannelModel openedDirectMessageChannelModel)
@@ -199,96 +193,28 @@ internal class ChannelManager : IChannelManager
         if (CurrentChannel is DirectMessageChannelModel dm && dm.IsTemporary() &&
             dm.Other.Id == openedDirectMessageChannelModel.Other.Id)
         {
-            return ChangeChannelAsync(openedDirectMessageChannelModel);
+            return OpenChannelAsync(openedDirectMessageChannelModel);
         }
 
         return Task.CompletedTask;
     }
 
-    // private Task ReceivedConnectedUsers(IEnumerable<IChatUser> users, bool fromPersistedData)
-    // {
-    //     foreach (var user in users)
-    //     {
-    //         _logger.LogInformation("User {@User} connected in bulk", user.Username);
-    //         UserConnected(user, true, fromPersistedData);
-    //     }
-    //
-    //     ConnectedUsersChanged?.Invoke();
-    //
-    //     return Task.CompletedTask;
-    // }
-    //
-    // public UserModel GetOrCreateUserModel(IChatUser chatUser)
-    // {
-    //     if (_users.TryGetValue(chatUser.Id, out var model))
-    //     {
-    //         return model;
-    //     }
-    //
-    //     model = UserModel.Create(chatUser);
-    //     _users[chatUser.Id] = model;
-    //
-    //     return model;
-    // }
-    //
-    // private Task UserConnected(IChatUser connectedUser, bool bulkAdd, bool fromPersistedData)
-    // {
-    //     if (connectedUser.Id == _userAuthenticationService.UserId)
-    //     {
-    //         return Task.CompletedTask;
-    //     }
-    //
-    //     var model = GetOrCreateUserModel(connectedUser);
-    //     model.Status = fromPersistedData ? UserStatus.Unknown : UserStatus.Online;
-    //
-    //     if (!bulkAdd)
-    //     {
-    //         ConnectedUsersChanged?.Invoke();
-    //     }
-    //
-    //     return Task.CompletedTask;
-    // }
-    //
-    // private Task UserDisconnected(IChatUser disconnectedUser)
-    // {
-    //     if (disconnectedUser.Id == _userAuthenticationService.UserId)
-    //     {
-    //         return Task.CompletedTask;
-    //     }
-    //
-    //     var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == disconnectedUser.Id);
-    //     if (openDirectMessageChannelWithUser is null)
-    //     {
-    //         _users.Remove(disconnectedUser.Id);
-    //     }
-    //     else
-    //     {
-    //         _users[disconnectedUser.Id].Status = UserStatus.Offline;
-    //     }
-    //
-    //     ConnectedUsersChanged?.Invoke();
-    //
-    //     return Task.CompletedTask;
-    // }
-
-    private Task OnChannelNameChanged(ChannelId channelId, string? channelName)
+    private void OnChannelNameChanged(ChannelId channelId, string? channelName)
     {
         if (!_allChannels.TryGetValue(channelId, out var channel))
         {
             _logger.LogInformation("Non-existent channel name changed");
-            return Task.CompletedTask;
+            return;
         }
 
         if (channel is not GroupChatModel groupChat)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         groupChat.CustomName = channelName;
 
         ChannelNameChanged?.Invoke(groupChat);
         ChannelsListChanged?.Invoke();
-
-        return Task.CompletedTask;
     }
 }

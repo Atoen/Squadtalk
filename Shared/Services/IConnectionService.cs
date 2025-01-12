@@ -2,7 +2,7 @@ namespace Shared.Services;
 
 public interface IConnectionService
 {
-    event Func<ConnectionStatus, Task>? ConnectionStatusChanged;
+    event Action<ConnectionStatus>? ConnectionStatusChanged;
 
     ConnectionStatus ConnectionStatus { get; }
 
