@@ -68,6 +68,8 @@ more: Więcej
 start_voice_call: Rozpocznij rozmowę głosową
 remove_friend: Usuń znajomego
 
+private_messages: Prywatne wiadomości
+global_chat: Czat globalny
 reset_password: Zresetuj swoje hasło
 password_reset: Twoje hasło zostało pomyślnie zresetowane.
 log_in: Zaloguj się do swojego konta
@@ -140,12 +142,13 @@ failed_to_change_password: Nie udało się zmienić hasła.
 password_changed: Hasło zostało pomyślnie zmienione.
 
 # Messages page
-create_channel_tooltip: Utwórz nową grupę
 create_channel_modal_title: Nowa grupa
-create_group_chat_button: Utwórz grupę
-select_user_placeholder: Wybierz użytkownika
-loading_users: Ładowanie...
-no_users_found: Nie znaleziono użytkownika
+add_new_chat: Dodaj nową rozmowę
+select_friends: Wybierz znajomych
+enter_friend_username: Podaj nazwę użytkownika znajomego
+create_new_group_chat: Utwórz nową rozmowę grupową
+crate_or_find_chat: Utwórz lub znajdź rozmowę
+no_friends_found: Nie znaleziono znajomych
 
 # Chat page
 start_call: Rozpocznij rozmowę

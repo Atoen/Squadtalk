@@ -23,13 +23,13 @@ public interface IContactManager
 
     UserModel GetOrCreateUserModel(IChatUser chatUser);
 
-    Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername);
+    Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername);
 
-    Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest);
+    Task<CancelFriendRequestResult> CancelFriendRequest(OutgoingFriendRequest friendRequest);
 
-    Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted);
+    Task<FriendRequestResponseResult> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted);
 
-    Task<RemoveFriendResult?> RemoveFriendAsync(UserModel userModel);
+    Task<RemoveFriendResult> RemoveFriendAsync(UserModel userModel);
 
     Task RefreshFriendListAsync();
 

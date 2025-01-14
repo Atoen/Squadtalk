@@ -72,6 +72,8 @@ more: More
 start_voice_call: Start voice call
 remove_friend: Remove friend
 
+private_messages: Private messages
+global_chat: Global chat
 reset_password: Reset your password
 password_reset: Your password has been successfully reset.
 log_in: Log in to your account
@@ -146,12 +148,13 @@ hello_world: Hello world!
 welcome_to_app: Welcome to your new app.
 
 # Messages page
-create_channel_tooltip: Create new group
 create_channel_modal_title: New group
-create_group_chat_button: Create group
-select_user_placeholder: Select user
-loading_users: Loading...
-no_users_found: No users found
+add_new_chat: Add new chat
+select_friends: Select friends
+enter_friend_username: Enter friend username
+create_new_group_chat: Create new group
+crate_or_find_chat: Create or find chat
+no_friends_found: No friends found
 
 # Settings page
 app_language: Language

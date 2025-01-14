@@ -1,0 +1,170 @@
+<MudDialog ContentClass="mt-n1">
+    <DialogContent>
+
+        @if (_selectedUsers.Count != 0)
+        {
+            <div class="mt-n1 mb-1">
+                @foreach (var selected in _selectedUsers)
+                {
+                    <div class="rounded pa-2 hover mud-chip-filled mud-chip"
+                         @onclick="() => CloseChip(selected)">
+                         @selected.User.Username
+
+                         <MudIcon Size="Size.Small" Icon="@Icons.Material.Rounded.Close"/>
+                    </div>
+                }
+            </div>
+        }
+
+        <MudTextField T="string" Immediate="true" @bind-Value="_searchValue"
+                      Placeholder="@LocalizedText.R.enter_friend_username" @ref="_textField"/>
+
+        <div class="my-1" style="max-height: 200px; overflow-y: auto">
+            @if (!FilteredResults.Any())
+            {
+                <div class="mud-typography-body1">
+                    @LocalizedText.R.no_friends_found
+                </div>
+            }
+
+            @foreach (var result in FilteredResults.Take(10))
+            {
+                @_listEntry(result)
+            }
+        </div>
+
+        <MudDivider/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CreateGroupChat" Color="Color.Primary"
+                   Variant="Variant.Filled" Disabled="_working">
+            @if (_working)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small"/>
+            }
+            else if (_selectedUsers.Count == 1)
+            {
+                @LocalizedText.R.crate_or_find_chat
+            }
+            else
+            {
+                @LocalizedText.R.create_new_group_chat
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@inject LocalizedText LocalizedText
+@inject IContactManager ContactManager
+@inject IChannelManager ChannelManager
+@inject ILogger<CreateGroupChatDialog> Logger
+
+@code
+{
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudTextField<string> _textField = default!;
+
+    private string? _searchValue;
+
+    private bool _working;
+
+    private Func<SearchResult, bool> _searchFilter = default!;
+    private IEnumerable<SearchResult> FilteredResults => _searchResults.Where(_searchFilter);
+
+    private readonly List<SearchResult> _searchResults = [];
+    private readonly List<SearchResult> _selectedUsers = [];
+
+    // Not initializing here due to problem with source generator when using the SearchResult.Click
+    private RenderFragment<SearchResult> _listEntry = default!;
+    private RenderFragment<SearchResult> CreateRenderFragment() => searchResult =>
+        @<div class="d-flex align-center my-1 pa-2 gap-2 hover rounded me-1 mud-ripple"
+              @onclick="searchResult.Click">
+            @FriendList.UserAvatarWithStatus(searchResult.User)
+
+            <div class="mud-typography-body1">
+                @searchResult.User.Username
+            </div>
+
+            @{
+                var (icon, color) = searchResult.IsSelected
+                    ? (Icons.Material.Rounded.CheckBox, Color.Primary)
+                    : (Icons.Material.Rounded.CheckBoxOutlineBlank, Color.Default);
+            }
+
+            <MudIcon Icon="@icon" Color="color" Class="ms-auto"/>
+        </div>;
+
+    protected override void OnInitialized()
+    {
+        _listEntry = CreateRenderFragment();
+
+        _searchFilter = searchResult => string.IsNullOrWhiteSpace(_searchValue) ||
+                          searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase);
+
+        var onClick = ClickResult;
+
+        var results = ContactManager.FriendList
+            .Select(x => new SearchResult(x, onClick));
+
+        _searchResults.AddRange(results);
+    }
+
+    private async Task CreateGroupChat()
+    {
+        if (_selectedUsers.Count == 0)
+        {
+            // TODO: One-User groups (backend)
+            return;
+        }
+
+        _working = true;
+
+        if (_selectedUsers is [ { User: var selectedUser } ])
+        {
+            await ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(selectedUser);
+            _working = false;
+            return;
+        }
+
+        var selectedUsers = _selectedUsers.Select(x => x.User);
+
+        var id = await ChannelManager.CreateNewChannel(selectedUsers);
+
+        _working = false;
+        Logger.LogInformation("Created channel id: {Id}", id);
+    }
+
+    private void CloseChip(SearchResult searchResult)
+    {
+        _selectedUsers.Remove(searchResult);
+        searchResult.IsSelected = false;
+    }
+
+    private void ClickResult(SearchResult searchResult)
+    {
+        if (searchResult.IsSelected)
+        {
+            _selectedUsers.Add(searchResult);
+            _textField.Clear();
+        }
+        else
+        {
+            _selectedUsers.Remove(searchResult);
+        }
+    }
+
+    private class SearchResult(UserModel user, Action<SearchResult> onClick)
+    {
+        public UserModel User { get; } = user;
+        public bool IsSelected { get; set; }
+
+        private Action? _click;
+        public Action Click => _click ??= () =>
+        {
+            IsSelected = !IsSelected;
+            onClick(this);
+        };
+    }
+}

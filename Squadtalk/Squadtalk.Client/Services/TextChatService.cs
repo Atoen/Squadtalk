@@ -1,7 +1,6 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
-using Shared.Extensions;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Services.SignalR;

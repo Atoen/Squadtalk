@@ -18,7 +18,7 @@ internal class NotificationService
         _localizedText = localizedText;
     }
 
-    public void ShowIncomingFriendRequestNotification(IncomingFriendRequest incomingFriendRequest)
+    public void IncomingFriendRequest(IncomingFriendRequest incomingFriendRequest)
     {
         var message = _localizedText.R.friend_request_from.Format(incomingFriendRequest.From.Username);
 
@@ -31,39 +31,59 @@ internal class NotificationService
         });
     }
 
-    public void ShowUserAcceptedFriendRequestNotification(OutgoingFriendRequest outgoingFriendRequest)
+    public void UserAcceptedFriendRequest(OutgoingFriendRequest outgoingFriendRequest)
     {
         var message = _localizedText.R.user_accepted_friend_request.Format(outgoingFriendRequest.To.Username);
         _snackbarHost.Add(message, Severity.Info);
     }
 
-    public void ShowFailedToRespondToFriendRequestNotification(IncomingFriendRequest incomingFriendRequest)
+    public void FailedToRespondToFriendRequest(IncomingFriendRequest incomingFriendRequest)
     {
         var message = _localizedText.R.failed_to_respond_to_friend_request.Format(incomingFriendRequest.From.Username);
         _snackbarHost.Add(message, Severity.Error);
     }
 
-    public void ShowFailedToSendFriendRequestNotification(string requestRecipient)
+    public void FailedToSendFriendRequest(string requestRecipient)
     {
         var message = _localizedText.R.failed_to_send_friend_request_to.Format(requestRecipient);
         _snackbarHost.Add(message, Severity.Error);
     }
 
-    public void ShowFailedToCancelFriendRequestNotification(OutgoingFriendRequest outgoingFriendRequest)
+    public void FailedToCancelFriendRequest(OutgoingFriendRequest outgoingFriendRequest)
     {
         var message = _localizedText.R.failed_to_cancel_friend_request_from.Format(outgoingFriendRequest.To.Username);
         _snackbarHost.Add(message, Severity.Error);
     }
 
-    public void ShowFailedToRemoveFriendNotification(UserModel user)
+    public void FailedToRemoveFriend(UserModel user)
     {
         var message = _localizedText.R.failed_to_remove_friend.Format(user.Username);
         _snackbarHost.Add(message, Severity.Error);
     }
 
-    public void ShowUnableToConnectNotification()
+    public void UnableToConnect()
     {
         _snackbarHost.Add(_localizedText.R.unable_to_connect_to_the_server, Severity.Error);
+    }
+
+    public void FailedToConnectToChatHub()
+    {
+
+    }
+
+    public void LostConnectionToServer()
+    {
+
+    }
+
+    public void AttemptingToReconnect()
+    {
+
+    }
+
+    public void Reconnected()
+    {
+
     }
 
     private Task FriendRequestAcceptedFromSnackbar(Snackbar snackbar, IncomingFriendRequest incomingFriendRequest)

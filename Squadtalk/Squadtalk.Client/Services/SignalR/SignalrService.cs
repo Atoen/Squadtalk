@@ -3,7 +3,6 @@ using MessagePack;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Shared.Enums;
-using Shared.Extensions;
 using Shared.Services;
 using Shared.Signalr;
 using Squadtalk.Client.Data;
@@ -76,15 +75,22 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             ConnectionStatus = ConnectionStatus.Connected;
             ConnectionStatusChanged?.Invoke(ConnectionStatus);
 
-            UserStatus = await _connection.InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
-            _logger.LogInformation("Connected with status: {Status}", UserStatus);
+            var result = await InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
+            if (result.IsSuccess)
+            {
+                UserStatus = result.Value;
 
-            UserStatusChanged?.Invoke();
+                _logger.LogInformation("Connected with status: {Status}", UserStatus);
+                UserStatusChanged?.Invoke();
+            }
         }
         catch (Exception e)
         {
             ConnectionStatus = ConnectionStatus.Disconnected;
+            ConnectionStatusChanged?.Invoke(ConnectionStatus);
+
             _logger.LogError(e, "Failed to connect to chat hub");
+            _notificationService.FailedToConnectToChatHub();
         }
     }
 
@@ -92,8 +98,8 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
     {
         var start = Stopwatch.GetTimestamp();
 
-        await _connection.InvokeAsync<bool>("Ping");
-        return Stopwatch.GetElapsedTime(start);
+        var result = await InvokeAsync<bool>("Ping");
+        return result.IsSuccess ? Stopwatch.GetElapsedTime(start) : TimeSpan.Zero;
     }
 
     public Task OnPersisting() => throw new InvalidOperationException();
@@ -140,12 +146,18 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             return Task.CompletedTask;
         };
 
-        _connection.Reconnected += _ =>
+        _connection.Reconnected += async _ =>
         {
             ConnectionStatus = ConnectionStatus.Connected;
             ConnectionStatusChanged?.Invoke(ConnectionStatus);
 
-            return Task.CompletedTask;
+            var result = await InvokeAsync<UserStatus>(HubMethods.GetSelfStatus);
+            if (result.IsSuccess)
+            {
+                UserStatus = result.Value;
+            }
+
+            UserStatusChanged?.Invoke();
         };
 
         _connection.Closed += _ =>
@@ -168,7 +180,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
         catch
         {
-            _notificationService.ShowUnableToConnectNotification();
             return SignalrResult<T>.Error;
         }
     }
@@ -181,7 +192,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
         catch
         {
-            _notificationService.ShowUnableToConnectNotification();
             return SignalrResult<T>.Error;
         }
     }
@@ -194,7 +204,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
         catch
         {
-            _notificationService.ShowUnableToConnectNotification();
             return SignalrResult<T>.Error;
         }
     }
@@ -208,7 +217,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
         catch
         {
-            _notificationService.ShowUnableToConnectNotification();
             return SignalrResult.Error;
         }
     }
@@ -222,7 +230,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
         catch
         {
-            _notificationService.ShowUnableToConnectNotification();
             return SignalrResult.Error;
         }
     }
@@ -236,7 +243,6 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
         catch
         {
-            _notificationService.ShowUnableToConnectNotification();
             return SignalrResult.Error;
         }
     }
