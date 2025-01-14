@@ -4,7 +4,7 @@ using Squadtalk.Client.Localization;
 
 namespace Squadtalk.Client.Extensions;
 
-public static class UserModelExtensions
+public static class UserStatusExtensions
 {
     public static string Name(this UserStatus status, LocalizedText.TextTable textTable) => status switch
     {
@@ -41,6 +41,12 @@ public static class UserModelExtensions
         UserStatus.Away => Icons.Material.Rounded.AccessTimeFilled,
         UserStatus.DoNotDisturb => Icons.Material.Rounded.DoNotDisturbOn,
         _ => Icons.Material.TwoTone.Circle
+    };
+
+    public static string BadgeIcon(this UserStatus status) => status switch
+    {
+        UserStatus.DoNotDisturb => Icons.Material.Rounded.Remove,
+        _ => string.Empty
     };
 
     public static Color PaletteColor(this UserStatus status) => status switch

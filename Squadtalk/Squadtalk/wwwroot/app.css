@@ -1,0 +1,7 @@
+/*noinspection CssUnresolvedCustomProperty*/
+
+@media (hover: hover) and (pointer: fine) {
+    .hover:hover {
+        background-color: var(--mud-palette-action-default-hover);
+    }
+}

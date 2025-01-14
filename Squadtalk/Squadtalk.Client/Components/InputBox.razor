@@ -1,15 +1,17 @@
 @using Shared.Extensions
 
-<MudPaper Outlined="true" Class="my-2 d-flex align-center" Style="grid-row: 5">
-    <MudTextField T="string" @ref="_textField" Disabled="Disable"
-                  MaxLines="10" AutoGrow="true" Class="ps-1" Immediate="true"
-                  id="textbox" Underline="false" OnKeyDown="OnKeyDown"
+<MudPaper Outlined="true" Class="my-0 d-flex align-center" Style="grid-row: 5"
+          @onclick="() => _textField.FocusAsync()">
+    <MudTextField T="string" @ref="_textField" id="textbox"
+                  Underline="false" Class="ps-1" Immediate="true"
                   KeyDownPreventDefault="_inputPreventDefault"
-                  Placeholder="@Placeholder" AutoFocus="true"/>
+                  OnKeyDown="OnKeyDown" Disabled="Disable"
+                  MaxLength="2000" Placeholder="@Placeholder"
+                  AutoFocus="true" MaxLines="20" AutoGrow="true"/>
 
     <MudDivider Vertical="true" Class="mx-1" DividerType="DividerType.FullWidth"/>
 
-    <div>
+    <div @onclick:stopPropagation="true">
         <MudTooltip Text="@LocalizedText.R.send_message" Disabled="Disable" Placement="Placement.Top">
             <MudIconButton Icon="@Icons.Material.Rounded.Send" Size="Size.Medium"
                            Class="pa-2 me-n1" OnClick="Send" Disabled="Disable"
@@ -26,6 +28,7 @@
     </div>
 </MudPaper>
 
+@implements IDisposable
 
 @inject IConnectionService CommunicationService
 @inject ITextChatService TextChatService
@@ -33,13 +36,14 @@
 @inject ILogger<InputBox> Logger
 @inject LocalizedText LocalizedText
 
-@* @inject IJSRuntime JSRuntime *@
 @* @inject IFileTransferService FileTransferService *@
 
 @code
 {
-    [Parameter, EditorRequired] public ChannelModel Channel { get; set; } = default!;
+    [Parameter, EditorRequired]
+    public ChannelModel Channel { get; set; } = default!;
 
+    private IJSInProcessRuntime _runtime = default!;
     private MudTextField<string> _textField = default!;
     private bool _inputPreventDefault;
 
@@ -48,8 +52,12 @@
 
     protected override void OnInitialized()
     {
-        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
         Placeholder = LocalizedText.R.write_to_channel.Format(Channel.Name);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
     }
 
     private Task OnKeyDown(KeyboardEventArgs e)
@@ -81,6 +89,14 @@
     private void ConnectionStatusChanged(ConnectionStatus status)
     {
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        if (RendererInfo.IsInteractive)
+        {
+            CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
+        }
     }
 
     // private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";

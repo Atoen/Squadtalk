@@ -63,6 +63,19 @@ internal class ContactManager : IContactManager
         signalrService.FriendListReceived += FriendListReceived;
         signalrService.FriendRequestsReceived += FriendRequestsReceived;
         signalrService.FriendStatusChanged += FriendStatusChanged;
+
+        var models = Enumerable.Range(0, 20)
+            .Select(x => new UserModel
+            {
+                Id = UserId.New,
+                Status = UserStatus.Online,
+                Username = $"Agent #{x}"
+            });
+
+        foreach (var model in models)
+        {
+            _friends.Add(model.Id, model);
+        }
     }
 
     #region PublicMethods
@@ -80,45 +93,49 @@ internal class ContactManager : IContactManager
         return model;
     }
 
-    public async Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername)
+    public async Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername)
     {
         var result = await _signalrService.SendFriendRequestAsync(recipientUsername);
         if (result.ErrorOrValueIs(FriendRequestResult.Error))
         {
-            _notificationService.ShowFailedToSendFriendRequestNotification(recipientUsername);
+            _notificationService.FailedToSendFriendRequest(recipientUsername);
+            return FriendRequestResult.Error;
         }
 
         return result.Value;
     }
 
-    public async Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted)
+    public async Task<FriendRequestResponseResult> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted)
     {
         var result = await _signalrService.RespondToFriendRequestAsync(friendRequest.Id, accepted);
         if (result.ErrorOrValueIs(FriendRequestResponseResult.Error))
         {
-            _notificationService.ShowFailedToRespondToFriendRequestNotification(friendRequest);
+            _notificationService.FailedToRespondToFriendRequest(friendRequest);
+            return FriendRequestResponseResult.Error;
         }
 
         return result.Value;
     }
 
-    public async Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest)
+    public async Task<CancelFriendRequestResult> CancelFriendRequest(OutgoingFriendRequest friendRequest)
     {
         var result = await _signalrService.CancelFriendRequestAsync(friendRequest.Id);
         if (result.ErrorOrValueIs(false))
         {
-            _notificationService.ShowFailedToCancelFriendRequestNotification(friendRequest);
+            _notificationService.FailedToCancelFriendRequest(friendRequest);
+            return CancelFriendRequestResult.Error;
         }
 
         return result.Value ? CancelFriendRequestResult.Success : CancelFriendRequestResult.InvalidRequest;
     }
 
-    public async Task<RemoveFriendResult?> RemoveFriendAsync(UserModel friend)
+    public async Task<RemoveFriendResult> RemoveFriendAsync(UserModel friend)
     {
         var result = await _signalrService.RemoveFriendAsync(friend.Id);
         if (result.ErrorOrValueIsNot(RemoveFriendResult.Error))
         {
-            _notificationService.ShowFailedToRemoveFriendNotification(friend);
+            _notificationService.FailedToRemoveFriend(friend);
+            return RemoveFriendResult.Error;
         }
 
         return result.Value;
@@ -225,7 +242,7 @@ internal class ContactManager : IContactManager
             FriendRequestsChanged?.Invoke();
             if (response.Accepted)
             {
-                _notificationService.ShowUserAcceptedFriendRequestNotification(request);
+                _notificationService.UserAcceptedFriendRequest(request);
             }
         }
     }
@@ -296,7 +313,7 @@ internal class ContactManager : IContactManager
             var added = _incomingFriendRequests.TryAdd(incomingRequest.Id, incomingRequest);
             if (invokeEvents && added)
             {
-                _notificationService.ShowIncomingFriendRequestNotification(incomingRequest);
+                _notificationService.IncomingFriendRequest(incomingRequest);
                 FriendRequestReceived?.Invoke(incomingRequest);
             }
 

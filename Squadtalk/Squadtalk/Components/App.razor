@@ -7,6 +7,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <base href="/"/>
+    <link rel="stylesheet" href="app.css"/>
     <link rel="stylesheet" href="Squadtalk.styles.css"/>
     <link rel="icon" type="image/png" href="favicon.png"/>
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
@@ -18,13 +19,13 @@
 </head>
 
 <body>
-<AppRouter @rendermode="RenderModeForPage" />
-<script src="_framework/blazor.web.js"></script>
-<script src="_content/MudBlazor/MudBlazor.min.js"></script>
-<script src="js/tus.min.js"></script>
-<script>navigator.serviceWorker.register('service-worker.js');</script>
-<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
-<script>
+    <AppRouter @rendermode="RenderModeForPage" />
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="js/tus.min.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <script>
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);

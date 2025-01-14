@@ -5,8 +5,6 @@ namespace Shared.Models;
 
 public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelModel(id)
 {
-    public const string TempChannelIdPrefix = "t_";
-
     public static DirectMessageChannelModel CreateTempChannel(UserModel other)
     {
         var id = ChannelId.From(other.Username);

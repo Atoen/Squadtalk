@@ -79,17 +79,17 @@ internal class ContactManager : LazyModelCreator, IContactManager
         return model;
     }
 
-    public Task<FriendRequestResult?> SendFriendRequestAsync(string recipientUsername) =>
-        Task.FromResult<FriendRequestResult?>(null);
+    public Task<FriendRequestResult> SendFriendRequestAsync(string recipientUsername) =>
+        Task.FromResult<FriendRequestResult>(default);
 
-    public Task<CancelFriendRequestResult?> CancelFriendRequest(OutgoingFriendRequest friendRequest) =>
-        Task.FromResult<CancelFriendRequestResult?>(null);
+    public Task<CancelFriendRequestResult> CancelFriendRequest(OutgoingFriendRequest friendRequest) =>
+        Task.FromResult<CancelFriendRequestResult>(default);
 
-    public Task<FriendRequestResponseResult?> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted) =>
-        Task.FromResult<FriendRequestResponseResult?>(null);
+    public Task<FriendRequestResponseResult> RespondToFriendRequestAsync(IncomingFriendRequest friendRequest, bool accepted) =>
+        Task.FromResult<FriendRequestResponseResult>(default);
 
-    public Task<RemoveFriendResult?> RemoveFriendAsync(UserModel userModel) =>
-        Task.FromResult<RemoveFriendResult?>(null);
+    public Task<RemoveFriendResult> RemoveFriendAsync(UserModel userModel) =>
+        Task.FromResult<RemoveFriendResult>(default);
 
     public Task RefreshFriendListAsync() => Task.CompletedTask;
 
