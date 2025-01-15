@@ -29,4 +29,8 @@ public record struct UserId([property: Key(0)] Guid Value) : IGuidIdRecord<UserI
     public override string ToString() => _string ??= Value.ToString();
 
     private string? _string;
+
+    public bool Equals(UserId other) => Value.Equals(other.Value);
+
+    public override int GetHashCode() => Value.GetHashCode();
 }

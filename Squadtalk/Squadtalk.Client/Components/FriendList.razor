@@ -18,7 +18,7 @@
     <MudStack Row="true" AlignItems="AlignItems.Center"
               Class="my-1 hover pa-1 mud-ripple"
               @onclick="() => MessageFriend(friend)">
-        @UserAvatar(friend)
+        @UserAvatar.NoBadgeMedium(friend)
 
         <div>
             <p class="mud-typography-body1">@friend.Username</p>
@@ -67,44 +67,6 @@
 
 @code
 {
-    public static readonly RenderFragment<UserModel> UserAvatar = user =>
-        @<div class="d-flex">
-            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
-            {
-                <MudAvatar Color="Color.Tertiary">
-                    @user.Username[0]
-                </MudAvatar>
-            }
-            else
-            {
-                <MudAvatar Color="Color.Transparent">
-                    <MudImage Src="@user.AvatarUrl"/>
-                </MudAvatar>
-            }
-        </div>;
-
-    public static readonly RenderFragment<UserModel> UserAvatarWithStatus = user =>
-        @<div class="d-flex">
-            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
-            {
-                <MudBadge Overlap="true" Icon="@user.Status.BadgeIcon()" Color="user.Status.PaletteColor()"
-                          Visible="@(user.Status != UserStatus.Away)" Bordered="true">
-                    <MudAvatar Color="Color.Primary">
-                        @user.Username[0]
-                    </MudAvatar>
-                </MudBadge>
-            }
-            else
-            {
-                <MudBadge Overlap="true" Icon="@user.Status.BadgeIcon()" Color="user.Status.PaletteColor()"
-                          Visible="@(user.Status != UserStatus.Away)" Bordered="true">
-                    <MudAvatar Color="Color.Transparent">
-                        <MudImage Src="@user.AvatarUrl"/>
-                    </MudAvatar>
-                </MudBadge>
-            }
-        </div>;
-
     protected override Task OnInitializedAsync()
     {
         return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();

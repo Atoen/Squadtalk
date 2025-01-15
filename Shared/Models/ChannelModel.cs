@@ -32,8 +32,7 @@ public abstract class ChannelModel(ChannelId id) : IStatus
         ChannelModel channelModel = othersInChannel switch
         {
             [var other] => new DirectMessageChannelModel(userModelProvider(other), channel.Id),
-            { Count: > 1 } => new GroupChatModel(othersInChannel.Select(userModelProvider), channel.Id, channel.Name),
-            _ => throw new InvalidOperationException()
+            _ => new GroupChatModel(othersInChannel.Select(userModelProvider), channel.Id, channel.Name)
         };
 
         return channelModel

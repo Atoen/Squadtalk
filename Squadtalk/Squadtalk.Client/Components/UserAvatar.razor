@@ -1,0 +1,74 @@
+@using Squadtalk.Client.Extensions
+
+@code
+{
+    public static readonly RenderFragment<(UserModel, Size)> NoBadge = data =>
+    {
+        var (user, size) = data;
+
+        return
+            @<MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
+                @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+                {
+                    @user.Username[0]
+                }
+                else
+                {
+                    <MudImage Src="@user.AvatarUrl"/>
+                }
+            </MudAvatar>;
+    };
+
+    public static readonly RenderFragment<(UserModel, Size)> SurfaceBadge = data =>
+    {
+        var (user, size) = data;
+        var dotBadge = size == Size.Small;
+
+        return
+            @<MudBadge Overlap="true" Icon="@user.Status.BadgeIcon()"
+                       Color="user.Status.PaletteColor()" Bordered="true"
+                       Visible="@(user.Status.IsOfflineOrUnknown())" Dot="dotBadge">
+                <MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
+                    @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+                    {
+                        @user.Username[0]
+                    }
+                    else
+                    {
+                        <MudImage Src="@user.AvatarUrl"/>
+                    }
+                </MudAvatar>
+            </MudBadge>;
+    };
+
+    public static readonly RenderFragment<(UserModel, Size)> PrimaryBadge = data =>
+    {
+        var (user, size) = data;
+        var dotBadge = size == Size.Small;
+
+        return
+            @<MudBadge Overlap="!dotBadge" Icon="@user.Status.BadgeIcon()"
+                       Color="user.Status.PaletteColor()" BadgeClass="primary-bordered"
+                       Visible="@(!user.Status.IsOfflineOrUnknown())" Dot="dotBadge">
+                <MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
+                    @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+                    {
+                        @user.Username[0]
+                    }
+                    else
+                    {
+                        <MudImage Src="@user.AvatarUrl"/>
+                    }
+                </MudAvatar>
+            </MudBadge>;
+    };
+
+    public static readonly RenderFragment<UserModel> NoBadgeSmall = user => NoBadge((user, Size.Small));
+    public static readonly RenderFragment<UserModel> NoBadgeMedium = user => NoBadge((user, Size.Medium));
+
+    public static readonly RenderFragment<UserModel> SurfaceBadgeSmall = user => SurfaceBadge((user, Size.Small));
+    public static readonly RenderFragment<UserModel> SurfaceBadgeMedium = user => SurfaceBadge((user, Size.Medium));
+
+    public static readonly RenderFragment<UserModel> PrimaryBadgeSmall = user => PrimaryBadge((user, Size.Small));
+    public static readonly RenderFragment<UserModel> PrimaryBadgeMedium = user => PrimaryBadge((user, Size.Medium));
+}

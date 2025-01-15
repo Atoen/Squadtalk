@@ -1,4 +1,4 @@
-<MudDialog ContentClass="mt-n1">
+<MudDialog ContentClass="mt-n1" >
     <DialogContent>
 
         @if (_selectedUsers.Count != 0)
@@ -8,9 +8,9 @@
                 {
                     <div class="rounded pa-2 hover mud-chip-filled mud-chip"
                          @onclick="() => CloseChip(selected)">
-                         @selected.User.Username
+                        @selected.User.Username
 
-                         <MudIcon Size="Size.Small" Icon="@Icons.Material.Rounded.Close"/>
+                        <MudIcon Size="Size.Small" Icon="@Icons.Material.Rounded.Close"/>
                     </div>
                 }
             </div>
@@ -19,17 +19,19 @@
         <MudTextField T="string" Immediate="true" @bind-Value="_searchValue"
                       Placeholder="@LocalizedText.R.enter_friend_username" @ref="_textField"/>
 
-        <div class="my-1" style="max-height: 200px; overflow-y: auto">
+        <div class="my-1 overflow-y-auto" style="max-height: 200px">
             @if (!FilteredResults.Any())
             {
-                <div class="mud-typography-body1">
+                <div class="mud-typography-body1 my-1">
                     @LocalizedText.R.no_friends_found
                 </div>
             }
-
-            @foreach (var result in FilteredResults.Take(10))
+            else
             {
-                @_listEntry(result)
+                foreach (var result in FilteredResults.Take(10))
+                {
+                    @_listEntry(result)
+                }
             }
         </div>
 
@@ -53,6 +55,8 @@
         </MudButton>
     </DialogActions>
 </MudDialog>
+
+@implements IDisposable
 
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
@@ -81,7 +85,7 @@
     private RenderFragment<SearchResult> CreateRenderFragment() => searchResult =>
         @<div class="d-flex align-center my-1 pa-2 gap-2 hover rounded me-1 mud-ripple"
               @onclick="searchResult.Click">
-            @FriendList.UserAvatarWithStatus(searchResult.User)
+            @UserAvatar.SurfaceBadgeMedium(searchResult.User)
 
             <div class="mud-typography-body1">
                 @searchResult.User.Username
@@ -104,23 +108,39 @@
                           searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase);
 
         var onClick = ClickResult;
-
         var results = ContactManager.FriendList
             .Select(x => new SearchResult(x, onClick));
 
         _searchResults.AddRange(results);
+
+        ContactManager.FriendListChanged += FriendListChanged;
+    }
+
+    private void FriendListChanged()
+    {
+        var countBefore = _searchResults.Count;
+
+        var onClick = ClickResult;
+        var results = ContactManager.FriendList
+            .Select(x => new SearchResult(x, onClick));
+
+        _searchResults.Clear();
+        _searchResults.AddRange(results);
+
+        // There is fewer friends than when we stared - remove possible selection of removed friend
+        if (countBefore > ContactManager.FriendList.Count)
+        {
+            _selectedUsers.RemoveAll(x => !ContactManager.FriendList.Contains(x.User));
+        }
+
+        StateHasChanged();
     }
 
     private async Task CreateGroupChat()
     {
-        if (_selectedUsers.Count == 0)
-        {
-            // TODO: One-User groups (backend)
-            return;
-        }
-
         _working = true;
 
+        // Precisely one user invited - create DM
         if (_selectedUsers is [ { User: var selectedUser } ])
         {
             await ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(selectedUser);
@@ -128,8 +148,8 @@
             return;
         }
 
+        // 0 or 2+ users selected - Create group chat
         var selectedUsers = _selectedUsers.Select(x => x.User);
-
         var id = await ChannelManager.CreateNewChannel(selectedUsers);
 
         _working = false;
@@ -147,7 +167,7 @@
         if (searchResult.IsSelected)
         {
             _selectedUsers.Add(searchResult);
-            _textField.Clear();
+            _searchValue = null;
         }
         else
         {
@@ -166,5 +186,10 @@
             IsSelected = !IsSelected;
             onClick(this);
         };
+    }
+
+    public void Dispose()
+    {
+        ContactManager.FriendListChanged -= FriendListChanged;
     }
 }

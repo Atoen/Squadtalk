@@ -141,7 +141,6 @@ enter_current_and_new_password: Wprowadź swoje obecne i nowe hasło.
 failed_to_change_password: Nie udało się zmienić hasła.
 password_changed: Hasło zostało pomyślnie zmienione.
 
-# Messages page
 create_channel_modal_title: Nowa grupa
 add_new_chat: Dodaj nową rozmowę
 select_friends: Wybierz znajomych
@@ -149,8 +148,8 @@ enter_friend_username: Podaj nazwę użytkownika znajomego
 create_new_group_chat: Utwórz nową rozmowę grupową
 crate_or_find_chat: Utwórz lub znajdź rozmowę
 no_friends_found: Nie znaleziono znajomych
+users_group: Grupa użytkownika {0}
 
-# Chat page
 start_call: Rozpocznij rozmowę
 manage_channel: Zarządzaj grupą
 channel_beginning: To jest początek wiadomości z
@@ -195,6 +194,7 @@ simulation_attacker: Atakujący
 simulation_attacked: Atakowany
 simulation_select_attacker: Wybierz atakującego
 simulation_select_attacked: Wybierz atakowanego
+download_image: Pobierz obraz
 
 # Dialog
 dialog_yes: Tak
@@ -215,6 +215,8 @@ channel_name_changed_template: {0} zmienił(a) nazwę grupy na {1}.
 channel_name_cleared_template: {0} przywrócił(a) domyślną nazwę grupy.
 call_started_template: {0} rozpoczął(-ęła) rozmowę głosową.
 call_ended_template: {0} rozpoczął(-ęła) rozmowę głosową, która trwała {1}.
+channel_name_cleared: {0} przywrócił(a) domyślną nazwę grupy.
+call_missed: Nieodebrane połączenie
 
 # Call dialog
 accept_call_dialog_message: Zaakceptować połączenie głosowe?

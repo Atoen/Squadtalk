@@ -16,7 +16,7 @@ else
             <img class="avatar" src="@Model.Author.AvatarUrl" alt="Avatar" draggable="false"/>
             <div class="label">
                 <div class="me-2">@Model.Author.Username</div>
-                <div class="date" data-date="@_longDate">@_date</div>
+                <div class="date">@_date</div>
             </div>
         }
         else
@@ -56,5 +56,8 @@ else
         _shortDate = Model.Timestamp.ToStringFormat(LocalizedText, DateFormatMode.Short);
     }
 
-    protected override bool ShouldRender() => Model.ShouldRender();
+    protected override bool ShouldRender()
+    {
+        return Model.ShouldRender();
+    }
 }

@@ -68,8 +68,13 @@
         ChannelSorter.ChannelsSorted -= StateHasChanged;
     }
 
+    private readonly DialogOptions _dialogOptions = new()
+    {
+        Position = DialogPosition.TopCenter
+    };
+
     private Task ShowCreateGroupDialog()
     {
-        return DialogService.ShowAsync<CreateGroupChatDialog>(LocalizedText.R.select_friends);
+        return DialogService.ShowAsync<CreateGroupChatDialog>(LocalizedText.R.select_friends, _dialogOptions);
     }
 }
