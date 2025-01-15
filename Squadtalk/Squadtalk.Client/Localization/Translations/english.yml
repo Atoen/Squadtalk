@@ -143,11 +143,9 @@ enter_current_and_new_password: Enter you current and new password.
 failed_to_change_password: Failed to change your password.
 password_changed: Password changed successfully.
 
-# Home page
 hello_world: Hello world!
 welcome_to_app: Welcome to your new app.
 
-# Messages page
 create_channel_modal_title: New group
 add_new_chat: Add new chat
 select_friends: Select friends
@@ -155,6 +153,7 @@ enter_friend_username: Enter friend username
 create_new_group_chat: Create new group
 crate_or_find_chat: Create or find chat
 no_friends_found: No friends found
+users_group: "{0}'s group"
 
 # Settings page
 app_language: Language
@@ -180,6 +179,7 @@ avatar_removed_snackbar: Avatar removed
 avatar_uploaded_snackbar_template: File {0} uploaded ({1})
 file_too_big_snackbar: Selected file is too big!
 failed_to_upload_snackbar: Failed to upload the file
+download_image: Download image
 
 # User status
 online: Online
@@ -205,6 +205,8 @@ channel_created_template: {0} has created this group.
 channel_name_changed_template: {0} has changed this group's name {1}.
 call_started_template: {0} has started voice call.
 call_ended_template: {0} has started voice call that lasted {1}.
+channel_name_cleared: {0} has cleared this group's name.
+call_missed: Call missed
 
 # Call dialog
 call_incoming_template: Incoming call from {0}

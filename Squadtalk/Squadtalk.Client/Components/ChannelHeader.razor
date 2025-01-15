@@ -1,11 +1,12 @@
 @using Shared.Extensions
 
 <MudPaper Class="d-flex mud-primary align-center ps-2">
-    <MudText Typo="Typo.h6" Class="order-2 mx-2">@Channel.Name</MudText>
+    <div class="mud-typography-h6 mud-text-primary order-2 mx-2">@ChatName</div>
+
     @if (!Channel.IsGlobal())
     {
-        <div class="order-1 align-content-center">
-            <ChannelImage Channel="Channel" Inline="true"/>
+        <div class="order-1 d-flex">
+            <ChannelImage Channel="Channel" Small="true"/>
         </div>
 
         <div class="order-3 d-flex ms-auto">
@@ -24,7 +25,7 @@
             }
         </div>
 
-    @* <VoiceCallStatus/> *@
+        @* <VoiceCallStatus/> *@
     }
 </MudPaper>
 
@@ -33,6 +34,7 @@
 @inject IChannelManager ChannelManager
 @inject IVoiceChatService VoiceChatService
 @inject LocalizedText LocalizedText
+@inject IUserAuthenticationService UserAuthenticationService
 @inject ILogger<ChannelHeader> Logger
 
 @code
@@ -44,6 +46,11 @@
     private readonly Dictionary<string, object> _modalParameters = new();
 
     private UserStatus _lastStatus;
+
+    private string? _formattedName;
+    private string ChatName => Channel.Name == string.Empty
+        ? _formattedName ??= LocalizedText.R.users_group.Format(UserAuthenticationService.Username)
+        : Channel.Name;
 
     private Task StartVoiceCall()
     {

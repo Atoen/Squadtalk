@@ -31,7 +31,7 @@ public class ChannelRepository(
 
     public async Task<Channel?> CreateChannelAsync(List<ApplicationUser> participants, CancellationToken cancellationToken = default)
     {
-        if (participants.Count < 2 || participants.DistinctBy(x => x.Id).Count() != participants.Count)
+        if (participants.Count < 1 || participants.DistinctBy(x => x.Id).Count() != participants.Count)
         {
             return null;
         }

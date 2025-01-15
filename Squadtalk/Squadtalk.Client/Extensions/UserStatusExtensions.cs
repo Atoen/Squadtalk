@@ -6,6 +6,11 @@ namespace Squadtalk.Client.Extensions;
 
 public static class UserStatusExtensions
 {
+    public static bool IsOfflineOrUnknown(this UserStatus status)
+    {
+        return status is UserStatus.Offline or UserStatus.Unknown;
+    }
+
     public static string Name(this UserStatus status, LocalizedText.TextTable textTable) => status switch
     {
         UserStatus.Online => textTable.online,

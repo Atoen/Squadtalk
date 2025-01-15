@@ -1,54 +1,63 @@
-@using Squadtalk.Client.Extensions
+@switch (Channel)
+{
+    case DirectMessageChannelModel dm:
+        @UserAvatar.PrimaryBadge((dm.Other, Size))
+        break;
 
-<div class="image-container @InlineClass">
-    @switch (Channel)
+    case GroupChatModel { Others.Count: 0 }:
     {
-        case DirectMessageChannelModel dm:
-            <img alt="@dm.Name avatar" src="@dm.Other.AvatarUrl" class="image @InlineClass"/>
-            break;
+        <MudAvatar Color="Color.Secondary" Size="Size">
+            <MudIcon Icon="@Icons.Material.Rounded.Group" Size="Size"/>
+        </MudAvatar>
+        break;
+    }
 
-        case GroupChatModel { ImageUrl: not null } groupChat:
-            <img alt="@groupChat.Name image" src="@groupChat.ImageUrl" class="image @InlineClass"/>
-            break;
+    case GroupChatModel { ImageUrl: { } url } groupChat:
+    {
+        <MudBadge Visible="groupChat.HasOnlineStatus" Color="Color.Success" Dot="Small">
+            <MudAvatar Color="Color.Secondary" Size="Size">
+                <MudImage Src="@url"/>
+            </MudAvatar>
+        </MudBadge>
 
-        case GroupChatModel groupChat:
-        {
-            foreach (var user in groupChat.Others.Take(2))
-            {
-                <img alt="@user.Username Avatar" src="@user.AvatarUrl" class="group-avatar-item @InlineClass"/>
+        break;
+    }
+
+    case GroupChatModel groupChat:
+    {
+        <MudBadge Visible="groupChat.HasOnlineStatus" Color="Color.Success"
+                  BadgeClass="primary-bordered z-10" Overlap="true">
+            @{
+                var containerClass = Small
+                    ? "inline image-container"
+                    : "image-container";
+
+                var imageClass = Small
+                    ? "inline group-avatar-item primary-bordered"
+                    : "group-avatar-item primary-bordered";
             }
-            break;
-        }
-    }
 
-    @if (DisplayStatus)
-    {
-        <div class="online-indicator @InlineClass" style="@GetStyle"></div>
-    }
-</div>
+            <div class="@containerClass">
 
-@code {
+                @foreach (var user in groupChat.Others.Take(2))
+                {
+                    <img alt="@user.Username Avatar" src="@user.AvatarUrl"
+                         class="@imageClass"/>
+                }
+            </div>
+        </MudBadge>
+
+        break;
+    }
+}
+
+@code
+{
     [Parameter, EditorRequired]
     public ChannelModel Channel { get; set; } = default!;
 
     [Parameter]
-    public bool Inline { get; set; }
+    public bool Small { get; set; }
 
-    [Parameter]
-    public bool HideStatus { get; set; }
-
-    private bool DisplayStatus
-    {
-        get
-        {
-            if (HideStatus || !OperatingSystem.IsBrowser()) return false;
-
-            if (Channel is DirectMessageChannelModel { Status: not UserStatus.Unknown }) return true;
-
-            return Channel is GroupChatModel { Status: UserStatus.Online };
-        }
-    }
-
-    private string GetStyle => $"background-color: {Channel.Status.StatusColor()}";
-    private string InlineClass => Inline ? "inline" : "";
+    private Size Size => Small ? Size.Small : Size.Medium;
 }

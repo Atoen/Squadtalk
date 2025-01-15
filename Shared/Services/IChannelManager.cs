@@ -13,15 +13,10 @@ public interface IChannelManager
 
     IReadOnlyCollection<ChannelModel> Channels { get; }
 
-    // IReadOnlyCollection<UserModel> Users { get; }
-
     event Action<GroupChatModel>? ChannelNameChanged;
     event Action? ChannelsListChanged;
     event Action? ChannelChanged;
     event Func<Task>? ChannelChangedAsync;
-    // event Action? ConnectedUsersChanged;
-
-    // UserModel GetOrCreateUserModel(IChatUser chatUser);
 
     ChannelModel? GetChannel(ChannelId channelId);
 

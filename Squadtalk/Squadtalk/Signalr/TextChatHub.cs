@@ -77,7 +77,8 @@ partial class AppHub
         await NotifyNewChannelParticipantsAsync(channel);
 
         // Don't send the system message for dms
-        if (participants.Count > 2)
+        // But send for solo and more groups
+        if (participants.Count != 2)
         {
             await systemMessageService.SendChannelCreatedMessageAsync(creatingUser, channel.Id);
         }

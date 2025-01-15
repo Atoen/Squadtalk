@@ -10,8 +10,9 @@ public static class FileSizeConverter
 
     public static string ConvertToHumanReadableSize(string length)
     {
-        var parsed = long.Parse(length);
-        return ConvertToHumanReadableSize(parsed);
+        return long.TryParse(length, out var parsed)
+            ? ConvertToHumanReadableSize(parsed)
+            : string.Empty;
     }
     
     public static string ConvertToHumanReadableSize(long length)

@@ -17,7 +17,7 @@
     {
         <MudStack Row="true" AlignItems="AlignItems.Center"
                   Class="my-1 mud-button pa-1 mud-ripple">
-            @FriendList.UserAvatar(request.From)
+            @UserAvatar.NoBadgeMedium(request.From)
 
             <p class="mud-typography-body1">@request.From.Username</p>
 
@@ -62,7 +62,7 @@
         <MudStack Row="true" AlignItems="AlignItems.Center"
                   Class="my-1 mud-button pa-1 mud-ripple">
 
-            @FriendList.UserAvatar(request.To)
+            @UserAvatar.NoBadgeMedium(request.To)
 
             <MudText>@request.To.Username</MudText>
 

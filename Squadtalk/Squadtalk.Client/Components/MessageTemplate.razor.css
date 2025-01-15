@@ -41,16 +41,6 @@
     position: relative;
 }
 
-.date:hover::after {
-    content: attr(data-date);
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin-left: -5px;
-    padding: 0 5px;
-    background: var(--mud-palette-action-default-hover);
-}
-
 .content-only-date {
     grid-column: 1;
     grid-row: 3;
