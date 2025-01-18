@@ -12,6 +12,8 @@ public static class HubMethods
     public const string GetSelfStatus = nameof(GetSelfStatus);
 
     public const string SendMessage = nameof(SendMessage);
+    public const string IsTyping = nameof(IsTyping);
+    public const string StoppedTyping = nameof(StoppedTyping);
     public const string GetMessagePage = nameof(GetMessagePage);
     public const string CreateChannel = nameof(CreateChannel);
     public const string ChangeChannelName = nameof(ChangeChannelName);

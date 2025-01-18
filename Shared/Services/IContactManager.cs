@@ -1,4 +1,5 @@
 using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Models;
 using Shared.Results;
@@ -20,6 +21,8 @@ public interface IContactManager
 
     IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
     IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
+
+    UserModel? FindUserById(UserId userId);
 
     UserModel GetOrCreateUserModel(IChatUser chatUser);
 

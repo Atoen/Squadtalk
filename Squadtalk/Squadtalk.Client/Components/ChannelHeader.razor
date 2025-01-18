@@ -31,6 +31,7 @@
 
 @implements IDisposable
 
+@inject IContactManager ContactManager
 @inject IChannelManager ChannelManager
 @inject IVoiceChatService VoiceChatService
 @inject LocalizedText LocalizedText
@@ -41,9 +42,6 @@
 {
     [Parameter, EditorRequired]
     public ChannelModel Channel { get; set; } = default!;
-
-    // private Modal _modal = default!;
-    private readonly Dictionary<string, object> _modalParameters = new();
 
     private UserStatus _lastStatus;
 
@@ -57,34 +55,6 @@
         return VoiceChatService.StartCallAsync(Channel.Id);
     }
 
-    private async Task ManageChannel()
-    {
-        if (Channel is not GroupChatModel groupChat) return;
-
-        _modalParameters[nameof(ManageGroupModal.GroupChat)] = groupChat;
-
-        // await _modal.ShowAsync<ManageGroupModal>("Manage channel", parameters: _modalParameters);
-    }
-
-    protected override void OnInitialized()
-    {
-        // _table = Localization.GetTextTable(this);
-        _lastStatus = Channel.Status;
-
-        _modalParameters[nameof(ManageGroupModal.GroupNameChanged)] =
-            (Func<GroupChatModel, string?, Task<bool>>) GroupNameChanged;
-
-        // ChannelManager.ConnectedUsersChanged += ConnectedUsersChanged;
-        ChannelManager.ChannelNameChanged += ChannelNameChanged;
-    }
-
-    private void ChannelNameChanged(GroupChatModel groupChat)
-    {
-        if (groupChat.Id != Channel.Id) return;
-
-        StateHasChanged();
-    }
-
     private async Task<bool> GroupNameChanged(GroupChatModel groupChat, string? newName)
     {
         Logger.LogInformation("New name {NewName}", newName);
@@ -96,8 +66,7 @@
 
     private void ConnectedUsersChanged()
     {
-        if (Channel is not { Status: var status }) return;
-
+        var status = Channel.Status;
         if (status != _lastStatus)
         {
             _lastStatus = status;
@@ -105,9 +74,28 @@
         }
     }
 
+    private void ChannelNameChanged(GroupChatModel groupChat)
+    {
+        if (groupChat.Id == Channel.Id)
+        {
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        ChannelManager.ChannelNameChanged += ChannelNameChanged;
+        ContactManager.FriendListChanged += ConnectedUsersChanged;
+
+    }
+
     public void Dispose()
     {
-        // ChannelManager.ConnectedUsersChanged -= ConnectedUsersChanged;
+        if (!RendererInfo.IsInteractive) return;
+
         ChannelManager.ChannelNameChanged -= ChannelNameChanged;
+        ContactManager.FriendListChanged -= ConnectedUsersChanged;
     }
 }
