@@ -68,6 +68,8 @@ internal class ContactManager : LazyModelCreator, IContactManager
         _incomingFriendRequests = incomingFriendRequests;
     }
 
+    public UserModel? FindUserById(UserId userId) => _userModels.GetValueOrDefault(userId);
+
     public UserModel GetOrCreateUserModel(IChatUser chatUser)
     {
         if (!_userModels.TryGetValue(chatUser.Id, out var model))

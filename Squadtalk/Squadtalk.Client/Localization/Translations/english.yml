@@ -154,6 +154,10 @@ create_new_group_chat: Create new group
 crate_or_find_chat: Create or find chat
 no_friends_found: No friends found
 users_group: "{0}'s group"
+is_typing: is typing...
+are_typing: are typing...
+and: and
+several_users_are_typing: Several users are typing...
 
 # Settings page
 app_language: Language

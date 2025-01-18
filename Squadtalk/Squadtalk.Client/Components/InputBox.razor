@@ -1,4 +1,31 @@
+@using Shared.Data.TypedIds
 @using Shared.Extensions
+
+@if (Channel.IsSomeoneTyping)
+{
+    <span class="grid-row-4 d-flex gap-1 typing-indicator">
+        @switch (Channel.TypingUsers.Count)
+        {
+            case 1:
+                var user = Channel.TypingUsers.First();
+                <strong>@user.Username</strong>
+                @LocalizedText.R.is_typing
+                break;
+
+            case 2:
+                var users = Channel.TypingUsers.Take(2).ToArray();
+                <strong>@users[0].Username</strong>
+                @LocalizedText.R.and
+                <strong>@users[1].Username</strong>
+                @LocalizedText.R.are_typing
+                break;
+
+            case > 2:
+                @LocalizedText.R.several_users_are_typing
+                break;
+        }
+    </span>
+}
 
 <MudPaper Outlined="true" Class="my-0 d-flex align-center" Style="grid-row: 5"
           @onclick="() => _textField.FocusAsync()">
@@ -7,6 +34,7 @@
                   KeyDownPreventDefault="_inputPreventDefault"
                   OnKeyDown="OnKeyDown" Disabled="Disable"
                   MaxLength="2000" Placeholder="@Placeholder"
+                  ValueChanged="TextFieldValueChanged"
                   AutoFocus="true" MaxLines="20" AutoGrow="true"/>
 
     <MudDivider Vertical="true" Class="mx-1" DividerType="DividerType.FullWidth"/>
@@ -28,7 +56,7 @@
     </div>
 </MudPaper>
 
-@implements IDisposable
+@implements IAsyncDisposable
 
 @inject IConnectionService CommunicationService
 @inject ITextChatService TextChatService
@@ -53,11 +81,6 @@
     protected override void OnInitialized()
     {
         Placeholder = LocalizedText.R.write_to_channel.Format(Channel.Name);
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
     }
 
     private Task OnKeyDown(KeyboardEventArgs e)
@@ -86,26 +109,45 @@
         }
     }
 
+    private Task TextFieldValueChanged()
+    {
+        var channelId = Channel.Id;
+        return _textField.Value is null or { Length: 0 }
+            ? TextChatService.StoppedTypingAsync(channelId)
+            : TextChatService.IsTypingAsync(channelId);
+    }
+
     private void ConnectionStatusChanged(ConnectionStatus status)
     {
         StateHasChanged();
     }
 
-    public void Dispose()
+    private void TypingUsersChanged(ChannelId channelId)
     {
-        if (RendererInfo.IsInteractive)
+        if (Channel.Id == channelId)
         {
-            CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
+            StateHasChanged();
         }
     }
 
-    // private const string DisabledStyle = "pointer-events: none; opacity: 0.4;";
-    // private const string DefaultPlaceholder = "Type message";
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
 
-    // private string? _userInput;
-    // private string? _placeholder;
-    // private bool _preventDefaultOnKeyDown;
-    //
+        CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
+        ChannelManager.TypingUsersChanged += TypingUsersChanged;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (!RendererInfo.IsInteractive) return;
+
+        CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
+        ChannelManager.TypingUsersChanged -= TypingUsersChanged;
+
+        await TextChatService.StoppedTypingAsync(Channel.Id);
+    }
+
     // private IJSObjectReference? _jsModule;
     //
     // protected override void OnInitialized()

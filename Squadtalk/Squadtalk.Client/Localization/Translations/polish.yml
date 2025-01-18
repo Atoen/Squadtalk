@@ -149,6 +149,10 @@ create_new_group_chat: Utwórz nową rozmowę grupową
 crate_or_find_chat: Utwórz lub znajdź rozmowę
 no_friends_found: Nie znaleziono znajomych
 users_group: Grupa użytkownika {0}
+is_typing: pisze...
+are_typing: piszą...
+and: i
+several_users_are_typing: Wielu użytkowników pisze...
 
 start_call: Rozpocznij rozmowę
 manage_channel: Zarządzaj grupą

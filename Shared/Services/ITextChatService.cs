@@ -7,7 +7,11 @@ public interface ITextChatService
 {
     event Action<ChannelId, MessageModel>? MessageReceived;
 
-    Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken);
+    Task<IList<MessageModel>> GetMessagePageAsync(ChannelId channelId, CancellationToken cancellationToken);
 
     Task SendMessageAsync(string message, CancellationToken cancellationToken = default);
+
+    Task IsTypingAsync(ChannelId channelId);
+
+    Task StoppedTypingAsync(ChannelId channelId);
 }

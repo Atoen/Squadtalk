@@ -8,7 +8,11 @@ internal class TextChatService : ITextChatService
 {
     event Action<ChannelId, MessageModel>? ITextChatService.MessageReceived { add { } remove { } }
 
-    public Task<IList<MessageModel>> GetMessagePageAsync(ChannelId id, CancellationToken cancellationToken) => throw new NotImplementedException();
+    public Task<IList<MessageModel>> GetMessagePageAsync(ChannelId channelId, CancellationToken cancellationToken) => Task.FromResult<IList<MessageModel>>(Array.Empty<MessageModel>());
 
-    public Task SendMessageAsync(string message, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task SendMessageAsync(string message, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task IsTypingAsync(ChannelId channelId) => Task.CompletedTask;
+
+    public Task StoppedTypingAsync(ChannelId channelId) => Task.CompletedTask;
 }

@@ -30,6 +30,7 @@ internal class ChannelManager : IChannelManager
 
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
+    public event Action<ChannelId>? TypingUsersChanged;
 
     public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
     public ChannelModel? CurrentChannel { get; private set; }
@@ -50,6 +51,8 @@ internal class ChannelManager : IChannelManager
         _signalrService.ChannelsReceived += ChannelsReceived;
         _signalrService.AddedToChannel += AddedToChannel;
         _signalrService.ChannelNameChanged += OnChannelNameChanged;
+        _signalrService.UserIsTyping += UserIsTyping;
+        _signalrService.UserStoppedTyping += UserStoppedTyping;
     }
 
     public ChannelModel? GetChannel(ChannelId channelId)
@@ -216,5 +219,38 @@ internal class ChannelManager : IChannelManager
 
         ChannelNameChanged?.Invoke(groupChat);
         ChannelsListChanged?.Invoke();
+    }
+
+    private void UserIsTyping(ChannelId channelId, UserId userId)
+    {
+        UpdateTypingState(channelId, userId, isTyping: true);
+    }
+
+    private void UserStoppedTyping(ChannelId channelId, UserId userId)
+    {
+        UpdateTypingState(channelId, userId, isTyping: false);
+    }
+
+    private void UpdateTypingState(ChannelId channelId, UserId userId, bool isTyping)
+    {
+        _logger.LogInformation("User {UserId} {Action} typing on channel: {ChannelId}",
+            userId, isTyping ? "is now" : "stopped", channelId);
+
+        if (!_allChannels.TryGetValue(channelId, out var channel))
+        {
+            return;
+        }
+
+        var user = _contactManager.FindUserById(userId);
+        if (user is null)
+        {
+            return;
+        }
+
+        var stateChanged = isTyping ? channel.TypingUsers.Add(user) : channel.TypingUsers.Remove(user);
+        if (stateChanged)
+        {
+            TypingUsersChanged?.Invoke(channelId);
+        }
     }
 }

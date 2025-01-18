@@ -29,10 +29,30 @@ partial class AppHub
         var addedMessage = await messageRepository.AddMessageAsync(
             participant, message, channelId, cancellationToken: Context.ConnectionAborted);
 
+        await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, participant.Id);
+
         if (addedMessage is not null)
         {
             await TextGroup(channelId).ReceivedMessage(addedMessage.ToDto());
         }
+    }
+
+    [HubMethodName(HubMethods.IsTyping)]
+    public async Task IsTyping(ChannelId channelId)
+    {
+        var userId = UserId;
+
+        var shouldNotify = await _connectionManager.SetUserIsTypingAsync(channelId, userId);
+        if (shouldNotify)
+        {
+            await Clients.OthersInGroup(channelId).UserIsTyping(channelId, userId);
+        }
+    }
+
+    [HubMethodName(HubMethods.StoppedTyping)]
+    public async Task StoppedTyping(ChannelId channelId)
+    {
+        await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, UserId);
     }
 
     private static readonly List<MessageDto> Empty = [];

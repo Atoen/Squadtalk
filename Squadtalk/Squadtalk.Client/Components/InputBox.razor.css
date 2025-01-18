@@ -1,0 +1,13 @@
+.typing-indicator {
+    animation: fadeIn 0.2s;
+    overflow: hidden;
+}
+
+@keyframes fadeIn {
+    from {
+        max-height: 0;
+    }
+    to {
+        max-height: 20px;
+    }
+}

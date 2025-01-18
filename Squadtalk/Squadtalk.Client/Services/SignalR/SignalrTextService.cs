@@ -18,6 +18,9 @@ internal sealed partial class SignalrService : ISignalrTextService
     public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
 
+    public event Action<ChannelId, UserId>? UserIsTyping;
+    public event Action<ChannelId, UserId>? UserStoppedTyping;
+
     public Task<SignalrResult> SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken)
     {
         return SendAsync(HubMethods.SendMessage, message, channelId, cancellationToken);
@@ -38,6 +41,16 @@ internal sealed partial class SignalrService : ISignalrTextService
         return InvokeAsync<bool>(HubMethods.ChangeChannelName, newName, cancellationToken);
     }
 
+    public Task<SignalrResult> UserIsTypingAsync(ChannelId channelId)
+    {
+        return SendAsync(HubMethods.IsTyping, channelId);
+    }
+
+    public Task<SignalrResult> UserStoppedTypingAsync(ChannelId channelId)
+    {
+        return SendAsync(HubMethods.StoppedTyping, channelId);
+    }
+
     private void RegisterTextHandlers()
     {
         _connection.On<MessageDto>(nameof(ITextChatClient.ReceivedMessage), message =>
@@ -51,5 +64,11 @@ internal sealed partial class SignalrService : ISignalrTextService
 
         _connection.On<ChannelId, string?>(nameof(ITextChatClient.ChannelNameChanged), (channelId, newName) =>
             ChannelNameChanged?.Invoke(channelId, newName));
+
+        _connection.On<ChannelId, UserId>(nameof(ITextChatClient.UserIsTyping), (channelId, userId) =>
+            UserIsTyping?.Invoke(channelId, userId));
+
+        _connection.On<ChannelId, UserId>(nameof(ITextChatClient.UserStoppedTyping), (channelId, userId) =>
+            UserStoppedTyping?.Invoke(channelId, userId));
     }
 }

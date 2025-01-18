@@ -25,6 +25,10 @@ public abstract class ChannelModel(ChannelId id) : IStatus
 
     public bool HasUnreadMessages => State.UnreadMessages > 0;
 
+    public bool IsSomeoneTyping => TypingUsers.Count != 0;
+
+    public readonly HashSet<UserModel> TypingUsers = [];
+
     public static ChannelModel Create(IChatChannel channel, UserId currentUserId, Func<IChatUser, UserModel> userModelProvider)
     {
         var othersInChannel = channel.Participants.Where(x => x.Id != currentUserId).ToList();

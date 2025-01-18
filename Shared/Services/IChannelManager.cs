@@ -17,6 +17,7 @@ public interface IChannelManager
     event Action? ChannelsListChanged;
     event Action? ChannelChanged;
     event Func<Task>? ChannelChangedAsync;
+    event Action<ChannelId>? TypingUsersChanged;
 
     ChannelModel? GetChannel(ChannelId channelId);
 
