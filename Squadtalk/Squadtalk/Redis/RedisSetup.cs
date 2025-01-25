@@ -14,8 +14,11 @@ public static partial class RedisExtensions
             var mux = application.Services.GetRequiredService<IConnectionMultiplexer>();
             var db = mux.GetDatabase(2);
 
-            var script = File.ReadAllText("./Scripts/lua/userConnections.lua");
-            db.Execute("FUNCTION", "LOAD", "REPLACE", script);
+            var typingScript = File.ReadAllText("./Scripts/lua/typing.lua");
+            db.Execute("FUNCTION", "LOAD", "REPLACE", typingScript);
+
+            var userConnectionScript = File.ReadAllText("./Scripts/lua/userConnections.lua");
+            db.Execute("FUNCTION", "LOAD", "REPLACE", userConnectionScript);
             db.Execute("FCALL", "clear_connections", 0);
 
             LogSuccess(logger);

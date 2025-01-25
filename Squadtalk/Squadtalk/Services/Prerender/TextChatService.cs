@@ -12,7 +12,7 @@ internal class TextChatService : ITextChatService
 
     public Task SendMessageAsync(string message, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-    public Task IsTypingAsync(ChannelId channelId) => Task.CompletedTask;
+    public void StartedTyping(ChannelId channelId) { }
 
-    public Task StoppedTypingAsync(ChannelId channelId) => Task.CompletedTask;
+    public void StoppedTyping() { }
 }

@@ -78,7 +78,7 @@ internal class ContactManager : IContactManager
         }
     }
 
-    #region PublicMethods
+    #region Public Methods
 
     public UserModel? FindUserById(UserId userId) => _userModels.GetValueOrDefault(userId);
 
@@ -188,7 +188,7 @@ internal class ContactManager : IContactManager
 
     #endregion
 
-    #region EventHandlers
+    #region Event Handlers
 
     private async Task FriendAcceptedFromNotification(IncomingFriendRequest incomingFriendRequest)
     {

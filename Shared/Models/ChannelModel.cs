@@ -5,7 +5,7 @@ using Shared.Extensions;
 
 namespace Shared.Models;
 
-public abstract class ChannelModel(ChannelId id) : IStatus
+public abstract class ChannelModel : IStatus
 {
     public abstract string Name { get; }
 
@@ -17,17 +17,23 @@ public abstract class ChannelModel(ChannelId id) : IStatus
 
     public IChatMessage? LastMessage { get; set; }
 
-    public ChannelId Id { get; } = id;
+    public ChannelId Id { get; }
 
-    public ChannelState State { get; } = new();
+    public ChannelState State { get; }
 
     public int UnreadMessages => State.UnreadMessages;
 
     public bool HasUnreadMessages => State.UnreadMessages > 0;
 
-    public bool IsSomeoneTyping => TypingUsers.Count != 0;
+    public bool IsSomeoneTyping => State.TypingUsers.Count != 0;
 
-    public readonly HashSet<UserModel> TypingUsers = [];
+    public IReadOnlyCollection<TypingUser> TypingUsers => State.TypingUsers.Typing;
+
+    protected ChannelModel(ChannelId id)
+    {
+        Id = id;
+        State = new ChannelState(this);
+    }
 
     public static ChannelModel Create(IChatChannel channel, UserId currentUserId, Func<IChatUser, UserModel> userModelProvider)
     {

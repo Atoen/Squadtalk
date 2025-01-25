@@ -65,7 +65,7 @@ local function connection_ended(_, args)
 
     if remainingConnectionCount > 0 or currentStatus == OFFLINE then
         -- No visible change in status
-        return {FALSE, currentStatus}
+        return { FALSE, currentStatus }
     end
 
     -- Preserve manually set status that is not 'Online'
@@ -75,7 +75,7 @@ local function connection_ended(_, args)
 
     redis.call('HDEL', CURRENT_USER_STATUS_KEY, userId)
 
-    return {TRUE, OFFLINE}
+    return { TRUE, OFFLINE }
 end
 
 local function set_user_status(_, args)
@@ -94,7 +94,7 @@ local function set_user_status(_, args)
         redis.call('HSET', SELECTED_USER_STATUS_KEY, userId, newStatus)
     end
 
-    return {TRUE, newStatus}
+    return { TRUE, newStatus }
 end
 
 local function clear_connections(_, _)

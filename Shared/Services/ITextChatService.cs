@@ -11,7 +11,7 @@ public interface ITextChatService
 
     Task SendMessageAsync(string message, CancellationToken cancellationToken = default);
 
-    Task IsTypingAsync(ChannelId channelId);
+    void StartedTyping(ChannelId channelId);
 
-    Task StoppedTypingAsync(ChannelId channelId);
+    void StoppedTyping();
 }

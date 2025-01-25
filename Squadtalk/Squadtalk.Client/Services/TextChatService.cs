@@ -7,7 +7,7 @@ using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
 
-internal class TextChatService : ITextChatService, IDisposable
+internal class TextChatService : ITextChatService
 {
     private readonly ILogger<TextChatService> _logger;
     private readonly IMessageModelService _modelService;
@@ -15,8 +15,7 @@ internal class TextChatService : ITextChatService, IDisposable
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly IChannelManager _channelManager;
 
-    private readonly PeriodicTimer _isTypingTimer = new(TimeSpan.FromSeconds(8));
-    private readonly TimeSpan _typingTimeToNotify = TimeSpan.FromSeconds(1);
+    private CancellationTokenSource? _cancellationTokenSource;
     private ChannelId? _typingChannelId;
 
     public event Action<ChannelId, MessageModel>? MessageReceived;
@@ -44,27 +43,21 @@ internal class TextChatService : ITextChatService, IDisposable
         await _signalrTextService.SendMessageAsync(message, channelId, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task IsTypingAsync(ChannelId channelId)
+    public void StartedTyping(ChannelId channelId)
     {
-        if (channelId == _channelManager.GlobalChat.Id) return;
-        if (channelId == _typingChannelId) return;
-
-        if (_typingChannelId is not null)
+        if (_typingChannelId == channelId || _typingChannelId == _channelManager.GlobalChat.Id)
         {
-            await _signalrTextService.UserStoppedTypingAsync(_typingChannelId);
+            return;
         }
 
         _typingChannelId = channelId;
-        _ = NotifyTypingAsync();
+        _ = EnterLoop();
     }
 
-    public async Task StoppedTypingAsync(ChannelId channelId)
+    public void StoppedTyping()
     {
-        if (_typingChannelId == channelId)
-        {
-            _typingChannelId = null;
-            await _signalrTextService.UserStoppedTypingAsync(channelId);
-        }
+        _typingChannelId = null;
+        ClearTokenSource();
     }
 
     public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId channelId, CancellationToken cancellationToken)
@@ -99,20 +92,42 @@ internal class TextChatService : ITextChatService, IDisposable
         return result.Value;
     }
 
-    private async Task NotifyTypingAsync()
+    private async Task EnterLoop()
     {
-        if (_typingChannelId is null) return;
+        if (_typingChannelId is not { } channelId) return;
 
-        await Task.Delay(_typingTimeToNotify);
+        ClearTokenSource();
+        _cancellationTokenSource = new CancellationTokenSource();
 
-        if (_typingChannelId is null) return;
+        var sent = false;
 
-        await _signalrTextService.UserIsTypingAsync(_typingChannelId);
-
-        while (await _isTypingTimer.WaitForNextTickAsync())
+        try
         {
-            if (_typingChannelId is null) return;
-            await _signalrTextService.UserIsTypingAsync(_typingChannelId);
+            await Task.Delay(TypingTiming.StartDelayToNotify, _cancellationTokenSource.Token);
+
+            if (_typingChannelId != channelId) return;
+
+            // Setting 'sent' before the loop to avoid skipping the assignment
+            // in case an OperationCanceledException is thrown
+            sent = true;
+            await IsTypingNotificationLoop(channelId, _cancellationTokenSource.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        if (sent)
+        {
+            await _signalrTextService.UserStoppedTypingAsync(channelId);
+        }
+    }
+
+    private async Task IsTypingNotificationLoop(ChannelId channelId, CancellationToken cancellationToken)
+    {
+        while (_typingChannelId == channelId && !cancellationToken.IsCancellationRequested)
+        {
+            await _signalrTextService.UserIsTypingAsync(channelId, cancellationToken);
+            await Task.Delay(TypingTiming.InputBoxInterval, cancellationToken);
         }
     }
 
@@ -146,8 +161,13 @@ internal class TextChatService : ITextChatService, IDisposable
         channelModel.LastMessage = message;
     }
 
-    public void Dispose()
+    private void ClearTokenSource()
     {
-        _isTypingTimer.Dispose();
+        if (_cancellationTokenSource is { } cts)
+        {
+            cts.Cancel();
+            cts.Dispose();
+            _cancellationTokenSource = null;
+        }
     }
 }
