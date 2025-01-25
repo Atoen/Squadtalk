@@ -56,7 +56,7 @@
     </div>
 </MudPaper>
 
-@implements IAsyncDisposable
+@implements IDisposable
 
 @inject IConnectionService CommunicationService
 @inject ITextChatService TextChatService
@@ -74,6 +74,7 @@
     private IJSInProcessRuntime _runtime = default!;
     private MudTextField<string> _textField = default!;
     private bool _inputPreventDefault;
+    private bool _isTyping;
 
     private bool Disable => !CommunicationService.Connected;
     private string Placeholder { get; set; } = default!;
@@ -109,12 +110,24 @@
         }
     }
 
-    private Task TextFieldValueChanged()
+    private void TextFieldValueChanged()
     {
         var channelId = Channel.Id;
-        return _textField.Value is null or { Length: 0 }
-            ? TextChatService.StoppedTypingAsync(channelId)
-            : TextChatService.IsTypingAsync(channelId);
+
+        if (_textField.Value is null or { Length: 0 })
+        {
+            if (!_isTyping) return;
+            _isTyping = false;
+
+            TextChatService.StoppedTyping();
+        }
+        else
+        {
+            if (_isTyping) return;
+            _isTyping = true;
+
+            TextChatService.StartedTyping(channelId);
+        }
     }
 
     private void ConnectionStatusChanged(ConnectionStatus status)
@@ -138,14 +151,17 @@
         ChannelManager.TypingUsersChanged += TypingUsersChanged;
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         if (!RendererInfo.IsInteractive) return;
 
         CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
         ChannelManager.TypingUsersChanged -= TypingUsersChanged;
 
-        await TextChatService.StoppedTypingAsync(Channel.Id);
+        if (_isTyping)
+        {
+            TextChatService.StoppedTyping();
+        }
     }
 
     // private IJSObjectReference? _jsModule;

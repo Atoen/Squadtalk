@@ -29,7 +29,11 @@ partial class AppHub
         var addedMessage = await messageRepository.AddMessageAsync(
             participant, message, channelId, cancellationToken: Context.ConnectionAborted);
 
-        await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, participant.Id);
+        var shouldUpdate = await _connectionManager.SetUserStoppedTyping(channelId, participant.Id);
+        if (shouldUpdate)
+        {
+            await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, UserId);
+        }
 
         if (addedMessage is not null)
         {
@@ -42,8 +46,11 @@ partial class AppHub
     {
         var userId = UserId;
 
-        var shouldNotify = await _connectionManager.SetUserIsTypingAsync(channelId, userId);
-        if (shouldNotify)
+        var shouldUpdate = await _connectionManager.SetUserIsTypingAsync(channelId, userId);
+
+        _logger.LogInformation("User {Id} is typing on channel {ChannelId}. Should update: {State}", userId, channelId, shouldUpdate);
+
+        if (shouldUpdate)
         {
             await Clients.OthersInGroup(channelId).UserIsTyping(channelId, userId);
         }
@@ -52,7 +59,16 @@ partial class AppHub
     [HubMethodName(HubMethods.StoppedTyping)]
     public async Task StoppedTyping(ChannelId channelId)
     {
-        await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, UserId);
+        var userId = UserId;
+
+        var shouldUpdate = await _connectionManager.SetUserStoppedTyping(channelId, userId);
+
+        _logger.LogInformation("User {Id} stopped typing. Should update: {State}", userId, shouldUpdate);
+
+        if (shouldUpdate)
+        {
+            await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, UserId);
+        }
     }
 
     private static readonly List<MessageDto> Empty = [];

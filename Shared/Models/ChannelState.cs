@@ -1,18 +1,20 @@
 using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Enums;
 
 namespace Shared.Models;
 
-public class ChannelState
+public class ChannelState(ChannelModel channel)
 {
     public TextChannelCursor Cursor { get; set; }
     public bool ScrolledToBeginning { get; set; }
 
     public List<MessageModel> Messages { get; } = [];
-    
+    public TypingUsers TypingUsers { get; } = new();
+
     public MessageModel? LastMessageReceived { get; set; }
     public MessageModel? LastPageMessageReceived { get; set; }
-    
+
     public int UnreadMessages { get; set; }
 
     public bool HasActiveCall { get; set; }
@@ -33,6 +35,21 @@ public class ChannelState
             Cursor = TextChannelCursor.New;
         }
     }
+
+    public bool UserIsTyping(UserId userId)
+    {
+        var typingUser = channel.Others.FirstOrDefault(x => x.Id == userId);
+        if (typingUser is null)
+        {
+            return false;
+        }
+
+        return TypingUsers.InsertOrUpdate(typingUser);
+    }
+
+    public bool UserStoppedTyping(UserId userId) => TypingUsers.Remove(userId);
+
+    public bool RemoveStaleTyping(DateTime now) => TypingUsers.RemoveStale(now);
 
     private bool UpdateCallSystemMessage(MessageModel message)
     {

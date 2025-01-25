@@ -35,6 +35,8 @@ internal class ChannelManager : IChannelManager
     public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
     public ChannelModel? CurrentChannel { get; private set; }
 
+    private bool _startedScanningStaleTypingState;
+
     public ChannelManager(
         IUserAuthenticationService userAuthenticationService,
         SignalrService signalrService,
@@ -54,6 +56,8 @@ internal class ChannelManager : IChannelManager
         _signalrService.UserIsTyping += UserIsTyping;
         _signalrService.UserStoppedTyping += UserStoppedTyping;
     }
+
+    #region Public Methods
 
     public ChannelModel? GetChannel(ChannelId channelId)
     {
@@ -130,22 +134,9 @@ internal class ChannelManager : IChannelManager
         return result.Value;
     }
 
-    private Task ChangeChannelAsync(ChannelModel? channel)
-    {
-        if (CurrentChannel == channel)
-        {
-            return Task.CompletedTask;
-        }
+    #endregion
 
-        CurrentChannel = channel;
-        if (CurrentChannel is not null)
-        {
-            CurrentChannel.State.UnreadMessages = 0;
-        }
-
-        ChannelChanged?.Invoke();
-        return ChannelChangedAsync.TryInvoke();
-    }
+    #region Event Handlers
 
     private async Task AddedToChannel(IChatChannel channel)
     {
@@ -162,6 +153,54 @@ internal class ChannelManager : IChannelManager
         }
 
         ChannelsListChanged?.Invoke();
+    }
+
+    private void OnChannelNameChanged(ChannelId channelId, string? channelName)
+    {
+        if (!_allChannels.TryGetValue(channelId, out var channel))
+        {
+            _logger.LogInformation("Non-existent channel name changed");
+            return;
+        }
+
+        if (channel is not GroupChatModel groupChat)
+        {
+            return;
+        }
+
+        groupChat.CustomName = channelName;
+
+        ChannelNameChanged?.Invoke(groupChat);
+        ChannelsListChanged?.Invoke();
+    }
+
+    private void UserIsTyping(ChannelId channelId, UserId userId)
+    {
+        UpdateTypingState(channelId, userId, isTyping: true);
+    }
+
+    private void UserStoppedTyping(ChannelId channelId, UserId userId)
+    {
+        UpdateTypingState(channelId, userId, isTyping: false);
+    }
+
+    #endregion
+
+    private Task ChangeChannelAsync(ChannelModel? channel)
+    {
+        if (CurrentChannel == channel)
+        {
+            return Task.CompletedTask;
+        }
+
+        CurrentChannel = channel;
+        if (CurrentChannel is not null)
+        {
+            CurrentChannel.State.UnreadMessages = 0;
+        }
+
+        ChannelChanged?.Invoke();
+        return ChannelChangedAsync.TryInvoke();
     }
 
     private Task AddChannel(IChatChannel channel, bool bulk)
@@ -202,35 +241,6 @@ internal class ChannelManager : IChannelManager
         return Task.CompletedTask;
     }
 
-    private void OnChannelNameChanged(ChannelId channelId, string? channelName)
-    {
-        if (!_allChannels.TryGetValue(channelId, out var channel))
-        {
-            _logger.LogInformation("Non-existent channel name changed");
-            return;
-        }
-
-        if (channel is not GroupChatModel groupChat)
-        {
-            return;
-        }
-
-        groupChat.CustomName = channelName;
-
-        ChannelNameChanged?.Invoke(groupChat);
-        ChannelsListChanged?.Invoke();
-    }
-
-    private void UserIsTyping(ChannelId channelId, UserId userId)
-    {
-        UpdateTypingState(channelId, userId, isTyping: true);
-    }
-
-    private void UserStoppedTyping(ChannelId channelId, UserId userId)
-    {
-        UpdateTypingState(channelId, userId, isTyping: false);
-    }
-
     private void UpdateTypingState(ChannelId channelId, UserId userId, bool isTyping)
     {
         _logger.LogInformation("User {UserId} {Action} typing on channel: {ChannelId}",
@@ -241,16 +251,46 @@ internal class ChannelManager : IChannelManager
             return;
         }
 
-        var user = _contactManager.FindUserById(userId);
-        if (user is null)
+        if (isTyping)
+        {
+            StartScanning();
+        }
+
+        var stateChanged = isTyping
+            ? channel.State.UserIsTyping(userId)
+            : channel.State.UserStoppedTyping(userId);
+
+        if (stateChanged)
+        {
+            TypingUsersChanged?.Invoke(channelId);
+        }
+    }
+
+    private void StartScanning()
+    {
+        if (Interlocked.Exchange(ref _startedScanningStaleTypingState, true))
         {
             return;
         }
 
-        var stateChanged = isTyping ? channel.TypingUsers.Add(user) : channel.TypingUsers.Remove(user);
-        if (stateChanged)
+        _logger.LogInformation("Started scanning typing state");
+
+        _ = RemoveStaleTypingStates();
+    }
+
+    private async Task RemoveStaleTypingStates()
+    {
+        using var timer = new PeriodicTimer(TypingTiming.StaleScanInterval);
+        while (await timer.WaitForNextTickAsync())
         {
-            TypingUsersChanged?.Invoke(channelId);
+            var now = DateTime.Now;
+            foreach (var channel in Channels)
+            {
+                if (channel.State.RemoveStaleTyping(now))
+                {
+                    TypingUsersChanged?.Invoke(channel.Id);
+                }
+            }
         }
     }
 }

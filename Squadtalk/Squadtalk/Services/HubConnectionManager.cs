@@ -1,60 +1,51 @@
-using Microsoft.AspNetCore.SignalR;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using Squadtalk.Data.Entities;
-using Squadtalk.Signalr;
 using StackExchange.Redis;
 
 namespace Squadtalk.Services;
 
 public class HubConnectionManager
 {
-    private readonly IHubContext<AppHub, IChatClient> _hubContext;
     private readonly ILogger<HubConnectionManager> _logger;
-    private const string FCALL = "FCALL";
+    private readonly IDatabase _redisDb;
+
+    private const string FCALL = nameof(FCALL);
+
     private static readonly object ZeroKeys = 0;
 
-    private readonly IDatabase _redisDb;
-    private readonly Task _subscriberTask;
+    private static readonly byte[] TypingUserChannelsPrefix = "user:typing:channels:"u8.ToArray();
+    private static readonly byte[] UserConnectionsPrefix = "user:connections:"u8.ToArray();
 
     public HubConnectionManager(
         IConnectionMultiplexer connectionMultiplexer,
-        IHubContext<AppHub, IChatClient> hubContext,
         ILogger<HubConnectionManager> logger)
     {
-        _hubContext = hubContext;
         _logger = logger;
         _redisDb = connectionMultiplexer.GetDatabase(2);
-
-        var subscriber = connectionMultiplexer.GetSubscriber();
-        var eventChannel = RedisChannel.Literal("__keyevent@2__:expired");
-
-        _subscriberTask = subscriber.SubscribeAsync(eventChannel, EventHandler);
     }
 
     public async Task<bool> SetUserIsTypingAsync(ChannelId channelId, UserId userId)
     {
-        await _subscriberTask;
+        var result = (int) await _redisDb.ExecuteAsync(
+            FCALL, "user_is_typing", ZeroKeys, channelId.Value, userId.ToString());
 
-        var redisKey = $"user:typing:{userId}";
-        var shadowKey = $"shadow:user:typing:{userId}";
+        const int shouldNotify = 1;
+        return result == shouldNotify;
+    }
 
-        var keySet = await _redisDb.StringSetAsync(shadowKey, string.Empty, TimeSpan.FromSeconds(10));
-        // No change in state
-        if (!keySet)
-        {
-            return false;
-        }
+    public async Task<bool> SetUserStoppedTyping(ChannelId channelId, UserId userId)
+    {
+        var key = new RedisKey(userId.ToString()).Prepend(TypingUserChannelsPrefix);
 
-        // Allow the event handler to run for up to 5 sec and expire it automatically if it fails
-        await _redisDb.StringSetAsync(redisKey, channelId.Value, TimeSpan.FromSeconds(15));
+        var userWasTypingOnChannel = await _redisDb.SetRemoveAsync(key, channelId.Value);
 
-        return true;
+        return userWasTypingOnChannel;
     }
 
     public async Task<IEnumerable<string>> GetUserConnectionsAsync(ApplicationUser user)
     {
-        var key = $"user:connections:{user.Id}";
+        var key = new RedisKey(user.Id.ToString()).Prepend(UserConnectionsPrefix);
         var connections = await _redisDb.SetMembersAsync(key);
 
         return connections.Length != 0
@@ -107,34 +98,6 @@ public class HubConnectionManager
             FCALL, "set_user_status", ZeroKeys, userId.ToString(), (int) userStatus);
 
         return ReadRedisResult(result);
-    }
-
-    // Subscribe async doesn't accept delegates returning Task
-    private async void EventHandler(RedisChannel channel, RedisValue value)
-    {
-        try
-        {
-            var expiredKey = (string?) value;
-            // The even could be raised for expiring the non-shadow key if the handler failed to remove it
-            if (expiredKey is null || !expiredKey.StartsWith("shadow:user:typing"))
-            {
-                return;
-            }
-
-            var userId = expiredKey.Split(':').Last();
-            var channelId = (string?) await _redisDb.StringGetDeleteAsync($"user:typing:{userId}");
-            if (channelId is null)
-            {
-                return;
-            }
-
-            await _hubContext.Clients.Group(channelId)
-                .UserStoppedTyping(ChannelId.From(channelId), UserId.Parse(userId));
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error when handling redis event");
-        }
     }
 
     private static (bool, UserStatus) ReadRedisResult(RedisResult redisResult)

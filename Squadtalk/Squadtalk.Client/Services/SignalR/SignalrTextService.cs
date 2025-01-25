@@ -41,14 +41,14 @@ internal sealed partial class SignalrService : ISignalrTextService
         return InvokeAsync<bool>(HubMethods.ChangeChannelName, newName, cancellationToken);
     }
 
-    public Task<SignalrResult> UserIsTypingAsync(ChannelId channelId)
+    public Task<SignalrResult> UserIsTypingAsync(ChannelId channelId, CancellationToken cancellationToken = default)
     {
-        return SendAsync(HubMethods.IsTyping, channelId);
+        return SendAsync(HubMethods.IsTyping, channelId, cancellationToken);
     }
 
-    public Task<SignalrResult> UserStoppedTypingAsync(ChannelId channelId)
+    public Task<SignalrResult> UserStoppedTypingAsync(ChannelId channelId, CancellationToken cancellationToken = default)
     {
-        return SendAsync(HubMethods.StoppedTyping, channelId);
+        return SendAsync(HubMethods.StoppedTyping, channelId, cancellationToken);
     }
 
     private void RegisterTextHandlers()

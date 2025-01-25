@@ -22,9 +22,9 @@ public interface ISignalrTextService
 
     Task<SignalrResult<ChannelId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<bool>> ChangeChannelNameAsync(ChannelId channelId, string? newName, CancellationToken cancellationToken);
+    Task<SignalrResult<bool>> ChangeChannelNameAsync(ChannelId channelId, string? newName, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult> UserIsTypingAsync(ChannelId channelId);
+    Task<SignalrResult> UserIsTypingAsync(ChannelId channelId, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult> UserStoppedTypingAsync(ChannelId channelId);
+    Task<SignalrResult> UserStoppedTypingAsync(ChannelId channelId, CancellationToken cancellationToken = default);
 }
