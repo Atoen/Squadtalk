@@ -5,7 +5,6 @@ using Shared.DTOs.Chat;
 using Shared.Signalr;
 using Shared.Signalr.Clients;
 using Squadtalk.Data;
-using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 
@@ -71,6 +70,43 @@ partial class AppHub
         }
     }
 
+    [HubMethodName(HubMethods.AddFriendsToChannel)]
+    public async Task<bool> AddFriendsToGroup(
+        ChannelId channelId, List<UserId> friendIds, ChannelRepository channelRepository, UserRepository userRepository)
+    {
+        if (friendIds.Count == 0)
+        {
+            return false;
+        }
+
+        var participant = await GetChannelParticipantAsync(channelId);
+        if (participant is null)
+        {
+            return false;
+        }
+
+        var users = await userRepository.GetUserListAsync(friendIds);
+
+        var added = await channelRepository.AddUsersToGroupAsync(channelId, users);
+        if (!added)
+        {
+            return false;
+        }
+
+        var channel = await channelRepository.GetChannelAsync(channelId);
+        if (channel is null)
+        {
+            return false;
+        }
+
+        var dto = channel.ToDto();
+
+        await NotifyNewChannelParticipantsAsync(dto, friendIds);
+        await Clients.User(participant.Id.ToString()).ChannelParticipantsChanged(dto);
+
+        return true;
+    }
+
     private static readonly List<MessageDto> Empty = [];
 
     [HubMethodName(HubMethods.GetMessagePage)]
@@ -110,7 +146,7 @@ partial class AppHub
             return null;
         }
 
-        await NotifyNewChannelParticipantsAsync(channel);
+        await NotifyNewChannelParticipantsAsync(channel.ToDto(), channel.Participants.Select(x => x.Id));
 
         // Don't send the system message for dms
         // But send for solo and more groups
@@ -122,17 +158,17 @@ partial class AppHub
         return channel.Id;
     }
 
-    private async Task NotifyNewChannelParticipantsAsync(Channel channel)
+    private async Task NotifyNewChannelParticipantsAsync(ChannelDto channelDto, IEnumerable<UserId> participantsToNotify)
     {
-        foreach (var user in channel.Participants)
+        foreach (var participantId in participantsToNotify)
         {
-            var userConnections = await _connectionManager.GetUserConnectionsAsync(user);
+            var userConnections = await _connectionManager.GetUserConnectionsAsync(participantId);
             foreach (var connection in userConnections)
             {
-                await Groups.AddToGroupAsync(connection, channel.Id);
+                await Groups.AddToGroupAsync(connection, channelDto.Id);
             }
         }
 
-        await Clients.Groups(channel.Id).AddedToChannel(channel.ToDto());
+        await Clients.Groups(channelDto.Id).AddedToChannel(channelDto);
     }
 }

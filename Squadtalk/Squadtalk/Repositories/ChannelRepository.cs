@@ -47,6 +47,33 @@ public class ChannelRepository(
         return added ? channel : null;
     }
 
+    public async Task<bool> AddUsersToGroupAsync(ChannelId channelId, List<ApplicationUser> users)
+    {
+        if (users.Count == 0)
+        {
+            return false;
+        }
+
+        var channel = await ChannelByIdAsync(DbContext, channelId);
+        if (channel is null)
+        {
+            return false;
+        }
+
+        var existingUserIds = channel.Participants.Select(p => p.Id).ToHashSet();
+        var newUsers = users
+            .Where(user => !existingUserIds.Contains(user.Id))
+            .ToList();
+
+        if (newUsers.Count == 0)
+        {
+            return false;
+        }
+
+        channel.Participants.AddRange(newUsers);
+        return await UpdateChannelAsync(channel);
+    }
+
     public async Task<bool> AddChannelAsync(Channel channel, CancellationToken cancellationToken = default)
     {
         DbContext.Channels.Add(channel);

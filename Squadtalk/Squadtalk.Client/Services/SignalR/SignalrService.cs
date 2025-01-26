@@ -178,8 +178,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         {
             return await _connection.InvokeAsync<T>(methodName, cancellationToken);
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
             return SignalrResult<T>.Error;
         }
     }
@@ -190,8 +191,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         {
             return await _connection.InvokeAsync<T>(methodName, arg, cancellationToken);
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
             return SignalrResult<T>.Error;
         }
     }
@@ -202,8 +204,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         {
             return await _connection.InvokeAsync<T>(methodName, arg1, arg2, cancellationToken);
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
             return SignalrResult<T>.Error;
         }
     }
@@ -215,8 +218,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             await _connection.SendAsync(methodName, cancellationToken);
             return SignalrResult.Ok;
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
             return SignalrResult.Error;
         }
     }
@@ -228,8 +232,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             await _connection.SendAsync(methodName, arg, cancellationToken);
             return SignalrResult.Ok;
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
             return SignalrResult.Error;
         }
     }
@@ -241,8 +246,9 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
             await _connection.SendAsync(methodName, arg1, arg2, cancellationToken);
             return SignalrResult.Ok;
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
             return SignalrResult.Error;
         }
     }

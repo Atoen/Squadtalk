@@ -15,6 +15,7 @@ internal sealed partial class SignalrService : ISignalrTextService
     public event Action<MessageDto>? MessageReceived;
     public event Action<ChannelId, string?>? ChannelNameChanged;
 
+    public event Action<ChannelDto>? ChannelParticipantsChanged;
     public event Func<ChannelDto, Task>? AddedToChannel;
     public event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
 
@@ -34,6 +35,11 @@ internal sealed partial class SignalrService : ISignalrTextService
     public Task<SignalrResult<ChannelId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default)
     {
         return InvokeAsync<ChannelId?>(HubMethods.CreateChannel, participants.ToList(), cancellationToken);
+    }
+
+    public Task<SignalrResult<bool>> AddFriendsToGroupAsync(ChannelId channelId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default)
+    {
+        return InvokeAsync<bool>(HubMethods.AddFriendsToChannel, channelId, friends.ToList(), cancellationToken);
     }
 
     public Task<SignalrResult<bool>> ChangeChannelNameAsync(ChannelId channelId, string? newName, CancellationToken cancellationToken = default)
@@ -61,6 +67,9 @@ internal sealed partial class SignalrService : ISignalrTextService
 
         _connection.On<ChannelDto>(nameof(ITextChatClient.AddedToChannel), channel =>
             AddedToChannel.TryInvoke(channel));
+
+        _connection.On<ChannelDto>(nameof(ITextChatClient.ChannelParticipantsChanged), channel =>
+            ChannelParticipantsChanged?.Invoke(channel));
 
         _connection.On<ChannelId, string?>(nameof(ITextChatClient.ChannelNameChanged), (channelId, newName) =>
             ChannelNameChanged?.Invoke(channelId, newName));

@@ -27,7 +27,7 @@
         return
             @<MudBadge Overlap="true" Icon="@user.Status.BadgeIcon()"
                        Color="user.Status.PaletteColor()" Bordered="true"
-                       Visible="@(user.Status.IsOfflineOrUnknown())" Dot="dotBadge">
+                       Visible="@(!user.Status.IsOfflineOrUnknown())" Dot="dotBadge">
                 <MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
                     @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
                     {

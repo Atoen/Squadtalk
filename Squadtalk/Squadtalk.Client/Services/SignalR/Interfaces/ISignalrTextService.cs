@@ -10,6 +10,7 @@ public interface ISignalrTextService
     event Action<MessageDto>? MessageReceived;
     event Action<ChannelId, string?>? ChannelNameChanged;
 
+    event Action<ChannelDto>? ChannelParticipantsChanged;
     event Func<ChannelDto, Task>? AddedToChannel;
     event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
 
@@ -21,6 +22,8 @@ public interface ISignalrTextService
     Task<SignalrResult<List<MessageDto>>> GetMessagePageAsync(ChannelId channelId, TextChannelCursor cursor = default, CancellationToken cancellationToken = default);
 
     Task<SignalrResult<ChannelId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
+
+    Task<SignalrResult<bool>> AddFriendsToGroupAsync(ChannelId channelId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default);
 
     Task<SignalrResult<bool>> ChangeChannelNameAsync(ChannelId channelId, string? newName, CancellationToken cancellationToken = default);
 

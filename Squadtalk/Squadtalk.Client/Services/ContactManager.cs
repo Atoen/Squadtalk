@@ -63,19 +63,6 @@ internal class ContactManager : IContactManager
         signalrService.FriendListReceived += FriendListReceived;
         signalrService.FriendRequestsReceived += FriendRequestsReceived;
         signalrService.FriendStatusChanged += FriendStatusChanged;
-
-        var models = Enumerable.Range(0, 20)
-            .Select(x => new UserModel
-            {
-                Id = UserId.New,
-                Status = UserStatus.Online,
-                Username = $"Agent #{x}"
-            });
-
-        foreach (var model in models)
-        {
-            _friends.Add(model.Id, model);
-        }
     }
 
     #region Public Methods
@@ -90,7 +77,10 @@ internal class ContactManager : IContactManager
             _userModels[chatUser.Id] = model;
         }
 
-        model.Status = chatUser.Status;
+        if (chatUser.Status != UserStatus.Unknown)
+        {
+            model.Status = chatUser.Status;
+        }
 
         return model;
     }

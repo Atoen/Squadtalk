@@ -11,7 +11,7 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string?
     public static GroupChatModel CreateGlobalChat() => new([], GlobalChatId) { _name = "Global" };
     
     public override List<UserModel> Others { get; } = others.ToList();
-    
+
     private string? _name;
     public override string Name => CustomName ?? GetOrPrepareName();
 
@@ -20,6 +20,41 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string?
     public override UserStatus Status => GetStatus();
 
     public bool HasOnlineStatus => Status == UserStatus.Online;
+
+    public override bool UpdateParticipants(IEnumerable<UserModel> updatedParticipants)
+    {
+        Others.Clear();
+        Others.AddRange(updatedParticipants);
+
+        _name = null;
+
+        return true;
+
+        // var updated = updatedParticipants.ToArray();
+        // var newParticipants = updated.Where(x => !Others.Contains(x)).ToArray();
+        // var removedParticipants = Others.Where(x => !updated.Contains(x)).ToArray();
+        //
+        // var changed = false;
+        //
+        // if (newParticipants.Length != 0)
+        // {
+        //     Others.AddRange(newParticipants);
+        //     changed = true;
+        // }
+        //
+        // if (removedParticipants.Length != 0)
+        // {
+        //     Others.RemoveAll(x => removedParticipants.Contains(x));
+        //     changed = true;
+        // }
+        //
+        // if (changed)
+        // {
+        //     _name = null;
+        // }
+        //
+        // return changed;
+    }
 
     private string GetOrPrepareName()
     {
@@ -30,7 +65,7 @@ public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string?
 
         _name = Others.Count == 0
             ? string.Empty // Group with only 1 user has localized default name
-            : string.Join(", ", Others.Select(x => x.Username));
+            : string.Join(", ", Others.Take(3).Select(x => x.Username));
 
         return _name;
     }
