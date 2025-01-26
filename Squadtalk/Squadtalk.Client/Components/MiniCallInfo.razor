@@ -126,7 +126,6 @@
         NavigationManager.LocationChanged += NavigationChanged;
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
-        ChannelManager.ChannelNameChanged += ChannelNameChanged;
         MediaQueryService.MediaMatchesChanged += StateHasChanged;
     }
 
@@ -183,7 +182,6 @@
         NavigationManager.LocationChanged -= NavigationChanged;
         VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
         VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
-        ChannelManager.ChannelNameChanged -= ChannelNameChanged;
         MediaQueryService.MediaMatchesChanged -= StateHasChanged;
     }
 }

@@ -1,59 +1,90 @@
 using Shared.Data.TypedIds;
 using Shared.Enums;
+using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? customName = null) : ChannelModel(id)
+public class GroupChatModel : ChannelModel, ISubscriber<UserModel>, IDisposable
 {
     public const string GlobalChanelIdValue = "global";
 
     public static readonly ChannelId GlobalChatId = new(GlobalChanelIdValue);
     public static GroupChatModel CreateGlobalChat() => new([], GlobalChatId) { _name = "Global" };
     
-    public override List<UserModel> Others { get; } = others.ToList();
+    public override List<UserModel> Others { get; }
 
     private string? _name;
     public override string Name => CustomName ?? GetOrPrepareName();
 
-    public string? CustomName { get; set; } = customName;
+    private string? _customName;
 
+    public string? CustomName
+    {
+        get => _customName;
+        set => SetField(ref _customName, value);
+    }
+
+    private UserStatus _previousStatus;
     public override UserStatus Status => GetStatus();
 
     public bool HasOnlineStatus => Status == UserStatus.Online;
 
-    public override bool UpdateParticipants(IEnumerable<UserModel> updatedParticipants)
+    public GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? customName = null) : base(id)
+    {
+        _customName = customName;
+
+        var otherUsers = others.ToList();
+        Subscribe(otherUsers);
+        Others = otherUsers;
+    }
+
+    private List<IDisposable?>? _subscriptions;
+
+    private void Subscribe(List<UserModel> users)
+    {
+        foreach (var user in users)
+        {
+            var subscription = user.Subscribe(this);
+            if (subscription is not null)
+            {
+                _subscriptions ??= [];
+                _subscriptions.Add(subscription);
+            }
+        }
+    }
+
+    // Propagating notification about status change
+    public void OnNext(UserModel value)
+    {
+        var status = GetStatus();
+        if (status != _previousStatus)
+        {
+            _previousStatus = status;
+            Notify(this);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_subscriptions is not { Count: > 0 } subscriptions)
+        {
+            return;
+        }
+
+        foreach (var subscription in subscriptions)
+        {
+            subscription?.Dispose();
+        }
+    }
+
+    public override void UpdateParticipants(IEnumerable<UserModel> updatedParticipants)
     {
         Others.Clear();
         Others.AddRange(updatedParticipants);
 
         _name = null;
 
-        return true;
-
-        // var updated = updatedParticipants.ToArray();
-        // var newParticipants = updated.Where(x => !Others.Contains(x)).ToArray();
-        // var removedParticipants = Others.Where(x => !updated.Contains(x)).ToArray();
-        //
-        // var changed = false;
-        //
-        // if (newParticipants.Length != 0)
-        // {
-        //     Others.AddRange(newParticipants);
-        //     changed = true;
-        // }
-        //
-        // if (removedParticipants.Length != 0)
-        // {
-        //     Others.RemoveAll(x => removedParticipants.Contains(x));
-        //     changed = true;
-        // }
-        //
-        // if (changed)
-        // {
-        //     _name = null;
-        // }
-        //
-        // return changed;
+        Notify(this);
     }
 
     private string GetOrPrepareName()

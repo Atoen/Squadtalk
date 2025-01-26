@@ -45,7 +45,6 @@
 
         ContactManager.FriendRequestsChanged += StateHasChanged;
 
-        await ContactManager.RefreshFriendListAsync();
         await ContactManager.RefreshFriendRequestsAsync();
     }
 

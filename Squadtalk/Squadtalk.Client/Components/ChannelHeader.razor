@@ -36,6 +36,7 @@
     }
 </MudPaper>
 
+@implements ISubscriber<ChannelModel>
 @implements IDisposable
 
 @inject IContactManager ContactManager
@@ -51,9 +52,8 @@
     [Parameter, EditorRequired]
     public ChannelModel Channel { get; set; } = default!;
 
-    private UserStatus _lastStatus;
-
     private string? _formattedName;
+
     private string ChatName => Channel.Name == string.Empty
         ? _formattedName ??= LocalizedText.R.users_group.Format(UserAuthenticationService.Username)
         : Channel.Name;
@@ -63,31 +63,13 @@
         return VoiceChatService.StartCallAsync(Channel.Id);
     }
 
-    private async Task<bool> GroupNameChanged(GroupChatModel groupChat, string? newName)
+    private async Task<bool> ChangeGroupName(GroupChatModel groupChat, string? newName)
     {
         Logger.LogInformation("New name {NewName}", newName);
 
         var changedName = await ChannelManager.ChangeGroupChatNameAsync(groupChat, newName);
 
         return changedName;
-    }
-
-    private void ConnectedUsersChanged()
-    {
-        var status = Channel.Status;
-        if (status != _lastStatus)
-        {
-            _lastStatus = status;
-            StateHasChanged();
-        }
-    }
-
-    private void ChannelNameChanged(GroupChatModel groupChat)
-    {
-        if (groupChat.Id == Channel.Id)
-        {
-            StateHasChanged();
-        }
     }
 
     private async Task AddFriendsToGroupAsync(List<UserModel> friends)
@@ -119,19 +101,11 @@
         return DialogService.ShowAsync<ManageGroupDialog>(LocalizedText.R.manage_group);
     }
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender) return;
+    public void OnNext(ChannelModel value) => StateHasChanged();
 
-        ChannelManager.ChannelNameChanged += ChannelNameChanged;
-        ContactManager.FriendListChanged += ConnectedUsersChanged;
-    }
+    private IDisposable? _subscription;
 
-    public void Dispose()
-    {
-        if (!RendererInfo.IsInteractive) return;
+    protected override void OnInitialized() => _subscription = Channel.Subscribe(this);
 
-        ChannelManager.ChannelNameChanged -= ChannelNameChanged;
-        ContactManager.FriendListChanged -= ConnectedUsersChanged;
-    }
+    public void Dispose() => _subscription?.Dispose();
 }

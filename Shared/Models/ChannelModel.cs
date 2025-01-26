@@ -2,17 +2,24 @@ using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Extensions;
+using Shared.Reactive;
 
 namespace Shared.Models;
 
-public abstract class ChannelModel : IStatus
+public abstract class ChannelModel : Observable<ChannelModel>
 {
+    private string? _imageUrl;
+
     public abstract string Name { get; }
 
     public abstract UserStatus Status { get; }
 
-    public string? ImageUrl { get; }
-    
+    public string? ImageUrl
+    {
+        get => _imageUrl;
+        set => SetField(ref _imageUrl, value);
+    }
+
     public abstract IEnumerable<UserModel> Others { get; }
 
     public IChatMessage? LastMessage { get; set; }
@@ -35,7 +42,7 @@ public abstract class ChannelModel : IStatus
         State = new ChannelState(this);
     }
 
-    public abstract bool UpdateParticipants(IEnumerable<UserModel> updatedParticipants);
+    public virtual void UpdateParticipants(IEnumerable<UserModel> updatedParticipants) { }
 
     public static ChannelModel Create(IChatChannel channel, UserId currentUserId, Func<IChatUser, UserModel> userModelProvider)
     {
@@ -51,9 +58,4 @@ public abstract class ChannelModel : IStatus
             .WithLastMessage(channel.LastMessage)
             .WithUnreadMessageCount(channel.MessagesSince);
     }
-}
-
-public interface IStatus
-{
-    UserStatus Status { get; }
 }
