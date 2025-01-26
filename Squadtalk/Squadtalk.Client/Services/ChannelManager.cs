@@ -27,6 +27,7 @@ internal class ChannelManager : IChannelManager
 
     public event Action? ChannelsListChanged;
     public event Action<GroupChatModel>? ChannelNameChanged;
+    public event Action<GroupChatModel>? ChannelParticipantsChanged;
 
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
@@ -55,6 +56,7 @@ internal class ChannelManager : IChannelManager
         _signalrService.ChannelNameChanged += OnChannelNameChanged;
         _signalrService.UserIsTyping += UserIsTyping;
         _signalrService.UserStoppedTyping += UserStoppedTyping;
+        _signalrService.ChannelParticipantsChanged += ParticipantsChanged;
     }
 
     #region Public Methods
@@ -89,7 +91,7 @@ internal class ChannelManager : IChannelManager
 
     public Task ClearChannelSelectionAsync() => ChangeChannelAsync(null);
 
-    public async Task OpenOrCreateTemporaryDirectMessageChannel(UserModel model)
+    public async Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel model)
     {
         if (model.Id == _userAuthenticationService.UserId) return;
 
@@ -111,7 +113,7 @@ internal class ChannelManager : IChannelManager
             return;
         }
 
-        var channelId = await CreateNewChannel(dm.Other);
+        var channelId = await CreateNewChannelAsync(dm.Other);
         if (channelId is not null && GetChannel(channelId) is { } openedChannel)
         {
             await ChangeChannelAsync(openedChannel);
@@ -124,7 +126,7 @@ internal class ChannelManager : IChannelManager
         return result.ValueOr(false);
     }
 
-    public async Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others)
+    public async Task<ChannelId?> CreateNewChannelAsync(params IEnumerable<UserModel> others)
     {
         var participantsId = others
             .Select(x => x.Id)
@@ -132,6 +134,17 @@ internal class ChannelManager : IChannelManager
 
         var result = await _signalrService.CreateChannelAsync(participantsId);
         return result.Value;
+    }
+
+    public async Task AddFriendsToGroupAsync(ChannelId channelId, params IEnumerable<UserModel> friends)
+    {
+        var friendsId = friends.Select(x => x.Id);
+        var result = await _signalrService.AddFriendsToGroupAsync(channelId, friendsId);
+
+        if (result.ErrorOrValueIs(false))
+        {
+
+        }
     }
 
     #endregion
@@ -153,6 +166,33 @@ internal class ChannelManager : IChannelManager
         }
 
         ChannelsListChanged?.Invoke();
+    }
+
+    private void ParticipantsChanged(IChatChannel updatedChannel)
+    {
+        _logger.LogInformation("Channel {Id} state changed", updatedChannel.Id);
+        if (!_allChannels.TryGetValue(updatedChannel.Id, out var channel))
+        {
+            AddChannel(updatedChannel, false);
+            ChannelsListChanged?.Invoke();
+
+            return;
+        }
+
+        var others = updatedChannel.Participants
+            .Where(x => x.Id != _userAuthenticationService.UserId)
+            .Select(_contactManager.UserModelProvider);
+
+        var updated = channel.UpdateParticipants(others);
+        if (updated)
+        {
+            if (channel is GroupChatModel groupChat)
+            {
+                ChannelNameChanged?.Invoke(groupChat);
+            }
+
+            ChannelsListChanged?.Invoke();
+        }
     }
 
     private void OnChannelNameChanged(ChannelId channelId, string? channelName)

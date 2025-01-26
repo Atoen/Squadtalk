@@ -16,5 +16,6 @@ public static class HubMethods
     public const string StoppedTyping = nameof(StoppedTyping);
     public const string GetMessagePage = nameof(GetMessagePage);
     public const string CreateChannel = nameof(CreateChannel);
+    public const string AddFriendsToChannel = nameof(AddFriendsToChannel);
     public const string ChangeChannelName = nameof(ChangeChannelName);
 }

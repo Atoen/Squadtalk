@@ -151,8 +151,9 @@ add_new_chat: Add new chat
 select_friends: Select friends
 enter_friend_username: Enter friend username
 create_new_group_chat: Create new group
-crate_or_find_chat: Create or find chat
+create_or_find_chat: Create or find chat
 no_friends_found: No friends found
+no_friends_found_not_present: No friends found that are not in this group
 users_group: "{0}'s group"
 is_typing: is typing...
 are_typing: are typing...
@@ -199,8 +200,10 @@ dialog_confirm: Confirm
 
 # Chat page
 start_call: Start call
-manage_channel: Manage group
+manage_group: Manage group
 channel_beginning: This is the beginning of chat with
+add_friends_to_group: Add friends to the group
+add: Add
 
 # Chat message
 today_time_template: Today {0}

@@ -25,7 +25,7 @@
                     @LocalizedText.R.email
                 </MudText>
                 <MudStack Row="true">
-                    <MudText Typo="Typo.body1">@_maskedEmail</MudText>
+                    <MudText Typo="Typo.body1">@DisplayedEmail</MudText>
                     <MudLink OnClick="ToggleEmailMasking" Style="user-select: none" Color="Color.Primary">
                         @ToggleButtonText
                     </MudLink>
@@ -58,7 +58,9 @@
 @code
 {
     private string _email = default!;
-    private string? _maskedEmail;
+    private string _maskedEmail = default!;
+    private string DisplayedEmail => _emailMasked ? _maskedEmail : _email;
+
     private bool _emailMasked = true;
 
     private bool DisableMenu => !RendererInfo.IsInteractive;
@@ -72,11 +74,7 @@
         _maskedEmail = MaskEmail(_email);
     }
 
-    private void ToggleEmailMasking()
-    {
-        _emailMasked = !_emailMasked;
-        _maskedEmail = _emailMasked ? MaskEmail(_email) : _email;
-    }
+    private void ToggleEmailMasking() => _emailMasked = !_emailMasked;
 
     private static string MaskEmail(string email)
     {

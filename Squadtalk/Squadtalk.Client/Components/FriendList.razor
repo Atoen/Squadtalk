@@ -81,7 +81,7 @@
 
     private async Task MessageFriend(UserModel friend)
     {
-        await ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(friend);
+        await ChannelManager.OpenOrCreateTemporaryDirectMessageChannelAsync(friend);
     }
 
     private async Task StartVoiceCall(UserModel friend)

@@ -52,10 +52,37 @@
         await ConnectionService.ConnectAsync();
     }
 
+    private DialogParameters<SelectFriendsDialog>? _dialogParameters;
+    private DialogOptions? _dialogOptions;
+
+    private async Task CreateGroupAsync(List<UserModel> invitedUsers)
+    {
+        if (invitedUsers is [var singleUser])
+        {
+            await ChannelManager.OpenOrCreateTemporaryDirectMessageChannelAsync(singleUser);
+            return;
+        }
+
+        await ChannelManager.CreateNewChannelAsync(invitedUsers);
+    }
+
+    private Task ShowCreateGroupDialog()
+    {
+        _dialogParameters ??= new DialogParameters<SelectFriendsDialog>
+        {
+            { x => x.OnSelection, EventCallback.Factory.Create<List<UserModel>>(this, CreateGroupAsync) }
+        };
+
+        _dialogOptions ??= new DialogOptions { Position = DialogPosition.TopCenter };
+
+        return DialogService.ShowAsync<SelectFriendsDialog>(LocalizedText.R.select_friends, _dialogParameters, _dialogOptions);
+    }
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
 
+        ChannelManager.ChannelsListChanged += StateHasChanged;
         ChannelManager.ChannelChanged += StateHasChanged;
         ChannelSorter.ChannelsSorted += StateHasChanged;
     }
@@ -64,17 +91,8 @@
     {
         if (!RendererInfo.IsInteractive) return;
 
+        ChannelManager.ChannelsListChanged -= StateHasChanged;
         ChannelManager.ChannelChanged -= StateHasChanged;
         ChannelSorter.ChannelsSorted -= StateHasChanged;
-    }
-
-    private readonly DialogOptions _dialogOptions = new()
-    {
-        Position = DialogPosition.TopCenter
-    };
-
-    private Task ShowCreateGroupDialog()
-    {
-        return DialogService.ShowAsync<CreateGroupChatDialog>(LocalizedText.R.select_friends, _dialogOptions);
     }
 }

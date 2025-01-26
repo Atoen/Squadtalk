@@ -35,6 +35,8 @@ public abstract class ChannelModel : IStatus
         State = new ChannelState(this);
     }
 
+    public abstract bool UpdateParticipants(IEnumerable<UserModel> updatedParticipants);
+
     public static ChannelModel Create(IChatChannel channel, UserId currentUserId, Func<IChatUser, UserModel> userModelProvider)
     {
         var othersInChannel = channel.Participants.Where(x => x.Id != currentUserId).ToList();

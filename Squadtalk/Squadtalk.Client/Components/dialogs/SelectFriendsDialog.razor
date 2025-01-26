@@ -17,13 +17,13 @@
         }
 
         <MudTextField T="string" Immediate="true" @bind-Value="_searchValue"
-                      Placeholder="@LocalizedText.R.enter_friend_username" @ref="_textField"/>
+                      Placeholder="@LocalizedText.R.enter_friend_username"/>
 
         <div class="my-1 overflow-y-auto" style="max-height: 200px">
             @if (!FilteredResults.Any())
             {
                 <div class="mud-typography-body1 my-1">
-                    @LocalizedText.R.no_friends_found
+                    @NotFoundText
                 </div>
             }
             else
@@ -38,19 +38,15 @@
         <MudDivider/>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="CreateGroupChat" Color="Color.Primary"
-                   Variant="Variant.Filled" Disabled="_working">
+        <MudButton OnClick="OnConfirm" Color="Color.Primary" FullWidth="true"
+                   Variant="Variant.Filled" Disabled="DisableButton">
             @if (_working)
             {
                 <MudProgressCircular Indeterminate="true" Size="Size.Small"/>
             }
-            else if (_selectedUsers.Count == 1)
-            {
-                @LocalizedText.R.crate_or_find_chat
-            }
             else
             {
-                @LocalizedText.R.create_new_group_chat
+                @ConfirmButtonText
             }
         </MudButton>
     </DialogActions>
@@ -61,18 +57,34 @@
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
 @inject IChannelManager ChannelManager
-@inject ILogger<CreateGroupChatDialog> Logger
 
 @code
 {
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; } = default!;
 
-    private MudTextField<string> _textField = default!;
+    [Parameter]
+    public FriendsSelectionType SelectionType { get; set; } = FriendsSelectionType.CreateGroup;
 
-    private string? _searchValue;
+    [Parameter, EditorRequired]
+    public EventCallback<List<UserModel>> OnSelection { get; set; }
+
+    private string ConfirmButtonText => (SelectionType, _selectedUsers.Count) switch
+    {
+        (FriendsSelectionType.CreateGroup, 1) => LocalizedText.R.create_or_find_chat,
+        (FriendsSelectionType.CreateGroup, _) => LocalizedText.R.create_new_group_chat,
+        _ => LocalizedText.R.add
+    };
+
+    private string NotFoundText => SelectionType == FriendsSelectionType.CreateGroup
+        ? LocalizedText.R.no_friends_found
+        : LocalizedText.R.no_friends_found_not_present;
 
     private bool _working;
+    private bool DisableButton => _working ||
+        SelectionType == FriendsSelectionType.InviteToGroup && _selectedUsers.Count == 0;
+
+    private string? _searchValue;
 
     private Func<SearchResult, bool> _searchFilter = default!;
     private IEnumerable<SearchResult> FilteredResults => _searchResults.Where(_searchFilter);
@@ -104,8 +116,16 @@
     {
         _listEntry = CreateRenderFragment();
 
-        _searchFilter = searchResult => string.IsNullOrWhiteSpace(_searchValue) ||
-                          searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase);
+        if (SelectionType == FriendsSelectionType.CreateGroup)
+        {
+            _searchFilter = searchResult => string.IsNullOrWhiteSpace(_searchValue) ||
+                              searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase);
+        }
+        else if (ChannelManager.CurrentChannel is { } channel)
+        {
+            _searchFilter = searchResult => !channel.Others.Contains(searchResult.User) &&
+                (string.IsNullOrWhiteSpace(_searchValue) || searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase));
+        }
 
         var onClick = ClickResult;
         var results = ContactManager.FriendList
@@ -127,7 +147,7 @@
         _searchResults.Clear();
         _searchResults.AddRange(results);
 
-        // There is fewer friends than when we stared - remove possible selection of removed friend
+        // There are fewer friends than when we stared - remove possible selection of removed friend
         if (countBefore > ContactManager.FriendList.Count)
         {
             _selectedUsers.RemoveAll(x => !ContactManager.FriendList.Contains(x.User));
@@ -136,25 +156,28 @@
         StateHasChanged();
     }
 
-    private async Task CreateGroupChat()
+    private async Task OnConfirm()
     {
-        _working = true;
-
-        // Precisely one user invited - create DM
-        if (_selectedUsers is [ { User: var selectedUser } ])
+        if (!OnSelection.HasDelegate)
         {
-            await ChannelManager.OpenOrCreateTemporaryDirectMessageChannel(selectedUser);
-            _working = false;
             return;
         }
 
-        // 0 or 2+ users selected - Create group chat
-        var selectedUsers = _selectedUsers.Select(x => x.User);
-        var id = await ChannelManager.CreateNewChannel(selectedUsers);
+        _working = true;
+
+        var users = _selectedUsers.Select(x => x.User).ToList();
+        await OnSelection.InvokeAsync(users);
 
         _working = false;
-        Logger.LogInformation("Created channel id: {Id}", id);
     }
+
+    // private async Task AddFriendsToGroupAsync()
+    // {
+    //     if (_selectedUsers.Count == 0) return;
+    //
+    //     var selectedFriends = _selectedUsers.Select(x => x.User);
+    //     await ChannelManager.AddFriendsToGroupAsync(selectedFriends);
+    // }
 
     private void CloseChip(SearchResult searchResult)
     {
@@ -191,5 +214,11 @@
     public void Dispose()
     {
         ContactManager.FriendListChanged -= FriendListChanged;
+    }
+
+    public enum FriendsSelectionType
+    {
+        CreateGroup,
+        InviteToGroup
     }
 }

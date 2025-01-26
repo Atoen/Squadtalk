@@ -1,11 +1,12 @@
 @using Shared.Extensions
+@using Squadtalk.Client.Components.dialogs
 
-<MudPaper Class="d-flex mud-primary align-center ps-2">
-    <div class="mud-typography-h6 mud-text-primary order-2 mx-2">@ChatName</div>
+<MudPaper Class="d-flex mud-theme-primary align-center mx-1">
+    <div class="mud-typography-h6 order-2 mx-2">@ChatName</div>
 
     @if (!Channel.IsGlobal())
     {
-        <div class="order-1 d-flex">
+        <div class="order-1 d-flex ps-2">
             <ChannelImage Channel="Channel" Small="true"/>
         </div>
 
@@ -13,14 +14,20 @@
             @if (!VoiceChatService.ActiveCallOnCurrentChannel)
             {
                 <MudTooltip Text="@LocalizedText.R.start_call">
-                    <MudIconButton Icon="@Icons.Material.Rounded.Call"/>
+                    <MudIconButton Icon="@Icons.Material.Rounded.Call" Color="Color.Inherit"/>
                 </MudTooltip>
             }
 
             @if (Channel is GroupChatModel)
             {
-                <MudTooltip Text="@LocalizedText.R.manage_channel">
-                    <MudIconButton Icon="@Icons.Material.Rounded.Settings"/>
+                <MudTooltip Text="@LocalizedText.R.add_friends_to_group">
+                    <MudIconButton Icon="@Icons.Material.Rounded.PersonAddAlt"
+                                   Color="Color.Inherit" OnClick="OpenAddToGroupDialog"/>
+                </MudTooltip>
+
+                <MudTooltip Text="@LocalizedText.R.manage_group">
+                    <MudIconButton Icon="@Icons.Material.Rounded.Settings"
+                                   Color="Color.Inherit" OnClick="OpenManageGroupDialog"/>
                 </MudTooltip>
             }
         </div>
@@ -36,6 +43,7 @@
 @inject IVoiceChatService VoiceChatService
 @inject LocalizedText LocalizedText
 @inject IUserAuthenticationService UserAuthenticationService
+@inject IDialogService DialogService
 @inject ILogger<ChannelHeader> Logger
 
 @code
@@ -82,13 +90,41 @@
         }
     }
 
+    private async Task AddFriendsToGroupAsync(List<UserModel> friends)
+    {
+        if (friends.Count != 0)
+        {
+            await ChannelManager.AddFriendsToGroupAsync(Channel.Id, friends);
+        }
+    }
+
+    private DialogParameters<SelectFriendsDialog>? _dialogParameters;
+    private DialogOptions? _dialogOptions;
+
+    private Task OpenAddToGroupDialog()
+    {
+        _dialogParameters ??= new DialogParameters<SelectFriendsDialog>
+        {
+            { x => x.OnSelection, EventCallback.Factory.Create<List<UserModel>>(this, AddFriendsToGroupAsync) },
+            { x => x.SelectionType, SelectFriendsDialog.FriendsSelectionType.InviteToGroup }
+        };
+
+        _dialogOptions ??= new DialogOptions { Position = DialogPosition.TopCenter };
+
+        return DialogService.ShowAsync<SelectFriendsDialog>(LocalizedText.R.add_friends_to_group, _dialogParameters, _dialogOptions);
+    }
+
+    private Task OpenManageGroupDialog()
+    {
+        return DialogService.ShowAsync<ManageGroupDialog>(LocalizedText.R.manage_group);
+    }
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
 
         ChannelManager.ChannelNameChanged += ChannelNameChanged;
         ContactManager.FriendListChanged += ConnectedUsersChanged;
-
     }
 
     public void Dispose()

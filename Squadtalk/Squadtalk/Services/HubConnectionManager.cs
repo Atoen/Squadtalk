@@ -1,6 +1,5 @@
 using Shared.Data.TypedIds;
 using Shared.Enums;
-using Squadtalk.Data.Entities;
 using StackExchange.Redis;
 
 namespace Squadtalk.Services;
@@ -43,9 +42,9 @@ public class HubConnectionManager
         return userWasTypingOnChannel;
     }
 
-    public async Task<IEnumerable<string>> GetUserConnectionsAsync(ApplicationUser user)
+    public async Task<IEnumerable<string>> GetUserConnectionsAsync(UserId userId)
     {
-        var key = new RedisKey(user.Id.ToString()).Prepend(UserConnectionsPrefix);
+        var key = new RedisKey(userId.ToString()).Prepend(UserConnectionsPrefix);
         var connections = await _redisDb.SetMembersAsync(key);
 
         return connections.Length != 0
@@ -53,18 +52,18 @@ public class HubConnectionManager
             : [];
     }
 
-    public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionStartedAsync(ApplicationUser user, string connectionId)
+    public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionStartedAsync(UserId userId, string connectionId)
     {
         var result = await _redisDb.ExecuteAsync(
-        FCALL, "connection_started", ZeroKeys, user.Id.ToString(), connectionId);
+        FCALL, "connection_started", ZeroKeys, userId.ToString(), connectionId);
 
         return ReadRedisResult(result);
     }
     
-    public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionClosedAsync(ApplicationUser user, string connectionId)
+    public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionClosedAsync(UserId userId, string connectionId)
     {
         var result = await _redisDb.ExecuteAsync(
-            FCALL, "connection_ended", ZeroKeys, user.Id.ToString(), connectionId);
+            FCALL, "connection_ended", ZeroKeys, userId.ToString(), connectionId);
 
         return ReadRedisResult(result);
     }

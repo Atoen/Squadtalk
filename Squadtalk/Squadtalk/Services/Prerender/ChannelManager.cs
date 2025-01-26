@@ -31,6 +31,7 @@ internal class ChannelManager : LazyModelCreator, IChannelManager
 
     event Action<ChannelId>? IChannelManager.TypingUsersChanged { add { } remove { } }
     event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
+    event Action<GroupChatModel>? IChannelManager.ChannelParticipantsChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
     event Action? IChannelManager.ChannelChanged { add { } remove { } }
     event Func<Task>? IChannelManager.ChannelChangedAsync { add { } remove { } }
@@ -62,11 +63,13 @@ internal class ChannelManager : LazyModelCreator, IChannelManager
 
     public ChannelModel GetRequiredChannel(ChannelId channelId) => LazyChannels[channelId];
 
-    public Task OpenOrCreateTemporaryDirectMessageChannel(UserModel model) => Task.CompletedTask;
+    public Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel model) => Task.CompletedTask;
 
     public Task UpgradeToPersistentChannelAsync(ChannelModel channelModel) => Task.CompletedTask;
 
-    public Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others) => Task.FromResult<ChannelId?>(null);
+    public Task<ChannelId?> CreateNewChannelAsync(params IEnumerable<UserModel> others) => Task.FromResult<ChannelId?>(null);
+
+    public Task AddFriendsToGroupAsync(ChannelId channelId, params IEnumerable<UserModel> friends) => Task.CompletedTask;
 
     public Task ClearChannelSelectionAsync() => Task.CompletedTask;
 

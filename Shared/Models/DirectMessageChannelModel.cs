@@ -22,5 +22,7 @@ public class DirectMessageChannelModel(UserModel other, ChannelId id) : ChannelM
 
     public override IEnumerable<UserModel> Others { get; } = [other];
 
+    public override bool UpdateParticipants(IEnumerable<UserModel> updatedParticipants) => false;
+
     public override UserStatus Status => Other.Status;
 }

@@ -14,6 +14,7 @@ public interface IChannelManager
     IReadOnlyCollection<ChannelModel> Channels { get; }
 
     event Action<GroupChatModel>? ChannelNameChanged;
+    event Action<GroupChatModel>? ChannelParticipantsChanged;
     event Action? ChannelsListChanged;
     event Action? ChannelChanged;
     event Func<Task>? ChannelChangedAsync;
@@ -23,13 +24,15 @@ public interface IChannelManager
 
     ChannelModel GetRequiredChannel(ChannelId channelId);
 
-    Task OpenOrCreateTemporaryDirectMessageChannel(UserModel model);
+    Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel model);
     
     Task UpgradeToPersistentChannelAsync(ChannelModel channelModel);
 
     Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true);
 
-    Task<ChannelId?> CreateNewChannel(params IEnumerable<UserModel> others);
+    Task<ChannelId?> CreateNewChannelAsync(params IEnumerable<UserModel> others);
+
+    Task AddFriendsToGroupAsync(ChannelId channelId, params IEnumerable<UserModel> friends);
 
     Task ClearChannelSelectionAsync();
 
