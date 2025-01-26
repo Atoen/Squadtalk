@@ -1,0 +1,81 @@
+@using Squadtalk.Client.Extensions
+
+<MudStack Row="true" AlignItems="AlignItems.Center"
+          Class="my-1 hover pa-1 mud-ripple"
+          @onclick="MessageFriend">
+    @UserAvatar.NoBadgeMedium(Friend)
+
+    <div>
+        <p class="mud-typography-body1">@Friend.Username</p>
+
+        @if (Friend.Status != UserStatus.Unknown)
+        {
+            <p class="mud-typography-caption d-flex align-center gap-1">
+                <MudIcon Icon="@Friend.Status.Icon()" Size="Size.Small"
+                         Color="@Friend.Status.PaletteColor()"/>
+                @Friend.Status.Name(LocalizedText.R)
+            </p>
+        }
+    </div>
+
+    <div class="ms-auto d-flex">
+        <MudTooltip Text="@LocalizedText.R.message"
+                    Placement="Placement.Top" Color="Color.Dark">
+            <MudIconButton Icon="@Icons.Material.Rounded.Message"
+                           OnClick="MessageFriend"/>
+        </MudTooltip>
+
+        <MudTooltip Text="@LocalizedText.R.more"
+                    Placement="Placement.Top" Color="Color.Dark">
+            <MudMenu Icon="@Icons.Material.Rounded.MoreVert" Dense="true">
+                <MudMenuItem OnClick="StartVoiceCall">
+                    @LocalizedText.R.start_voice_call
+                </MudMenuItem>
+                <MudMenuItem Class="mud-error-text"
+                             OnClick="RemoveFriend">
+                    @LocalizedText.R.remove_friend
+                </MudMenuItem>
+            </MudMenu>
+        </MudTooltip>
+    </div>
+
+</MudStack>
+
+@implements IDisposable
+@implements Shared.Reactive.ISubscriber<UserModel>
+
+@inject IContactManager ContactManager
+@inject IChannelManager ChannelManager
+@inject LocalizedText LocalizedText
+
+@code
+{
+    [Parameter, EditorRequired]
+    public UserModel Friend { get; set; } = default!;
+
+    private async Task MessageFriend()
+    {
+        await ChannelManager.OpenOrCreateTemporaryDirectMessageChannelAsync(Friend);
+    }
+
+    private void StartVoiceCall()
+    {
+
+    }
+
+    private async Task RemoveFriend()
+    {
+        await ContactManager.RemoveFriendAsync(Friend);
+    }
+
+    public void OnNext(UserModel value)
+    {
+        StateHasChanged();
+    }
+
+    private IDisposable? _subscription;
+
+    protected override void OnInitialized() => _subscription = Friend.Subscribe(this);
+
+    public void Dispose() => _subscription?.Dispose();
+}

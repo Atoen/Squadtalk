@@ -33,7 +33,7 @@
 
     @foreach (var channel in ChannelSorter.SortedChannels)
     {
-        <ChatTemplate @key="channel.Id" Model="@channel"/>
+        <ChatTemplate @key="channel.Id" Channel="@channel"/>
     }
 </div>
 

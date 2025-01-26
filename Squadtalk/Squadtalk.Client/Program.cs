@@ -14,12 +14,12 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.Services.AddAuthorizationCore();
 builder.Services.AddNetworking(builder.HostEnvironment.BaseAddress);
 
-builder.Services.AddSingleton<UserAuthenticationService>();
+builder.Services.AddScoped<UserAuthenticationService>();
 
-builder.Services.AddSingleton<IUserAuthenticationService>(provider =>
+builder.Services.AddScoped<IUserAuthenticationService>(provider =>
     provider.GetRequiredService<UserAuthenticationService>());
 
-builder.Services.AddSingleton<AuthenticationStateProvider>(provider =>
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<UserAuthenticationService>());
 
 builder.Services.AddCascadingAuthenticationState();

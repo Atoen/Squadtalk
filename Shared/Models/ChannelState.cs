@@ -1,10 +1,11 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
+using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class ChannelState(ChannelModel channel)
+public class ChannelState(ChannelModel channel) : Observable<ChannelState>
 {
     public TextChannelCursor Cursor { get; set; }
     public bool ScrolledToBeginning { get; set; }
@@ -36,20 +37,35 @@ public class ChannelState(ChannelModel channel)
         }
     }
 
-    public bool UserIsTyping(UserId userId)
+    public void UserIsTyping(UserId userId)
     {
         var typingUser = channel.Others.FirstOrDefault(x => x.Id == userId);
         if (typingUser is null)
         {
-            return false;
+            return;
         }
 
-        return TypingUsers.InsertOrUpdate(typingUser);
+        if (TypingUsers.InsertOrUpdate(typingUser))
+        {
+            Notify(this);
+        }
     }
 
-    public bool UserStoppedTyping(UserId userId) => TypingUsers.Remove(userId);
+    public void UserStoppedTyping(UserId userId)
+    {
+        if (TypingUsers.Remove(userId))
+        {
+            Notify(this);
+        }
+    }
 
-    public bool RemoveStaleTyping(DateTime now) => TypingUsers.RemoveStale(now);
+    public void RemoveStaleTyping(DateTime now)
+    {
+        if (TypingUsers.RemoveStale(now))
+        {
+            Notify(this);
+        }
+    }
 
     private bool UpdateCallSystemMessage(MessageModel message)
     {

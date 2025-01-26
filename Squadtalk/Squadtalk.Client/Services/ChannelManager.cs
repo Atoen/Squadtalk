@@ -26,12 +26,9 @@ internal class ChannelManager : IChannelManager
     public IEnumerable<DirectMessageChannelModel> DirectMessageChannels => _directMessageChannels;
 
     public event Action? ChannelsListChanged;
-    public event Action<GroupChatModel>? ChannelNameChanged;
-    public event Action<GroupChatModel>? ChannelParticipantsChanged;
 
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
-    public event Action<ChannelId>? TypingUsersChanged;
 
     public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
     public ChannelModel? CurrentChannel { get; private set; }
@@ -183,16 +180,7 @@ internal class ChannelManager : IChannelManager
             .Where(x => x.Id != _userAuthenticationService.UserId)
             .Select(_contactManager.UserModelProvider);
 
-        var updated = channel.UpdateParticipants(others);
-        if (updated)
-        {
-            if (channel is GroupChatModel groupChat)
-            {
-                ChannelNameChanged?.Invoke(groupChat);
-            }
-
-            ChannelsListChanged?.Invoke();
-        }
+        channel.UpdateParticipants(others);
     }
 
     private void OnChannelNameChanged(ChannelId channelId, string? channelName)
@@ -210,7 +198,6 @@ internal class ChannelManager : IChannelManager
 
         groupChat.CustomName = channelName;
 
-        ChannelNameChanged?.Invoke(groupChat);
         ChannelsListChanged?.Invoke();
     }
 
@@ -296,13 +283,13 @@ internal class ChannelManager : IChannelManager
             StartScanning();
         }
 
-        var stateChanged = isTyping
-            ? channel.State.UserIsTyping(userId)
-            : channel.State.UserStoppedTyping(userId);
-
-        if (stateChanged)
+        if (isTyping)
         {
-            TypingUsersChanged?.Invoke(channelId);
+            channel.State.UserIsTyping(userId);
+        }
+        else
+        {
+            channel.State.UserStoppedTyping(userId);
         }
     }
 
@@ -326,10 +313,7 @@ internal class ChannelManager : IChannelManager
             var now = DateTime.Now;
             foreach (var channel in Channels)
             {
-                if (channel.State.RemoveStaleTyping(now))
-                {
-                    TypingUsersChanged?.Invoke(channel.Id);
-                }
+                channel.State.RemoveStaleTyping(now);
             }
         }
     }

@@ -13,12 +13,9 @@ public interface IChannelManager
 
     IReadOnlyCollection<ChannelModel> Channels { get; }
 
-    event Action<GroupChatModel>? ChannelNameChanged;
-    event Action<GroupChatModel>? ChannelParticipantsChanged;
     event Action? ChannelsListChanged;
     event Action? ChannelChanged;
     event Func<Task>? ChannelChangedAsync;
-    event Action<ChannelId>? TypingUsersChanged;
 
     ChannelModel? GetChannel(ChannelId channelId);
 

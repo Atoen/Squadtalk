@@ -29,9 +29,6 @@ internal class ChannelManager : LazyModelCreator, IChannelManager
     public GroupChatModel GlobalChat => GlobalChatModel;
     public ChannelModel? CurrentChannel { get; private set; }
 
-    event Action<ChannelId>? IChannelManager.TypingUsersChanged { add { } remove { } }
-    event Action<GroupChatModel>? IChannelManager.ChannelNameChanged { add { } remove { } }
-    event Action<GroupChatModel>? IChannelManager.ChannelParticipantsChanged { add { } remove { } }
     event Action? IChannelManager.ChannelsListChanged { add { } remove { } }
     event Action? IChannelManager.ChannelChanged { add { } remove { } }
     event Func<Task>? IChannelManager.ChannelChangedAsync { add { } remove { } }

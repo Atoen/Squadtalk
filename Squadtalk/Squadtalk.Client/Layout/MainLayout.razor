@@ -36,7 +36,7 @@
 @inject IVoiceChatService VoiceChatService
 @inject IUserPreferencesService UserPreferences
 @inject IUserAuthenticationService UserAuthenticationService
-@inject ILogger<MainLayout> Logger
+@inject IContactManager ContactManager
 @inject PersistentComponentState PersistentComponentState
 
 @code
@@ -66,7 +66,7 @@
 
         if (UserAuthenticationService.IsAuthenticated)
         {
-
+            await ContactManager.RefreshFriendListAsync();
             await VoiceChatService.InitializeAsync();
         }
     }
