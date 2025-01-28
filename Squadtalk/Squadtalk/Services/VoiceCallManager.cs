@@ -10,32 +10,32 @@ public class VoiceCallManager(ILogger<VoiceCallManager> logger)
 {
     public IEnumerable<Room> ActiveRooms => _rooms.Values;
 
-    private readonly ConcurrentDictionary<ChannelId, UserId> _roomsToInitiate = [];
-    private readonly ConcurrentDictionary<ChannelId, Room> _rooms = [];
+    private readonly ConcurrentDictionary<GroupId, UserId> _roomsToInitiate = [];
+    private readonly ConcurrentDictionary<GroupId, Room> _rooms = [];
 
-    public bool ChannelHasActiveCall(ChannelId channelId)
+    public bool ChannelHasActiveCall(GroupId groupId)
     {
-        return _rooms.TryGetValue(channelId, out var room) && room.Active;
+        return _rooms.TryGetValue(groupId, out var room) && room.Active;
     }
 
-    public void VoiceCallInitiated(IChatUser initiator, ChannelId channelId)
+    public void VoiceCallInitiated(IChatUser initiator, GroupId groupId)
     {
-        _roomsToInitiate.TryAdd(channelId, initiator.Id);
+        _roomsToInitiate.TryAdd(groupId, initiator.Id);
     }
 
     public UserId AddRoom(RoomDto dto)
     {
-        var room = new Room(dto.ChannelId);
-        _rooms.TryAdd(room.ChannelId, room);
+        var room = new Room(dto.GroupId);
+        _rooms.TryAdd(room.GroupId, room);
 
-        _roomsToInitiate.TryRemove(room.ChannelId, out var initiatorId);
+        _roomsToInitiate.TryRemove(room.GroupId, out var initiatorId);
 
         return initiatorId;
     }
 
-    public async Task AddParticipantAsync(ParticipantDto participantDto, ChannelId channelId)
+    public async Task AddParticipantAsync(ParticipantDto participantDto, GroupId groupId)
     {
-        if (!_rooms.TryGetValue(channelId, out var room))
+        if (!_rooms.TryGetValue(groupId, out var room))
         {
             logger.LogError("Missing room");
             return;
@@ -45,9 +45,9 @@ public class VoiceCallManager(ILogger<VoiceCallManager> logger)
         await room.AddParticipantAsync(participant);
     }
 
-    public async Task<bool> RemoveParticipantAsync(ParticipantDto participantDto, ChannelId channelId)
+    public async Task<bool> RemoveParticipantAsync(ParticipantDto participantDto, GroupId groupId)
     {
-        if (!_rooms.TryGetValue(channelId, out var room))
+        if (!_rooms.TryGetValue(groupId, out var room))
         {
             logger.LogError("Missing room");
             return false;
@@ -57,12 +57,12 @@ public class VoiceCallManager(ILogger<VoiceCallManager> logger)
         return !room.Active;
     }
 
-    public bool RemoveRoom(ChannelId channelId, out (UserId initiatorId, TimeSpan callDuration, bool callMissed) tuple)
+    public bool RemoveRoom(GroupId groupId, out (UserId initiatorId, TimeSpan callDuration, bool callMissed) tuple)
     {
         tuple = default;
 
-        _roomsToInitiate.TryRemove(channelId, out _);
-        if (!_rooms.TryRemove(channelId, out var room))
+        _roomsToInitiate.TryRemove(groupId, out _);
+        if (!_rooms.TryRemove(groupId, out var room))
         {
             return false;
         }

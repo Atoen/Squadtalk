@@ -9,8 +9,8 @@ internal class NoOpVoiceChatService : IVoiceChatService
     public bool ConnectedToVoiceCall { get; }
     public bool ConnectedToVoiceCallOnCurrentChannel { get; }
     public bool ActiveCallOnCurrentChannel { get; }
-    public ChannelModel? CallChannel { get; }
-    public ChannelModel? CurrentChannel { get; }
+    public ChatModel? CallChannel { get; }
+    public ChatModel? CurrentChannel { get; }
     public bool MicrophoneEnabled { get; }
     public bool CameraEnabled { get; }
     public bool ScreenShareEnabled { get; }
@@ -25,15 +25,15 @@ internal class NoOpVoiceChatService : IVoiceChatService
     public event ErrorNotificationHandler? Error;
     public event Action<DisconnectReason>? Disconnected;
     public event Action? CurrentChannelCallChanged;
-    public event Func<ChannelModel, Task>? CallIncoming;
-    public event Action<ChannelModel>? CallEnded;
-    public event Action<ChannelModel>? ParticipantListUpdated;
-    public event Action<UserId, ChannelModel>? ParticipantUpdated;
+    public event Func<ChatModel, Task>? CallIncoming;
+    public event Action<ChatModel>? CallEnded;
+    public event Action<ChatModel>? ParticipantListUpdated;
+    public event Action<UserId, ChatModel>? ParticipantUpdated;
     public event Action? LocalParticipantStateUpdated;
     public Task InitializeAsync() => throw new NotImplementedException();
-    public Task StartCallAsync(ChannelId channelId) => throw new NotImplementedException();
-    public Task AcceptCallAsync(ChannelId channelId) => throw new NotImplementedException();
-    public Task DeclineCallAsync(ChannelId channelId) => throw new NotImplementedException();
+    public Task StartCallAsync(GroupId groupId) => throw new NotImplementedException();
+    public Task AcceptCallAsync(GroupId groupId) => throw new NotImplementedException();
+    public Task DeclineCallAsync(GroupId groupId) => throw new NotImplementedException();
     public Task LeaveCallAsync() => throw new NotImplementedException();
     public Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone) => throw new NotImplementedException();
     public Task<Volume> GetUserVolumeAsync(CallParticipantModel participantModel) => throw new NotImplementedException();
@@ -45,5 +45,5 @@ internal class NoOpVoiceChatService : IVoiceChatService
     public Task ToggleMicrophoneAsync() => throw new NotImplementedException();
     public Task ToggleCameraAsync() => throw new NotImplementedException();
     public Task ToggleScreenShareAsync() => throw new NotImplementedException();
-    public Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel) => Task.FromResult(false);
+    public Task<bool> CheckIfChannelHasActiveCallAsync(ChatModel chat) => Task.FromResult(false);
 }

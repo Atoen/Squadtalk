@@ -50,7 +50,7 @@
         _volume = await VoiceChatService.GetUserVolumeAsync(Model);
     }
 
-    private void ParticipantUpdated(UserId userId, ChannelModel channelModel)
+    private void ParticipantUpdated(UserId userId, ChatModel chatModel)
     {
         if (Model.Id == userId)
         {

@@ -59,21 +59,21 @@
     private const string Start = nameof(Start);
     private const string Stop = "Stop";
     private const string Apply = "Apply";
-    
+
     private int _delayMs = 100;
     private int _lastDelay;
-    
+
     private int _threshold = 3;
     private int _lastThreshold;
-    
+
     private IJSObjectReference _jsModule = default!;
     private string _buttonText = Start;
     private bool _running;
-    
+
     private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(100));
     private readonly List<Rule> _rules = [];
     private bool _rulesChanged;
-    
+
     // private Modal _modal = default!;
     private Dictionary<string, object> _parameters = default!;
 
@@ -81,13 +81,13 @@
     {
         PropertyNameCaseInsensitive = true
     };
-    
+
     [SupplyParameterFromQuery]
     public int? Step { get; set; }
-    
+
     [SupplyParameterFromQuery]
     public int? Neighbours { get; set; }
-    
+
     [SupplyParameterFromQuery]
     public string? Rules { get; set; }
 
@@ -115,7 +115,7 @@
         {
             return GetDefaultRules();
         }
-        
+
         try
         {
             var rules = JsonSerializer.Deserialize<List<Rule>>(json, _serializerOptions);
@@ -151,7 +151,7 @@
         _rulesChanged = true;
         _buttonText = Apply;
         _rules.Add(rule);
-        
+
         StateHasChanged();
 
         // return _modal.HideAsync();
@@ -167,7 +167,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        
+
         _parameters = new Dictionary<string, object>
         {
             // { "CancelCallback", EventCallback.Factory.Create(this, CloseModal) },
@@ -177,7 +177,7 @@
         _jsModule = await JSRuntime.ImportAndInitModuleAsync("../js/Simulation.min.js");
         await _jsModule.InvokeVoidAsync("SetRules", _rules, true);
     }
-    
+
     private async Task ToggleSimulation()
     {
         if (_rulesChanged)
@@ -189,7 +189,7 @@
         {
             _running = !_running;
         }
-        
+
         _buttonText = _running ? Stop : Start;
 
         if (_running)
@@ -197,7 +197,7 @@
             _ = RunAsync();
         }
     }
-    
+
     private async Task RunAsync()
     {
         while (await _periodicTimer.WaitForNextTickAsync())
@@ -235,7 +235,7 @@
         var rulesJson = JsonSerializer.Serialize(_rules, _serializerOptions);
         var encoded = Uri.EscapeDataString(rulesJson);
         var uri = new Uri(NavigationManager.Uri).GetLeftPart(UriPartial.Path);
-        
+
         var link = $"{uri}?Step={_delayMs}&Neighbours={_threshold}&Rules={encoded}";
 
         try

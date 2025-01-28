@@ -17,13 +17,13 @@ public interface IChatClient : ITextChatClient, IVoiceChatClient, IFriendChatCli
 public partial class AppHub : Hub<IChatClient>
 {
     private readonly HubConnectionManager _connectionManager;
-    private readonly UserRepository _userRepository;
+    private readonly ChatUserRepository _userRepository;
     private readonly FriendRepository _friendRepository;
     private readonly ILogger<AppHub> _logger;
 
     public AppHub(
         HubConnectionManager connectionManager,
-        UserRepository userRepository,
+        ChatUserRepository userRepository,
         FriendRepository friendRepository,
         ILogger<AppHub> logger)
     {
@@ -35,7 +35,7 @@ public partial class AppHub : Hub<IChatClient>
 
     public override async Task OnConnectedAsync()
     {
-        var user = await _userRepository.FindUserById(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserByIdAsync(Context.User, ChannelsInclusionOption.Include);
         if (user is null)
         {
             Context.Abort();
@@ -43,13 +43,13 @@ public partial class AppHub : Hub<IChatClient>
         }
 
         var (statusChanged, currentStatus) = await _connectionManager.ConnectionStartedAsync(user.Id, Context.ConnectionId);
-        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.UserName, statusChanged, currentStatus);
+        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.Username, statusChanged, currentStatus);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupChatModel.GlobalChatId);
 
-        if (user.Channels is { Count: > 0 })
+        if (user.GroupParticipants is { Count: > 0 })
         {
-            var tasks = user.Channels
+            var tasks = user.Groups
                 .Select(x => Groups.AddToGroupAsync(Context.ConnectionId, x.Id));
 
             await Task.WhenAll(tasks);
@@ -66,14 +66,14 @@ public partial class AppHub : Hub<IChatClient>
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var user = await _userRepository.FindUserById(Context.User);
+        var user = await _userRepository.FindUserByIdAsync(Context.User);
         if (user is null)
         {
             return;
         }
 
         var (statusChanged, currentStatus) = await _connectionManager.ConnectionClosedAsync(user.Id, Context.ConnectionId);
-        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.UserName, statusChanged, currentStatus);
+        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.Username, statusChanged, currentStatus);
 
         if (statusChanged)
         {
@@ -84,10 +84,10 @@ public partial class AppHub : Hub<IChatClient>
         }
     }
 
-    private async Task<ApplicationUser?> GetChannelParticipantAsync(ChannelId channelId)
+    private async Task<ChatUser?> GetChannelParticipantAsync(GroupId groupId)
     {
-        var user = await _userRepository.FindUserById(Context.User, ChannelsInclusionOption.Include);
-        if (user is null || !user.ParticipatesInChannel(channelId))
+        var user = await _userRepository.FindUserByIdAsync(Context.User, ChannelsInclusionOption.Include);
+        if (user is null || !user.ParticipatesInChannel(groupId))
         {
             return null;
         }

@@ -19,7 +19,7 @@
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
 @inject IConnectionService ConnectionService
-@inject IChannelManager ChannelManager
+@inject IChatGroupManager ChatGroupManager
 @inject ILogger<FriendList> Logger
 
 @code
@@ -31,7 +31,7 @@
 
     private async Task MessageFriend(UserModel friend)
     {
-        await ChannelManager.OpenOrCreateTemporaryDirectMessageChannelAsync(friend);
+        await ChatGroupManager.OpenOrCreateTemporaryDirectMessageChannelAsync(friend);
     }
 
     private async Task StartVoiceCall(UserModel friend)

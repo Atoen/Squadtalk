@@ -31,11 +31,15 @@ public class UserModel : Observable<UserModel>, IEquatable<UserModel?>
 
     public UserId Id { get; private init; }
 
-    public static UserModel Create(IChatUser chatUser)
+    public bool IsLocal { get; private init; }
+    public bool IsRemote => !IsLocal;
+
+    public static UserModel Create(IChatUser chatUser, UserId localUserId)
     {
         return new UserModel
         {
             Id = chatUser.Id,
+            IsLocal = chatUser.Id == localUserId,
             _username = chatUser.Username,
             _status = chatUser.Status,
             _avatarUrl = "user.png"

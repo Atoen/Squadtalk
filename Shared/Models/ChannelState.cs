@@ -5,7 +5,7 @@ using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class ChannelState(ChannelModel channel) : Observable<ChannelState>
+public class ChannelState(ChatModel chat) : Observable<ChannelState>
 {
     public TextChannelCursor Cursor { get; set; }
     public bool ScrolledToBeginning { get; set; }
@@ -39,13 +39,13 @@ public class ChannelState(ChannelModel channel) : Observable<ChannelState>
 
     public void UserIsTyping(UserId userId)
     {
-        var typingUser = channel.Others.FirstOrDefault(x => x.Id == userId);
-        if (typingUser is null)
+        var typingParticipant = chat.Others.FirstOrDefault(x => x.User.Id == userId);
+        if (typingParticipant is null)
         {
             return;
         }
 
-        if (TypingUsers.InsertOrUpdate(typingUser))
+        if (TypingUsers.InsertOrUpdate(typingParticipant.User))
         {
             Notify(this);
         }

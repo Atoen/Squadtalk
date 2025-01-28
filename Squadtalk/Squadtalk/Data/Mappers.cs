@@ -4,8 +4,7 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Data;
 
-
-public static class Mappers
+internal static class Mappers
 {
     public static MessageDto ToDto(this Message message)
     {
@@ -14,7 +13,7 @@ public static class Mappers
             Author = message.Author.ToDto(),
             Content = message.Content,
             Timestamp = message.Timestamp,
-            ChannelId = message.ChannelId,
+            GroupId = message.GroupId,
             Embed = message.Embed?.ToDto()
         };
     }
@@ -29,20 +28,55 @@ public static class Mappers
         };
     }
 
-    public static ChannelDto ToDto(this Channel channel)
+    public static UserDto ToDto(this ChatUser user, UserStatus status = UserStatus.Unknown)
     {
-        var dto = new ChannelDto
+        return new UserDto
         {
-            Id = channel.Id,
-            Participants = channel.Participants.Select(x => x.ToDto()).ToList(),
-            LastMessage = channel.LastMessage?.ToDto(),
-            Name = channel.Name
+            Username = user.Username,
+            Id = user.Id,
+            Status = status
+        };
+    }
+
+    public static GroupParticipant ToGroupParticipant(this ChatUser user, Group group, ChatUser? addedBy = null)
+    {
+        var role = group.GroupCreator.Id == user.Id ? GroupRole.Owner : GroupRole.Member;
+        return new GroupParticipant
+        {
+            User = user,
+            UserId = user.Id,
+            Group = group,
+            GroupId = group.Id,
+            AddedBy = addedBy,
+            Role = role
+        };
+    }
+
+    public static GroupParticipantDto ToDto(this GroupParticipant participant)
+    {
+        return new GroupParticipantDto
+        {
+            User = participant.User.ToDto(),
+            AddedBy = participant.AddedBy?.ToDto(),
+            Role = participant.Role
+        };
+    }
+
+    public static GroupDto ToDto(this Group group)
+    {
+        var dto = new GroupDto
+        {
+            Id = group.Id,
+            Participants = group.Participants.Select(x => x.ToDto()).ToList(),
+            LastMessage = group.LastMessage?.ToDto(),
+            Name = group.Name,
+            Type = group.ChatType
         };
 
         return dto;
     }
 
-    public static MessageDto ToDto(this Channel.Message message)
+    public static MessageDto ToDto(this Group.Message message)
     {
         return new MessageDto
         {
@@ -52,7 +86,7 @@ public static class Mappers
                 Id = message.AuthorId
             },
             Timestamp = message.Timestamp,
-            ChannelId = message.ChannelId,
+            GroupId = message.GroupId,
             Content = message.Content,
             Embed = message.Embed?.ToDto()
         };

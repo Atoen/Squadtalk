@@ -10,6 +10,7 @@ internal class NoOpFormValidator : IFormValidator
     public Func<string?, IEnumerable<string>> PasswordValidator => Enumerable;
     public Func<string?, string?> UsernameValidator => String;
     public Func<string?, string?> EmailValidator => String;
+    public Func<string?, string?> GroupNameValidator => String;
 
     public string? PasswordMatches(string? first, string? second) => null;
 
@@ -18,4 +19,6 @@ internal class NoOpFormValidator : IFormValidator
     public string? ValidateUsername(string? username) => null;
 
     public string? ValidateEmail(string? email) => null;
+
+    public string? ValidateGroupName(string? groupName) => null;
 }

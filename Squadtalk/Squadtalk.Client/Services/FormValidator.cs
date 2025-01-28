@@ -12,6 +12,7 @@ internal partial class FormValidator : IFormValidator
     public Func<string?, IEnumerable<string>> PasswordValidator { get; }
     public Func<string?, string?> UsernameValidator { get; }
     public Func<string?, string?> EmailValidator { get; }
+    public Func<string?, string?> GroupNameValidator { get; }
 
     public FormValidator(LocalizedText localizedText)
     {
@@ -20,6 +21,7 @@ internal partial class FormValidator : IFormValidator
         PasswordValidator = ValidatePassword;
         UsernameValidator = ValidateUsername;
         EmailValidator = ValidateEmail;
+        GroupNameValidator = ValidateGroupName;
     }
 
     public string? PasswordMatches(string? first, string? second)
@@ -108,6 +110,16 @@ internal partial class FormValidator : IFormValidator
                       atIndex == span.LastIndexOf('@');
 
         return isValid ? null : _localizedText.R.email_is_invalid;
+    }
+
+    public string? ValidateGroupName(string? groupName)
+    {
+        if (groupName?.Length > IFormValidator.MaximumGroupNameLength)
+        {
+            return _localizedText.R.group_name_too_long;
+        }
+
+        return null;
     }
 
     [GeneratedRegex("[A-Z]")]

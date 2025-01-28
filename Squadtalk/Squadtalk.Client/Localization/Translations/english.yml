@@ -120,6 +120,11 @@ change_password: Change your password
 show: Show
 hide: Hide
 
+group_name: Group name
+enter_group_name: Enter group name
+group_name_set: Set group name
+change_group_name: Change group name
+clear_group_name: Clear group name
 change_username: Change your username
 change_email: Change your email
 enter_new_username_and_password: Enter new username and current password.
@@ -204,6 +209,22 @@ manage_group: Manage group
 channel_beginning: This is the beginning of chat with
 add_friends_to_group: Add friends to the group
 add: Add
+group_members: Members
+group_image: Group image
+leave_group: Leave group
+group_name_too_long: Group name is too long
+failed_to_change_group_name: Failed to change group name
+added_by: Added by
+group_creator: Group creator
+group_admin: Administrator
+group_moderator: Moderator
+group_member: Member
+all_members: All
+moderators: Moderators
+one_member: Member
+many_members: Members
+one_moderator: Moderator
+many_moderators: Moderators
 
 # Chat message
 today_time_template: Today {0}

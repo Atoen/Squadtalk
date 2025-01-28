@@ -7,15 +7,15 @@ public interface ITextChatClient
 {
     Task ReceivedMessage(MessageDto messageDto);
 
-    Task UserIsTyping(ChannelId channelId, UserId userId);
+    Task UserIsTyping(GroupId groupId, UserId userId);
 
-    Task UserStoppedTyping(ChannelId channelId, UserId userId);
+    Task UserStoppedTyping(GroupId groupId, UserId userId);
 
-    Task ReceivedChannels(IList<ChannelDto> channelDtos);
+    Task ReceivedChannels(IList<GroupDto> channelDtos);
 
-    Task AddedToChannel(ChannelDto channelDto);
+    Task AddedToChannel(GroupDto groupDto);
 
-    Task ChannelParticipantsChanged(ChannelDto channelDto);
+    Task ChannelParticipantsChanged(GroupDto groupDto);
 
-    Task ChannelNameChanged(ChannelId channelId, string? name);
+    Task ChannelNameChanged(GroupId groupId, string? name);
 }

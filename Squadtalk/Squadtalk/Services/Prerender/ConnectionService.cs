@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Shared.Services;
 using Squadtalk.Data;
+using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 
 namespace Squadtalk.Services.Prerender;
@@ -8,8 +10,9 @@ namespace Squadtalk.Services.Prerender;
 internal class ConnectionService : IConnectionService
 {
     private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly UserRepository _userRepository;
+    private readonly ChatUserRepository _chatUserRepository;
     private readonly FriendRepository _friendRepository;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly PrerenderPersistantState _persistState;
 
     event Action<ConnectionStatus>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
@@ -20,13 +23,15 @@ internal class ConnectionService : IConnectionService
 
     public ConnectionService(
         AuthenticationStateProvider authenticationStateProvider,
-        UserRepository userRepository,
+        ChatUserRepository chatUserRepository,
         FriendRepository friendRepository,
+        SignInManager<ApplicationUser> signInManager,
         PrerenderPersistantState persistState)
     {
         _authenticationStateProvider = authenticationStateProvider;
-        _userRepository = userRepository;
+        _chatUserRepository = chatUserRepository;
         _friendRepository = friendRepository;
+        _signInManager = signInManager;
         _persistState = persistState;
     }
 
@@ -48,16 +53,17 @@ internal class ConnectionService : IConnectionService
     private async Task ConnectInternalAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _userRepository.FindUserById(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
+        var user = await _chatUserRepository.FindUserByIdAsync(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
+            await _signInManager.SignOutAsync();
             return;
         }
 
         var friends = await _friendRepository.GetUserFriendsAsync(user.Id);
         var friendRequests = await _friendRepository.GetUserPendingFriendRequests(user.Id);
 
-        var channelDtos = user.Channels
+        var channelDtos = user.Groups
             .Select(x => x.ToDto())
             .OrderByDescending(x => x.LastMessage?.Timestamp)
             .ToList();

@@ -1,0 +1,92 @@
+<MudDialog ContentClass="mt-n1">
+    <DialogContent>
+        <MudTabs Centered="true">
+            <MudTabPanel Text="@LocalizedText.R.all_members">
+
+                @{ var memberCount = GroupChat.Participants.Count; }
+
+                <p class="mud-typography-body2 my-1 mud-text-secondary">
+                    @memberCount @MemberCountString(memberCount)
+                </p>
+
+                @foreach (var participant in GroupChat.Participants)
+                {
+                    <div class="my-1 hover pa-1 d-flex gap-2 align-center overflow-y-auto rounded"
+                         style="max-height: 300px">
+                        @UserAvatar.NoBadgeMedium(participant.User)
+
+                        <div>
+                            <p class="mud-typography-body1">@participant.Username()</p>
+                            @if (participant.IsGroupCreator)
+                            {
+                                <p class="mud-typography-body2">@LocalizedText.R.group_creator</p>
+                            }
+                            else
+                            {
+                                <p class="mud-typography-body2">@LocalizedText.R.added_by @participant.AddedBy.Username</p>
+                            }
+                        </div>
+                    </div>
+                }
+            </MudTabPanel>
+            <MudTabPanel Text="@LocalizedText.R.moderators">
+
+                @{
+                    var moderators = GroupChat.Participants
+                        .Where(x => x.IsModeratorOrAbove())
+                        .ToArray();
+                }
+
+                <p class="mud-typography-body2 my-1 mud-text-secondary">
+                    @moderators.Length @ModeratorCountString(moderators.Length)
+                </p>
+
+                @foreach (var moderator in moderators)
+                {
+                    <div class="my-1 hover pa-1 d-flex gap-2 align-center overflow-y-auto rounded"
+                         style="max-height: 300px">
+                        @UserAvatar.NoBadgeMedium(moderator.User)
+
+                        <div>
+                            <p class="mud-typography-body1">@moderator.Username()</p>
+                            <p class="mud-typography-body2">
+                                @RoleName(moderator)
+                            </p>
+                        </div>
+                    </div>
+                }
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+</MudDialog>
+
+@inject LocalizedText LocalizedText
+
+@code
+{
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public GroupChatModel GroupChat { get; set; } = default!;
+
+    private string MemberCountString(int memberCount) => memberCount switch
+    {
+        1 => LocalizedText.R.one_member,
+        _ => LocalizedText.R.many_members
+    };
+
+    private string ModeratorCountString(int memberCount) => memberCount switch
+    {
+        1 => LocalizedText.R.one_moderator,
+        _ => LocalizedText.R.many_moderators
+    };
+
+    private string RoleName(GroupParticipantModel participant) => participant.Role switch
+    {
+        GroupRole.Moderator => LocalizedText.R.group_moderator,
+        GroupRole.Administrator => LocalizedText.R.group_admin,
+        GroupRole.Owner => LocalizedText.R.group_creator,
+        _ => LocalizedText.R.group_member
+    };
+}

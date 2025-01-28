@@ -24,20 +24,20 @@ public class HubConnectionManager
         _redisDb = connectionMultiplexer.GetDatabase(2);
     }
 
-    public async Task<bool> SetUserIsTypingAsync(ChannelId channelId, UserId userId)
+    public async Task<bool> SetUserIsTypingAsync(GroupId groupId, UserId userId)
     {
         var result = (int) await _redisDb.ExecuteAsync(
-            FCALL, "user_is_typing", ZeroKeys, channelId.Value, userId.ToString());
+            FCALL, "user_is_typing", ZeroKeys, groupId.Value, userId.ToString());
 
         const int shouldNotify = 1;
         return result == shouldNotify;
     }
 
-    public async Task<bool> SetUserStoppedTyping(ChannelId channelId, UserId userId)
+    public async Task<bool> SetUserStoppedTyping(GroupId groupId, UserId userId)
     {
         var key = new RedisKey(userId.ToString()).Prepend(TypingUserChannelsPrefix);
 
-        var userWasTypingOnChannel = await _redisDb.SetRemoveAsync(key, channelId.Value);
+        var userWasTypingOnChannel = await _redisDb.SetRemoveAsync(key, groupId.Value);
 
         return userWasTypingOnChannel;
     }
@@ -59,7 +59,7 @@ public class HubConnectionManager
 
         return ReadRedisResult(result);
     }
-    
+
     public async Task<(bool statusChanged, UserStatus currentStatus)> ConnectionClosedAsync(UserId userId, string connectionId)
     {
         var result = await _redisDb.ExecuteAsync(

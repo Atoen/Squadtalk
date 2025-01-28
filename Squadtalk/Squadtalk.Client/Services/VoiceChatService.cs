@@ -18,7 +18,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
 {
     private readonly IJSRuntime _jsRuntime;
     private readonly ISignalrRTCService _signalrRTCService;
-    private readonly IChannelManager _channelManager;
+    private readonly IChatGroupManager _chatGroupManager;
     private readonly UserVolumeManager _volumeManager;
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly ILogger<VoiceChatService> _logger;
@@ -30,8 +30,8 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
     public bool ActiveCallOnCurrentChannel => CurrentChannel?.State.HasActiveCall ?? false;
     public bool ConnectedToVoiceCallOnCurrentChannel => ConnectedToVoiceCall && CurrentChannel == CallChannel;
 
-    public ChannelModel? CallChannel { get; private set; }
-    public ChannelModel? CurrentChannel => _channelManager.CurrentChannel;
+    public ChatModel? CallChannel { get; private set; }
+    public ChatModel? CurrentChannel => _chatGroupManager.CurrentChannel;
 
     public bool MicrophoneEnabled { get; private set; }
     public bool CameraEnabled { get; private set; }
@@ -56,23 +56,23 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
     public event ErrorNotificationHandler? Error;
     public event Action<DisconnectReason>? Disconnected;
     public event Action? CurrentChannelCallChanged;
-    public event Func<ChannelModel, Task>? CallIncoming;
-    public event Action<ChannelModel>? CallEnded;
-    public event Action<ChannelModel>? ParticipantListUpdated;
-    public event Action<UserId, ChannelModel>? ParticipantUpdated;
+    public event Func<ChatModel, Task>? CallIncoming;
+    public event Action<ChatModel>? CallEnded;
+    public event Action<ChatModel>? ParticipantListUpdated;
+    public event Action<UserId, ChatModel>? ParticipantUpdated;
     public event Action? LocalParticipantStateUpdated;
 
     public VoiceChatService(
         IJSRuntime jsRuntime,
         SignalrService signalrRTCService,
-        IChannelManager channelManager,
+        IChatGroupManager chatGroupManager,
         UserVolumeManager volumeManager,
         IUserAuthenticationService userAuthenticationService,
         ILogger<VoiceChatService> logger)
     {
         _jsRuntime = jsRuntime;
         _signalrRTCService = signalrRTCService;
-        _channelManager = channelManager;
+        _chatGroupManager = chatGroupManager;
         _volumeManager = volumeManager;
         _userAuthenticationService = userAuthenticationService;
         _logger = logger;
@@ -92,9 +92,9 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
             "wss://192.168.1.134:1230/jajo");
     }
 
-    public async Task StartCallAsync(ChannelId channelId)
+    public async Task StartCallAsync(GroupId groupId)
     {
-        var roomToken = await _signalrRTCService.StartVoiceCallAsync(channelId);
+        var roomToken = await _signalrRTCService.StartVoiceCallAsync(groupId);
         if (roomToken.IsError)
         {
             Error?.Invoke("Error while initiating call", "Failed to create room token");
@@ -102,8 +102,8 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
             return;
         }
 
-        var currentChannel = _channelManager.CurrentChannel;
-        if (currentChannel?.Id != channelId)
+        var currentChannel = _chatGroupManager.CurrentChannel;
+        if (currentChannel?.Id != groupId)
         {
             Error?.Invoke("Error while initiating call","Channel not found");
             _logger.LogError("Channel is null");
@@ -113,7 +113,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         await JoinRoomAsync(roomToken.Value, currentChannel);
     }
 
-    public async Task AcceptCallAsync(ChannelId id)
+    public async Task AcceptCallAsync(GroupId id)
     {
         var token = await _signalrRTCService.AcceptCallAsync(id);
         if (token.IsError)
@@ -123,11 +123,11 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
             return;
         }
 
-        var channel = _channelManager.GetChannel(id)!;
+        var channel = _chatGroupManager.GetChannel(id)!;
         await JoinRoomAsync(token.Value, channel);
     }
 
-    public Task DeclineCallAsync(ChannelId id)
+    public Task DeclineCallAsync(GroupId id)
     {
         return _signalrRTCService.DeclineCallAsync(id);
     }
@@ -242,16 +242,16 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         }
     }
 
-    public async Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel)
+    public async Task<bool> CheckIfChannelHasActiveCallAsync(ChatModel chat)
     {
-        var hasCall = await _signalrRTCService.ChannelHasActiveCall(channel.Id);
+        var hasCall = await _signalrRTCService.ChannelHasActiveCall(chat.Id);
 
         if (hasCall.IsError)
         {
             return false;
         }
 
-        channel.State.HasActiveCall = hasCall.Value;
+        chat.State.HasActiveCall = hasCall.Value;
         if (hasCall.Value)
         {
             CurrentChannelCallChanged?.Invoke();
@@ -260,7 +260,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         return hasCall.Value;
     }
 
-    private async Task JoinRoomAsync(RoomTokenDto token, ChannelModel channel)
+    private async Task JoinRoomAsync(RoomTokenDto token, ChatModel chat)
     {
         var result = await _jsModule.TryInvokeAsync2<bool>("Start", token.Token);
         if (result.IsFailed)
@@ -275,16 +275,16 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
             return;
         }
 
-        channel.State.HasActiveCall = true;
+        chat.State.HasActiveCall = true;
         ConnectedToVoiceCall = true;
-        CallChannel = channel;
+        CallChannel = chat;
 
         CurrentChannelCallChanged?.Invoke();
     }
 
-    private Task OnIncomingCall(ChannelId channelId, UserId initiatorId)
+    private Task OnIncomingCall(GroupId groupId, UserId initiatorId)
     {
-        if (_channelManager.GetChannel(channelId) is not { } channel || channel.State.HasActiveCall)
+        if (_chatGroupManager.GetChannel(groupId) is not { } channel || channel.State.HasActiveCall)
         {
             return Task.CompletedTask;
         }
@@ -295,13 +295,13 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
             return Task.CompletedTask;
         }
 
-        _logger.LogInformation("Incoming call from: {Caller}", channelId.Value);
+        _logger.LogInformation("Incoming call from: {Caller}", groupId.Value);
 
         CurrentChannelCallChanged?.Invoke();
         return CallIncoming.TryInvoke(channel);
     }
 
-    private Task OnCallAccepted(ChannelId channelId, IChatUser accepting)
+    private Task OnCallAccepted(GroupId groupId, IChatUser accepting)
     {
         _logger.LogInformation("User {User} accepted call", accepting.Username);
 
@@ -313,23 +313,23 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
                 ConnectionQuality = ConnectionQuality.Unknown
             };
 
-            ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
+            ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
         }
 
         return Task.CompletedTask;
     }
 
-    private Task OnCallDeclined(IChatUser declining, ChannelId channelId)
+    private Task OnCallDeclined(IChatUser declining, GroupId groupId)
     {
-        _logger.LogInformation("Call {CallId} declined by {User}", channelId, declining.Username);
+        _logger.LogInformation("Call {CallId} declined by {User}", groupId, declining.Username);
         return Task.CompletedTask;
     }
 
-    private Task OnCallEnded(ChannelId channelId)
+    private Task OnCallEnded(GroupId groupId)
     {
-        _logger.LogInformation("Call {Id} ended", channelId);
+        _logger.LogInformation("Call {Id} ended", groupId);
 
-        var channel = _channelManager.GetRequiredChannel(channelId);
+        var channel = _chatGroupManager.GetRequiredChannel(groupId);
         channel.State.HasActiveCall = false;
 
         CallEnded?.Invoke(channel);

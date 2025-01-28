@@ -13,11 +13,11 @@ namespace Squadtalk.Controllers;
 [Route("api/files")]
 public class FileController(FileRepository fileRepository): ControllerBase
 {
-    [HttpGet("{channelId}/{fileId}/{**slug}")]
-    public async Task<IActionResult> DownloadFile(ChannelId channelId, TusFileId fileId)
+    [HttpGet("{groupId}/{fileId}/{**slug}")]
+    public async Task<IActionResult> DownloadFile(GroupId groupId, TusFileId fileId)
     {
         var cancellationToken = HttpContext.RequestAborted;
-        var file = await fileRepository.GetTusFileAsync(channelId, fileId, cancellationToken);
+        var file = await fileRepository.GetTusFileAsync(groupId, fileId, cancellationToken);
 
         return file is not null
             ? await SetFileContentDispositionAsync(file, cancellationToken)

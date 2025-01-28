@@ -74,7 +74,7 @@ internal class ContactManager : LazyModelCreator, IContactManager
     {
         if (!_userModels.TryGetValue(chatUser.Id, out var model))
         {
-            model = UserModel.Create(chatUser);
+            model = UserModel.Create(chatUser, _userAuthenticationService.UserId);
             _userModels[chatUser.Id] = model;
         }
 

@@ -18,9 +18,9 @@ public interface IVoiceChatService
 
     bool ActiveCallOnCurrentChannel { get; }
 
-    ChannelModel? CallChannel { get; }
+    ChatModel? CallChannel { get; }
 
-    ChannelModel? CurrentChannel { get; }
+    ChatModel? CurrentChannel { get; }
 
     bool MicrophoneEnabled { get; }
 
@@ -45,19 +45,19 @@ public interface IVoiceChatService
     event ErrorNotificationHandler? Error;
     event Action<DisconnectReason>? Disconnected;
     event Action? CurrentChannelCallChanged;
-    event Func<ChannelModel, Task>? CallIncoming;
-    event Action<ChannelModel>? CallEnded;
-    event Action<ChannelModel>? ParticipantListUpdated;
-    event Action<UserId, ChannelModel>? ParticipantUpdated;
+    event Func<ChatModel, Task>? CallIncoming;
+    event Action<ChatModel>? CallEnded;
+    event Action<ChatModel>? ParticipantListUpdated;
+    event Action<UserId, ChatModel>? ParticipantUpdated;
     event Action? LocalParticipantStateUpdated;
 
     Task InitializeAsync();
 
-    Task StartCallAsync(ChannelId channelId);
+    Task StartCallAsync(GroupId groupId);
 
-    Task AcceptCallAsync(ChannelId channelId);
+    Task AcceptCallAsync(GroupId groupId);
 
-    Task DeclineCallAsync(ChannelId channelId);
+    Task DeclineCallAsync(GroupId groupId);
 
     Task LeaveCallAsync();
 
@@ -81,7 +81,7 @@ public interface IVoiceChatService
 
     Task ToggleScreenShareAsync();
 
-    Task<bool> CheckIfChannelHasActiveCallAsync(ChannelModel channel);
+    Task<bool> CheckIfChannelHasActiveCallAsync(ChatModel chat);
 }
 
 public enum AudioSource

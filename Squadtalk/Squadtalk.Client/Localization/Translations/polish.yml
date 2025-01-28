@@ -116,6 +116,12 @@ change_password: Zmień hasło
 show: Pokaż
 hide: Ukryj
 
+group_name: Nazwa grupy
+enter_group_name: Wprowadź nazwę grupy
+group_name_set: Ustaw nazwę grupy
+change_group_name: Zmień nazwę grupy
+clear_group_name: Usuń nazwę grupy
+
 network_error: Błąd połączenia
 
 change_username: Zmień swoją nazwę użytkownika
@@ -160,6 +166,22 @@ manage_group: Zarządzaj grupą
 add_friends_to_group: Dodaj znajomych do grupy
 channel_beginning: To jest początek wiadomości z
 add: Dodaj
+group_members: Uczestnicy
+group_image: Zdjęcie grupy
+leave_group: Opuść grupę
+group_name_too_long: Nazwa grupy jest zbyt długa
+failed_to_change_group_name: Nie udało się zmienić nazwy grupy
+added_by: Dodany przez
+group_creator: Założyciel grupy
+group_admin: Administrator
+group_moderator: Moderator
+group_member: Uczestnik
+all_members: Wszyscy
+moderators: Moderatorzy
+one_member: Uczestnik
+many_members: Uczestników
+one_moderator: Moderator
+many_moderators: Moderatorów
 
 # Settings page
 app_language: Język

@@ -89,9 +89,10 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
     {
+        serviceCollection.AddScoped<ApplicationUserRepository>();
+        serviceCollection.AddScoped<ChatUserRepository>();
         serviceCollection.AddScoped<MessageRepository>();
-        serviceCollection.AddScoped<UserRepository>();
-        serviceCollection.AddScoped<ChannelRepository>();
+        serviceCollection.AddScoped<GroupRepository>();
         serviceCollection.AddScoped<FileRepository>();
         serviceCollection.AddScoped<FriendRepository>();
 
@@ -129,7 +130,7 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.AddScoped<ITextChatService, TextChatService>();
 
-        serviceCollection.AddScoped<IChannelManager, ChannelManager>();
+        serviceCollection.AddScoped<IChatGroupManager, ChatGroupManager>();
         serviceCollection.AddScoped<IContactManager, ContactManager>();
 
         serviceCollection.AddScoped<ContactTabState>();

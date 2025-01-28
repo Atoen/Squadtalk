@@ -8,7 +8,7 @@ namespace Squadtalk.Repositories;
 
 public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    public async Task<List<ApplicationUser>> GetUserFriendsAsync(UserId userId)
+    public async Task<List<ChatUser>> GetUserFriendsAsync(UserId userId)
     {
         return await UserFriendsAsync(DbContext, userId).ToListAsync();
     }
@@ -92,7 +92,7 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
         return output.Success ? RemoveFriendResult.Success : RemoveFriendResult.BadRequest;
     }
 
-    private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<ApplicationUser>> UserFriendsAsync =
+    private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<ChatUser>> UserFriendsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Friendships
                 .AsNoTracking()

@@ -1,17 +1,19 @@
 using Shared.Data.TypedIds;
 using Shared.Enums;
+using Shared.Extensions;
 using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class GroupChatModel : ChannelModel, ISubscriber<UserModel>, IDisposable
+public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposable
 {
     public const string GlobalChanelIdValue = "global";
 
-    public static readonly ChannelId GlobalChatId = new(GlobalChanelIdValue);
+    public static readonly GroupId GlobalChatId = new(GlobalChanelIdValue);
     public static GroupChatModel CreateGlobalChat() => new([], GlobalChatId) { _name = "Global" };
-    
-    public override List<UserModel> Others { get; }
+
+    public override List<GroupParticipantModel> Participants { get; }
+    public override List<GroupParticipantModel> Others { get; }
 
     private string? _name;
     public override string Name => CustomName ?? GetOrPrepareName();
@@ -29,25 +31,25 @@ public class GroupChatModel : ChannelModel, ISubscriber<UserModel>, IDisposable
 
     public bool HasOnlineStatus => Status == UserStatus.Online;
 
-    public GroupChatModel(IEnumerable<UserModel> others, ChannelId id, string? customName = null) : base(id)
+    public GroupChatModel(IEnumerable<GroupParticipantModel> participants, GroupId id, string? customName = null) : base(id)
     {
         _customName = customName;
 
-        var otherUsers = others.ToList();
-        Subscribe(otherUsers);
-        Others = otherUsers;
+        Participants = participants.OrderBy(x => x.Username()).ToList();
+        Others = Participants.Where(x => x.User.IsRemote).ToList();
+
+        Subscribe(Others);
     }
 
-    private List<IDisposable?>? _subscriptions;
+    private readonly List<IDisposable?> _subscriptions = [];
 
-    private void Subscribe(List<UserModel> users)
+    private void Subscribe(List<GroupParticipantModel> participants)
     {
-        foreach (var user in users)
+        foreach (var participant in participants)
         {
-            var subscription = user.Subscribe(this);
+            var subscription = participant.User.Subscribe(this);
             if (subscription is not null)
             {
-                _subscriptions ??= [];
                 _subscriptions.Add(subscription);
             }
         }
@@ -66,18 +68,18 @@ public class GroupChatModel : ChannelModel, ISubscriber<UserModel>, IDisposable
 
     public void Dispose()
     {
-        if (_subscriptions is not { Count: > 0 } subscriptions)
+        if (_subscriptions is not { Count: > 0 })
         {
             return;
         }
 
-        foreach (var subscription in subscriptions)
+        foreach (var subscription in _subscriptions)
         {
             subscription?.Dispose();
         }
     }
 
-    public override void UpdateParticipants(IEnumerable<UserModel> updatedParticipants)
+    public override void UpdateParticipants(IEnumerable<GroupParticipantModel> updatedParticipants)
     {
         Others.Clear();
         Others.AddRange(updatedParticipants);
@@ -96,14 +98,14 @@ public class GroupChatModel : ChannelModel, ISubscriber<UserModel>, IDisposable
 
         _name = Others.Count == 0
             ? string.Empty // Group with only 1 user has localized default name
-            : string.Join(", ", Others.Take(3).Select(x => x.Username));
+            : string.Join(", ", Others.Take(3).Select(x => x.User.Username));
 
         return _name;
     }
 
     private UserStatus GetStatus()
     {
-        var hasOnlineUser = Others.Any(x => x.Status == UserStatus.Online);
+        var hasOnlineUser = Others.Any(x => x.User.Status == UserStatus.Online);
         return hasOnlineUser ? UserStatus.Online : UserStatus.Offline;
     }
 }

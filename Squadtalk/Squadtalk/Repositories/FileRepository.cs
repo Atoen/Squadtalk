@@ -13,9 +13,9 @@ public class FileRepository(
     TusHelper tusHelper,
     ILogger<FileRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    public async Task<ITusFile?> GetTusFileAsync(ChannelId channelId, TusFileId fileId, CancellationToken cancellationToken = default)
+    public async Task<ITusFile?> GetTusFileAsync(GroupId groupId, TusFileId fileId, CancellationToken cancellationToken = default)
     {
-        var dbFile = await GetFileAsync(channelId, fileId);
+        var dbFile = await GetFileAsync(groupId, fileId);
         if (dbFile is null)
         {
             return null;
@@ -24,12 +24,12 @@ public class FileRepository(
         return await tusHelper.DiskStore.GetFileAsync(dbFile.TusId, cancellationToken);
     }
 
-    public async Task<DbFile?> AddFileAsync(ITusFile tusFile, ChannelId channelId, CancellationToken cancellationToken = default)
+    public async Task<DbFile?> AddFileAsync(ITusFile tusFile, GroupId groupId, CancellationToken cancellationToken = default)
     {
         var file = new DbFile
         {
             TusId = new TusFileId(tusFile.Id),
-            ChannelId = channelId
+            GroupId = groupId
         };
 
         var added = await AddFileAsync(file, cancellationToken);
@@ -44,15 +44,15 @@ public class FileRepository(
         return await SaveChangesAsync(cancellationToken);
     }
 
-    public Task<DbFile?> GetFileAsync(ChannelId channelId, TusFileId fileId)
+    public Task<DbFile?> GetFileAsync(GroupId groupId, TusFileId fileId)
     {
-        return FileByChannelPathAsync(DbContext, channelId, fileId);
+        return FileByChannelPathAsync(DbContext, groupId, fileId);
     }
 
-    private static readonly Func<ApplicationDbContext, ChannelId, TusFileId, Task<DbFile?>> FileByChannelPathAsync =
+    private static readonly Func<ApplicationDbContext, GroupId, TusFileId, Task<DbFile?>> FileByChannelPathAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, ChannelId channelId, TusFileId fileId) => context.Files
+            (ApplicationDbContext context, GroupId channelId, TusFileId fileId) => context.Files
                 .AsNoTracking()
-                .Where(x => x.ChannelId == channelId)
+                .Where(x => x.GroupId == channelId)
                 .SingleOrDefault(x => x.TusId == fileId));
 }

@@ -6,7 +6,7 @@ using Squadtalk.Services;
 
 namespace Squadtalk.Signalr;
 
-partial class AppHub
+public partial class AppHub
 {
     private IVoiceChatClient VoiceClient(string connectionId) => Clients.Client(connectionId);
     private IVoiceChatClient VoiceGroup(string groupName) => Clients.Group(groupName);
@@ -16,67 +16,67 @@ partial class AppHub
     public bool Ping() => true;
 
     public async Task<RoomTokenDto?> StartCall(
-        ChannelId channelId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
+        GroupId groupId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
     {
-        var participant = await GetChannelParticipantAsync(channelId);
+        var participant = await GetChannelParticipantAsync(groupId);
         if (participant is null)
         {
             await VoiceCaller.CallFailed("Failed to create voice call");
             return null;
         }
 
-        voiceCallManager.VoiceCallInitiated(participant, channelId);
+        voiceCallManager.VoiceCallInitiated(participant, groupId);
 
-        return liveKitService.CreateRoomToken(Context.User, channelId);
+        return liveKitService.CreateRoomToken(Context.User, groupId);
     }
 
     public async Task<RoomTokenDto?> AcceptCall(
-        ChannelId channelId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
+        GroupId groupId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
     {
-        var participant = await GetChannelParticipantAsync(channelId);
+        var participant = await GetChannelParticipantAsync(groupId);
         if (participant is null)
         {
             await VoiceCaller.CallFailed("Failed to join the call");
             return null;
         }
 
-        voiceCallManager.VoiceCallInitiated(participant, channelId);
+        voiceCallManager.VoiceCallInitiated(participant, groupId);
 
-        if (!voiceCallManager.ChannelHasActiveCall(channelId))
+        if (!voiceCallManager.ChannelHasActiveCall(groupId))
         {
             return null;
         }
 
-        await OthersInVoiceGroup(channelId).CallAccepted(channelId, participant.ToDto());
+        await OthersInVoiceGroup(groupId).CallAccepted(groupId, participant.ToDto());
 
-        return liveKitService.CreateRoomToken(Context.User, channelId);
+        return liveKitService.CreateRoomToken(Context.User, groupId);
     }
 
-    public async Task DeclineCall(ChannelId channelId, VoiceCallManager voiceCallManager)
+    public async Task DeclineCall(GroupId groupId, VoiceCallManager voiceCallManager)
     {
-        var participant = await GetChannelParticipantAsync(channelId);
+        var participant = await GetChannelParticipantAsync(groupId);
         if (participant is null)
         {
             return;
         }
 
-        var room = voiceCallManager.ActiveRooms.SingleOrDefault(x => x.ChannelId == channelId);
+        var room = voiceCallManager.ActiveRooms.SingleOrDefault(x => x.GroupId == groupId);
         if (room is null)
         {
             return;
         }
 
-        await OthersInVoiceGroup(channelId).CallDeclined(participant.ToDto(), channelId);
+        await OthersInVoiceGroup(groupId).CallDeclined(participant.ToDto(), groupId);
     }
 
-    public async Task<bool> ChannelHasActiveCall(ChannelId channelId, VoiceCallManager voiceCallManager)
+    public async Task<bool> ChannelHasActiveCall(GroupId groupId, VoiceCallManager voiceCallManager)
     {
-        var participant = await GetChannelParticipantAsync(channelId);
+        var participant = await GetChannelParticipantAsync(groupId);
         if (participant is null)
         {
             return false;
         }
 
-        return voiceCallManager.ChannelHasActiveCall(channelId);
+        return voiceCallManager.ChannelHasActiveCall(groupId);
     }
 }

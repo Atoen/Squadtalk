@@ -1,7 +1,7 @@
-@switch (Channel)
+@switch (Chat)
 {
-    case DirectMessageChannelModel dm:
-        @UserAvatar.PrimaryBadge((dm.Other, Size))
+    case DirectMessageModel dm:
+        @UserAvatar.PrimaryBadge((dm.Other.User, Size))
         break;
 
     case GroupChatModel { Others.Count: 0 }:
@@ -41,7 +41,7 @@
 
                 @foreach (var user in groupChat.Others.Take(2))
                 {
-                    <img alt="@user.Username Avatar" src="@user.AvatarUrl"
+                    <img alt="@user.Username() Avatar" src="@user.AvatarUrl()"
                          class="@imageClass"/>
                 }
             </div>
@@ -54,7 +54,7 @@
 @code
 {
     [Parameter, EditorRequired]
-    public ChannelModel Channel { get; set; } = default!;
+    public ChatModel Chat { get; set; } = default!;
 
     [Parameter]
     public bool Small { get; set; }

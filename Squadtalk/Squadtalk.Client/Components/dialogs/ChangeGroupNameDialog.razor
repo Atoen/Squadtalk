@@ -1,0 +1,77 @@
+<MudDialog ContentClass="mt-n1">
+    <DialogContent>
+
+        @if (_alertMessage is not null)
+        {
+            <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mt-n1 mb-3" Dense="true">
+                @_alertMessage.Text
+            </MudAlert>
+        }
+
+        <MudTextField T="string" Immediate="true" Counter="@IFormValidator.MaximumGroupNameLength"
+                      Label="@LocalizedText.R.group_name" @bind-Value="_name" Class="mt-n1"
+                      Validation="FormValidator.GroupNameValidator" Clearable="true"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Cancel">
+            @LocalizedText.R.dialog_cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="DisableConfirmButton" OnClick="ChangeGroupName">
+            @ConfirmButtonText
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@inject IChatGroupManager ChatGroupManager
+@inject IFormValidator FormValidator
+@inject LocalizedText LocalizedText
+
+@code
+{
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public GroupChatModel GroupChat { get; set; } = default!;
+
+    private bool DisableConfirmButton => GroupChat.CustomName == _name || _working;
+    private string ConfirmButtonText => _name switch
+    {
+        _ when GroupChat.CustomName is null => LocalizedText.R.group_name_set,
+        null or { Length: 0 } => LocalizedText.R.clear_group_name,
+        _ => LocalizedText.R.change_group_name
+    };
+
+    private string? _name;
+    private bool _working;
+    private AlertMessage? _alertMessage;
+
+    protected override void OnInitialized() => _name = GroupChat.CustomName;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task ChangeGroupName()
+    {
+        var name = _name;
+        if (name?.Length > IFormValidator.MaximumGroupNameLength || _working)
+        {
+            return;
+        }
+
+        _working = true;
+
+        var success = await ChatGroupManager.ChangeGroupChatNameAsync(GroupChat, name);
+
+        _working = false;
+
+        if (!success)
+        {
+            _alertMessage = AlertMessage.Error(LocalizedText.R.failed_to_change_group_name);
+        }
+        else
+        {
+            MudDialog.Close();
+        }
+    }
+}

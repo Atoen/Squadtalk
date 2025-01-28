@@ -71,7 +71,7 @@
         }
     }
 
-    private async Task CallIncoming(ChannelModel channel)
+    private async Task CallIncoming(ChatModel chat)
     {
         // return _callIncomingModal.ShowAsync<IncomingCallModal>(
         //     title: Localization.TextTable.CallIncomingTemplate.TryFormat(channel.Name),
@@ -98,17 +98,17 @@
         _theme.PaletteDark = dark;
     }
 
-    private async Task CallAcceptedDecisionCallback(bool accepted, ChannelId channelId)
+    private async Task CallAcceptedDecisionCallback(bool accepted, GroupId groupId)
     {
         // await _callIncomingModal.HideAsync();
 
         if (accepted)
         {
-            await VoiceChatService.AcceptCallAsync(channelId);
+            await VoiceChatService.AcceptCallAsync(groupId);
         }
         else
         {
-            await VoiceChatService.DeclineCallAsync(channelId);
+            await VoiceChatService.DeclineCallAsync(groupId);
         }
     }
 

@@ -8,38 +8,39 @@ using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
 
-internal class ChannelManager : IChannelManager
+internal class ChatGroupManager : IChatGroupManager
 {
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly SignalrService _signalrService;
     private readonly IContactManager _contactManager;
-    private readonly ILogger<ChannelManager> _logger;
+    private readonly ILogger<ChatGroupManager> _logger;
     private readonly NavigationManager _navigationManager;
 
-    private readonly Dictionary<ChannelId, ChannelModel> _allChannels = [];
+    private readonly Dictionary<GroupId, ChatModel> _allChannels = [];
     private readonly List<GroupChatModel> _groupChats = [];
-    private readonly List<DirectMessageChannelModel> _directMessageChannels = [];
+    private readonly List<DirectMessageModel> _directMessageChannels = [];
 
-    public IReadOnlyCollection<ChannelModel> Channels => _allChannels.Values;
+    public IReadOnlyCollection<ChatModel> Channels => _allChannels.Values;
 
     public IEnumerable<GroupChatModel> GroupChats => _groupChats;
-    public IEnumerable<DirectMessageChannelModel> DirectMessageChannels => _directMessageChannels;
+    public IEnumerable<DirectMessageModel> DirectMessageChannels => _directMessageChannels;
 
     public event Action? ChannelsListChanged;
 
     public event Action? ChannelChanged;
     public event Func<Task>? ChannelChangedAsync;
 
-    public GroupChatModel GlobalChat { get; } = GroupChatModel.CreateGlobalChat();
-    public ChannelModel? CurrentChannel { get; private set; }
+    public Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
+    public GroupChatModel GlobalGroup { get; } = GroupChatModel.CreateGlobalChat();
+    public ChatModel? CurrentChannel { get; private set; }
 
     private bool _startedScanningStaleTypingState;
 
-    public ChannelManager(
+    public ChatGroupManager(
         IUserAuthenticationService userAuthenticationService,
         SignalrService signalrService,
         IContactManager contactManager,
-        ILogger<ChannelManager> logger,
+        ILogger<ChatGroupManager> logger,
         NavigationManager navigationManager)
     {
         _userAuthenticationService = userAuthenticationService;
@@ -47,6 +48,8 @@ internal class ChannelManager : IChannelManager
         _contactManager = contactManager;
         _navigationManager = navigationManager;
         _logger = logger;
+
+        GroupParticipantProvider = GetOrCreateGroupParticipantModel;
 
         _signalrService.ChannelsReceived += ChannelsReceived;
         _signalrService.AddedToChannel += AddedToChannel;
@@ -58,27 +61,27 @@ internal class ChannelManager : IChannelManager
 
     #region Public Methods
 
-    public ChannelModel? GetChannel(ChannelId channelId)
+    public ChatModel? GetChannel(GroupId groupId)
     {
-        if (channelId == GlobalChat.Id)
+        if (groupId == GlobalGroup.Id)
         {
-            return GlobalChat;
+            return GlobalGroup;
         }
 
-        _allChannels.TryGetValue(channelId, out var channel);
+        _allChannels.TryGetValue(groupId, out var channel);
         return channel;
     }
 
-    public ChannelModel GetRequiredChannel(ChannelId channelId)
+    public ChatModel GetRequiredChannel(GroupId groupId)
     {
-        return channelId == GlobalChat.Id ? GlobalChat : _allChannels[channelId];
+        return groupId == GlobalGroup.Id ? GlobalGroup : _allChannels[groupId];
     }
 
-    public async Task OpenChannelAsync(ChannelModel channelModel, bool navigate = true)
+    public async Task OpenChannelAsync(ChatModel chatModel, bool navigate = true)
     {
-        if (CurrentChannel == channelModel) return;
+        if (CurrentChannel == chatModel) return;
 
-        await ChangeChannelAsync(channelModel);
+        await ChangeChannelAsync(chatModel);
 
         if (navigate)
         {
@@ -92,25 +95,25 @@ internal class ChannelManager : IChannelManager
     {
         if (model.Id == _userAuthenticationService.UserId) return;
 
-        var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.Id == model.Id);
+        var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.User.Id == model.Id);
         if (openDirectMessageChannelWithUser is not null)
         {
             await OpenChannelAsync(openDirectMessageChannelWithUser);
             return;
         }
 
-        await OpenChannelAsync(DirectMessageChannelModel.CreateTempChannel(model));
+        await OpenChannelAsync(DirectMessageModel.CreateTempChannel(model));
     }
 
-    public async Task UpgradeToPersistentChannelAsync(ChannelModel channelModel)
+    public async Task UpgradeToPersistentChannelAsync(ChatModel chatModel)
     {
-        if (channelModel is not DirectMessageChannelModel dm)
+        if (chatModel is not DirectMessageModel dm)
         {
             _logger.LogError("Only direct message channels can be temporary");
             return;
         }
 
-        var channelId = await CreateNewChannelAsync(dm.Other);
+        var channelId = await CreateNewChannelAsync(dm.Other.User);
         if (channelId is not null && GetChannel(channelId) is { } openedChannel)
         {
             await ChangeChannelAsync(openedChannel);
@@ -123,7 +126,7 @@ internal class ChannelManager : IChannelManager
         return result.ValueOr(false);
     }
 
-    public async Task<ChannelId?> CreateNewChannelAsync(params IEnumerable<UserModel> others)
+    public async Task<GroupId?> CreateNewChannelAsync(params IEnumerable<UserModel> others)
     {
         var participantsId = others
             .Select(x => x.Id)
@@ -133,10 +136,23 @@ internal class ChannelManager : IChannelManager
         return result.Value;
     }
 
-    public async Task AddFriendsToGroupAsync(ChannelId channelId, params IEnumerable<UserModel> friends)
+    public async Task CreateAndOpenNewChannelAsync(params IEnumerable<UserModel> others)
+    {
+        var channelId = await CreateNewChannelAsync(others);
+        if (channelId is null) return;
+
+        if (!_allChannels.TryGetValue(channelId, out var createdChannel))
+        {
+            return;
+        }
+
+        await OpenChannelAsync(createdChannel);
+    }
+
+    public async Task AddFriendsToGroupAsync(GroupId groupId, params IEnumerable<UserModel> friends)
     {
         var friendsId = friends.Select(x => x.Id);
-        var result = await _signalrService.AddFriendsToGroupAsync(channelId, friendsId);
+        var result = await _signalrService.AddFriendsToGroupAsync(groupId, friendsId);
 
         if (result.ErrorOrValueIs(false))
         {
@@ -148,14 +164,14 @@ internal class ChannelManager : IChannelManager
 
     #region Event Handlers
 
-    private async Task AddedToChannel(IChatChannel channel)
+    private async Task AddedToChannel(IChatGroup group)
     {
-        await AddChannel(channel, false);
+        await AddChannel(group, false);
 
         ChannelsListChanged?.Invoke();
     }
 
-    private async Task ChannelsReceived(IEnumerable<IChatChannel> channels)
+    private async Task ChannelsReceived(IEnumerable<IChatGroup> channels)
     {
         foreach (var channel in channels)
         {
@@ -165,27 +181,27 @@ internal class ChannelManager : IChannelManager
         ChannelsListChanged?.Invoke();
     }
 
-    private void ParticipantsChanged(IChatChannel updatedChannel)
+    private void ParticipantsChanged(IChatGroup updatedGroup)
     {
-        _logger.LogInformation("Channel {Id} state changed", updatedChannel.Id);
-        if (!_allChannels.TryGetValue(updatedChannel.Id, out var channel))
+        _logger.LogInformation("Channel {Id} state changed", updatedGroup.Id);
+        if (!_allChannels.TryGetValue(updatedGroup.Id, out var channel))
         {
-            AddChannel(updatedChannel, false);
+            AddChannel(updatedGroup, false);
             ChannelsListChanged?.Invoke();
 
             return;
         }
 
-        var others = updatedChannel.Participants
+        var others = updatedGroup.Participants
             .Where(x => x.Id != _userAuthenticationService.UserId)
-            .Select(_contactManager.UserModelProvider);
+            .Select(GroupParticipantProvider);
 
         channel.UpdateParticipants(others);
     }
 
-    private void OnChannelNameChanged(ChannelId channelId, string? channelName)
+    private void OnChannelNameChanged(GroupId groupId, string? channelName)
     {
-        if (!_allChannels.TryGetValue(channelId, out var channel))
+        if (!_allChannels.TryGetValue(groupId, out var channel))
         {
             _logger.LogInformation("Non-existent channel name changed");
             return;
@@ -201,19 +217,24 @@ internal class ChannelManager : IChannelManager
         ChannelsListChanged?.Invoke();
     }
 
-    private void UserIsTyping(ChannelId channelId, UserId userId)
+    private void UserIsTyping(GroupId groupId, UserId userId)
     {
-        UpdateTypingState(channelId, userId, isTyping: true);
+        UpdateTypingState(groupId, userId, isTyping: true);
     }
 
-    private void UserStoppedTyping(ChannelId channelId, UserId userId)
+    private void UserStoppedTyping(GroupId groupId, UserId userId)
     {
-        UpdateTypingState(channelId, userId, isTyping: false);
+        UpdateTypingState(groupId, userId, isTyping: false);
     }
 
     #endregion
 
-    private Task ChangeChannelAsync(ChannelModel? channel)
+    private GroupParticipantModel GetOrCreateGroupParticipantModel(IGroupParticipant groupParticipant)
+    {
+        return GroupParticipantModel.Create(groupParticipant, _contactManager.UserModelProvider);
+    }
+
+    private Task ChangeChannelAsync(ChatModel? channel)
     {
         if (CurrentChannel == channel)
         {
@@ -230,14 +251,14 @@ internal class ChannelManager : IChannelManager
         return ChannelChangedAsync.TryInvoke();
     }
 
-    private Task AddChannel(IChatChannel channel, bool bulk)
+    private Task AddChannel(IChatGroup group, bool bulk)
     {
-        if (_allChannels.ContainsKey(channel.Id))
+        if (_allChannels.ContainsKey(group.Id))
         {
             return Task.CompletedTask;
         }
 
-        var model = ChannelModel.Create(channel, _userAuthenticationService.UserId, _contactManager.UserModelProvider);
+        var model = ChatModel.Create(group, GroupParticipantProvider);
         // if (!bulk)
         // {
         //     model.State.ScrolledToBeginning = true;
@@ -251,29 +272,29 @@ internal class ChannelManager : IChannelManager
             return Task.CompletedTask;
         }
 
-        var directMessageChannel = (DirectMessageChannelModel) model;
+        var directMessageChannel = (DirectMessageModel) model;
         _directMessageChannels.Add(directMessageChannel);
 
         return UpgradeFakeChanelIfNeeded(directMessageChannel);
     }
 
-    private Task UpgradeFakeChanelIfNeeded(DirectMessageChannelModel openedDirectMessageChannelModel)
+    private Task UpgradeFakeChanelIfNeeded(DirectMessageModel openedDirectMessageModel)
     {
-        if (CurrentChannel is DirectMessageChannelModel dm && dm.IsTemporary() &&
-            dm.Other.Id == openedDirectMessageChannelModel.Other.Id)
+        if (CurrentChannel is DirectMessageModel dm && dm.IsTemporary() &&
+            dm.Other.User.Id == openedDirectMessageModel.Other.User.Id)
         {
-            return OpenChannelAsync(openedDirectMessageChannelModel);
+            return OpenChannelAsync(openedDirectMessageModel);
         }
 
         return Task.CompletedTask;
     }
 
-    private void UpdateTypingState(ChannelId channelId, UserId userId, bool isTyping)
+    private void UpdateTypingState(GroupId groupId, UserId userId, bool isTyping)
     {
         _logger.LogInformation("User {UserId} {Action} typing on channel: {ChannelId}",
-            userId, isTyping ? "is now" : "stopped", channelId);
+            userId, isTyping ? "is now" : "stopped", groupId);
 
-        if (!_allChannels.TryGetValue(channelId, out var channel))
+        if (!_allChannels.TryGetValue(groupId, out var channel))
         {
             return;
         }

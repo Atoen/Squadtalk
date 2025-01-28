@@ -2,7 +2,7 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Extensions;
 
-public static class MessageExtensions
+internal static class MessageExtensions
 {
     public static Message WithEmbed(this Message message, Embed embed)
     {

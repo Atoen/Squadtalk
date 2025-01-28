@@ -22,8 +22,8 @@ public class EmbedService
         _previewGenerator = previewGenerator;
         _urlBasePath = configuration.GetString("Rest:BasePath");
     }
-    
-    public async Task<Embed> CreateFileEmbedAsync(ITusFile file, ChannelId channelId, CancellationToken cancellationToken)
+
+    public async Task<Embed> CreateFileEmbedAsync(ITusFile file, GroupId groupId, CancellationToken cancellationToken)
     {
         var metadata = await file.GetMetadataAsync(cancellationToken);
 
@@ -31,23 +31,23 @@ public class EmbedService
         var filesize = metadata.GetString(EmbedData.FileSize);
         var contentType = metadata.GetString(EmbedData.ContentType);
 
-        var url = CreateDownloadUrl(channelId, file.Id, filename);
+        var url = CreateDownloadUrl(groupId, file.Id, filename);
         var embed = CreateFileEmbed(filename, filesize, url, EmbedType.File);
 
         if (contentType.StartsWith(ImageMime))
         {
-            await AddImageDataAsync(embed, file, channelId, metadata, cancellationToken);
+            await AddImageDataAsync(embed, file, groupId, metadata, cancellationToken);
         }
 
         else if (contentType.StartsWith(VideoMime))
         {
-            
+
         }
 
         return embed;
     }
 
-    private async Task AddImageDataAsync(Embed embed, ITusFile file, ChannelId channelId, Dictionary<string, Metadata> metadata,
+    private async Task AddImageDataAsync(Embed embed, ITusFile file, GroupId groupId, Dictionary<string, Metadata> metadata,
         CancellationToken cancellationToken)
     {
         var width = metadata.GetString(EmbedData.ImageWidth);
@@ -63,21 +63,21 @@ public class EmbedService
             Width = int.Parse(width),
             Height = int.Parse(height)
         };
-        
+
         embed.Type = EmbedType.Image;
 
         if (!_previewGenerator.ShouldCreatePreview(imageSize)) return;
-        
+
         var previewData = await _previewGenerator.CreatePreviewAsync(file, cancellationToken);
         if (previewData is null)
         {
             embed.Type = EmbedType.File;
             return;
         }
-        
+
         var (id, name, size) = previewData;
 
-        data[EmbedData.PreviewUrl] = CreateDownloadUrl(channelId,  id, name);
+        data[EmbedData.PreviewUrl] = CreateDownloadUrl(groupId,  id, name);
         data[EmbedData.ImageWidth] = size.Width.ToString();
         data[EmbedData.ImageHeight] = size.Height.ToString();
     }
@@ -96,8 +96,8 @@ public class EmbedService
         };
     }
 
-    private string CreateDownloadUrl(ChannelId channelId, string fileId, string filename)
+    private string CreateDownloadUrl(GroupId groupId, string fileId, string filename)
     {
-        return $"{_urlBasePath}/api/files/{channelId.Value}/{fileId}/{filename}";
+        return $"{_urlBasePath}/api/files/{groupId.Value}/{fileId}/{filename}";
     }
 }

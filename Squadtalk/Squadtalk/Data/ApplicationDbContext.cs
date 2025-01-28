@@ -6,6 +6,7 @@ using Shared.Data.TypedIds;
 using Squadtalk.Data.Entities;
 using Squadtalk.Data.Sql;
 using Squadtalk.Data.TypedIds;
+using FriendRequest = Squadtalk.Data.Entities.FriendRequest;
 
 namespace Squadtalk.Data;
 
@@ -16,9 +17,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 
+    public DbSet<ChatUser> ChatUsers { get; set; } = default!;
+
     public DbSet<Message> Messages { get; set; } = default!;
 
-    public DbSet<Channel> Channels { get; set; } = default!;
+    public DbSet<Group> Channels { get; set; } = default!;
 
     public DbSet<DbFile> Files { get; set; } = default!;
 
@@ -48,13 +51,45 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.HasDbFunction(() => RemoveFriend(default, default))
             .HasName("remove_friend");
 
-        var userConverter = new ValueConverter<UserId, Guid>(
+        var userIdConverter = new ValueConverter<UserId, Guid>(
             x => x.Value,
             x => new UserId(x));
 
-        var channelConverter = new ValueConverter<ChannelId, string>(
+        var groupIdConverter = new ValueConverter<GroupId, string>(
             x => x.Value,
-            x => new ChannelId(x));
+            x => new GroupId(x));
+
+        // builder.Entity<ChatUser>(entity =>
+        // {
+        //     entity.ToTable("AspNetUsers");
+        //
+        //     entity.Property(x => x.Id)
+        //         .HasConversion(userIdConverter);
+        // });
+
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.ToTable("AspNetUsers"); // Main table for ApplicationUser
+            entity.Property(x => x.Id)
+                .HasConversion(userIdConverter)
+                .ValueGeneratedOnAdd();
+
+            entity.Property(x => x.UserName)
+                .HasColumnName("UserName")
+                .IsRequired();
+        });
+
+        builder.Entity<ChatUser>(entity =>
+        {
+            entity.ToTable("AspNetUsers"); // Maps to the same table
+            entity.HasOne<ApplicationUser>()
+                .WithOne()
+                .HasForeignKey<ChatUser>(x => x.Id); // FK is the same as the PK in ApplicationUser
+
+            entity.Property(x => x.Username)
+                .HasColumnName("UserName")
+                .IsRequired();
+        });
 
         builder.Entity<FriendRequest>()
             .Property(x => x.Id)
@@ -62,50 +97,90 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .ValueGeneratedOnAdd();
 
         builder.Entity<DbFile>()
-            .Property(x => x.ChannelId)
-            .HasConversion(id => id.Value, value => new ChannelId(value));
+            .Property(x => x.GroupId)
+            .HasConversion(id => id.Value, value => new GroupId(value));
 
         builder.Entity<DbFile>()
             .Property(x => x.TusId)
             .HasConversion(id => id.Value, value => new TusFileId(value));
 
-        builder.Entity<ApplicationUser>()
-            .Property(x => x.Id)
-            .HasConversion(userConverter);
-
-        builder.Entity<ApplicationUser>()
-            .Property(x => x.Id)
-            .HasConversion(x => x.Value, value => new UserId(value))
-            .ValueGeneratedOnAdd();
+        // builder.Entity<ApplicationUser>()
+        //     .Property(x => x.Id)
+        //     .HasConversion(userIdConverter)
+        //     .ValueGeneratedOnAdd();
 
         builder.Entity<IdentityRole<UserId>>()
             .Property(x => x.Id)
-            .HasConversion(userConverter);
+            .HasConversion(userIdConverter);
 
         builder.Entity<Message>()
-            .Property(x => x.ChannelId)
-            .HasConversion(channelConverter);
+            .Property(x => x.GroupId)
+            .HasConversion(groupIdConverter);
 
-        builder.Entity<Channel>()
+        builder.Entity<Message>()
+            .HasIndex(x => x.GroupId);
+
+        builder.Entity<Group>()
             .Property(x => x.Id)
-            .HasConversion(channelConverter);
+            .HasConversion(groupIdConverter);
 
-        builder.Entity<Channel>()
+        builder.Entity<Group>()
             .OwnsOne(x => x.LastMessage)
             .Property(x => x.AuthorId)
-            .HasConversion(userConverter);
+            .HasConversion(userIdConverter);
 
-        builder.Entity<Channel>()
+        builder.Entity<Group>()
             .OwnsOne(x => x.LastMessage)
-            .Property(x => x.ChannelId)
-            .HasConversion(channelConverter);
+            .Property(x => x.GroupId)
+            .HasConversion(groupIdConverter);
 
-        builder.Entity<Channel>()
-            .HasMany(x => x.Participants)
-            .WithMany(x => x.Channels);
+        builder.Entity<GroupParticipant>()
+            .HasKey(x => new { x.UserId, x.GroupId });
+
+        builder.Entity<GroupParticipant>()
+            .Property(x => x.GroupId)
+            .HasConversion(groupIdConverter);
+
+        builder.Entity<GroupParticipant>()
+            .Property(x => x.UserId)
+            .HasConversion(userIdConverter);
+
+        builder.Entity<GroupParticipant>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.GroupParticipants)
+            .HasForeignKey(x => x.UserId);
+
+        builder.Entity<GroupParticipant>()
+            .HasOne(x => x.Group)
+            .WithMany(x => x.Participants)
+            .HasForeignKey(x => x.GroupId);
+
+        builder.Entity<GroupParticipant>()
+            .Property(x => x.JoinedAt)
+            .HasDefaultValueSql("NOW()");
 
         builder.Entity<ApplicationUser>()
-            .Navigation(x => x.Channels)
+            .Navigation(x => x.GroupParticipants)
             .AutoInclude(false);
+
+        // builder.Entity<Group>()
+        //     .HasMany(x => x.Participants);
+        //     // .WithMany(x => x.Channels);
+        //
+        // builder.Entity<ApplicationUser>()
+        //     .Navigation(x => x.Groups)
+        //     .AutoInclude(false);
+        //
+        // builder.Entity<GroupParticipant>()
+        //     .Property(x => x.UserId)
+        //     .HasConversion(userIdConverter);
+        //
+        // builder.Entity<GroupParticipant>()
+        //     .Property(x => x.GroupId)
+        //     .HasConversion(groupIdConverter);
+        //
+        // builder.Entity<GroupParticipant>()
+        //     .HasKey(x => new { x.UserId,
+        //         ChannelId = x.GroupId });
     }
 }

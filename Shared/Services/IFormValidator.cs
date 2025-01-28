@@ -8,11 +8,16 @@ public interface IFormValidator
     const int MaximumUsernameLength = 32;
     const int MinimumUsernameLength = 3;
 
+    const int MaximumGroupNameLength = 100;
+
+    const int MaximumTextMessageLength = 2000;
+
     const string AllowedUsernameChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 
     Func<string?, IEnumerable<string>> PasswordValidator { get; }
     Func<string?, string?> UsernameValidator { get; }
     Func<string?, string?> EmailValidator { get; }
+    Func<string?, string?> GroupNameValidator { get; }
 
     string? PasswordMatches(string? first, string? second);
 
@@ -21,4 +26,6 @@ public interface IFormValidator
     string? ValidateUsername(string? username);
 
     string? ValidateEmail(string? email);
+
+    string? ValidateGroupName(string? groupName);
 }

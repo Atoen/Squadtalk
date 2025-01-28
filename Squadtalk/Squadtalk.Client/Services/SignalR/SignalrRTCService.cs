@@ -10,44 +10,44 @@ namespace Squadtalk.Client.Services.SignalR;
 
 internal sealed partial class SignalrService : ISignalrRTCService
 {
-    public event Func<ChannelId, UserId, Task>? IncomingCall;
-    public event Func<ChannelId, UserDto, Task>? CallAccepted;
-    public event Func<UserDto, ChannelId, Task>? CallDeclined;
-    public event Func<ChannelId, Task>? CallEnded;
+    public event Func<GroupId, UserId, Task>? IncomingCall;
+    public event Func<GroupId, UserDto, Task>? CallAccepted;
+    public event Func<UserDto, GroupId, Task>? CallDeclined;
+    public event Func<GroupId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
 
-    public Task<SignalrResult<RoomTokenDto?>> StartVoiceCallAsync(ChannelId id)
+    public Task<SignalrResult<RoomTokenDto?>> StartVoiceCallAsync(GroupId id)
     {
         return InvokeAsync<RoomTokenDto?>("StartCall", id);
     }
 
-    public Task<SignalrResult<RoomTokenDto?>> AcceptCallAsync(ChannelId id)
+    public Task<SignalrResult<RoomTokenDto?>> AcceptCallAsync(GroupId id)
     {
         return InvokeAsync<RoomTokenDto?>("AcceptCall", id);
     }
 
-    public Task<SignalrResult> DeclineCallAsync(ChannelId id)
+    public Task<SignalrResult> DeclineCallAsync(GroupId id)
     {
         return SendAsync("DeclineCall", id);
     }
 
-    public Task<SignalrResult<bool>> ChannelHasActiveCall(ChannelId id)
+    public Task<SignalrResult<bool>> ChannelHasActiveCall(GroupId id)
     {
         return InvokeAsync<bool>("ChannelHasActiveCall", id);
     }
 
     private void RegisterRTCHandlers()
     {
-        _connection.On<ChannelId, UserId>("IncomingCall", (channelId, initiatorId) =>
+        _connection.On<GroupId, UserId>("IncomingCall", (channelId, initiatorId) =>
             IncomingCall.TryInvoke(channelId, initiatorId));
 
-        _connection.On<ChannelId, UserDto>("CallAccepted", (channelId, accepting) =>
+        _connection.On<GroupId, UserDto>("CallAccepted", (channelId, accepting) =>
             CallAccepted.TryInvoke(channelId, accepting));
 
-        _connection.On<UserDto, ChannelId>("CallDeclined", (user, channelId) =>
+        _connection.On<UserDto, GroupId>("CallDeclined", (user, channelId) =>
             CallDeclined.TryInvoke(user, channelId));
 
-        _connection.On<ChannelId>("CallEnded", channelId =>
+        _connection.On<GroupId>("CallEnded", channelId =>
             CallEnded.TryInvoke(channelId));
 
         _connection.On<string>("CallFailed", reason =>

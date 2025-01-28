@@ -6,7 +6,7 @@ namespace Squadtalk.Services.Prerender;
 
 internal class PrerenderPersistantState(PersistentComponentState persistentComponentState)
 {
-    public IList<ChannelDto>? Channels { get; private set; }
+    public IList<GroupDto>? Channels { get; private set; }
     public IList<UserDto>? Friends { get; private set; }
     public IList<PendingFriendRequestDto>? FriendRequests { get; private set; }
 
@@ -14,7 +14,7 @@ internal class PrerenderPersistantState(PersistentComponentState persistentCompo
                                 Friends is { Count: > 0 } ||
                                 FriendRequests is { Count: > 0 };
 
-    public void AddData(List<ChannelDto>? channels, List<UserDto>? friends, List<PendingFriendRequestDto>? friendRequests)
+    public void AddData(List<GroupDto>? channels, List<UserDto>? friends, List<PendingFriendRequestDto>? friendRequests)
     {
         Channels = channels;
         Friends = friends;

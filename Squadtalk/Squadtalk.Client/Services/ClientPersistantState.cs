@@ -7,7 +7,7 @@ namespace Squadtalk.Client.Services;
 
 internal class ClientPersistantState(PersistentComponentState persistentComponentState)
 {
-    public bool TryReadChannels([NotNullWhen(true)] out List<ChannelDto>? channels)
+    public bool TryReadChannels([NotNullWhen(true)] out List<GroupDto>? channels)
     {
         var read = persistentComponentState.TryTakeFromJson(PersistentStateKeys.Channels, out channels);
         return read && channels is { Count: > 0 };

@@ -1,19 +1,18 @@
 @using Shared.Data.TypedIds
-@using Shared.Extensions
 
-@if (Channel.IsSomeoneTyping)
+@if (Chat.IsSomeoneTyping())
 {
     <span class="grid-row-4 d-flex gap-1 typing-indicator">
-        @switch (Channel.TypingUsers.Count)
+        @switch (Chat.TypingUsers().Count)
         {
             case 1:
-                var user = Channel.TypingUsers.First();
+                var user = Chat.TypingUsers().First();
                 <strong>@user.Username</strong>
                 @LocalizedText.R.is_typing
                 break;
 
             case 2:
-                var users = Channel.TypingUsers.Take(2).ToArray();
+                var users = Chat.TypingUsers().Take(2).ToArray();
                 <strong>@users[0].Username</strong>
                 @LocalizedText.R.and
                 <strong>@users[1].Username</strong>
@@ -33,8 +32,8 @@
                   Underline="false" Class="ps-1" Immediate="true"
                   KeyDownPreventDefault="_inputPreventDefault"
                   OnKeyDown="OnKeyDown" Disabled="Disable"
-                  MaxLength="2000" Placeholder="@Placeholder"
-                  ValueChanged="TextFieldValueChanged"
+                  MaxLength="IFormValidator.MaximumTextMessageLength"
+                  Placeholder="@Placeholder" ValueChanged="TextFieldValueChanged"
                   AutoFocus="true" MaxLines="20" AutoGrow="true"/>
 
     <MudDivider Vertical="true" Class="mx-1" DividerType="DividerType.FullWidth"/>
@@ -61,7 +60,7 @@
 
 @inject IConnectionService CommunicationService
 @inject ITextChatService TextChatService
-@inject IChannelManager ChannelManager
+@inject IChatGroupManager ChatGroupManager
 @inject ILogger<InputBox> Logger
 @inject LocalizedText LocalizedText
 
@@ -70,7 +69,7 @@
 @code
 {
     [Parameter, EditorRequired]
-    public ChannelModel Channel { get; set; } = default!;
+    public ChatModel Chat { get; set; } = default!;
 
     private IJSInProcessRuntime _runtime = default!;
     private MudTextField<string> _textField = default!;
@@ -82,7 +81,7 @@
 
     protected override void OnInitialized()
     {
-        Placeholder = LocalizedText.R.write_to_channel.Format(Channel.Name);
+        Placeholder = LocalizedText.R.write_to_channel.Format(Chat.Name);
     }
 
     private Task OnKeyDown(KeyboardEventArgs e)
@@ -97,9 +96,9 @@
     {
         _inputPreventDefault = true;
 
-        if (Channel.IsTemporary())
+        if (Chat.IsTemporary())
         {
-            await ChannelManager.UpgradeToPersistentChannelAsync(Channel);
+            await ChatGroupManager.UpgradeToPersistentChannelAsync(Chat);
         }
 
         var text = _textField.Value;
@@ -113,7 +112,7 @@
 
     private void TextFieldValueChanged()
     {
-        var channelId = Channel.Id;
+        var channelId = Chat.Id;
 
         if (_textField.Value is null or { Length: 0 })
         {
@@ -136,9 +135,9 @@
         StateHasChanged();
     }
 
-    private void TypingUsersChanged(ChannelId channelId)
+    private void TypingUsersChanged(GroupId groupId)
     {
-        if (Channel.Id == channelId)
+        if (Chat.Id == groupId)
         {
             StateHasChanged();
         }
@@ -155,7 +154,7 @@
     {
         if (!firstRender) return;
 
-        _disposable = Channel.State.Subscribe(this);
+        _disposable = Chat.State.Subscribe(this);
         // CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
         // ChannelManager.TypingUsersChanged += TypingUsersChanged;
     }

@@ -6,8 +6,8 @@ public class FriendRequest
 {
     public FriendRequestId Id { get; set; }
 
-    public ApplicationUser Requester { get; set; } = default!;
-    public ApplicationUser Recipient { get; set; } = default!;
+    public ChatUser Requester { get; set; } = default!;
+    public ChatUser Recipient { get; set; } = default!;
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? RespondedAt { get; set; }

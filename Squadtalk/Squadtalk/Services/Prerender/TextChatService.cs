@@ -6,13 +6,13 @@ namespace Squadtalk.Services.Prerender;
 
 internal class TextChatService : ITextChatService
 {
-    event Action<ChannelId, MessageModel>? ITextChatService.MessageReceived { add { } remove { } }
+    event Action<GroupId, MessageModel>? ITextChatService.MessageReceived { add { } remove { } }
 
-    public Task<IList<MessageModel>> GetMessagePageAsync(ChannelId channelId, CancellationToken cancellationToken) => Task.FromResult<IList<MessageModel>>(Array.Empty<MessageModel>());
+    public Task<IList<MessageModel>> GetMessagePageAsync(GroupId groupId, CancellationToken cancellationToken) => Task.FromResult<IList<MessageModel>>(Array.Empty<MessageModel>());
 
     public Task SendMessageAsync(string message, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-    public void StartedTyping(ChannelId channelId) { }
+    public void StartedTyping(GroupId groupId) { }
 
     public void StoppedTyping() { }
 }
