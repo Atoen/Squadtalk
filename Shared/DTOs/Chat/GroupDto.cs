@@ -1,20 +1,21 @@
 using MessagePack;
 using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Enums;
 
 namespace Shared.DTOs.Chat;
 
 [MessagePackObject(AllowPrivate = true)]
-public class ChannelDto : IChatChannel
+public class GroupDto : IChatGroup
 {
     [Key(0)]
-    public ChannelId Id { get; set; } = default!;
+    public GroupId Id { get; set; } = default!;
 
     [Key(1)]
     public string? Name { get; set; }
 
     [Key(2)]
-    public List<UserDto> Participants { get; set; } = default!;
+    public List<GroupParticipantDto> Participants { get; set; } = default!;
 
     [Key(3)]
     public MessageDto? LastMessage { get; set; }
@@ -22,9 +23,12 @@ public class ChannelDto : IChatChannel
     [Key(4)]
     public int MessagesSince { get; set; }
 
+    [Key(5)]
+    public ChatType Type { get; set; }
+
     [IgnoreMember]
-    IEnumerable<IChatUser> IChatChannel.Participants => Participants;
-    
+    IEnumerable<IGroupParticipant> IChatGroup.Participants => Participants;
+
     [IgnoreMember]
-    IChatMessage? IChatChannel.LastMessage => LastMessage;
+    IChatMessage? IChatGroup.LastMessage => LastMessage;
 }

@@ -7,9 +7,9 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Repositories;
 
-public class UserRepository(
+internal class ApplicationUserRepository(
     ApplicationDbContext dbContext,
-    ILogger<UserRepository> logger) : RepositoryBase(dbContext, logger)
+    ILogger<ApplicationUserRepository> logger) : RepositoryBase(dbContext, logger)
 {
     public Task<ApplicationUser?> FindUserById(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
     {
@@ -63,15 +63,20 @@ public class UserRepository(
     private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithChannelsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Users
-                .Include(x => x.Channels)
+                .AsSplitQuery()
+                .Include(x => x.GroupParticipants)
+                .ThenInclude(x => x.Group)
+                .ThenInclude(x => x.Participants)
                 .SingleOrDefault(x => x.Id == userId));
 
     private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithFullChannelsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Users
                 .AsSplitQuery()
-                .Include(x => x.Channels)
+                .Include(x => x.GroupParticipants)
+                .ThenInclude(x => x.Group)
                 .ThenInclude(x => x.Participants)
+                .ThenInclude(x => x.User)
                 .SingleOrDefault(x => x.Id == userId));
 
     private static readonly Func<ApplicationDbContext, List<UserId>, IAsyncEnumerable<ApplicationUser>> UserListByIdAsync =

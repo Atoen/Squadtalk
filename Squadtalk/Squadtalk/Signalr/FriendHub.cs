@@ -8,7 +8,7 @@ using Squadtalk.Repositories;
 
 namespace Squadtalk.Signalr;
 
-partial class AppHub
+public partial class AppHub
 {
     [HubMethodName(HubMethods.SendFriendRequest)]
     public async Task<FriendRequestResult> SendFriendRequest(

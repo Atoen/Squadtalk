@@ -47,19 +47,19 @@
 
 
 @using Shared.Routing
-@using Squadtalk.Client.Localization
 @using Squadtalk.Client.Components
+@using Squadtalk.Client.Localization
 @implements IDisposable
 
 @inject NavigationManager NavigationManager
 @inject LocalizedText LocalizedText
 
 @code {
-    
+
     private string? _currentUrl;
 
     private LocalizedText.TextTable _textTable = default!;
-    
+
     protected override void OnInitialized()
     {
         _textTable = LocalizedText.GetTextTable(this);

@@ -30,61 +30,63 @@ public class SystemMessageService
         _embedService = embedService;
     }
 
-    public Task SendChannelCreatedMessageAsync(ApplicationUser user, ChannelId channelId)
+    // TODO: Use user ID instead of username to support updating system message on name change
+
+    public Task SendChannelCreatedMessageAsync(ChatUser user, GroupId groupId)
     {
         var data = new Dictionary<string, string>
         {
-            [EmbedData.SystemMessageDataUsername] = user.UserName!
+            [EmbedData.SystemMessageDataUsername] = user.Username
         };
 
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelCreated, data);
+        return SendSystemMessageAsync(user, groupId, SystemMessageType.ChannelCreated, data);
     }
 
-    public Task SendChannelNameChangedMessageAsync(ApplicationUser user, ChannelId channelId, string newName)
+    public Task SendChannelNameChangedMessageAsync(ChatUser user, GroupId groupId, string newName)
     {
         var data = new Dictionary<string, string>
         {
-            [EmbedData.SystemMessageDataUsername] = user.UserName!,
+            [EmbedData.SystemMessageDataUsername] = user.Username,
             [EmbedData.SystemMessageDataChannelName] = newName
         };
 
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameChanged, data);
+        return SendSystemMessageAsync(user, groupId, SystemMessageType.ChannelNameChanged, data);
     }
 
-    public Task SendChannelNameClearedMessageAsync(ApplicationUser user, ChannelId channelId)
+    public Task SendChannelNameClearedMessageAsync(ChatUser user, GroupId groupId)
     {
         var data = new Dictionary<string, string>
         {
-            [EmbedData.SystemMessageDataUsername] = user.UserName!
+            [EmbedData.SystemMessageDataUsername] = user.Username
         };
 
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.ChannelNameCleared, data);
+        return SendSystemMessageAsync(user, groupId, SystemMessageType.ChannelNameCleared, data);
     }
 
-    public Task SendCallStartedMessageAsync(ApplicationUser user, ChannelId channelId, string callId)
+    public Task SendCallStartedMessageAsync(ChatUser user, GroupId groupId, string callId)
     {
         var data = new Dictionary<string, string>
         {
-            [EmbedData.SystemMessageDataUsername] = user.UserName!,
+            [EmbedData.SystemMessageDataUsername] = user.Username,
             [EmbedData.SystemMessageDataCallId] = callId
         };
 
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.CallStarted, data);
+        return SendSystemMessageAsync(user, groupId, SystemMessageType.CallStarted, data);
     }
 
-    public Task SendCallEndedMessageAsync(ApplicationUser user, ChannelId channelId, TimeSpan callDuration, bool callMissed, string callId)
+    public Task SendCallEndedMessageAsync(ChatUser user, GroupId groupId, TimeSpan callDuration, bool callMissed, string callId)
     {
         var data = new Dictionary<string, string>
         {
-            [EmbedData.SystemMessageDataUsername] = user.UserName!,
+            [EmbedData.SystemMessageDataUsername] = user.Username,
             [EmbedData.SystemMessageDataCallId] = callId,
             [EmbedData.SystemMessageDataDuration] = callDuration.ToString(@"hh\:mm\:ss")
         };
 
-        return SendSystemMessageAsync(user, channelId, SystemMessageType.CallEnded, data);
+        return SendSystemMessageAsync(user, groupId, SystemMessageType.CallEnded, data);
     }
 
-    public async Task SendSystemMessageAsync(ApplicationUser user, ChannelId channelId, SystemMessageType messageType, Dictionary<string, string> data)
+    public async Task SendSystemMessageAsync(ChatUser user, GroupId groupId, SystemMessageType messageType, Dictionary<string, string> data)
     {
         var embed = new Embed
         {
@@ -97,17 +99,17 @@ public class SystemMessageService
             embed[key] = value;
         }
 
-        var addedMessage = await _messageRepository.AddMessageAsync(user, string.Empty, channelId, embed);
+        var addedMessage = await _messageRepository.AddMessageAsync(user, string.Empty, groupId, embed);
         if (addedMessage is not null)
         {
-            await _hubContext.Clients.Group(channelId).ReceivedMessage(addedMessage.ToDto());
+            await _hubContext.Clients.Group(groupId).ReceivedMessage(addedMessage.ToDto());
         }
     }
 
-    public async Task SendFileEmbedMessageAsync(ApplicationUser user, ITusFile file, CancellationToken cancellationToken)
+    public async Task SendFileEmbedMessageAsync(ChatUser user, ITusFile file, CancellationToken cancellationToken)
     {
         var metadata = await file.GetMetadataAsync(cancellationToken);
-        var channelId = (ChannelId) metadata.GetString(EmbedData.ChannelId);
+        var channelId = (GroupId) metadata.GetString(EmbedData.ChannelId);
 
         await _fileRepository.AddFileAsync(file, channelId, cancellationToken);
 

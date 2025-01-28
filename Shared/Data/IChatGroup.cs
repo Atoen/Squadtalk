@@ -1,15 +1,18 @@
 using Shared.Data.TypedIds;
+using Shared.Enums;
 
 namespace Shared.Data;
 
-public interface IChatChannel
+public interface IChatGroup
 {
-    ChannelId Id { get; }
+    GroupId Id { get; }
 
     string? Name { get; }
-    
-    IEnumerable<IChatUser> Participants { get; }
-    
+
+    IEnumerable<IGroupParticipant> Participants { get; }
+
+    ChatType Type { get; }
+
     IChatMessage? LastMessage { get; }
 
     int MessagesSince { get; set; }

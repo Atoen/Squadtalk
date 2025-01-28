@@ -5,13 +5,13 @@ namespace Shared.Signalr.Clients;
 
 public interface IVoiceChatClient
 {
-    Task IncomingCall(ChannelId channelId, UserId initiatorId);
+    Task IncomingCall(GroupId groupId, UserId initiatorId);
 
-    Task CallAccepted(ChannelId channelId, UserDto accepting);
+    Task CallAccepted(GroupId groupId, UserDto accepting);
 
-    Task CallDeclined(UserDto decliningUser, ChannelId channelId);
-    
-    Task CallEnded(ChannelId channelId);
+    Task CallDeclined(UserDto decliningUser, GroupId groupId);
+
+    Task CallEnded(GroupId groupId);
 
     Task CallFailed(string reason);
 }

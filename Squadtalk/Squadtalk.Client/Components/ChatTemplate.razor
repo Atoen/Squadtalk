@@ -1,16 +1,15 @@
 @using Shared
-@using Shared.Extensions
 @using Squadtalk.Client.Extensions
 
-<MudBadge Content="Channel.UnreadMessages" Overlap="true" Color="Color.Error"
-          Style="max-width: 350px" Visible="Channel.HasUnreadMessages">
+<MudBadge Content="Chat.UnreadMessages()" Overlap="true" Color="Color.Error"
+          Style="max-width: 350px" Visible="Chat.HasUnreadMessages()">
     <div class="text-chat box-shadow hover-primary rounded mud-typography-body1" @onclick="OpenChat">
         <div class="ms-1 me-2 d-flex" style="grid-row: 1/3">
-            <ChannelImage Channel="Channel"/>
+            <ChannelImage Chat="Chat"/>
         </div>
 
         <div class="chat-name">@ChatName</div>
-        @if (Channel.LastMessage is { } message)
+        @if (Chat.LastMessage is { } message)
         {
             <div class="channel-status" style="@StatusStyle">
                 <div class="last-message">@FormatLastMessage(message)</div>
@@ -23,31 +22,31 @@
     </div>
 </MudBadge>
 
-@implements Shared.Reactive.ISubscriber<ChannelModel>
+@implements Shared.Reactive.ISubscriber<ChatModel>
 @implements IDisposable
 
-@inject IChannelManager ChannelManager
+@inject IChatGroupManager ChatGroupManager
 @inject IUserAuthenticationService UserAuthenticationService
 @inject LocalizedText LocalizedText
 
 @code {
 
     [Parameter, EditorRequired]
-    public ChannelModel Channel { get; set; } = default!;
+    public ChatModel Chat { get; set; } = default!;
 
-    private Task OpenChat() => ChannelManager.OpenChannelAsync(Channel);
+    private Task OpenChat() => ChatGroupManager.OpenChannelAsync(Chat);
 
-    private string StatusStyle => Channel.HasUnreadMessages ? "color: white; font-weight: bold" : string.Empty;
+    private string StatusStyle => Chat.HasUnreadMessages() ? "color: white; font-weight: bold" : string.Empty;
 
     private string? _formattedName;
-    private string ChatName => Channel.Name == string.Empty
+    private string ChatName => Chat.Name == string.Empty
         ? _formattedName ??= LocalizedText.R.users_group.Format(UserAuthenticationService.Username)
-        : Channel.Name;
+        : Chat.Name;
 
     private string FormatLastMessage(IChatMessage message)
     {
         var messageByCurrentUser = message.Author.Id == UserAuthenticationService.UserId;
-        var isDm = Channel is DirectMessageChannelModel;
+        var isDm = Chat is DirectMessageModel;
 
         var authorPrefix = (messageByCurrentUser, isDm) switch
         {
@@ -117,11 +116,11 @@
         }
     }
 
-    public void OnNext(ChannelModel value) => StateHasChanged();
+    public void OnNext(ChatModel value) => StateHasChanged();
 
     private IDisposable? _subscription;
 
-    protected override void OnInitialized() => _subscription = Channel.Subscribe(this);
+    protected override void OnInitialized() => _subscription = Chat.Subscribe(this);
 
     public void Dispose() => _subscription?.Dispose();
 }

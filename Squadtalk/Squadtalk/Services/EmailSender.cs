@@ -10,7 +10,7 @@ using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;
 
-public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
+internal sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
 {
     private readonly SmtpClient _client;
     private readonly ILogger<EmailSender> _logger;
@@ -29,14 +29,14 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
 
         _password = configuration.GetString("Mail:Password");
         _host = configuration.GetString("Mail:Host");
-        
+
         var senderName = configuration.GetString("Mail:Username");
         var senderAddress = configuration.GetString("Mail:Address");
 
         _sender = new MailboxAddress(senderName, senderAddress);
         _port = Convert.ToInt32(configuration["Mail:Port"]);
     }
-    
+
     public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
     {
         var message = CreateMessage(user.UserName!, email, "Confirm your email",
@@ -74,7 +74,7 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
             _logger.LogWarning("MimeMessage is null");
             return;
         }
-        
+
         var pipeline = _registry.GetOrAddPipeline("smtp", builder =>
         {
             builder.AddRetry(new RetryStrategyOptions
@@ -90,7 +90,7 @@ public sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         try
         {
             await pipeline.ExecuteAsync((msg, _) => SendAsync(msg), message);
-            
+
             _logger.LogInformation("Successfully sent email to {Address}, subject: '{Subject}'",
                 address, message.Subject);
         }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 using Shared.Data;
 using Shared.Data.TypedIds;
@@ -5,17 +6,15 @@ using Shared.Enums;
 
 namespace Squadtalk.Data.Entities;
 
-// Add profile data for application users by adding properties to the ApplicationUser class
 public class ApplicationUser : IdentityUser<UserId>, IChatUser
 {
-    [PersonalData]
-    public List<Channel> Channels { get; set; } = default!;
+    public ICollection<GroupParticipant> GroupParticipants { get; set; } = default!;
 
-    [PersonalData]
-    public List<ApplicationUser> Contacts { get; set; } = default!;
+    [NotMapped]
+    public IEnumerable<Group> Groups => GroupParticipants.Select(x => x.Group);
 
     public DateTimeOffset LastSeen { get; set; }
-    
+
     string IChatUser.Username => UserName!;
 
     UserStatus IChatUser.Status => UserStatus.Unknown;

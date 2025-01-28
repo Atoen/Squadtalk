@@ -56,7 +56,7 @@
 
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
-@inject IChannelManager ChannelManager
+@inject IChatGroupManager ChatGroupManager
 
 @code
 {
@@ -121,9 +121,10 @@
             _searchFilter = searchResult => string.IsNullOrWhiteSpace(_searchValue) ||
                               searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase);
         }
-        else if (ChannelManager.CurrentChannel is { } channel)
+        else if (ChatGroupManager.CurrentChannel is { } channel)
         {
-            _searchFilter = searchResult => !channel.Others.Contains(searchResult.User) &&
+            _searchFilter = searchResult =>
+                !channel.Others.Select(x => x.User).Contains(searchResult.User) &&
                 (string.IsNullOrWhiteSpace(_searchValue) || searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase));
         }
 

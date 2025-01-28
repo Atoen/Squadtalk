@@ -6,5 +6,5 @@ public interface IChannelSorter
 {
     event Action? ChannelsSorted;
 
-    IReadOnlyCollection<ChannelModel> SortedChannels { get; }
+    IReadOnlyCollection<ChatModel> SortedChannels { get; }
 }

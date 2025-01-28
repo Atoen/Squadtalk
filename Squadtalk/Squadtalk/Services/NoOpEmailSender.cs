@@ -3,7 +3,7 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Services;
 
-public class NoOpEmailSender(ILogger<NoOpEmailSender> logger) : IEmailSender<ApplicationUser>
+internal class NoOpEmailSender(ILogger<NoOpEmailSender> logger) : IEmailSender<ApplicationUser>
 {
     public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
     {

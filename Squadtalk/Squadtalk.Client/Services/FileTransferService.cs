@@ -11,16 +11,16 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     private readonly ILogger<FileTransferService> _logger;
     private readonly DotNetObjectReference<FileTransferService> _dotNetObject;
     private IJSObjectReference? _jsModule;
-    
+
     public event Action<FileModel>? FileSelected;
     public event Action? SelectionCleared;
-    public event Action<FileModel, ChannelModel>? UploadStarted;
+    public event Action<FileModel, ChatModel>? UploadStarted;
     public event Action? StateChanged;
 
     public int SelectedCount { get; private set; }
     public FileModel? SelectedFile { get; private set; }
     public FileModel? CurrentlyUploadedFile { get; private set; }
-    public ChannelModel? UploadChannel { get; private set; }
+    public ChatModel? UploadChannel { get; private set; }
     public List<FileModel> UploadQueue { get; } = [];
 
     public FileTransferService(IJSRuntime jsRuntime,
@@ -30,7 +30,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         _logger = logger;
         _dotNetObject = DotNetObjectReference.Create(this);
     }
-    
+
     public async Task InitializeAsync()
     {
         _jsModule ??= await _jsRuntime
@@ -39,7 +39,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         await _jsModule.InvokeVoidAsync("initialize", _dotNetObject, "127.0.0.1:1235/Upload");
     }
 
-    public Task UploadFileAsync(ChannelModel channelModel)
+    public Task UploadFileAsync(ChatModel chatModel)
     {
         if (SelectedFile is null)
         {
@@ -48,9 +48,9 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         }
 
         SelectedFile = null;
-        UploadChannel = channelModel;
+        UploadChannel = chatModel;
 
-        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", channelModel.Id.Value, channelModel.Name).AsTask();
+        return _jsModule!.InvokeVoidAsync("uploadSelectedFiles", chatModel.Id.Value, chatModel.Name).AsTask();
     }
 
     public Task CancelUploadAsync()
@@ -59,14 +59,14 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
         {
             UploadChannel = null;
         }
-        
+
         return _jsModule!.InvokeVoidAsync("cancelUpload").AsTask();
     }
 
     public async Task RemoveSelectedFileAsync()
     {
         await _jsModule!.InvokeVoidAsync("removeSelectedFile");
-        
+
         SelectedFile = null;
         SelectionCleared?.Invoke();
     }
@@ -82,7 +82,7 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
 
         await _jsModule!.InvokeVoidAsync("removeFromQueue", index);
         UploadQueue.RemoveAt(index);
-        
+
         if (UploadQueue.Count == 0)
         {
             StateChanged?.Invoke();
@@ -109,9 +109,9 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     {
         var file = FileModel.Create(filename, filesize);
         UploadQueue.Add(file);
-        
+
         _logger.LogInformation("Added {FileName} to queue", file.Name);
-        
+
         StateChanged?.Invoke();
     }
 
@@ -119,9 +119,9 @@ public sealed class FileTransferService : IFileTransferService, IAsyncDisposable
     public void UploadStartedCallback(string filename, long filesize)
     {
         CurrentlyUploadedFile = FileModel.Create(filename, filesize);
-        
+
         ArgumentNullException.ThrowIfNull(UploadChannel);
-        
+
         UploadStarted?.Invoke(CurrentlyUploadedFile, UploadChannel);
     }
 

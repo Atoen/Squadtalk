@@ -6,15 +6,15 @@ namespace Squadtalk.Client.Services;
 
 internal class ChannelSorter : IChannelSorter
 {
-    private readonly IChannelManager _channelManager;
+    private readonly IChatGroupManager _chatGroupManager;
     private readonly ITextChatService _textChatService;
     private readonly ILogger<ChannelSorter> _logger;
 
-    private List<ChannelModel> _channels = [];
+    private List<ChatModel> _channels = [];
 
     public event Action? ChannelsSorted;
 
-    public IReadOnlyCollection<ChannelModel> SortedChannels
+    public IReadOnlyCollection<ChatModel> SortedChannels
     {
         get
         {
@@ -26,19 +26,19 @@ internal class ChannelSorter : IChannelSorter
     private bool _shouldSortChannels = true;
 
     public ChannelSorter(
-        IChannelManager channelManager,
+        IChatGroupManager chatGroupManager,
         ITextChatService textChatService,
         ILogger<ChannelSorter> logger)
     {
-        _channelManager = channelManager;
+        _chatGroupManager = chatGroupManager;
         _textChatService = textChatService;
         _logger = logger;
 
         _textChatService.MessageReceived += MessageReceived;
-        _channelManager.ChannelsListChanged += OnChannelsListChanged;
+        _chatGroupManager.ChannelsListChanged += OnChatGroupsListChanged;
     }
 
-    private void OnChannelsListChanged()
+    private void OnChatGroupsListChanged()
     {
         _shouldSortChannels = true;
     }
@@ -48,15 +48,15 @@ internal class ChannelSorter : IChannelSorter
         if (!_shouldSortChannels) return;
         _shouldSortChannels = false;
 
-        _channels = _channelManager.Channels.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
+        _channels = _chatGroupManager.Channels.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
 
         _logger.LogInformation("Channels sorted");
     }
 
-    private void MessageReceived(ChannelId channelId, MessageModel model)
+    private void MessageReceived(GroupId groupId, MessageModel model)
     {
-        if (channelId != GroupChatModel.GlobalChatId &&
-            _channels is [var first, ..] && first.Id != channelId)
+        if (groupId != GroupChatModel.GlobalChatId &&
+            _channels is [var first, ..] && first.Id != groupId)
         {
             _shouldSortChannels = true;
         }

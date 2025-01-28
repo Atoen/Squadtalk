@@ -64,7 +64,7 @@ internal partial class VoiceChatService
     }
 
     [JSInvokable]
-    public void ParticipantUpdatedCallback(CallParticipantModel participant, ChannelId channelId)
+    public void ParticipantUpdatedCallback(CallParticipantModel participant, GroupId groupId)
     {
         if (!_participants.TryAdd(participant.Id, participant))
         {
@@ -77,31 +77,31 @@ internal partial class VoiceChatService
             existingParticipant.IsSpeaking = participant.IsSpeaking;
         }
 
-        ParticipantUpdated?.Invoke(participant.Id, _channelManager.GetRequiredChannel(channelId));
+        ParticipantUpdated?.Invoke(participant.Id, _chatGroupManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
-    public void ParticipantListReceivedCallback(List<CallParticipantModel> participants, ChannelId channelId)
+    public void ParticipantListReceivedCallback(List<CallParticipantModel> participants, GroupId groupId)
     {
         foreach (var participant in participants)
         {
             _participants[participant.Id] = participant;
         }
 
-        ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
-    public void ParticipantConnectedCallback(CallParticipantModel participant, ChannelId channelId)
+    public void ParticipantConnectedCallback(CallParticipantModel participant, GroupId groupId)
     {
         _participants[participant.Id] = participant;
-        ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
-    public void ParticipantDisconnectedCallback(CallParticipantModel participant, ChannelId channelId)
+    public void ParticipantDisconnectedCallback(CallParticipantModel participant, GroupId groupId)
     {
         _participants.Remove(participant.Id);
-        ParticipantListUpdated?.Invoke(_channelManager.GetRequiredChannel(channelId));
+        ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
     }
 }

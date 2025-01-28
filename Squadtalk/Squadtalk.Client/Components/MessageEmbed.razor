@@ -1,5 +1,4 @@
 @using Shared
-@using Shared.Extensions
 @if (_showOverlay)
 {
     <div class="image-overlay-parent" @onclick="ToggleOverlay">
@@ -60,7 +59,7 @@
 @inject LocalizedText LocalizedText
 
 @code {
-    
+
     [Parameter, EditorRequired]
     public required EmbedModel Model { get; set; }
     private string _imageDisplay = "none";

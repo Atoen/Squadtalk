@@ -13,21 +13,21 @@ internal class TextChatService : ITextChatService
     private readonly IMessageModelService _modelService;
     private readonly SignalrService _signalrTextService;
     private readonly IUserAuthenticationService _userAuthenticationService;
-    private readonly IChannelManager _channelManager;
+    private readonly IChatGroupManager _chatGroupManager;
 
     private CancellationTokenSource? _cancellationTokenSource;
-    private ChannelId? _typingChannelId;
+    private GroupId? _typingChannelId;
 
-    public event Action<ChannelId, MessageModel>? MessageReceived;
+    public event Action<GroupId, MessageModel>? MessageReceived;
 
     public TextChatService(
-        IChannelManager channelManager,
+        IChatGroupManager chatGroupManager,
         IMessageModelService modelService,
         SignalrService signalrTextService,
         IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
-        _channelManager = channelManager;
+        _chatGroupManager = chatGroupManager;
         _modelService = modelService;
         _signalrTextService = signalrTextService;
         _userAuthenticationService = userAuthenticationService;
@@ -38,19 +38,19 @@ internal class TextChatService : ITextChatService
 
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (_channelManager.CurrentChannel is not { Id: var channelId }) return;
+        if (_chatGroupManager.CurrentChannel is not { Id: var channelId }) return;
 
         await _signalrTextService.SendMessageAsync(message, channelId, cancellationToken).ConfigureAwait(false);
     }
 
-    public void StartedTyping(ChannelId channelId)
+    public void StartedTyping(GroupId groupId)
     {
-        if (_typingChannelId == channelId || _typingChannelId == _channelManager.GlobalChat.Id)
+        if (_typingChannelId == groupId || _typingChannelId == _chatGroupManager.GlobalGroup.Id)
         {
             return;
         }
 
-        _typingChannelId = channelId;
+        _typingChannelId = groupId;
         _ = EnterLoop();
     }
 
@@ -60,16 +60,16 @@ internal class TextChatService : ITextChatService
         ClearTokenSource();
     }
 
-    public async Task<IList<MessageModel>> GetMessagePageAsync(ChannelId channelId, CancellationToken cancellationToken)
+    public async Task<IList<MessageModel>> GetMessagePageAsync(GroupId groupId, CancellationToken cancellationToken)
     {
-        var channel = _channelManager.GetChannel(channelId);
+        var channel = _chatGroupManager.GetChannel(groupId);
         if (channel is null or { State.ScrolledToBeginning: true })
         {
             return Array.Empty<MessageModel>();
         }
 
         var channelState = channel.State;
-        var page = await FetchPageAsync(channelId, channelState.Cursor, cancellationToken);
+        var page = await FetchPageAsync(groupId, channelState.Cursor, cancellationToken);
 
         if (page.Count == 0)
         {
@@ -80,9 +80,9 @@ internal class TextChatService : ITextChatService
         return _modelService.CreateModelPage(page, channelState);
     }
 
-    private async Task<IReadOnlyList<MessageDto>> FetchPageAsync(ChannelId channelId, TextChannelCursor cursor, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<MessageDto>> FetchPageAsync(GroupId groupId, TextChannelCursor cursor, CancellationToken cancellationToken)
     {
-        var result = await _signalrTextService.GetMessagePageAsync(channelId, cursor, cancellationToken);
+        var result = await _signalrTextService.GetMessagePageAsync(groupId, cursor, cancellationToken);
         if (result.IsError)
         {
             _logger.LogError("Failed to fetch message page");
@@ -122,21 +122,21 @@ internal class TextChatService : ITextChatService
         }
     }
 
-    private async Task IsTypingNotificationLoop(ChannelId channelId, CancellationToken cancellationToken)
+    private async Task IsTypingNotificationLoop(GroupId groupId, CancellationToken cancellationToken)
     {
-        while (_typingChannelId == channelId && !cancellationToken.IsCancellationRequested)
+        while (_typingChannelId == groupId && !cancellationToken.IsCancellationRequested)
         {
-            await _signalrTextService.UserIsTypingAsync(channelId, cancellationToken);
+            await _signalrTextService.UserIsTypingAsync(groupId, cancellationToken);
             await Task.Delay(TypingTiming.InputBoxInterval, cancellationToken);
         }
     }
 
     private void HandleIncomingMessage(IChatMessage message)
     {
-        var channel = _channelManager.GetChannel(message.ChannelId);
+        var channel = _chatGroupManager.GetChannel(message.GroupId);
         if (channel is null)
         {
-            _logger.LogWarning("Received message on nonexistent channel id: {Id}", message.ChannelId);
+            _logger.LogWarning("Received message on nonexistent channel id: {Id}", message.GroupId);
             return;
         }
 
@@ -150,15 +150,15 @@ internal class TextChatService : ITextChatService
         MessageReceived?.Invoke(channel.Id, messageModel);
     }
 
-    private void UpdateChannelMessageState(ChannelModel channelModel, IChatMessage message)
+    private void UpdateChannelMessageState(ChatModel chatModel, IChatMessage message)
     {
         var messageByCurrentUser = message.Author.Id == _userAuthenticationService.UserId;
-        if (_channelManager.CurrentChannel != channelModel && !messageByCurrentUser)
+        if (_chatGroupManager.CurrentChannel != chatModel && !messageByCurrentUser)
         {
-            channelModel.State.UnreadMessages++;
+            chatModel.State.UnreadMessages++;
         }
 
-        channelModel.LastMessage = message;
+        chatModel.LastMessage = message;
     }
 
     private void ClearTokenSource()

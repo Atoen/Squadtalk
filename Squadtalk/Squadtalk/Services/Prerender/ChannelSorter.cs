@@ -3,10 +3,10 @@ using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
-internal class ChannelSorter(IChannelManager channelManager) : IChannelSorter
+internal class ChannelSorter(IChatGroupManager chatGroupManager) : IChannelSorter
 {
     event Action? IChannelSorter.ChannelsSorted { add { } remove { } }
 
     // Channels are already sorted during prerender
-    public IReadOnlyCollection<ChannelModel> SortedChannels => channelManager.Channels;
+    public IReadOnlyCollection<ChatModel> SortedChannels => chatGroupManager.Channels;
 }

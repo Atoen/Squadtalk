@@ -7,7 +7,7 @@
         var (user, size) = data;
 
         return
-            @<MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
+            @<MudAvatar Color="Color.Transparent" Class="d-flex" Size="size">
                 @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
                 {
                     @user.Username[0]
@@ -28,7 +28,7 @@
             @<MudBadge Overlap="true" Icon="@user.Status.BadgeIcon()"
                        Color="user.Status.PaletteColor()" Bordered="true"
                        Visible="@(!user.Status.IsOfflineOrUnknown())" Dot="dotBadge">
-                <MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
+                <MudAvatar Color="Color.Transparent" Class="d-flex" Size="size">
                     @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
                     {
                         @user.Username[0]
@@ -50,7 +50,7 @@
             @<MudBadge Overlap="!dotBadge" Icon="@user.Status.BadgeIcon()"
                        Color="user.Status.PaletteColor()" BadgeClass="primary-bordered"
                        Visible="@(!user.Status.IsOfflineOrUnknown())" Dot="dotBadge">
-                <MudAvatar Color="Color.Primary" Class="d-flex" Size="size">
+                <MudAvatar Color="Color.Transparent" Class="d-flex" Size="size">
                     @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
                     {
                         @user.Username[0]

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Signalr;
 using Shared.Signalr.Clients;
 using Squadtalk.Data;
@@ -10,90 +11,90 @@ using Squadtalk.Services;
 
 namespace Squadtalk.Signalr;
 
-partial class AppHub
+public partial class AppHub
 {
     private ITextChatClient TextGroup(string groupName) => Clients.Group(groupName);
     private ITextChatClient TextClient(string connectionId) => Clients.Client(connectionId);
     private ITextChatClient TextCaller => Clients.Caller;
 
     [HubMethodName(HubMethods.SendMessage)]
-    public async Task SendMessage(string message, ChannelId channelId, MessageRepository messageRepository)
+    public async Task SendMessage(string message, GroupId groupId, MessageRepository messageRepository)
     {
-        var participant = await GetChannelParticipantAsync(channelId);
+        var participant = await GetChannelParticipantAsync(groupId);
         if (participant is null)
         {
             return;
         }
 
         var addedMessage = await messageRepository.AddMessageAsync(
-            participant, message, channelId, cancellationToken: Context.ConnectionAborted);
+            participant, message, groupId, cancellationToken: Context.ConnectionAborted);
 
-        var shouldUpdate = await _connectionManager.SetUserStoppedTyping(channelId, participant.Id);
+        var shouldUpdate = await _connectionManager.SetUserStoppedTyping(groupId, participant.Id);
         if (shouldUpdate)
         {
-            await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, UserId);
+            await Clients.OthersInGroup(groupId).UserStoppedTyping(groupId, UserId);
         }
 
         if (addedMessage is not null)
         {
-            await TextGroup(channelId).ReceivedMessage(addedMessage.ToDto());
+            await TextGroup(groupId).ReceivedMessage(addedMessage.ToDto());
         }
     }
 
     [HubMethodName(HubMethods.IsTyping)]
-    public async Task IsTyping(ChannelId channelId)
+    public async Task IsTyping(GroupId groupId)
     {
         var userId = UserId;
 
-        var shouldUpdate = await _connectionManager.SetUserIsTypingAsync(channelId, userId);
+        var shouldUpdate = await _connectionManager.SetUserIsTypingAsync(groupId, userId);
 
-        _logger.LogInformation("User {Id} is typing on channel {ChannelId}. Should update: {State}", userId, channelId, shouldUpdate);
+        _logger.LogInformation("User {Id} is typing on channel {ChannelId}. Should update: {State}", userId, groupId, shouldUpdate);
 
         if (shouldUpdate)
         {
-            await Clients.OthersInGroup(channelId).UserIsTyping(channelId, userId);
+            await Clients.OthersInGroup(groupId).UserIsTyping(groupId, userId);
         }
     }
 
     [HubMethodName(HubMethods.StoppedTyping)]
-    public async Task StoppedTyping(ChannelId channelId)
+    public async Task StoppedTyping(GroupId groupId)
     {
         var userId = UserId;
 
-        var shouldUpdate = await _connectionManager.SetUserStoppedTyping(channelId, userId);
+        var shouldUpdate = await _connectionManager.SetUserStoppedTyping(groupId, userId);
 
         _logger.LogInformation("User {Id} stopped typing. Should update: {State}", userId, shouldUpdate);
 
         if (shouldUpdate)
         {
-            await Clients.OthersInGroup(channelId).UserStoppedTyping(channelId, UserId);
+            await Clients.OthersInGroup(groupId).UserStoppedTyping(groupId, UserId);
         }
     }
 
     [HubMethodName(HubMethods.AddFriendsToChannel)]
     public async Task<bool> AddFriendsToGroup(
-        ChannelId channelId, List<UserId> friendIds, ChannelRepository channelRepository, UserRepository userRepository)
+        GroupId groupId, List<UserId> friendIds, GroupRepository groupRepository)
     {
         if (friendIds.Count == 0)
         {
             return false;
         }
 
-        var participant = await GetChannelParticipantAsync(channelId);
-        if (participant is null)
+        var addingUser = await GetChannelParticipantAsync(groupId);
+        if (addingUser is null)
         {
             return false;
         }
 
-        var users = await userRepository.GetUserListAsync(friendIds);
+        var users = await _userRepository.GetUserListAsync(friendIds);
 
-        var added = await channelRepository.AddUsersToGroupAsync(channelId, users);
+        var added = await groupRepository.AddUsersToGroupAsync(groupId, addingUser, users);
         if (!added)
         {
             return false;
         }
 
-        var channel = await channelRepository.GetChannelAsync(channelId);
+        var channel = await groupRepository.GetGroupAsync(groupId);
         if (channel is null)
         {
             return false;
@@ -102,7 +103,7 @@ partial class AppHub
         var dto = channel.ToDto();
 
         await NotifyNewChannelParticipantsAsync(dto, friendIds);
-        await Clients.User(participant.Id.ToString()).ChannelParticipantsChanged(dto);
+        await Clients.User(addingUser.Id.ToString()).ChannelParticipantsChanged(dto);
 
         return true;
     }
@@ -111,21 +112,21 @@ partial class AppHub
 
     [HubMethodName(HubMethods.GetMessagePage)]
     public async Task<List<MessageDto>> GetMessagePage(
-        ChannelId channelId, TextChannelCursor cursor, MessageRepository messageRepository)
+        GroupId groupId, TextChannelCursor cursor, MessageRepository messageRepository)
     {
-        var participant = await GetChannelParticipantAsync(channelId);
+        var participant = await GetChannelParticipantAsync(groupId);
         if (participant is null)
         {
             return Empty;
         }
 
-        var messages = await messageRepository.GetPageAsync(channelId, cursor, Context.ConnectionAborted);
+        var messages = await messageRepository.GetPageAsync(groupId, cursor, Context.ConnectionAborted);
         return messages.Select(x => x.ToDto()).ToList();
     }
 
     [HubMethodName(HubMethods.CreateChannel)]
-    public async Task<ChannelId?> CreateChannel(
-        List<UserId> participantIds, ChannelRepository channelRepository, SystemMessageService systemMessageService)
+    public async Task<GroupId?> CreateChannel(
+        List<UserId> participantIds, GroupRepository groupRepository, SystemMessageService systemMessageService)
     {
         var creatingUserId = UserId;
         if (!participantIds.Contains(creatingUserId))
@@ -140,17 +141,16 @@ partial class AppHub
             return null;
         }
 
-        var channel = await channelRepository.CreateChannelAsync(participants, Context.ConnectionAborted);
+        var channel = await groupRepository.CreateGroupAsync(creatingUser, participants, Context.ConnectionAborted);
         if (channel is null)
         {
             return null;
         }
 
-        await NotifyNewChannelParticipantsAsync(channel.ToDto(), channel.Participants.Select(x => x.Id));
+        await NotifyNewChannelParticipantsAsync(channel.ToDto(), channel.Participants.Select(x => x.UserId));
 
         // Don't send the system message for dms
-        // But send for solo and more groups
-        if (participants.Count != 2)
+        if (channel.ChatType != ChatType.DirectMessage)
         {
             await systemMessageService.SendChannelCreatedMessageAsync(creatingUser, channel.Id);
         }
@@ -158,17 +158,17 @@ partial class AppHub
         return channel.Id;
     }
 
-    private async Task NotifyNewChannelParticipantsAsync(ChannelDto channelDto, IEnumerable<UserId> participantsToNotify)
+    private async Task NotifyNewChannelParticipantsAsync(GroupDto groupDto, IEnumerable<UserId> participantsToNotify)
     {
         foreach (var participantId in participantsToNotify)
         {
             var userConnections = await _connectionManager.GetUserConnectionsAsync(participantId);
             foreach (var connection in userConnections)
             {
-                await Groups.AddToGroupAsync(connection, channelDto.Id);
+                await Groups.AddToGroupAsync(connection, groupDto.Id);
             }
         }
 
-        await Clients.Groups(channelDto.Id).AddedToChannel(channelDto);
+        await Clients.Groups(groupDto.Id).AddedToChannel(groupDto);
     }
 }

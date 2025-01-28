@@ -7,7 +7,7 @@ namespace Squadtalk.Data.LiveKit.DTOs;
 public class RoomDto
 {
     [JsonPropertyName("name")]
-    public ChannelId ChannelId { get; set; } = default!;
+    public GroupId GroupId { get; set; } = default!;
 
     [JsonPropertyName("sid")]
     public string CallId { get; set; } = default!;

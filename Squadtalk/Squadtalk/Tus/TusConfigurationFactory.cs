@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 using Shared;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
-using Squadtalk.Data.Entities;
 using Squadtalk.Repositories;
 using Squadtalk.Services;
 using tusdotnet.Models;
@@ -68,10 +66,10 @@ public static class TusConfigurationFactory
         if (context.HasFailed || channelIdMetadata is null) return;
 
         var userId = context.HttpContext.User.GetRequiredUserId();
-        var channelId = ChannelId.From(channelIdMetadata);
+        var channelId = GroupId.From(channelIdMetadata);
 
-        var channelRepository = context.HttpContext.RequestServices.GetRequiredService<ChannelRepository>();
-        var userParticipatesInChannel = await channelRepository.UserParticipatesInChannelAsync(userId, channelId);
+        var channelRepository = context.HttpContext.RequestServices.GetRequiredService<GroupRepository>();
+        var userParticipatesInChannel = await channelRepository.UserParticipatesInGroupAsync(userId, channelId);
 
         if (!userParticipatesInChannel)
         {
@@ -84,8 +82,8 @@ public static class TusConfigurationFactory
         var httpContext = fileCompleteContext.HttpContext;
         var cancellationToken = httpContext.RequestAborted;
 
-        var userManager = httpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = await userManager.GetUserAsync(httpContext.User);
+        var userRepository = httpContext.RequestServices.GetRequiredService<ChatUserRepository>();
+        var user = await userRepository.FindUserByIdAsync(httpContext.User);
         if (user is null) return;
 
         var file = await fileCompleteContext.GetFileAsync();

@@ -8,7 +8,7 @@ public interface IFileTransferService
     event Action<FileModel>? FileSelected;
     event Action? SelectionCleared;
 
-    event Action<FileModel, ChannelModel>? UploadStarted; 
+    event Action<FileModel, ChatModel>? UploadStarted; 
     event Action? StateChanged;
 
     bool IsFileAvailable => SelectedFile is not null;
@@ -21,7 +21,7 @@ public interface IFileTransferService
     
     FileModel? CurrentlyUploadedFile { get; }
 
-    ChannelModel? UploadChannel { get; }
+    ChatModel? UploadChannel { get; }
     
     List<FileModel> UploadQueue { get; }
 
@@ -29,7 +29,7 @@ public interface IFileTransferService
     
     Task InitializeAsync();
 
-    Task UploadFileAsync(ChannelModel channelModel);
+    Task UploadFileAsync(ChatModel chatModel);
 
     Task CancelUploadAsync();
 

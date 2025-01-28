@@ -23,7 +23,7 @@
     private IJSObjectReference _jsModule = default!;
     // private string ButtonText => _filling ? Table.CanvasStop : Table.CanvasStart;
     private bool _filling;
-    
+
     private readonly Random _random = new();
     private readonly PeriodicTimer _periodicTimer = new(TimeSpan.FromMilliseconds(100));
     private readonly HashSet<Point> _filledCells = [];

@@ -60,7 +60,7 @@ public class LiveKitService
         return new RoomTokenDto { Token = tokenString };
     }
 
-    public RoomTokenDto? CreateRoomToken(ClaimsPrincipal? claimsPrincipal, ChannelId channelId)
+    public RoomTokenDto? CreateRoomToken(ClaimsPrincipal? claimsPrincipal, GroupId groupId)
     {
         var username = claimsPrincipal?.GetClaimValue(ClaimTypes.Name);
         var id = claimsPrincipal?.GetClaimValue(ClaimTypes.NameIdentifier);
@@ -72,7 +72,7 @@ public class LiveKitService
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var now = DateTime.UtcNow;
-        var videoClaim = JsonSerializer.Serialize(new { room = channelId.Value, roomJoin = true });
+        var videoClaim = JsonSerializer.Serialize(new { room = groupId.Value, roomJoin = true });
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

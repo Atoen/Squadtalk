@@ -8,26 +8,26 @@ namespace Squadtalk.Client.Services.SignalR.Interfaces;
 public interface ISignalrTextService
 {
     event Action<MessageDto>? MessageReceived;
-    event Action<ChannelId, string?>? ChannelNameChanged;
+    event Action<GroupId, string?>? ChannelNameChanged;
 
-    event Action<ChannelDto>? ChannelParticipantsChanged;
-    event Func<ChannelDto, Task>? AddedToChannel;
-    event Func<IEnumerable<ChannelDto>, Task>? ChannelsReceived;
+    event Action<GroupDto>? ChannelParticipantsChanged;
+    event Func<GroupDto, Task>? AddedToChannel;
+    event Func<IEnumerable<GroupDto>, Task>? ChannelsReceived;
 
-    event Action<ChannelId, UserId>? UserIsTyping;
-    event Action<ChannelId, UserId>? UserStoppedTyping;
+    event Action<GroupId, UserId>? UserIsTyping;
+    event Action<GroupId, UserId>? UserStoppedTyping;
 
-    Task<SignalrResult> SendMessageAsync(string message, ChannelId channelId, CancellationToken cancellationToken = default);
+    Task<SignalrResult> SendMessageAsync(string message, GroupId groupId, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<List<MessageDto>>> GetMessagePageAsync(ChannelId channelId, TextChannelCursor cursor = default, CancellationToken cancellationToken = default);
+    Task<SignalrResult<List<MessageDto>>> GetMessagePageAsync(GroupId groupId, TextChannelCursor cursor = default, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<ChannelId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
+    Task<SignalrResult<GroupId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<bool>> AddFriendsToGroupAsync(ChannelId channelId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default);
+    Task<SignalrResult<bool>> AddFriendsToGroupAsync(GroupId groupId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<bool>> ChangeChannelNameAsync(ChannelId channelId, string? newName, CancellationToken cancellationToken = default);
+    Task<SignalrResult<bool>> ChangeChannelNameAsync(GroupId groupId, string? newName, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult> UserIsTypingAsync(ChannelId channelId, CancellationToken cancellationToken = default);
+    Task<SignalrResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult> UserStoppedTypingAsync(ChannelId channelId, CancellationToken cancellationToken = default);
+    Task<SignalrResult> UserStoppedTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
 }

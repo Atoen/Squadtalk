@@ -1,8 +1,7 @@
 @using Squadtalk.Client.Extensions
 
-<MudStack Row="true" AlignItems="AlignItems.Center"
-          Class="my-1 hover pa-1 mud-ripple"
-          @onclick="MessageFriend">
+<div class="my-1 hover rounded pa-1 mud-ripple align-center d-flex flex-row gap-2"
+     @onclick="MessageFriend">
     @UserAvatar.NoBadgeMedium(Friend)
 
     <div>
@@ -38,14 +37,13 @@
             </MudMenu>
         </MudTooltip>
     </div>
-
-</MudStack>
+</div>
 
 @implements IDisposable
-@implements Shared.Reactive.ISubscriber<UserModel>
+@implements ISubscriber<UserModel>
 
 @inject IContactManager ContactManager
-@inject IChannelManager ChannelManager
+@inject IChatGroupManager ChatGroupManager
 @inject LocalizedText LocalizedText
 
 @code
@@ -55,7 +53,7 @@
 
     private async Task MessageFriend()
     {
-        await ChannelManager.OpenOrCreateTemporaryDirectMessageChannelAsync(Friend);
+        await ChatGroupManager.OpenOrCreateTemporaryDirectMessageChannelAsync(Friend);
     }
 
     private void StartVoiceCall()

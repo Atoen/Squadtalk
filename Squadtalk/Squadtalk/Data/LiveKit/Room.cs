@@ -2,13 +2,13 @@ using Shared.Data.TypedIds;
 
 namespace Squadtalk.Data.LiveKit;
 
-public sealed class Room(ChannelId channelId) : IDisposable
+public sealed class Room(GroupId groupId) : IDisposable
 {
     private readonly SemaphoreSlim _semaphore = new(1);
     private readonly Dictionary<string, Participant> _participants = [];
     private readonly DateTime _startTime = DateTime.Now;
 
-    public ChannelId ChannelId { get; } = channelId;
+    public GroupId GroupId { get; } = groupId;
     public UserId InitiatorId { get; private set; }
     public IEnumerable<Participant> Participants => _participants.Values;
 

@@ -5,37 +5,37 @@ using Squadtalk.Data.Entities;
 
 namespace Squadtalk.Extensions;
 
-public static class ChannelExtensions
+internal static class ChannelExtensions
 {
-    public static Channel WithLastMessage(this Channel textChannel, Message message)
+    public static Group WithLastMessage(this Group textGroup, Message message)
     {
-        textChannel.LastMessage = new Channel.Message
+        textGroup.LastMessage = new Group.Message
         {
             Content = message.Content,
             AuthorId = message.Author.Id,
-            AuthorName = message.Author.UserName!,
-            ChannelId = message.ChannelId,
+            AuthorName = message.Author.Username,
+            GroupId = message.GroupId,
             Timestamp = message.Timestamp,
             Embed = message.Embed is not null
                 ? new Embed { Type = message.Embed.Type, Data = message.Embed.Data }
                 : null
         };
 
-        return textChannel;
+        return textGroup;
     }
 
-    public static bool UserParticipatesInChannel(this Channel channel, ClaimsPrincipal? principal)
+    public static bool UserParticipatesInChannel(this Group group, ClaimsPrincipal? principal)
     {
         if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
         {
             return false;
         }
 
-        return UserId.TryParse(claim, out var userId) && channel.UserParticipatesInChannel(userId);
+        return UserId.TryParse(claim, out var userId) && group.UserParticipatesInChannel(userId);
     }
 
-    public static bool UserParticipatesInChannel(this Channel channel, UserId userId)
+    public static bool UserParticipatesInChannel(this Group group, UserId userId)
     {
-        return channel.Participants.Any(x => x.Id == userId);
+        return group.Participants.Any(x => x.UserId == userId);
     }
 }
