@@ -32,19 +32,19 @@ internal sealed partial class SignalrService : ISignalrTextService
         return InvokeAsync<List<MessageDto>>(HubMethods.GetMessagePage, groupId, cursor, cancellationToken);
     }
 
-    public Task<SignalrResult<GroupId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default)
+    public Task<SignalrResult<GroupId?>> CreateGroupAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default)
     {
-        return InvokeAsync<GroupId?>(HubMethods.CreateChannel, participants.ToList(), cancellationToken);
+        return InvokeAsync<GroupId?>(HubMethods.CreateGroup, participants.ToList(), cancellationToken);
     }
 
     public Task<SignalrResult<bool>> AddFriendsToGroupAsync(GroupId groupId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default)
     {
-        return InvokeAsync<bool>(HubMethods.AddFriendsToChannel, groupId, friends.ToList(), cancellationToken);
+        return InvokeAsync<bool>(HubMethods.AddFriendsToGroup, groupId, friends.ToList(), cancellationToken);
     }
 
-    public Task<SignalrResult<bool>> ChangeChannelNameAsync(GroupId groupId, string? newName, CancellationToken cancellationToken = default)
+    public Task<SignalrResult<bool>> ChangeGroupNameAsync(GroupId groupId, string? newName, CancellationToken cancellationToken = default)
     {
-        return InvokeAsync<bool>(HubMethods.ChangeChannelName, newName, cancellationToken);
+        return InvokeAsync<bool>(HubMethods.ChangeGroupName, groupId, newName, cancellationToken);
     }
 
     public Task<SignalrResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default)
@@ -65,10 +65,10 @@ internal sealed partial class SignalrService : ISignalrTextService
         _connection.On<IList<GroupDto>>(nameof(ITextChatClient.ReceivedChannels), channels =>
             ChannelsReceived.TryInvoke(channels));
 
-        _connection.On<GroupDto>(nameof(ITextChatClient.AddedToChannel), channel =>
+        _connection.On<GroupDto>(nameof(ITextChatClient.AddedToGroup), channel =>
             AddedToChannel.TryInvoke(channel));
 
-        _connection.On<GroupDto>(nameof(ITextChatClient.ChannelParticipantsChanged), channel =>
+        _connection.On<GroupDto>(nameof(ITextChatClient.GroupParticipantsChanged), channel =>
             ChannelParticipantsChanged?.Invoke(channel));
 
         _connection.On<GroupId, string?>(nameof(ITextChatClient.ChannelNameChanged), (channelId, newName) =>

@@ -45,7 +45,7 @@ internal class TextChatService : ITextChatService
 
     public void StartedTyping(GroupId groupId)
     {
-        if (_typingChannelId == groupId || _typingChannelId == _chatGroupManager.GlobalGroup.Id)
+        if (_typingChannelId == groupId || _typingChannelId == _chatGroupManager.GlobalChat.Id)
         {
             return;
         }

@@ -15,7 +15,12 @@ public static class HubMethods
     public const string IsTyping = nameof(IsTyping);
     public const string StoppedTyping = nameof(StoppedTyping);
     public const string GetMessagePage = nameof(GetMessagePage);
-    public const string CreateChannel = nameof(CreateChannel);
-    public const string AddFriendsToChannel = nameof(AddFriendsToChannel);
-    public const string ChangeChannelName = nameof(ChangeChannelName);
+
+    public const string CreateGroup = nameof(CreateGroup);
+    public const string AddFriendsToGroup = nameof(AddFriendsToGroup);
+    public const string ChangeGroupName = nameof(ChangeGroupName);
+    public const string KickUser = nameof(KickUser);
+    public const string PromoteUser = nameof(PromoteUser);
+    public const string DemoteUser = nameof(DemoteUser);
+    public const string DeleteGroup = nameof(DeleteGroup);
 }

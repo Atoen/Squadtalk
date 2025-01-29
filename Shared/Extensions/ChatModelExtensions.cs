@@ -7,7 +7,7 @@ public static class ChatModelExtensions
 {
     public static bool IsGlobal(this ChatModel? channelModel)
     {
-        return channelModel?.Id == GroupChatModel.GlobalChatId;
+        return channelModel?.Id == ChatModel.GlobalChatId;
     }
 
     public static bool IsTemporary(this ChatModel? channelModel)

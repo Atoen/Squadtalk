@@ -7,13 +7,9 @@ namespace Shared.Models;
 
 public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposable
 {
-    public const string GlobalChanelIdValue = "global";
-
-    public static readonly GroupId GlobalChatId = new(GlobalChanelIdValue);
-    public static GroupChatModel CreateGlobalChat() => new([], GlobalChatId) { _name = "Global" };
-
     public override List<GroupParticipantModel> Participants { get; }
     public override List<GroupParticipantModel> Others { get; }
+    public override GroupParticipantModel LocalUser { get; }
 
     private string? _name;
     public override string Name => CustomName ?? GetOrPrepareName();
@@ -37,6 +33,7 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
 
         Participants = participants.OrderBy(x => x.Username()).ToList();
         Others = Participants.Where(x => x.User.IsRemote).ToList();
+        LocalUser = Participants.Single(x => x.User.IsLocal);
 
         Subscribe(Others);
     }

@@ -182,6 +182,7 @@ one_member: Uczestnik
 many_members: Uczestników
 one_moderator: Moderator
 many_moderators: Moderatorów
+delete_group: Usuń grupę
 
 # Settings page
 app_language: Język

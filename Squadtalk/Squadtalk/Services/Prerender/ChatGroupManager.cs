@@ -7,23 +7,11 @@ namespace Squadtalk.Services.Prerender;
 
 internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
 {
-    private static readonly GroupChatModel GlobalGroupModel = GroupChatModel.CreateGlobalChat();
     private static readonly Dictionary<GroupId, ChatModel> EmptyChannels = [];
 
     private readonly IContactManager _contactManager;
-    private readonly IUserAuthenticationService _authenticationService;
+
     private Dictionary<GroupId, ChatModel>? _channels;
-
-    public ChatGroupManager(
-        PrerenderPersistantState prerenderPersistantState,
-        IContactManager contactManager,
-        IUserAuthenticationService authenticationService) : base(prerenderPersistantState)
-    {
-        _contactManager = contactManager;
-        _authenticationService = authenticationService;
-
-        GroupParticipantProvider = GetOrCreateGroupParticipantModel;
-    }
 
     private Dictionary<GroupId, ChatModel> LazyChannels => TryCreateModels(ref _channels, EmptyChannels);
 
@@ -31,12 +19,23 @@ internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
 
     public Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
 
-    public GroupChatModel GlobalGroup => GlobalGroupModel;
+    public ChatModel GlobalChat { get; }
+
     public ChatModel? CurrentChannel { get; private set; }
 
     event Action? IChatGroupManager.ChannelsListChanged { add { } remove { } }
     event Action? IChatGroupManager.ChannelChanged { add { } remove { } }
     event Func<Task>? IChatGroupManager.ChannelChangedAsync { add { } remove { } }
+
+    public ChatGroupManager(
+        PrerenderPersistantState prerenderPersistantState,
+        IContactManager contactManager) : base(prerenderPersistantState)
+    {
+        _contactManager = contactManager;
+
+        GlobalChat = ChatModel.CreateGlobalChat(_contactManager.LocalUserModel);
+        GroupParticipantProvider = GetOrCreateGroupParticipantModel;
+    }
 
     protected override void CreateModels(PrerenderPersistantState prerenderPersistantState)
     {
@@ -45,8 +44,6 @@ internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
             _channels = EmptyChannels;
             return;
         }
-
-        var currentUserId = _authenticationService.UserId;
 
         var channelModels = channels
             .Select(x => ChatModel.Create(x, GroupParticipantProvider))

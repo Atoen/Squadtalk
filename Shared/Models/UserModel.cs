@@ -5,7 +5,7 @@ using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class UserModel : Observable<UserModel>, IEquatable<UserModel?>
+public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUser
 {
     private UserStatus _status;
     private string _avatarUrl = default!;

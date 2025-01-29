@@ -28,27 +28,34 @@
                     <MudMenu Icon="@Icons.Material.Rounded.Settings" ListClass="pa-1 z-90"
                              Color="Color.Inherit" Dense="true" MaxHeight="300"
                              AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                        <MudMenuItem Icon="@Icons.Material.Rounded.Edit"
-                                     OnClick="OpenChangeGroupNameDialog">
-                            @LocalizedText.R.group_name
-                        </MudMenuItem>
 
-                        <MudMenuItem Icon="@Icons.Material.Rounded.Image"
-                                     OnClick="OpenChangeGroupNameDialog">
-                            @LocalizedText.R.group_image
-                        </MudMenuItem>
+                        @if (Chat.LocalUser.CanChangeGroupNameAndImage())
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Rounded.Edit"
+                                         OnClick="OpenChangeGroupNameDialog">
+                                @LocalizedText.R.group_name
+                            </MudMenuItem>
 
-                        <MudDivider Class="my-1"/>
+                            <MudMenuItem Icon="@Icons.Material.Rounded.Image"
+                                         OnClick="OpenChangeGroupNameDialog">
+                                @LocalizedText.R.group_image
+                            </MudMenuItem>
+
+                            <MudDivider Class="my-1"/>
+                        }
 
                         <MudMenuItem Icon="@Icons.Material.Rounded.People"
                                      OnClick="OpenGroupMembersDialog">
                             @LocalizedText.R.group_members
                         </MudMenuItem>
 
-                        <MudMenuItem Icon="@Icons.Material.Rounded.PersonAddAlt"
-                                     OnClick="OpenAddToGroupDialog">
-                            @LocalizedText.R.add_friends_to_group
-                        </MudMenuItem>
+                        @if (Chat.LocalUser.CanAddNewMembers())
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Rounded.PersonAddAlt"
+                                         OnClick="OpenAddToGroupDialog">
+                                @LocalizedText.R.add_friends_to_group
+                            </MudMenuItem>
+                        }
 
                         <MudDivider Class="my-1"/>
 
@@ -56,6 +63,17 @@
                                      IconColor="Color.Error" OnClick="OpenLeaveGroupDialog">
                             @LocalizedText.R.leave_group
                         </MudMenuItem>
+
+                        @if (Chat.LocalUser.CanDeleteGroup())
+                        {
+                            <MudDivider Class="my-1"/>
+
+                            <MudMenuItem Icon="@Icons.Material.Rounded.DeleteForever"
+                                         IconColor="Color.Error">
+                                @LocalizedText.R.delete_group
+                            </MudMenuItem>
+                        }
+
                     </MudMenu>
                 </MudTooltip>
             }

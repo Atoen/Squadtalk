@@ -12,7 +12,7 @@ public interface IChatGroupManager
 
     Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
 
-    GroupChatModel GlobalGroup { get; }
+    ChatModel GlobalChat { get; }
 
     ChatModel? CurrentChannel { get; }
 

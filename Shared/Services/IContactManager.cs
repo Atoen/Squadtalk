@@ -15,6 +15,8 @@ public interface IContactManager
 
     UserStatus UserStatus { get; }
 
+    UserModel LocalUserModel { get; }
+
     Func<IChatUser, UserModel> UserModelProvider { get; }
 
     IReadOnlyCollection<UserModel> FriendList { get; }

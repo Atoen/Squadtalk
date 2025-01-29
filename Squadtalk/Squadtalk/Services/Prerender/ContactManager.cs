@@ -36,6 +36,8 @@ internal class ContactManager : LazyModelCreator, IContactManager
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
+    public UserModel LocalUserModel { get; }
+
     public ContactManager(
         PrerenderPersistantState prerenderPersistantState,
         IUserAuthenticationService userAuthenticationService) : base(prerenderPersistantState)
@@ -44,6 +46,7 @@ internal class ContactManager : LazyModelCreator, IContactManager
         _userAuthenticationService = userAuthenticationService;
 
         UserModelProvider = GetOrCreateUserModel;
+        LocalUserModel = CreateLocalUserModel();
     }
 
     protected override void CreateModels(PrerenderPersistantState prerenderPersistantState)
@@ -66,6 +69,19 @@ internal class ContactManager : LazyModelCreator, IContactManager
         }
 
         _incomingFriendRequests = incomingFriendRequests;
+    }
+
+    private UserModel CreateLocalUserModel()
+    {
+        var model = new UserModel
+        {
+            Status = UserStatus.Unknown,
+            Username = _userAuthenticationService.Username,
+        };
+
+        _userModels.TryAdd(model.Id, model);
+
+        return model;
     }
 
     public UserModel? FindUserById(UserId userId) => _userModels.GetValueOrDefault(userId);

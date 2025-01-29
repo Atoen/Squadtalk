@@ -15,19 +15,19 @@ public class GroupRepository(
 {
     public Task<Group?> GetGroupAsync(GroupId groupId)
     {
-        return ChannelByIdAsync(DbContext, groupId);
+        return GroupByIdAsync(DbContext, groupId);
     }
 
     public async Task<bool> UserParticipatesInGroupAsync(UserId userId, GroupId groupId)
     {
-        if (groupId == GroupChatModel.GlobalChatId)
+        if (groupId == ChatModel.GlobalChatId)
         {
             return true;
         }
 
-        var channel = await GetGroupAsync(groupId);
+        var group = await GetGroupAsync(groupId);
 
-        return channel?.UserParticipatesInChannel(userId) ?? false;
+        return group?.UserParticipatesInGroupAsync(userId) ?? false;
     }
 
     public async Task<Group?> CreateGroupAsync(ChatUser creatingUser, List<ChatUser> initialParticipants, CancellationToken cancellationToken = default)
@@ -54,44 +54,18 @@ public class GroupRepository(
         return added ? group : null;
     }
 
-    public async Task<bool> AddUsersToGroupAsync(GroupId groupId, ChatUser addingUser, List<ChatUser> users)
-    {
-        if (users.Count == 0)
-        {
-            return false;
-        }
-
-        var channel = await ChannelByIdAsync(DbContext, groupId);
-        if (channel is null)
-        {
-            return false;
-        }
-
-        var existingUserIds = channel.Participants.Select(x => x.UserId).ToHashSet();
-        var newUsers = users
-            .Where(user => !existingUserIds.Contains(user.Id))
-            .ToList();
-
-        if (newUsers.Count == 0)
-        {
-            return false;
-        }
-
-        var addedParticipants = newUsers.Select(x => x.ToGroupParticipant(channel, addingUser));
-
-        foreach (var participant in addedParticipants)
-        {
-            channel.Participants.Add(participant);
-        }
-
-        return await UpdateGroupAsync(channel);
-    }
-
     public async Task<bool> AddGroupAsync(Group group, CancellationToken cancellationToken = default)
     {
         DbContext.Channels.Add(group);
 
         return await SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<bool> DeleteGroupAsync(Group group)
+    {
+        var deletedRows = await DeleteGroupByIdAsync(DbContext, group.Id);
+
+        return deletedRows == 1;
     }
 
     public async Task<bool> UpdateGroupAsync(Group group, CancellationToken cancellationToken = default)
@@ -101,10 +75,16 @@ public class GroupRepository(
         return await SaveChangesAsync(cancellationToken);
     }
 
-    private static readonly Func<ApplicationDbContext, GroupId, Task<Group?>> ChannelByIdAsync =
+    private static readonly Func<ApplicationDbContext, GroupId, Task<Group?>> GroupByIdAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, GroupId channelId) => context.Channels
+            (ApplicationDbContext context, GroupId groupId) => context.Channels
                 .Include(x => x.GroupCreator)
                 .Include(x => x.Participants)
-                .SingleOrDefault(x => x.Id == channelId));
+                .SingleOrDefault(x => x.Id == groupId));
+
+    private static readonly Func<ApplicationDbContext, GroupId, Task<int>> DeleteGroupByIdAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, GroupId groupId) => context.Channels
+                .Where(x => x.Id == groupId)
+                .ExecuteDelete());
 }

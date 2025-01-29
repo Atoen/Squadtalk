@@ -8,9 +8,12 @@
             </MudAlert>
         }
 
-        <MudTextField T="string" Immediate="true" Counter="@IFormValidator.MaximumGroupNameLength"
-                      Label="@LocalizedText.R.group_name" @bind-Value="_name" Class="mt-n1"
-                      Validation="FormValidator.GroupNameValidator" Clearable="true"/>
+        <form @onsubmit="ChangeGroupName">
+            <MudTextField T="string" Immediate="true" Counter="@IFormValidator.MaximumGroupNameLength"
+                          Label="@LocalizedText.R.group_name" @bind-Value="_name" Class="mt-n1"
+                          Validation="FormValidator.GroupNameValidator" Clearable="true"/>
+        </form>
+
     </DialogContent>
     <DialogActions>
         <MudButton Color="Color.Primary" OnClick="Cancel">
