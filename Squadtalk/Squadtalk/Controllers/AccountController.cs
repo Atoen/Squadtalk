@@ -123,7 +123,16 @@ public class AccountController : ControllerBase
             return LocalRedirect(Routes.Pages.EmailAlreadyConfirmed);
         }
 
-        var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        string decoded;
+        try
+        {
+            decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        }
+        catch
+        {
+            return LocalRedirect(Routes.Pages.EmailConfirmationError);
+        }
+
         var result = await _userManager.ConfirmEmailAsync(user, decoded);
         if (!result.Succeeded)
         {
@@ -271,7 +280,16 @@ public class AccountController : ControllerBase
             return LocalRedirect(Routes.Pages.InvalidEmailConfirmationLink);
         }
 
-        var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        string decoded;
+        try
+        {
+            decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        }
+        catch
+        {
+            return LocalRedirect(Routes.Pages.EmailConfirmationError);
+        }
+
         var result = await _userManager.ChangeEmailAsync(user, email, decoded);
         if (!result.Succeeded)
         {

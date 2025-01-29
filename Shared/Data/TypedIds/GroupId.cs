@@ -1,9 +1,11 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
+using MessagePack;
 using Shared.Data.JsonConverters;
 
 namespace Shared.Data.TypedIds;
 
+[MessagePackObject]
 [JsonConverter(typeof(GroupIdConverter))]
 [TypeConverter(typeof(StringIdConverter<GroupId>))]
 public record GroupId(string Value) : StringIdRecord(Value), IStringIdRecord<GroupId>

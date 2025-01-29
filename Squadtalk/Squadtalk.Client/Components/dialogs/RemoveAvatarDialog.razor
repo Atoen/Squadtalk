@@ -14,7 +14,7 @@
     private const string SnackbarKey = "avatar removed";
 
     [CascadingParameter]
-    private MudDialogInstance MudDialog { get; set; } = default!;
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
     private void Cancel() => MudDialog.Cancel();
 

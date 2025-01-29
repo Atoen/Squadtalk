@@ -3,7 +3,6 @@ using Shared.Extensions;
 
 namespace Shared.Data.TypedIds;
 
-[MessagePackObject]
 public abstract record StringIdRecord
 {
     protected StringIdRecord(string value)

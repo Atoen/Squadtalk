@@ -27,7 +27,7 @@ internal class NotificationService
             options.Action = _localizedText.R.friend_request_accept;
             options.ActionColor = Color.Success;
             options.Icon = Icons.Material.Rounded.EmojiPeople;
-            options.Onclick = snackbar => FriendRequestAcceptedFromSnackbar(snackbar, incomingFriendRequest);
+            options.OnClick = snackbar => FriendRequestAcceptedFromSnackbar(snackbar, incomingFriendRequest);
         });
     }
 
