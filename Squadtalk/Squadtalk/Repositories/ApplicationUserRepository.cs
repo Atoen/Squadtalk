@@ -11,7 +11,7 @@ internal class ApplicationUserRepository(
     ApplicationDbContext dbContext,
     ILogger<ApplicationUserRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    public Task<ApplicationUser?> FindUserById(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ApplicationUser?> FindUserById(ClaimsPrincipal? principal, GroupInclusionOption groupInclusionOption = GroupInclusionOption.DontInclude)
     {
         if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
         {
@@ -19,18 +19,18 @@ internal class ApplicationUserRepository(
         }
 
         return UserId.TryParse(claim, out var userId)
-            ? FindUserById(userId, channelsInclusionOption)
+            ? FindUserById(userId, groupInclusionOption)
             : Task.FromResult<ApplicationUser?>(null);
     }
 
-    public Task<ApplicationUser?> FindUserById(UserId userId, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ApplicationUser?> FindUserById(UserId userId, GroupInclusionOption groupInclusionOption = GroupInclusionOption.DontInclude)
     {
-        return channelsInclusionOption switch
+        return groupInclusionOption switch
         {
-            ChannelsInclusionOption.DontInclude => UserByIdAsync(DbContext, userId),
-            ChannelsInclusionOption.Include => UserByIdWithChannelsAsync(DbContext, userId),
-            ChannelsInclusionOption.IncludeWithParticipants => UserByIdWithFullChannelsAsync(DbContext, userId),
-            _ => throw new ArgumentOutOfRangeException(nameof(channelsInclusionOption), channelsInclusionOption, null)
+            GroupInclusionOption.DontInclude => UserByIdAsync(DbContext, userId),
+            GroupInclusionOption.Include => UserByIdWithGroupsAsync(DbContext, userId),
+            GroupInclusionOption.IncludeWithParticipants => UserByIdWithFullGroupsAsync(DbContext, userId),
+            _ => throw new ArgumentOutOfRangeException(nameof(groupInclusionOption), groupInclusionOption, null)
         };
     }
 
@@ -60,7 +60,7 @@ internal class ApplicationUserRepository(
             (ApplicationDbContext context, UserId userId) => context.Users
                 .SingleOrDefault(x => x.Id == userId));
 
-    private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithChannelsAsync =
+    private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithGroupsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Users
                 .AsSplitQuery()
@@ -69,7 +69,7 @@ internal class ApplicationUserRepository(
                 .ThenInclude(x => x.Participants)
                 .SingleOrDefault(x => x.Id == userId));
 
-    private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithFullChannelsAsync =
+    private static readonly Func<ApplicationDbContext, UserId, Task<ApplicationUser?>> UserByIdWithFullGroupsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Users
                 .AsSplitQuery()
@@ -90,7 +90,7 @@ internal class ApplicationUserRepository(
                 .FirstOrDefault(x => x.NormalizedUserName == normalizedUsername));
 }
 
-public enum ChannelsInclusionOption
+public enum GroupInclusionOption
 {
     DontInclude,
     Include,

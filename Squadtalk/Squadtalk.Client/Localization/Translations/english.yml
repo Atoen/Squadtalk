@@ -225,6 +225,7 @@ one_member: Member
 many_members: Members
 one_moderator: Moderator
 many_moderators: Moderators
+delete_group: Delete group
 
 # Chat message
 today_time_template: Today {0}

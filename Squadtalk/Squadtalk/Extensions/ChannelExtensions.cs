@@ -24,17 +24,17 @@ internal static class ChannelExtensions
         return textGroup;
     }
 
-    public static bool UserParticipatesInChannel(this Group group, ClaimsPrincipal? principal)
+    public static bool UserParticipatesInGroup(this Group group, ClaimsPrincipal? principal)
     {
         if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
         {
             return false;
         }
 
-        return UserId.TryParse(claim, out var userId) && group.UserParticipatesInChannel(userId);
+        return UserId.TryParse(claim, out var userId) && group.UserParticipatesInGroupAsync(userId);
     }
 
-    public static bool UserParticipatesInChannel(this Group group, UserId userId)
+    public static bool UserParticipatesInGroupAsync(this Group group, UserId userId)
     {
         return group.Participants.Any(x => x.UserId == userId);
     }

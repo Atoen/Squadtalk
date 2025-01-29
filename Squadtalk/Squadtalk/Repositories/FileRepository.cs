@@ -46,13 +46,13 @@ public class FileRepository(
 
     public Task<DbFile?> GetFileAsync(GroupId groupId, TusFileId fileId)
     {
-        return FileByChannelPathAsync(DbContext, groupId, fileId);
+        return FileByGroupPathAsync(DbContext, groupId, fileId);
     }
 
-    private static readonly Func<ApplicationDbContext, GroupId, TusFileId, Task<DbFile?>> FileByChannelPathAsync =
+    private static readonly Func<ApplicationDbContext, GroupId, TusFileId, Task<DbFile?>> FileByGroupPathAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, GroupId channelId, TusFileId fileId) => context.Files
+            (ApplicationDbContext context, GroupId groupId, TusFileId fileId) => context.Files
                 .AsNoTracking()
-                .Where(x => x.GroupId == channelId)
+                .Where(x => x.GroupId == groupId)
                 .SingleOrDefault(x => x.TusId == fileId));
 }

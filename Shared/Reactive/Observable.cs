@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace Shared.Reactive;
@@ -6,11 +7,11 @@ public abstract class Observable<T> : IObservable<T> where T : class, IObservabl
 {
     private List<ISubscriber<T>>? _subscribers;
     private readonly Lock _lock = new();
-
+    
     public static explicit operator T(Observable<T> observable)
     {
         var value = observable as T;
-        ArgumentNullException.ThrowIfNull(value); // Shouldn't happen
+        Debug.Assert(value is not null);
 
         return value;
     }

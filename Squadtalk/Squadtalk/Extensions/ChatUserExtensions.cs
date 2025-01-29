@@ -8,7 +8,7 @@ internal static class ChatUserExtensions
 {
     public static bool ParticipatesInChannel(this ChatUser user, GroupId groupId)
     {
-        if (groupId == GroupChatModel.GlobalChatId)
+        if (groupId == ChatModel.GlobalChatId)
         {
             return true;
         }

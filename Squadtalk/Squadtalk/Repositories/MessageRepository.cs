@@ -28,10 +28,10 @@ public class MessageRepository(
         return await page.ToListAsync(cancellationToken);
     }
 
-    public async Task<Dictionary<GroupId, int>> GetUnreadMessageCountPerChannelAsync(List<Group> channels, DateTimeOffset since)
+    public async Task<Dictionary<GroupId, int>> GetUnreadMessageCountPerGroupAsync(List<Group> groups, DateTimeOffset since)
     {
-        var channelIds = channels.Select(x => x.Id).ToList();
-        var grouping = UnreadMessagesPerChannelAsync(DbContext, channelIds, since);
+        var groupIds = groups.Select(x => x.Id).ToList();
+        var grouping = UnreadMessagesPerGroupAsync(DbContext, groupIds, since);
 
         return await grouping.ToDictionaryAsync(g => g.Key, g => g.Count());
     }
@@ -60,10 +60,10 @@ public class MessageRepository(
     public async Task<bool> AddMessageAsync(Message message, CancellationToken cancellationToken = default)
     {
         DbContext.Messages.Add(message);
-        if (message.GroupId != GroupChatModel.GlobalChatId)
+        if (message.GroupId != ChatModel.GlobalChatId)
         {
-            var channel = await groupRepository.GetGroupAsync(message.GroupId);
-            channel?.WithLastMessage(message);
+            var group = await groupRepository.GetGroupAsync(message.GroupId);
+            group?.WithLastMessage(message);
         }
 
         return await SaveChangesAsync(cancellationToken);
@@ -87,18 +87,18 @@ public class MessageRepository(
     }
 
     private static readonly Func<ApplicationDbContext, List<GroupId>, DateTimeOffset, IAsyncEnumerable<IGrouping<GroupId, Message>>>
-        UnreadMessagesPerChannelAsync = EF.CompileAsyncQuery(
-            (ApplicationDbContext context, List<GroupId> channelIds, DateTimeOffset since) => context.Messages
+        UnreadMessagesPerGroupAsync = EF.CompileAsyncQuery(
+            (ApplicationDbContext context, List<GroupId> groupIds, DateTimeOffset since) => context.Messages
                 .AsNoTracking()
-                .Where(x => channelIds.Contains(x.GroupId))
+                .Where(x => groupIds.Contains(x.GroupId))
                 .Where(x => x.Timestamp > since)
                 .GroupBy(x => x.GroupId));
 
     private static readonly Func<ApplicationDbContext, GroupId, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, GroupId channelId) => context.Messages
+            (ApplicationDbContext context, GroupId groupId) => context.Messages
                 .AsNoTracking()
-                .Where(x => x.GroupId == channelId)
+                .Where(x => x.GroupId == groupId)
                 .OrderByDescending(x => x.Timestamp)
                 .Take(PageSize)
                 .Include(x => x.Author)
@@ -106,9 +106,9 @@ public class MessageRepository(
 
     private static readonly Func<ApplicationDbContext, GroupId, DateTimeOffset, IAsyncEnumerable<Message>> MessagePageByCursorAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, GroupId channelId, DateTimeOffset cursor) => context.Messages
+            (ApplicationDbContext context, GroupId groupId, DateTimeOffset cursor) => context.Messages
                 .AsNoTracking()
-                .Where(x => x.GroupId == channelId)
+                .Where(x => x.GroupId == groupId)
                 .OrderByDescending(x => x.Timestamp)
                 .Where(x => x.Timestamp < cursor)
                 .Take(PageSize)

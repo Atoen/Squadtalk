@@ -21,11 +21,11 @@ public interface ISignalrTextService
 
     Task<SignalrResult<List<MessageDto>>> GetMessagePageAsync(GroupId groupId, TextChannelCursor cursor = default, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<GroupId?>> CreateChannelAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
+    Task<SignalrResult<GroupId?>> CreateGroupAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
 
     Task<SignalrResult<bool>> AddFriendsToGroupAsync(GroupId groupId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult<bool>> ChangeChannelNameAsync(GroupId groupId, string? newName, CancellationToken cancellationToken = default);
+    Task<SignalrResult<bool>> ChangeGroupNameAsync(GroupId groupId, string? newName, CancellationToken cancellationToken = default);
 
     Task<SignalrResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
 

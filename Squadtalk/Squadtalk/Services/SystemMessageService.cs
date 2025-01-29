@@ -32,7 +32,7 @@ public class SystemMessageService
 
     // TODO: Use user ID instead of username to support updating system message on name change
 
-    public Task SendChannelCreatedMessageAsync(ChatUser user, GroupId groupId)
+    public Task SendGroupCreatedMessageAsync(ChatUser user, GroupId groupId)
     {
         var data = new Dictionary<string, string>
         {
@@ -42,8 +42,13 @@ public class SystemMessageService
         return SendSystemMessageAsync(user, groupId, SystemMessageType.ChannelCreated, data);
     }
 
-    public Task SendChannelNameChangedMessageAsync(ChatUser user, GroupId groupId, string newName)
+    public Task SendChannelNameChangedMessageAsync(ChatUser user, GroupId groupId, string? newName)
     {
+        if (string.IsNullOrEmpty(newName))
+        {
+            return SendChannelNameClearedMessageAsync(user, groupId);
+        }
+
         var data = new Dictionary<string, string>
         {
             [EmbedData.SystemMessageDataUsername] = user.Username,

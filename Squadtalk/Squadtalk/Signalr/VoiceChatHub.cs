@@ -18,7 +18,7 @@ public partial class AppHub
     public async Task<RoomTokenDto?> StartCall(
         GroupId groupId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
     {
-        var participant = await GetChannelParticipantAsync(groupId);
+        var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
         {
             await VoiceCaller.CallFailed("Failed to create voice call");
@@ -33,7 +33,7 @@ public partial class AppHub
     public async Task<RoomTokenDto?> AcceptCall(
         GroupId groupId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
     {
-        var participant = await GetChannelParticipantAsync(groupId);
+        var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
         {
             await VoiceCaller.CallFailed("Failed to join the call");
@@ -54,7 +54,7 @@ public partial class AppHub
 
     public async Task DeclineCall(GroupId groupId, VoiceCallManager voiceCallManager)
     {
-        var participant = await GetChannelParticipantAsync(groupId);
+        var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
         {
             return;
@@ -71,7 +71,7 @@ public partial class AppHub
 
     public async Task<bool> ChannelHasActiveCall(GroupId groupId, VoiceCallManager voiceCallManager)
     {
-        var participant = await GetChannelParticipantAsync(groupId);
+        var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
         {
             return false;

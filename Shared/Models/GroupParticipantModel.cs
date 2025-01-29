@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Shared.Data;
+using Shared.Data.TypedIds;
 using Shared.Enums;
 
 namespace Shared.Models;
 
-public class GroupParticipantModel
+public class GroupParticipantModel : IGroupParticipant
 {
     public required UserModel User { get; init; }
 
@@ -24,5 +25,10 @@ public class GroupParticipantModel
             AddedBy = groupParticipant.AddedBy is { } addedBy ? userModelProvider(addedBy) : null
         };
     }
+
+    IChatUser? IGroupParticipant.AddedBy => AddedBy;
+    string IChatUser.Username => User.Username;
+    UserId IChatUser.Id => User.Id;
+    UserStatus IChatUser.Status => User.Status;
 }
 

@@ -32,6 +32,7 @@ internal class ContactManager : IContactManager
     }
 
     public UserStatus UserStatus => _signalrService.UserStatus;
+    public UserModel LocalUserModel { get; }
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
@@ -52,6 +53,7 @@ internal class ContactManager : IContactManager
         _logger = logger;
 
         UserModelProvider = GetOrCreateUserModel;
+        LocalUserModel = CreateLocalUserModel();
 
         notificationService.FriendRequestAcceptedFromNotification += FriendAcceptedFromNotification;
 
@@ -277,6 +279,19 @@ internal class ContactManager : IContactManager
     }
 
     #endregion
+
+    private UserModel CreateLocalUserModel()
+    {
+        var model = new UserModel
+        {
+            Status = _signalrService.UserStatus,
+            Username = _userAuthenticationService.Username,
+        };
+
+        _userModels.TryAdd(model.Id, model);
+
+        return model;
+    }
 
     private bool AddFriendRequest(PendingFriendRequestDto requestDto, bool invokeEvents = false)
     {

@@ -16,6 +16,8 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
 
     public override IEnumerable<GroupParticipantModel> Others { get; }
 
+    public override GroupParticipantModel LocalUser { get; }
+
     public override UserStatus Status => Other.User.Status;
 
     private readonly IDisposable? _subscription;
@@ -23,6 +25,7 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
     public DirectMessageModel(IEnumerable<GroupParticipantModel> participants, GroupId id) : base(id)
     {
         Participants = participants.ToList();
+        LocalUser = Participants.Single(x => x.User.IsLocal);
         Other = Participants.Single(x => x.User.IsRemote);
         Others = [Other];
 

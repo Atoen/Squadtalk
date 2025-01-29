@@ -8,6 +8,9 @@ namespace Shared.Models;
 
 public abstract class ChatModel : Observable<ChatModel>
 {
+    public const string GlobalChanelIdValue = "global";
+    public static readonly GroupId GlobalChatId = new(GlobalChanelIdValue);
+
     private string? _imageUrl;
 
     public abstract string Name { get; }
@@ -24,6 +27,8 @@ public abstract class ChatModel : Observable<ChatModel>
 
     public abstract IEnumerable<GroupParticipantModel> Others { get; }
 
+    public abstract GroupParticipantModel LocalUser { get; }
+
     public IChatMessage? LastMessage { get; set; }
 
     public GroupId Id { get; }
@@ -37,6 +42,8 @@ public abstract class ChatModel : Observable<ChatModel>
     }
 
     public virtual void UpdateParticipants(IEnumerable<GroupParticipantModel> updatedParticipants) { }
+
+    public static ChatModel CreateGlobalChat(UserModel localUser) => new GlobalChatModel(localUser);
 
     public static ChatModel Create(IChatGroup group, Func<IGroupParticipant, GroupParticipantModel> participantModelProvider)
     {
@@ -53,4 +60,5 @@ public abstract class ChatModel : Observable<ChatModel>
             .WithLastMessage(group.LastMessage)
             .WithUnreadMessageCount(group.MessagesSince);
     }
+
 }

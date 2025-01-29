@@ -13,9 +13,9 @@ public interface ITextChatClient
 
     Task ReceivedChannels(IList<GroupDto> channelDtos);
 
-    Task AddedToChannel(GroupDto groupDto);
+    Task AddedToGroup(GroupDto groupDto);
 
-    Task ChannelParticipantsChanged(GroupDto groupDto);
+    Task GroupParticipantsChanged(GroupDto groupDto);
 
     Task ChannelNameChanged(GroupId groupId, string? name);
 }

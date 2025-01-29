@@ -11,7 +11,7 @@ public class ChatUserRepository(
     ApplicationDbContext dbContext,
     ILogger<ChatUserRepository> logger) : RepositoryBase(dbContext, logger)
 {
-    public Task<ChatUser?> FindUserByIdAsync(ClaimsPrincipal? principal, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ChatUser?> FindUserByIdAsync(ClaimsPrincipal? principal, GroupInclusionOption groupInclusionOption = GroupInclusionOption.DontInclude)
     {
         if (principal?.GetClaimValue(ClaimTypes.NameIdentifier) is not { } claim)
         {
@@ -19,18 +19,18 @@ public class ChatUserRepository(
         }
 
         return UserId.TryParse(claim, out var userId)
-            ? FindUserByIdAsync(userId, channelsInclusionOption)
+            ? FindUserByIdAsync(userId, groupInclusionOption)
             : Task.FromResult<ChatUser?>(null);
     }
 
-    public Task<ChatUser?> FindUserByIdAsync(UserId userId, ChannelsInclusionOption channelsInclusionOption = ChannelsInclusionOption.DontInclude)
+    public Task<ChatUser?> FindUserByIdAsync(UserId userId, GroupInclusionOption groupInclusionOption = GroupInclusionOption.DontInclude)
     {
-        return channelsInclusionOption switch
+        return groupInclusionOption switch
         {
-            ChannelsInclusionOption.DontInclude => UserByIdAsync(DbContext, userId),
-            ChannelsInclusionOption.Include => UserByIdWithChannelsAsync(DbContext, userId),
-            ChannelsInclusionOption.IncludeWithParticipants => UserByIdWithFullChannelsAsync(DbContext, userId),
-            _ => throw new ArgumentOutOfRangeException(nameof(channelsInclusionOption), channelsInclusionOption, null)
+            GroupInclusionOption.DontInclude => UserByIdAsync(DbContext, userId),
+            GroupInclusionOption.Include => UserByIdWithGroupsAsync(DbContext, userId),
+            GroupInclusionOption.IncludeWithParticipants => UserByIdWithFullGroupsAsync(DbContext, userId),
+            _ => throw new ArgumentOutOfRangeException(nameof(groupInclusionOption), groupInclusionOption, null)
         };
     }
 
@@ -46,7 +46,7 @@ public class ChatUserRepository(
             (ApplicationDbContext context, UserId userId) => context.ChatUsers
                 .SingleOrDefault(x => x.Id == userId));
 
-    private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdWithChannelsAsync =
+    private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdWithGroupsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.ChatUsers
                 .AsSplitQuery()
@@ -55,7 +55,7 @@ public class ChatUserRepository(
                 .ThenInclude(x => x.Participants)
                 .SingleOrDefault(x => x.Id == userId));
 
-    private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdWithFullChannelsAsync =
+    private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdWithFullGroupsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.ChatUsers
                 .AsSplitQuery()

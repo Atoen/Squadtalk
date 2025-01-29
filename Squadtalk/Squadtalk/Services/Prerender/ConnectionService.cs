@@ -53,7 +53,7 @@ internal class ConnectionService : IConnectionService
     private async Task ConnectInternalAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await _chatUserRepository.FindUserByIdAsync(authenticationState.User, ChannelsInclusionOption.IncludeWithParticipants);
+        var user = await _chatUserRepository.FindUserByIdAsync(authenticationState.User, GroupInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
             await _signInManager.SignOutAsync();

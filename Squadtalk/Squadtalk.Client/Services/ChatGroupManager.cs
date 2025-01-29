@@ -31,7 +31,7 @@ internal class ChatGroupManager : IChatGroupManager
     public event Func<Task>? ChannelChangedAsync;
 
     public Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
-    public GroupChatModel GlobalGroup { get; } = GroupChatModel.CreateGlobalChat();
+    public ChatModel GlobalChat { get; }
     public ChatModel? CurrentChannel { get; private set; }
 
     private bool _startedScanningStaleTypingState;
@@ -49,6 +49,7 @@ internal class ChatGroupManager : IChatGroupManager
         _navigationManager = navigationManager;
         _logger = logger;
 
+        GlobalChat = ChatModel.CreateGlobalChat(_contactManager.LocalUserModel);
         GroupParticipantProvider = GetOrCreateGroupParticipantModel;
 
         _signalrService.ChannelsReceived += ChannelsReceived;
@@ -63,9 +64,9 @@ internal class ChatGroupManager : IChatGroupManager
 
     public ChatModel? GetChannel(GroupId groupId)
     {
-        if (groupId == GlobalGroup.Id)
+        if (groupId == GlobalChat.Id)
         {
-            return GlobalGroup;
+            return GlobalChat;
         }
 
         _allChannels.TryGetValue(groupId, out var channel);
@@ -74,7 +75,7 @@ internal class ChatGroupManager : IChatGroupManager
 
     public ChatModel GetRequiredChannel(GroupId groupId)
     {
-        return groupId == GlobalGroup.Id ? GlobalGroup : _allChannels[groupId];
+        return groupId == GlobalChat.Id ? GlobalChat : _allChannels[groupId];
     }
 
     public async Task OpenChannelAsync(ChatModel chatModel, bool navigate = true)
@@ -122,7 +123,7 @@ internal class ChatGroupManager : IChatGroupManager
 
     public async Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName)
     {
-        var result = await _signalrService.ChangeChannelNameAsync(groupChat.Id, newName);
+        var result = await _signalrService.ChangeGroupNameAsync(groupChat.Id, newName);
         return result.ValueOr(false);
     }
 
@@ -132,7 +133,7 @@ internal class ChatGroupManager : IChatGroupManager
             .Select(x => x.Id)
             .Append(_userAuthenticationService.UserId);
 
-        var result = await _signalrService.CreateChannelAsync(participantsId);
+        var result = await _signalrService.CreateGroupAsync(participantsId);
         return result.Value;
     }
 

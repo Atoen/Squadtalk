@@ -35,7 +35,7 @@ public partial class AppHub : Hub<IChatClient>
 
     public override async Task OnConnectedAsync()
     {
-        var user = await _userRepository.FindUserByIdAsync(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserByIdAsync(Context.User, GroupInclusionOption.Include);
         if (user is null)
         {
             Context.Abort();
@@ -45,7 +45,7 @@ public partial class AppHub : Hub<IChatClient>
         var (statusChanged, currentStatus) = await _connectionManager.ConnectionStartedAsync(user.Id, Context.ConnectionId);
         _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.Username, statusChanged, currentStatus);
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, GroupChatModel.GlobalChatId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, ChatModel.GlobalChatId);
 
         if (user.GroupParticipants is { Count: > 0 })
         {
@@ -84,9 +84,9 @@ public partial class AppHub : Hub<IChatClient>
         }
     }
 
-    private async Task<ChatUser?> GetChannelParticipantAsync(GroupId groupId)
+    private async Task<ChatUser?> GetParticipatingUserWithGroups(GroupId groupId)
     {
-        var user = await _userRepository.FindUserByIdAsync(Context.User, ChannelsInclusionOption.Include);
+        var user = await _userRepository.FindUserByIdAsync(Context.User, GroupInclusionOption.Include);
         if (user is null || !user.ParticipatesInChannel(groupId))
         {
             return null;

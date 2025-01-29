@@ -55,7 +55,7 @@ internal class ChannelSorter : IChannelSorter
 
     private void MessageReceived(GroupId groupId, MessageModel model)
     {
-        if (groupId != GroupChatModel.GlobalChatId &&
+        if (groupId != ChatModel.GlobalChatId &&
             _channels is [var first, ..] && first.Id != groupId)
         {
             _shouldSortChannels = true;
