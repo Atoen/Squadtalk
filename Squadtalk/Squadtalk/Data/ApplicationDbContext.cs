@@ -6,7 +6,6 @@ using Shared.Data.TypedIds;
 using Squadtalk.Data.Entities;
 using Squadtalk.Data.Sql;
 using Squadtalk.Data.TypedIds;
-using FriendRequest = Squadtalk.Data.Entities.FriendRequest;
 
 namespace Squadtalk.Data;
 
@@ -59,36 +58,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             x => x.Value,
             x => new GroupId(x));
 
-        // builder.Entity<ChatUser>(entity =>
-        // {
-        //     entity.ToTable("AspNetUsers");
-        //
-        //     entity.Property(x => x.Id)
-        //         .HasConversion(userIdConverter);
-        // });
-
         builder.Entity<ApplicationUser>(entity =>
         {
-            entity.ToTable("AspNetUsers"); // Main table for ApplicationUser
+            entity.ToTable("AspNetUsers");
             entity.Property(x => x.Id)
                 .HasConversion(userIdConverter)
                 .ValueGeneratedOnAdd();
 
             entity.Property(x => x.UserName)
-                .HasColumnName("UserName")
-                .IsRequired();
+                .HasColumnName("UserName");
         });
 
         builder.Entity<ChatUser>(entity =>
         {
-            entity.ToTable("AspNetUsers"); // Maps to the same table
+            entity.ToTable("AspNetUsers");
             entity.HasOne<ApplicationUser>()
                 .WithOne()
-                .HasForeignKey<ChatUser>(x => x.Id); // FK is the same as the PK in ApplicationUser
+                .HasForeignKey<ChatUser>(x => x.Id);
 
             entity.Property(x => x.Username)
-                .HasColumnName("UserName")
-                .IsRequired();
+                .HasColumnName("UserName");
         });
 
         builder.Entity<FriendRequest>()
@@ -103,11 +92,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<DbFile>()
             .Property(x => x.TusId)
             .HasConversion(id => id.Value, value => new TusFileId(value));
-
-        // builder.Entity<ApplicationUser>()
-        //     .Property(x => x.Id)
-        //     .HasConversion(userIdConverter)
-        //     .ValueGeneratedOnAdd();
 
         builder.Entity<IdentityRole<UserId>>()
             .Property(x => x.Id)
@@ -158,29 +142,5 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<GroupParticipant>()
             .Property(x => x.JoinedAt)
             .HasDefaultValueSql("NOW()");
-
-        builder.Entity<ApplicationUser>()
-            .Navigation(x => x.GroupParticipants)
-            .AutoInclude(false);
-
-        // builder.Entity<Group>()
-        //     .HasMany(x => x.Participants);
-        //     // .WithMany(x => x.Channels);
-        //
-        // builder.Entity<ApplicationUser>()
-        //     .Navigation(x => x.Groups)
-        //     .AutoInclude(false);
-        //
-        // builder.Entity<GroupParticipant>()
-        //     .Property(x => x.UserId)
-        //     .HasConversion(userIdConverter);
-        //
-        // builder.Entity<GroupParticipant>()
-        //     .Property(x => x.GroupId)
-        //     .HasConversion(groupIdConverter);
-        //
-        // builder.Entity<GroupParticipant>()
-        //     .HasKey(x => new { x.UserId,
-        //         ChannelId = x.GroupId });
     }
 }

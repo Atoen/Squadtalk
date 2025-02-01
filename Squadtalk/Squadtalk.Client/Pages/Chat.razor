@@ -6,7 +6,7 @@
 
 @implements IAsyncDisposable
 
-<PageTitle>Squadtalk | @ChatGroupManager.CurrentChannel?.Name</PageTitle>
+<PageTitle>Squadtalk | @ChatManager.CurrentChat?.Name</PageTitle>
 
 <div class="chat-container">
     @if (_channel is not null)
@@ -30,7 +30,7 @@
     }
 </div>
 
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
 @inject IVoiceChatService VoiceChatService
@@ -47,9 +47,9 @@
     {
         await ConnectionService.ConnectAsync();
 
-        if (ChatGroupManager.CurrentChannel is not { } currentChannel)
+        if (ChatManager.CurrentChat is not { } currentChannel)
         {
-            var channel = ChatGroupManager.GetChannel(new GroupId(ChannelId));
+            var channel = ChatManager.GetChannel(new GroupId(ChannelId));
             if (channel is null)
             {
                 NavigationManager.NavigateTo(Routes.Pages.Chats, replace: true);
@@ -57,7 +57,7 @@
             }
 
             _channel = channel;
-            await ChatGroupManager.OpenChannelAsync(_channel, false);
+            await ChatManager.OpenChannelAsync(_channel, false);
         }
         else
         {
@@ -65,7 +65,7 @@
         }
 
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        ChatGroupManager.ChannelChanged += StateHasChanged;
+        ChatManager.ChatChanged += StateHasChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
     }
@@ -78,9 +78,9 @@
     public async ValueTask DisposeAsync()
     {
         VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
-        ChatGroupManager.ChannelChanged -= StateHasChanged;
+        ChatManager.ChatChanged -= StateHasChanged;
 
-        await ChatGroupManager.ClearChannelSelectionAsync();
+        await ChatManager.ClearChannelSelectionAsync();
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 

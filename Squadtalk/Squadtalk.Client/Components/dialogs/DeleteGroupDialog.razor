@@ -1,0 +1,52 @@
+<MudDialog>
+    <DialogContent>
+        @if (_alertMessage is not null)
+        {
+            <MudAlert Variant="Variant.Filled" Severity="_alertMessage.Severity" Class="mt-n1 mb-3" Dense="true">
+                @_alertMessage.Text
+            </MudAlert>
+        }
+
+        @LocalizedText.R.delete_group_confirm
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary"
+                   OnClick="Cancel">
+            @LocalizedText.R.dialog_cancel
+        </MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled"
+                   OnClick="Confirm">
+            @LocalizedText.R.delete_group
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@inject IChatManager ChatManager
+@inject ISnackbar Snackbar
+@inject LocalizedText LocalizedText
+
+@code
+{
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public GroupChatModel GroupChat { get; set; } = default!;
+
+    private AlertMessage? _alertMessage;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Confirm()
+    {
+        var success = await ChatManager.DeleteGroupAsync(GroupChat);
+        if (success)
+        {
+            Snackbar.Add(LocalizedText.R.chat_group_deleted);
+        }
+        else
+        {
+            _alertMessage = AlertMessage.Error(LocalizedText.R.failed_to_delete_group);
+        }
+    }
+}

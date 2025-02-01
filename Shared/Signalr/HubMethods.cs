@@ -20,7 +20,7 @@ public static class HubMethods
     public const string AddFriendsToGroup = nameof(AddFriendsToGroup);
     public const string ChangeGroupName = nameof(ChangeGroupName);
     public const string KickUser = nameof(KickUser);
-    public const string PromoteUser = nameof(PromoteUser);
-    public const string DemoteUser = nameof(DemoteUser);
+    public const string ChangeUserRole = nameof(ChangeUserRole);
+    public const string LeaveGroup = nameof(LeaveGroup);
     public const string DeleteGroup = nameof(DeleteGroup);
 }

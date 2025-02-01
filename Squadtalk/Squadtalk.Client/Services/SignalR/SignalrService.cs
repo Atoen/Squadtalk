@@ -172,7 +172,7 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         };
     }
 
-    private async Task<SignalrResult<T>> InvokeAsync<T>(string methodName, CancellationToken cancellationToken = default)
+    private async Task<NetworkResult<T>> InvokeAsync<T>(string methodName, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -181,11 +181,11 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         catch (Exception e)
         {
             _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
-            return SignalrResult<T>.Error;
+            return NetworkResult<T>.Error;
         }
     }
 
-    private async Task<SignalrResult<T>> InvokeAsync<T>(string methodName, object? arg, CancellationToken cancellationToken = default)
+    private async Task<NetworkResult<T>> InvokeAsync<T>(string methodName, object? arg, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -194,11 +194,11 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         catch (Exception e)
         {
             _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
-            return SignalrResult<T>.Error;
+            return NetworkResult<T>.Error;
         }
     }
 
-    private async Task<SignalrResult<T>> InvokeAsync<T>(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
+    private async Task<NetworkResult<T>> InvokeAsync<T>(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -207,7 +207,20 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         catch (Exception e)
         {
             _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
-            return SignalrResult<T>.Error;
+            return NetworkResult<T>.Error;
+        }
+    }
+
+    private async Task<NetworkResult<T>> InvokeAsync<T>(string methodName, object? arg1, object? arg2, object? arg3, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _connection.InvokeAsync<T>(methodName, arg1, arg2, arg3, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
+            return NetworkResult<T>.Error;
         }
     }
 

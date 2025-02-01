@@ -13,11 +13,11 @@ public interface ISignalrRTCService
     event Func<GroupId, Task>? CallEnded;
     event Func<string, Task>? CallFailed;
 
-    Task<SignalrResult<RoomTokenDto?>> StartVoiceCallAsync(GroupId id);
+    Task<NetworkResult<RoomTokenDto?>> StartVoiceCallAsync(GroupId id);
 
-    Task<SignalrResult<RoomTokenDto?>> AcceptCallAsync(GroupId id);
+    Task<NetworkResult<RoomTokenDto?>> AcceptCallAsync(GroupId id);
 
     Task<SignalrResult> DeclineCallAsync(GroupId id);
 
-    Task<SignalrResult<bool>> ChannelHasActiveCall(GroupId id);
+    Task<NetworkResult<bool>> ChannelHasActiveCall(GroupId id);
 }

@@ -43,6 +43,8 @@ public abstract class ChatModel : Observable<ChatModel>
 
     public virtual void UpdateParticipants(IEnumerable<GroupParticipantModel> updatedParticipants) { }
 
+    public virtual void UpdateParticipantRole(UserId userId, GroupRole groupRole) { }
+
     public static ChatModel CreateGlobalChat(UserModel localUser) => new GlobalChatModel(localUser);
 
     public static ChatModel Create(IChatGroup group, Func<IGroupParticipant, GroupParticipantModel> participantModelProvider)
@@ -52,7 +54,7 @@ public abstract class ChatModel : Observable<ChatModel>
         ChatModel chatModel = group.Type switch
         {
             ChatType.DirectMessage => new DirectMessageModel(participantModels, group.Id),
-            ChatType.GroupChat => new GroupChatModel(participantModels, group.Id),
+            ChatType.GroupChat => new GroupChatModel(participantModels, group.Id, group.CustomName),
             _ => throw new ArgumentOutOfRangeException(nameof(group), nameof(group.Type))
         };
 
@@ -60,5 +62,4 @@ public abstract class ChatModel : Observable<ChatModel>
             .WithLastMessage(group.LastMessage)
             .WithUnreadMessageCount(group.MessagesSince);
     }
-
 }

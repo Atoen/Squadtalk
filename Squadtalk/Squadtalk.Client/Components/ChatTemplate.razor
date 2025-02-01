@@ -25,7 +25,7 @@
 @implements Shared.Reactive.ISubscriber<ChatModel>
 @implements IDisposable
 
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject IUserAuthenticationService UserAuthenticationService
 @inject LocalizedText LocalizedText
 
@@ -34,7 +34,7 @@
     [Parameter, EditorRequired]
     public ChatModel Chat { get; set; } = default!;
 
-    private Task OpenChat() => ChatGroupManager.OpenChannelAsync(Chat);
+    private Task OpenChat() => ChatManager.OpenChannelAsync(Chat);
 
     private string StatusStyle => Chat.HasUnreadMessages() ? "color: white; font-weight: bold" : string.Empty;
 

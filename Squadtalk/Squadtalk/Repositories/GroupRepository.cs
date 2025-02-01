@@ -80,6 +80,7 @@ public class GroupRepository(
             (ApplicationDbContext context, GroupId groupId) => context.Channels
                 .Include(x => x.GroupCreator)
                 .Include(x => x.Participants)
+                .ThenInclude(x => x.User)
                 .SingleOrDefault(x => x.Id == groupId));
 
     private static readonly Func<ApplicationDbContext, GroupId, Task<int>> DeleteGroupByIdAsync =

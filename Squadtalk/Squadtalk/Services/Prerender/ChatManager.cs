@@ -1,11 +1,12 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
-internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
+internal class ChatManager : LazyModelCreator, IChatManager
 {
     private static readonly Dictionary<GroupId, ChatModel> EmptyChannels = [];
 
@@ -15,19 +16,20 @@ internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
 
     private Dictionary<GroupId, ChatModel> LazyChannels => TryCreateModels(ref _channels, EmptyChannels);
 
-    public IReadOnlyCollection<ChatModel> Channels => LazyChannels.Values;
+    public IReadOnlyCollection<ChatModel> Chats => LazyChannels.Values;
 
     public Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
 
     public ChatModel GlobalChat { get; }
 
-    public ChatModel? CurrentChannel { get; private set; }
+    public ChatModel? CurrentChat { get; private set; }
 
-    event Action? IChatGroupManager.ChannelsListChanged { add { } remove { } }
-    event Action? IChatGroupManager.ChannelChanged { add { } remove { } }
-    event Func<Task>? IChatGroupManager.ChannelChangedAsync { add { } remove { } }
+    event Action? IChatManager.ChatListChanged { add { } remove { } }
+    event Action? IChatManager.ChatChanged { add { } remove { } }
 
-    public ChatGroupManager(
+    event Func<Task>? IChatManager.ChatChangedAsync { add { } remove { } }
+
+    public ChatManager(
         PrerenderPersistantState prerenderPersistantState,
         IContactManager contactManager) : base(prerenderPersistantState)
     {
@@ -59,7 +61,7 @@ internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
 
     public Task OpenChannelAsync(ChatModel chatModel, bool navigate = true)
     {
-        CurrentChannel = chatModel;
+        CurrentChat = chatModel;
         return Task.CompletedTask;
     }
 
@@ -75,9 +77,17 @@ internal class ChatGroupManager : LazyModelCreator, IChatGroupManager
 
     public Task CreateAndOpenNewChannelAsync(params IEnumerable<UserModel> others) => Task.CompletedTask;
 
-    public Task AddFriendsToGroupAsync(GroupId groupId, params IEnumerable<UserModel> friends) => Task.CompletedTask;
+    public Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends) => Task.CompletedTask;
 
     public Task ClearChannelSelectionAsync() => Task.CompletedTask;
 
     public Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName) => Task.FromResult(false);
+
+    public Task<bool> DeleteGroupAsync(GroupChatModel groupChat) => Task.FromResult(false);
+
+    public Task<bool> LeaveGroupAsync(GroupChatModel groupChat) => Task.FromResult(false);
+
+    public Task<bool> KickUserAsync(GroupChatModel groupChat, GroupParticipantModel groupParticipant) => Task.FromResult(false);
+
+    public Task<bool> ChangeUserRoleAsync(GroupChatModel groupChat, GroupParticipantModel groupParticipant, GroupRole newRole) => Task.FromResult(false);
 }

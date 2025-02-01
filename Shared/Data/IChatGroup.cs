@@ -7,7 +7,7 @@ public interface IChatGroup
 {
     GroupId Id { get; }
 
-    string? Name { get; }
+    string? CustomName { get; }
 
     IEnumerable<IGroupParticipant> Participants { get; }
 

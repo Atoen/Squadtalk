@@ -13,7 +13,7 @@ internal class TextChatService : ITextChatService
     private readonly IMessageModelService _modelService;
     private readonly SignalrService _signalrTextService;
     private readonly IUserAuthenticationService _userAuthenticationService;
-    private readonly IChatGroupManager _chatGroupManager;
+    private readonly IChatManager _chatManager;
 
     private CancellationTokenSource? _cancellationTokenSource;
     private GroupId? _typingChannelId;
@@ -21,13 +21,13 @@ internal class TextChatService : ITextChatService
     public event Action<GroupId, MessageModel>? MessageReceived;
 
     public TextChatService(
-        IChatGroupManager chatGroupManager,
+        IChatManager chatManager,
         IMessageModelService modelService,
         SignalrService signalrTextService,
         IUserAuthenticationService userAuthenticationService,
         ILogger<TextChatService> logger)
     {
-        _chatGroupManager = chatGroupManager;
+        _chatManager = chatManager;
         _modelService = modelService;
         _signalrTextService = signalrTextService;
         _userAuthenticationService = userAuthenticationService;
@@ -38,14 +38,14 @@ internal class TextChatService : ITextChatService
 
     public async Task SendMessageAsync(string message, CancellationToken cancellationToken = default)
     {
-        if (_chatGroupManager.CurrentChannel is not { Id: var channelId }) return;
+        if (_chatManager.CurrentChat is not { Id: var channelId }) return;
 
         await _signalrTextService.SendMessageAsync(message, channelId, cancellationToken).ConfigureAwait(false);
     }
 
     public void StartedTyping(GroupId groupId)
     {
-        if (_typingChannelId == groupId || _typingChannelId == _chatGroupManager.GlobalChat.Id)
+        if (_typingChannelId == groupId || _typingChannelId == _chatManager.GlobalChat.Id)
         {
             return;
         }
@@ -62,7 +62,7 @@ internal class TextChatService : ITextChatService
 
     public async Task<IList<MessageModel>> GetMessagePageAsync(GroupId groupId, CancellationToken cancellationToken)
     {
-        var channel = _chatGroupManager.GetChannel(groupId);
+        var channel = _chatManager.GetChannel(groupId);
         if (channel is null or { State.ScrolledToBeginning: true })
         {
             return Array.Empty<MessageModel>();
@@ -133,7 +133,7 @@ internal class TextChatService : ITextChatService
 
     private void HandleIncomingMessage(IChatMessage message)
     {
-        var channel = _chatGroupManager.GetChannel(message.GroupId);
+        var channel = _chatManager.GetChannel(message.GroupId);
         if (channel is null)
         {
             _logger.LogWarning("Received message on nonexistent channel id: {Id}", message.GroupId);
@@ -153,7 +153,7 @@ internal class TextChatService : ITextChatService
     private void UpdateChannelMessageState(ChatModel chatModel, IChatMessage message)
     {
         var messageByCurrentUser = message.Author.Id == _userAuthenticationService.UserId;
-        if (_chatGroupManager.CurrentChannel != chatModel && !messageByCurrentUser)
+        if (_chatManager.CurrentChat != chatModel && !messageByCurrentUser)
         {
             chatModel.State.UnreadMessages++;
         }

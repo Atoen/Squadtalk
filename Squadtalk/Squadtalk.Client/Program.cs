@@ -24,7 +24,7 @@ builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
 
 builder.Services.AddCascadingAuthenticationState();
 
-builder.Services.AddScoped<IChatGroupManager, ChatGroupManager>();
+builder.Services.AddScoped<IChatManager, ChatManager>();
 builder.Services.AddScoped<IContactManager, ContactManager>();
 
 builder.Services.AddScoped<SignalrService>();

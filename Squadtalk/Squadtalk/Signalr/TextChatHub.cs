@@ -17,8 +17,6 @@ namespace Squadtalk.Signalr;
 public partial class AppHub
 {
     private ITextChatClient TextGroup(string groupName) => Clients.Group(groupName);
-    private ITextChatClient TextClient(string connectionId) => Clients.Client(connectionId);
-    private ITextChatClient TextCaller => Clients.Caller;
 
     [HubMethodName(HubMethods.SendMessage)]
     public async Task SendMessage(string message, GroupId groupId, MessageRepository messageRepository)
@@ -48,7 +46,6 @@ public partial class AppHub
     public async Task IsTyping(GroupId groupId)
     {
         var userId = UserId;
-
         var shouldUpdate = await _connectionManager.SetUserIsTypingAsync(groupId, userId);
 
         _logger.LogInformation("User {Id} is typing on channel {ChannelId}. Should update: {State}", userId, groupId, shouldUpdate);
@@ -63,14 +60,13 @@ public partial class AppHub
     public async Task StoppedTyping(GroupId groupId)
     {
         var userId = UserId;
-
         var shouldUpdate = await _connectionManager.SetUserStoppedTyping(groupId, userId);
 
         _logger.LogInformation("User {Id} stopped typing. Should update: {State}", userId, shouldUpdate);
 
         if (shouldUpdate)
         {
-            await Clients.OthersInGroup(groupId).UserStoppedTyping(groupId, UserId);
+            await Clients.OthersInGroup(groupId).UserStoppedTyping(groupId, userId);
         }
     }
 
@@ -96,19 +92,24 @@ public partial class AppHub
     {
         if (friendIds.Count == 0)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         var group = await groupRepository.GetGroupAsync(groupId);
         var addingParticipant = group?.Participants.FirstOrDefault(x => x.UserId == UserId);
         if (group is null || addingParticipant is null)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
+        }
+
+        if (group.ChatType != ChatType.GroupChat)
+        {
+            return HubResult.Error;
         }
 
         if (!addingParticipant.CanAddNewMembers())
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         var users = await _userRepository.GetUserListAsync(friendIds);
@@ -120,7 +121,7 @@ public partial class AppHub
 
         if (newUsers.Count == 0)
         {
-            return HubResult.Success;
+            return HubResult.Ok;
         }
 
         var addedParticipants = newUsers.Select(x => x.ToGroupParticipant(group, addingParticipant.User));
@@ -131,14 +132,14 @@ public partial class AppHub
 
         if (!await groupRepository.UpdateGroupAsync(group))
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         var dto = group.ToDto();
         await NotifyNewGroupParticipantsAsync(dto, friendIds);
         await Clients.User(addingParticipant.UserId.ToString()).GroupParticipantsChanged(dto);
 
-        return HubResult.Success;
+        return HubResult.Ok;
     }
 
     [HubMethodName(HubMethods.ChangeGroupName)]
@@ -147,35 +148,40 @@ public partial class AppHub
     {
         if (newName?.Length > IFormValidator.MaximumGroupNameLength)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         var group = await groupRepository.GetGroupAsync(groupId);
         var participant = group?.Participants.FirstOrDefault(x => x.UserId == UserId);
         if (group is null || participant is null)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
+        }
+
+        if (group.ChatType != ChatType.GroupChat)
+        {
+            return HubResult.Error;
         }
 
         if (!participant.CanChangeGroupNameAndImage())
         {
-            return HubResult.Fail;
+            return HubResult.Unauthorized;
         }
 
-        if (group.Name == newName)
+        if (group.CustomName == newName)
         {
-            return HubResult.Success;
+            return HubResult.Ok;
         }
 
-        group.Name = newName;
+        group.CustomName = string.IsNullOrWhiteSpace(newName) ? null : newName;
         if (!await groupRepository.UpdateGroupAsync(group))
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
-        await TextGroup(groupId).ChannelNameChanged(groupId, group.Name);
-        await systemMessageService.SendChannelNameChangedMessageAsync(participant.User, groupId, group.Name);
-        return HubResult.Success;
+        await TextGroup(groupId).GroupNameChanged(groupId, group.CustomName);
+        await systemMessageService.SendChannelNameChangedMessageAsync(participant.User, groupId, group.CustomName);
+        return HubResult.Ok;
     }
 
     private readonly record struct GroupActorAndSubject(Group? Group, GroupParticipant? Actor, GroupParticipant? Subject)
@@ -192,66 +198,35 @@ public partial class AppHub
         return new GroupActorAndSubject(group, actor, subject);
     }
 
-    [HubMethodName(HubMethods.PromoteUser)]
-    public async Task<HubResult> PromoteUser(GroupId groupId, UserId userToPromoteId, GroupRole newRole, GroupRepository groupRepository)
+    [HubMethodName(HubMethods.ChangeUserRole)]
+    public async Task<HubResult> ChangeUserRole(GroupId groupId, UserId targetUser, GroupRole newRole, GroupRepository groupRepository)
     {
         var userId = UserId;
-        if (userId == userToPromoteId)
+        if (userId == targetUser)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
-        var set = await GetGroupActorAndSubjectAsync(groupId, userId, userToPromoteId, groupRepository);
-        if (!set.IsValid)
+        var set = await GetGroupActorAndSubjectAsync(groupId, userId, targetUser, groupRepository);
+        if (!set.IsValid || set.Group.ChatType != ChatType.GroupChat)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
-        if (!set.Actor.CanPromoteTo(newRole, set.Subject))
+        var subject = set.Subject;
+        if (!set.Actor.CanChangeRoleTo(subject, newRole))
         {
-            return HubResult.Fail;
+            return HubResult.Unauthorized;
         }
 
-        set.Subject.Role = newRole;
+        subject.Role = newRole;
         if (!await groupRepository.UpdateGroupAsync(set.Group))
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
-        // TODO: use more fine-grained method
-        await TextGroup(groupId).GroupParticipantsChanged(set.Group.ToDto());
-        return HubResult.Success;
-    }
-
-    [HubMethodName(HubMethods.DemoteUser)]
-    public async Task<HubResult> DemoteUser(GroupId groupId, UserId userToDemoteId, GroupRole newRole, GroupRepository groupRepository)
-    {
-        var userId = UserId;
-        if (userId == userToDemoteId)
-        {
-            return HubResult.Fail;
-        }
-
-        var set = await GetGroupActorAndSubjectAsync(groupId, userId, userToDemoteId, groupRepository);
-        if (!set.IsValid)
-        {
-            return HubResult.Fail;
-        }
-
-        if (!set.Actor.CanDemoteTo(newRole, set.Subject))
-        {
-            return HubResult.Fail;
-        }
-
-        set.Subject.Role = newRole;
-        if (!await groupRepository.UpdateGroupAsync(set.Group))
-        {
-            return HubResult.Fail;
-        }
-
-        // TODO: use more fine-grained method
-        await TextGroup(groupId).GroupParticipantsChanged(set.Group.ToDto());
-        return HubResult.Success;
+        await TextGroup(groupId).ParticipantRoleChanged(groupId, subject.UserId, subject.Role);
+        return HubResult.Ok;
     }
 
     [HubMethodName(HubMethods.KickUser)]
@@ -260,28 +235,53 @@ public partial class AppHub
         var userId = UserId;
         if (userId == userToKickId)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         var set = await GetGroupActorAndSubjectAsync(groupId, userId, userToKickId, groupRepository);
-        if (!set.IsValid)
+        if (!set.IsValid || set.Group.ChatType != ChatType.GroupChat)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         if (!set.Actor.CanKick(set.Subject))
         {
-            return HubResult.Fail;
+            return HubResult.Unauthorized;
         }
 
         var group = set.Group;
         if (!group.Participants.Remove(set.Subject) || !await groupRepository.UpdateGroupAsync(group))
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
         await TextGroup(groupId).GroupParticipantsChanged(group.ToDto());
-        return HubResult.Fail;
+        return HubResult.Ok;
+    }
+
+    [HubMethodName(HubMethods.LeaveGroup)]
+    public async Task<HubResult> LeaveGroup(GroupId groupId, GroupRepository groupRepository)
+    {
+        var group = await groupRepository.GetGroupAsync(groupId);
+        var participant = group?.Participants.FirstOrDefault(x => x.UserId == UserId);
+        if (group is null || participant is null)
+        {
+            return HubResult.Error;
+        }
+
+        if (!group.Participants.Remove(participant))
+        {
+            return HubResult.Error;
+        }
+
+        if (!await groupRepository.UpdateGroupAsync(group))
+        {
+            return HubResult.Error;
+        }
+
+        await TextGroup(groupId).GroupParticipantsChanged(group.ToDto());
+
+        return HubResult.Ok;
     }
 
     [HubMethodName(HubMethods.DeleteGroup)]
@@ -291,22 +291,27 @@ public partial class AppHub
         var participant = group?.Participants.FirstOrDefault(x => x.UserId == UserId);
         if (group is null || participant is null)
         {
-            return HubResult.Fail;
+            return HubResult.Error;
+        }
+
+        if (group.ChatType != ChatType.GroupChat)
+        {
+            return HubResult.Error;
         }
 
         if (!participant.CanDeleteGroup())
         {
-            return HubResult.Fail;
+            return HubResult.Unauthorized;
         }
 
         if (!await groupRepository.DeleteGroupAsync(group))
         {
-            return HubResult.Fail;
+            return HubResult.Error;
         }
 
-        // TODO: notify clients
+        await TextGroup(groupId).GroupDeleted(groupId);
 
-        return HubResult.Success;
+        return HubResult.Ok;
     }
 
     [HubMethodName(HubMethods.CreateGroup)]

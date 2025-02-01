@@ -8,9 +8,9 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
 {
     public bool IsTemporary { get; init; }
 
-    public GroupParticipantModel Other { get; }
+    public UserModel Other { get; }
 
-    public override string Name => Other.User.Username;
+    public override string Name => Other.Username;
 
     public override List<GroupParticipantModel> Participants { get; }
 
@@ -18,7 +18,7 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
 
     public override GroupParticipantModel LocalUser { get; }
 
-    public override UserStatus Status => Other.User.Status;
+    public override UserStatus Status => Other.Status;
 
     private readonly IDisposable? _subscription;
 
@@ -26,10 +26,12 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
     {
         Participants = participants.ToList();
         LocalUser = Participants.Single(x => x.User.IsLocal);
-        Other = Participants.Single(x => x.User.IsRemote);
-        Others = [Other];
 
-        _subscription = Other.User.Subscribe(this);
+        var otherParticipant = Participants.Single(x => x.User.IsRemote);
+        Others = [otherParticipant];
+        Other = otherParticipant.User;
+
+        _subscription = Other.Subscribe(this);
     }
 
     public static DirectMessageModel CreateTempChannel(UserModel userModel)

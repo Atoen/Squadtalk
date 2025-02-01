@@ -1,7 +1,7 @@
 @using Microsoft.AspNetCore.Components.Rendering
 @using Shared.Data.TypedIds
 
-@if (ChatGroupManager.CurrentChannel is { State.ScrolledToBeginning: true } channel)
+@if (ChatManager.CurrentChat is { State.ScrolledToBeginning: true } channel)
 {
     <div class="channel-start">
         <div class="title">@channel.Name</div>
@@ -34,9 +34,9 @@
 @* ReSharper disable once CSharpWarnings::CS8974 *@
 @RenderLastElement
 
-@if (ChatGroupManager.CurrentChannelState is not null && ItemTemplate is not null)
+@if (ChatManager.CurrentChannelState is not null && ItemTemplate is not null)
 {
-    foreach (var item in ChatGroupManager.CurrentChannelState.Messages)
+    foreach (var item in ChatManager.CurrentChannelState.Messages)
     {
         @ItemTemplate(item)
     }
@@ -45,7 +45,7 @@
 @implements IDisposable
 
 @inject IJSRuntime JsRuntime
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject ITextChatService TextChatService
 @inject LocalizedText LocalizedText
 @inject ILogger<InfiniteScrolling> Logger
@@ -78,10 +78,10 @@
         _inProcessRuntime = (IJSInProcessRuntime) JsRuntime;
 
         TextChatService.MessageReceived += MessageReceived;
-        ChatGroupManager.ChannelChangedAsync += ChatGroupChangedAsync;
+        ChatManager.ChatChangedAsync += ChatChangedAsync;
     }
 
-    private async Task ChatGroupChangedAsync()
+    private async Task ChatChangedAsync()
     {
         _changedChannel = true;
 
@@ -92,7 +92,7 @@
 
     private void MessageReceived(GroupId id, MessageModel message)
     {
-        if (id != ChatGroupManager.CurrentChannel?.Id)
+        if (id != ChatManager.CurrentChat?.Id)
         {
             return;
         }
@@ -105,7 +105,7 @@
     public async Task LoadMoreItems()
     {
         if (_loading) return;
-        if (ChatGroupManager.CurrentChannel is not { } channel) return;
+        if (ChatManager.CurrentChat is not { } channel) return;
 
         _loading = true;
         _beforeFirstLoad = false;
@@ -172,14 +172,14 @@
         _currentComponentReference?.Dispose();
 
         TextChatService.MessageReceived -= MessageReceived;
-        ChatGroupManager.ChannelChangedAsync -= ChatGroupChangedAsync;
+        ChatManager.ChatChangedAsync -= ChatChangedAsync;
     }
 
     private void RenderLastElement(RenderTreeBuilder builder)
     {
         builder.OpenElement(1000, "div");
 
-        var style = ChatGroupManager.CurrentChannelState is { ScrolledToBeginning: true }
+        var style = ChatManager.CurrentChannelState is { ScrolledToBeginning: true }
             ? "height:0;width:0"
             : "height:1px;width:1px;flex-shrink:0";
 

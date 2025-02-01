@@ -16,12 +16,12 @@ internal sealed partial class SignalrService : ISignalrRTCService
     public event Func<GroupId, Task>? CallEnded;
     public event Func<string, Task>? CallFailed;
 
-    public Task<SignalrResult<RoomTokenDto?>> StartVoiceCallAsync(GroupId id)
+    public Task<NetworkResult<RoomTokenDto?>> StartVoiceCallAsync(GroupId id)
     {
         return InvokeAsync<RoomTokenDto?>("StartCall", id);
     }
 
-    public Task<SignalrResult<RoomTokenDto?>> AcceptCallAsync(GroupId id)
+    public Task<NetworkResult<RoomTokenDto?>> AcceptCallAsync(GroupId id)
     {
         return InvokeAsync<RoomTokenDto?>("AcceptCall", id);
     }
@@ -31,7 +31,7 @@ internal sealed partial class SignalrService : ISignalrRTCService
         return SendAsync("DeclineCall", id);
     }
 
-    public Task<SignalrResult<bool>> ChannelHasActiveCall(GroupId id)
+    public Task<NetworkResult<bool>> ChannelHasActiveCall(GroupId id)
     {
         return InvokeAsync<bool>("ChannelHasActiveCall", id);
     }

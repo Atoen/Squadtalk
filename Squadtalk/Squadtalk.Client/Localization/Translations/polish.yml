@@ -183,6 +183,15 @@ many_members: Uczestników
 one_moderator: Moderator
 many_moderators: Moderatorów
 delete_group: Usuń grupę
+delete_chat_group_confirm: Czy na pewno chcesz usunąć tę grupę?
+chat_group_deleted: Grupa została usunięta
+leave_group_confirm: Czy na pewno chcesz opuścić tę grupę?
+failed_to_delete_group: Nie udało się usunąć grupy
+failed_to_leave_group: Nie udało się opuścić grupy
+kick_from_group: Usuń z grupy
+kick_confirm: Czy na pewno chcesz usunąć {0} z grupy?
+user_role: "Rola {0}: "
+save: Zapisz
 
 # Settings page
 app_language: Język

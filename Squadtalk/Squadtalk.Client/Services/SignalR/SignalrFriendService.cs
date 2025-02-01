@@ -25,19 +25,19 @@ internal sealed partial class SignalrService : ISignalrFriendService
     public event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
     public event Action<UserId, UserStatus>? FriendStatusChanged;
 
-    public Task<SignalrResult<FriendRequestResult>> SendFriendRequestAsync(string recipientUsername)
+    public Task<NetworkResult<FriendRequestResult>> SendFriendRequestAsync(string recipientUsername)
     {
         var data = new FriendRequestDto { RecipientUsername = recipientUsername };
         return InvokeAsync<FriendRequestResult>(HubMethods.SendFriendRequest, data);
     }
 
-    public Task<SignalrResult<bool>> CancelFriendRequestAsync(FriendRequestId friendRequestId)
+    public Task<NetworkResult<bool>> CancelFriendRequestAsync(FriendRequestId friendRequestId)
     {
         var data = new CancelFriendRequestDto { RequestId = friendRequestId };
         return InvokeAsync<bool>(HubMethods.CancelFriendRequest, data);
     }
 
-    public Task<SignalrResult<FriendRequestResponseResult>> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted)
+    public Task<NetworkResult<FriendRequestResponseResult>> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted)
     {
         var data = new FriendRequestResponseDto
         {
@@ -48,18 +48,18 @@ internal sealed partial class SignalrService : ISignalrFriendService
         return InvokeAsync<FriendRequestResponseResult>(HubMethods.RespondToFriendRequest, data);
     }
 
-    public Task<SignalrResult<RemoveFriendResult>> RemoveFriendAsync(UserId friendId)
+    public Task<NetworkResult<RemoveFriendResult>> RemoveFriendAsync(UserId friendId)
     {
         var data = new RemoveFriendDto { FriendId = friendId };
         return InvokeAsync<RemoveFriendResult>(HubMethods.RemoveFriend, data);
     }
 
-    public Task<SignalrResult<List<UserDto>>> GetFriendListAsync()
+    public Task<NetworkResult<List<UserDto>>> GetFriendListAsync()
     {
         return InvokeAsync<List<UserDto>>(HubMethods.GetFriendList);
     }
 
-    public Task<SignalrResult<List<PendingFriendRequestDto>>> GetFriendRequestsAsync()
+    public Task<NetworkResult<List<PendingFriendRequestDto>>> GetFriendRequestsAsync()
     {
         return InvokeAsync<List<PendingFriendRequestDto>>(HubMethods.GetFriendRequests);
     }
