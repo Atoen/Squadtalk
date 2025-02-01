@@ -20,6 +20,7 @@ internal class ChatManager : IChatManager
 
     private readonly Dictionary<GroupId, ChatModel> _allChats = [];
     private readonly List<DirectMessageModel> _dms = [];
+    private readonly TimeSpan _lastSeenUpdateInterval = TimeSpan.FromSeconds(20);
 
     public IReadOnlyCollection<ChatModel> Chats => _allChats.Values;
 
@@ -291,21 +292,42 @@ internal class ChatManager : IChatManager
         return GroupParticipantModel.Create(groupParticipant, _contactManager.UserModelProvider);
     }
 
-    private Task ChangeChannelAsync(ChatModel? channel)
+    private async Task ChangeChannelAsync(ChatModel? chat)
     {
-        if (CurrentChat == channel)
+        if (CurrentChat == chat)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        CurrentChat = channel;
-        if (CurrentChat is not null)
+        // Don't update on global chat
+        if (CurrentChat is { } previousChat && !previousChat.IsGlobal())
         {
-            CurrentChat.State.UnreadMessages = 0;
+            if (chat is not null)
+            {
+                // Switched from one chat to another
+                await _signalrService.MarkLastSeenAsync(chat.Id, previousChat.Id);
+            }
+            else
+            {
+                // Closed the chat
+                await _signalrService.MarkLastSeenAsync(previousChat.Id);
+            }
+        }
+        else if (chat is not null && !chat.IsGlobal())
+        {
+            // Opened the chat
+            await _signalrService.MarkLastSeenAsync(chat.Id);
+        }
+
+        CurrentChat = chat;
+
+        if (chat is not null)
+        {
+            chat.State.UnreadMessages = 0;
         }
 
         ChatChanged?.Invoke();
-        return ChatChangedAsync.TryInvoke();
+        await ChatChangedAsync.TryInvoke();
     }
 
     private Task AddChannel(IChatGroup group, bool bulk)
@@ -378,6 +400,18 @@ internal class ChatManager : IChatManager
         _logger.LogInformation("Started scanning typing state");
 
         _ = RemoveStaleTypingStates();
+    }
+
+    private async Task UpdateLastSeenLoop()
+    {
+        while (!CurrentChat.IsNullOrSpecial())
+        {
+            await Task.Delay(_lastSeenUpdateInterval);
+            if (CurrentChat is { } chat)
+            {
+                await _signalrService.MarkLastSeenAsync(chat.Id);
+            }
+        }
     }
 
     private async Task RemoveStaleTypingStates()

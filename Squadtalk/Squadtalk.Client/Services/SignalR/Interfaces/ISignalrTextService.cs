@@ -21,7 +21,7 @@ public interface ISignalrTextService
     event Action<GroupId, UserId, GroupRole>? ParticipantRoleChanged;
     event Action<GroupId>? GroupDeleted;
 
-    Task<SignalrResult> SendMessageAsync(string message, GroupId groupId, CancellationToken cancellationToken = default);
+    Task<NetworkResult> SendMessageAsync(string message, GroupId groupId, CancellationToken cancellationToken = default);
 
     Task<NetworkResult<List<MessageDto>>> GetMessagePageAsync(GroupId groupId, TextChannelCursor cursor = default, CancellationToken cancellationToken = default);
 
@@ -33,7 +33,9 @@ public interface ISignalrTextService
 
     Task<NetworkResult<HubResult>> KickUserAsync(GroupId groupId, UserId userId, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
+    Task<NetworkResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
 
-    Task<SignalrResult> UserStoppedTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
+    Task<NetworkResult> UserStoppedTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
+
+    Task<NetworkResult> MarkLastSeenAsync(GroupId currentGroupId, GroupId? previousGroupId = null, CancellationToken cancellationToken = default);
 }

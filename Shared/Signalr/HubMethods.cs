@@ -23,4 +23,5 @@ public static class HubMethods
     public const string ChangeUserRole = nameof(ChangeUserRole);
     public const string LeaveGroup = nameof(LeaveGroup);
     public const string DeleteGroup = nameof(DeleteGroup);
+    public const string MarkLastSeen = nameof(MarkLastSeen);
 }

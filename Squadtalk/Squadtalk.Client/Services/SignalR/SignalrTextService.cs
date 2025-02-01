@@ -26,7 +26,7 @@ internal sealed partial class SignalrService : ISignalrTextService
     public event Action<GroupId, UserId, GroupRole>? ParticipantRoleChanged;
     public event Action<GroupId>? GroupDeleted;
 
-    public Task<SignalrResult> SendMessageAsync(string message, GroupId groupId, CancellationToken cancellationToken)
+    public Task<NetworkResult> SendMessageAsync(string message, GroupId groupId, CancellationToken cancellationToken)
     {
         return SendAsync(HubMethods.SendMessage, message, groupId, cancellationToken);
     }
@@ -51,12 +51,12 @@ internal sealed partial class SignalrService : ISignalrTextService
         return InvokeAsync<HubResult>(HubMethods.ChangeGroupName, groupId, newName, cancellationToken);
     }
 
-    public Task<SignalrResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default)
+    public Task<NetworkResult> UserIsTypingAsync(GroupId groupId, CancellationToken cancellationToken = default)
     {
         return SendAsync(HubMethods.IsTyping, groupId, cancellationToken);
     }
 
-    public Task<SignalrResult> UserStoppedTypingAsync(GroupId groupId, CancellationToken cancellationToken = default)
+    public Task<NetworkResult> UserStoppedTypingAsync(GroupId groupId, CancellationToken cancellationToken = default)
     {
         return SendAsync(HubMethods.StoppedTyping, groupId, cancellationToken);
     }
@@ -79,6 +79,11 @@ internal sealed partial class SignalrService : ISignalrTextService
     public Task<NetworkResult<HubResult>> DeleteGroupAsync(GroupId groupId, CancellationToken cancellationToken = default)
     {
         return InvokeAsync<HubResult>(HubMethods.DeleteGroup, groupId, cancellationToken);
+    }
+
+    public Task<NetworkResult> MarkLastSeenAsync(GroupId currentGroupId, GroupId? previousGroupId = null, CancellationToken cancellationToken = default)
+    {
+        return SendAsync(HubMethods.MarkLastSeen, currentGroupId, previousGroupId, cancellationToken);
     }
 
     private void RegisterTextHandlers()

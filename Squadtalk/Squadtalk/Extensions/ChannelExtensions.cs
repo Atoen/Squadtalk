@@ -9,18 +9,7 @@ internal static class ChannelExtensions
 {
     public static Group WithLastMessage(this Group textGroup, Message message)
     {
-        textGroup.LastMessage = new Group.Message
-        {
-            Content = message.Content,
-            AuthorId = message.Author.Id,
-            AuthorName = message.Author.Username,
-            GroupId = message.GroupId,
-            Timestamp = message.Timestamp,
-            Embed = message.Embed is not null
-                ? new Embed { Type = message.Embed.Type, Data = message.Embed.Data }
-                : null
-        };
-
+        textGroup.LastMessage = message;
         return textGroup;
     }
 

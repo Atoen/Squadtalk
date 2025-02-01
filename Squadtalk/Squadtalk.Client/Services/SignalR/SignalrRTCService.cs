@@ -26,7 +26,7 @@ internal sealed partial class SignalrService : ISignalrRTCService
         return InvokeAsync<RoomTokenDto?>("AcceptCall", id);
     }
 
-    public Task<SignalrResult> DeclineCallAsync(GroupId id)
+    public Task<NetworkResult> DeclineCallAsync(GroupId id)
     {
         return SendAsync("DeclineCall", id);
     }

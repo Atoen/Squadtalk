@@ -224,45 +224,45 @@ internal sealed partial class SignalrService : IConnectionService, IAsyncDisposa
         }
     }
 
-    private async Task<SignalrResult> SendAsync(string methodName, CancellationToken cancellationToken = default)
+    private async Task<NetworkResult> SendAsync(string methodName, CancellationToken cancellationToken = default)
     {
         try
         {
             await _connection.SendAsync(methodName, cancellationToken);
-            return SignalrResult.Ok;
+            return NetworkResult.Ok;
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
-            return SignalrResult.Error;
+            return NetworkResult.Error;
         }
     }
 
-    private async Task<SignalrResult> SendAsync(string methodName, object? arg, CancellationToken cancellationToken = default)
+    private async Task<NetworkResult> SendAsync(string methodName, object? arg, CancellationToken cancellationToken = default)
     {
         try
         {
             await _connection.SendAsync(methodName, arg, cancellationToken);
-            return SignalrResult.Ok;
+            return NetworkResult.Ok;
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
-            return SignalrResult.Error;
+            return NetworkResult.Error;
         }
     }
 
-    private async Task<SignalrResult> SendAsync(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
+    private async Task<NetworkResult> SendAsync(string methodName, object? arg1, object? arg2, CancellationToken cancellationToken = default)
     {
         try
         {
             await _connection.SendAsync(methodName, arg1, arg2, cancellationToken);
-            return SignalrResult.Ok;
+            return NetworkResult.Ok;
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error while invoking hub method {MethodName}", methodName);
-            return SignalrResult.Error;
+            return NetworkResult.Error;
         }
     }
 

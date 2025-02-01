@@ -28,12 +28,33 @@ public class MessageRepository(
         return await page.ToListAsync(cancellationToken);
     }
 
-    public async Task<Dictionary<GroupId, int>> GetUnreadMessageCountPerGroupAsync(List<Group> groups, DateTimeOffset since)
+    public async Task<Dictionary<GroupId, int>> GetUnreadMessageCountPerGroupAsync(UserId userId)
     {
-        var groupIds = groups.Select(x => x.Id).ToList();
-        var grouping = UnreadMessagesPerGroupAsync(DbContext, groupIds, since);
+        // var groupIds = groups.Select(x => x.Id).ToList();
+        // var grouping = UnreadMessagesPerGroupAsync(DbContext, groupIds, since);
+        //
+        // return await grouping.ToDictionaryAsync(g => g.Key, g => g.Count());
 
-        return await grouping.ToDictionaryAsync(g => g.Key, g => g.Count());
+        // Console.WriteLine(new string('\n', 20));
+        //
+        // var a = DbContext.Messages
+        //     .Join(
+        //         DbContext.GroupParticipants,
+        //         message => message.GroupId,
+        //         participant => participant.GroupId,
+        //         (message, participant) => new { message, participant })
+        //     .Where(x => x.participant.UserId == userId && (x.participant.LastSeen == null || x.participant.LastSeen < x.message.Timestamp))
+        //     .GroupBy(x => x.message.GroupId);
+        //
+        // Console.WriteLine(a.ToQueryString());
+        //
+        // var b = await a.ToDictionaryAsync(x => x.Key, x => x.Count());
+        //
+        // Console.WriteLine(new string('\n', 20));
+        //
+        // return b;
+
+        return [];
     }
 
     public async Task<Message?> AddMessageAsync(

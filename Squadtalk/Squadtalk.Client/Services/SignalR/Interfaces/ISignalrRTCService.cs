@@ -17,7 +17,7 @@ public interface ISignalrRTCService
 
     Task<NetworkResult<RoomTokenDto?>> AcceptCallAsync(GroupId id);
 
-    Task<SignalrResult> DeclineCallAsync(GroupId id);
+    Task<NetworkResult> DeclineCallAsync(GroupId id);
 
     Task<NetworkResult<bool>> ChannelHasActiveCall(GroupId id);
 }

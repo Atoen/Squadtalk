@@ -42,6 +42,12 @@ public partial class AppHub
         }
     }
 
+    [HubMethodName(HubMethods.MarkLastSeen)]
+    public async Task MarkLastSeen(GroupId groupId, GroupId? previousGroupId, GroupRepository groupRepository)
+    {
+        await groupRepository.MarkLastSeenAsync(groupId, previousGroupId, UserId);
+    }
+
     [HubMethodName(HubMethods.IsTyping)]
     public async Task IsTyping(GroupId groupId)
     {
