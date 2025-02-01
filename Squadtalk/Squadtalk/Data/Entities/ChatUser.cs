@@ -17,8 +17,6 @@ public class ChatUser : IChatUser
     [Column(nameof(ApplicationUser.Id))]
     public UserId Id { get; set; }
 
-    public DateTimeOffset LastSeen { get; set; }
-
     // DB doesn't store user status
     public UserStatus Status => UserStatus.Unknown;
 }

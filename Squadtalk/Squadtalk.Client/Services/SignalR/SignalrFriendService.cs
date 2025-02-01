@@ -64,7 +64,7 @@ internal sealed partial class SignalrService : ISignalrFriendService
         return InvokeAsync<List<PendingFriendRequestDto>>(HubMethods.GetFriendRequests);
     }
 
-    public Task<SignalrResult> SetStatusAsync(UserStatus status)
+    public Task<NetworkResult> SetStatusAsync(UserStatus status)
     {
         return SendAsync(HubMethods.ChangeStatus, status);
     }

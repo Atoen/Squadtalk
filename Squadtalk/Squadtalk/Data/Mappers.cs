@@ -76,21 +76,21 @@ internal static class Mappers
         return dto;
     }
 
-    public static MessageDto ToDto(this Group.Message message)
-    {
-        return new MessageDto
-        {
-            Author = new UserDto
-            {
-                Username = message.AuthorName,
-                Id = message.AuthorId
-            },
-            Timestamp = message.Timestamp,
-            GroupId = message.GroupId,
-            Content = message.Content,
-            Embed = message.Embed?.ToDto()
-        };
-    }
+    // public static MessageDto ToDto(this Group.Message message)
+    // {
+    //     return new MessageDto
+    //     {
+    //         Author = new UserDto
+    //         {
+    //             Username = message.AuthorName,
+    //             Id = message.AuthorId
+    //         },
+    //         Timestamp = message.Timestamp,
+    //         GroupId = message.GroupId,
+    //         Content = message.Content,
+    //         Embed = message.Embed?.ToDto()
+    //     };
+    // }
 
     public static EmbedDto ToDto(this Embed embed)
     {

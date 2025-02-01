@@ -21,21 +21,21 @@ public class Group
 
     public Message? LastMessage { get; set; }
 
-    [Owned]
-    public class Message
-    {
-        [StringLength(IFormValidator.MaximumTextMessageLength)]
-        public required string Content { get; set; }
-
-        [StringLength(IFormValidator.MaximumUsernameLength)]
-        public required string AuthorName { get; set; }
-
-        public required GroupId GroupId { get; set; }
-
-        public required UserId AuthorId { get; set; }
-
-        public Embed? Embed { get; set; }
-
-        public DateTimeOffset Timestamp { get; set; }
-    }
+    // [Owned]
+    // public class Message
+    // {
+    //     [StringLength(IFormValidator.MaximumTextMessageLength)]
+    //     public required string Content { get; set; }
+    //
+    //     [StringLength(IFormValidator.MaximumUsernameLength)]
+    //     public required string AuthorName { get; set; }
+    //
+    //     public required GroupId GroupId { get; set; }
+    //
+    //     public required UserId AuthorId { get; set; }
+    //
+    //     public Embed? Embed { get; set; }
+    //
+    //     public DateTimeOffset Timestamp { get; set; }
+    // }
 }

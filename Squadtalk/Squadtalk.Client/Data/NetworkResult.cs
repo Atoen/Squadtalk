@@ -26,11 +26,11 @@ public readonly record struct NetworkResult<T>(
     public bool SuccessAndValueIsNot(T value) => IsSuccess && !EqualityComparer<T>.Default.Equals(Value, value);
 }
 
-public readonly record struct SignalrResult(bool IsSuccess)
+public readonly record struct NetworkResult(bool IsSuccess)
 {
-    public static readonly SignalrResult Ok = new(true);
+    public static readonly NetworkResult Ok = new(true);
 
-    public static readonly SignalrResult Error = new(false);
+    public static readonly NetworkResult Error = new(false);
 
     public bool IsError => !IsSuccess;
 }

@@ -15,6 +15,7 @@ public class GroupParticipant : IGroupParticipant
     public ChatUser? AddedBy { get; set; }
     public DateTimeOffset JoinedAt { get; set; }
     public GroupRole Role { get; set; }
+    public DateTimeOffset? LastSeen { get; set; }
 
     IChatUser? IGroupParticipant.AddedBy => AddedBy;
     string IChatUser.Username => User.Username;

@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
@@ -12,7 +15,9 @@ internal class ConnectionService : IConnectionService
     private readonly AuthenticationStateProvider _authenticationStateProvider;
     private readonly ChatUserRepository _chatUserRepository;
     private readonly FriendRepository _friendRepository;
+    private readonly MessageRepository _messageRepository;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly NavigationManager _navigationManager;
     private readonly PrerenderPersistantState _persistState;
 
     event Action<ConnectionStatus>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
@@ -25,13 +30,17 @@ internal class ConnectionService : IConnectionService
         AuthenticationStateProvider authenticationStateProvider,
         ChatUserRepository chatUserRepository,
         FriendRepository friendRepository,
+        MessageRepository messageRepository,
         SignInManager<ApplicationUser> signInManager,
+        NavigationManager navigationManager,
         PrerenderPersistantState persistState)
     {
         _authenticationStateProvider = authenticationStateProvider;
         _chatUserRepository = chatUserRepository;
         _friendRepository = friendRepository;
+        _messageRepository = messageRepository;
         _signInManager = signInManager;
+        _navigationManager = navigationManager;
         _persistState = persistState;
     }
 
@@ -53,20 +62,29 @@ internal class ConnectionService : IConnectionService
     private async Task ConnectInternalAsync()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+
         var user = await _chatUserRepository.FindUserByIdAsync(authenticationState.User, GroupInclusionOption.IncludeWithParticipants);
         if (user is null)
         {
             await _signInManager.SignOutAsync();
+            // _navigationManager.NavigateTo(Routes.Pages.Register);
             return;
         }
 
         var friends = await _friendRepository.GetUserFriendsAsync(user.Id);
         var friendRequests = await _friendRepository.GetUserPendingFriendRequests(user.Id);
 
-        var channelDtos = user.Groups
+        var unreadPerGroup = await _messageRepository.GetUnreadMessageCountPerGroupAsync(user.Id);
+
+        var groupDtos = user.Groups
             .Select(x => x.ToDto())
             .OrderByDescending(x => x.LastMessage?.Timestamp)
             .ToList();
+
+        foreach (var groupDto in groupDtos)
+        {
+            groupDto.MessagesSince = unreadPerGroup.GetValueOrDefault(groupDto.Id);
+        }
 
         var friendDtos = friends
             .Select(x => x.ToDto())
@@ -76,6 +94,6 @@ internal class ConnectionService : IConnectionService
             .Select(x => x.ToDto())
             .ToList();
 
-        _persistState.AddData(channelDtos, friendDtos, friendRequestDtos);
+        _persistState.AddData(groupDtos, friendDtos, friendRequestDtos);
     }
 }
