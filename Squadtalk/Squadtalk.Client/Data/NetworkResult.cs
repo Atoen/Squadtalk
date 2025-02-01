@@ -2,15 +2,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Squadtalk.Client.Data;
 
-public readonly record struct SignalrResult<T>(
+public readonly record struct NetworkResult<T>(
     T? Value,                                         // nameof() needs explicit prop to work
     [property: MemberNotNullWhen(true, "Value")] bool IsSuccess)
 {
-    public static SignalrResult<T> Ok(T value) => new(value, true);
+    public static NetworkResult<T> Ok(T value) => new(value, true);
 
-    public static readonly SignalrResult<T> Error = new(default, false);
+    public static readonly NetworkResult<T> Error = new(default, false);
 
-    public static implicit operator SignalrResult<T>(T value) => new(value, true);
+    public static implicit operator NetworkResult<T>(T value) => new(value, true);
 
     public T ValueOr(T other) => IsSuccess ? Value : other;
 

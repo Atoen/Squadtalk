@@ -12,7 +12,7 @@ public class GroupDto : IChatGroup
     public GroupId Id { get; set; } = default!;
 
     [Key(1)]
-    public string? Name { get; set; }
+    public string? CustomName { get; set; }
 
     [Key(2)]
     public List<GroupParticipantDto> Participants { get; set; } = default!;

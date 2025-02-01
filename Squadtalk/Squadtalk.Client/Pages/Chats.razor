@@ -10,14 +10,14 @@
 
 <div class="channels">
     <div>
-        @{ var globalUnread = ChatGroupManager.GlobalChat.UnreadMessages(); }
+        @{ var globalUnread = ChatManager.GlobalChat.UnreadMessages(); }
 
         <MudBadge Content="globalUnread" Color="Color.Error" Style="max-width: 200px"
                   Overlap="true"
                   Visible="@(globalUnread > 0)">
             <MudButton Size="Size.Large" Variant="Variant.Filled" Color="Color.Primary"
                        StartIcon="@Icons.Material.Rounded.Public"
-                       OnClick="() => ChatGroupManager.OpenChannelAsync(ChatGroupManager.GlobalChat)">
+                       OnClick="() => ChatManager.OpenChannelAsync(ChatManager.GlobalChat)">
                 @LocalizedText.R.global_chat
             </MudButton>
         </MudBadge>
@@ -40,7 +40,7 @@
 
 @implements IDisposable
 
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject IChannelSorter ChannelSorter
 @inject LocalizedText LocalizedText
 @inject IConnectionService ConnectionService
@@ -65,11 +65,11 @@
 
         if (invitedUsers is [var singleUser])
         {
-            await ChatGroupManager.OpenOrCreateTemporaryDirectMessageChannelAsync(singleUser);
+            await ChatManager.OpenOrCreateTemporaryDirectMessageChannelAsync(singleUser);
         }
         else
         {
-            await ChatGroupManager.CreateAndOpenNewChannelAsync(invitedUsers);
+            await ChatManager.CreateAndOpenNewChannelAsync(invitedUsers);
         }
     }
 
@@ -90,8 +90,8 @@
     {
         if (!firstRender) return;
 
-        ChatGroupManager.ChannelsListChanged += StateHasChanged;
-        ChatGroupManager.ChannelChanged += StateHasChanged;
+        ChatManager.ChatListChanged += StateHasChanged;
+        ChatManager.ChatChanged += StateHasChanged;
         ChannelSorter.ChannelsSorted += StateHasChanged;
     }
 
@@ -99,8 +99,8 @@
     {
         if (!RendererInfo.IsInteractive) return;
 
-        ChatGroupManager.ChannelsListChanged -= StateHasChanged;
-        ChatGroupManager.ChannelChanged -= StateHasChanged;
+        ChatManager.ChatListChanged -= StateHasChanged;
+        ChatManager.ChatChanged -= StateHasChanged;
         ChannelSorter.ChannelsSorted -= StateHasChanged;
     }
 }

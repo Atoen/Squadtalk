@@ -1,46 +1,43 @@
 using Microsoft.AspNetCore.Components;
 using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Enums;
 using Shared.Extensions;
 using Shared.Models;
+using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Client.Services.SignalR;
 
 namespace Squadtalk.Client.Services;
 
-internal class ChatGroupManager : IChatGroupManager
+internal class ChatManager : IChatManager
 {
     private readonly IUserAuthenticationService _userAuthenticationService;
     private readonly SignalrService _signalrService;
     private readonly IContactManager _contactManager;
-    private readonly ILogger<ChatGroupManager> _logger;
+    private readonly ILogger<ChatManager> _logger;
     private readonly NavigationManager _navigationManager;
 
-    private readonly Dictionary<GroupId, ChatModel> _allChannels = [];
-    private readonly List<GroupChatModel> _groupChats = [];
-    private readonly List<DirectMessageModel> _directMessageChannels = [];
+    private readonly Dictionary<GroupId, ChatModel> _allChats = [];
+    private readonly List<DirectMessageModel> _dms = [];
 
-    public IReadOnlyCollection<ChatModel> Channels => _allChannels.Values;
+    public IReadOnlyCollection<ChatModel> Chats => _allChats.Values;
 
-    public IEnumerable<GroupChatModel> GroupChats => _groupChats;
-    public IEnumerable<DirectMessageModel> DirectMessageChannels => _directMessageChannels;
-
-    public event Action? ChannelsListChanged;
-
-    public event Action? ChannelChanged;
-    public event Func<Task>? ChannelChangedAsync;
+    public event Action? ChatListChanged;
+    public event Action? ChatChanged;
+    public event Func<Task>? ChatChangedAsync;
 
     public Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
     public ChatModel GlobalChat { get; }
-    public ChatModel? CurrentChannel { get; private set; }
+    public ChatModel? CurrentChat { get; private set; }
 
     private bool _startedScanningStaleTypingState;
 
-    public ChatGroupManager(
+    public ChatManager(
         IUserAuthenticationService userAuthenticationService,
         SignalrService signalrService,
         IContactManager contactManager,
-        ILogger<ChatGroupManager> logger,
+        ILogger<ChatManager> logger,
         NavigationManager navigationManager)
     {
         _userAuthenticationService = userAuthenticationService;
@@ -53,11 +50,13 @@ internal class ChatGroupManager : IChatGroupManager
         GroupParticipantProvider = GetOrCreateGroupParticipantModel;
 
         _signalrService.ChannelsReceived += ChannelsReceived;
-        _signalrService.AddedToChannel += AddedToChannel;
+        _signalrService.AddedToGroup += AddedToGroup;
         _signalrService.ChannelNameChanged += OnChannelNameChanged;
         _signalrService.UserIsTyping += UserIsTyping;
         _signalrService.UserStoppedTyping += UserStoppedTyping;
-        _signalrService.ChannelParticipantsChanged += ParticipantsChanged;
+        _signalrService.GroupParticipantsChanged += ParticipantsChanged;
+        _signalrService.ParticipantRoleChanged += ParticipantRoleChanged;
+        _signalrService.GroupDeleted += GroupDeleted;
     }
 
     #region Public Methods
@@ -69,24 +68,24 @@ internal class ChatGroupManager : IChatGroupManager
             return GlobalChat;
         }
 
-        _allChannels.TryGetValue(groupId, out var channel);
+        _allChats.TryGetValue(groupId, out var channel);
         return channel;
     }
 
     public ChatModel GetRequiredChannel(GroupId groupId)
     {
-        return groupId == GlobalChat.Id ? GlobalChat : _allChannels[groupId];
+        return groupId == GlobalChat.Id ? GlobalChat : _allChats[groupId];
     }
 
     public async Task OpenChannelAsync(ChatModel chatModel, bool navigate = true)
     {
-        if (CurrentChannel == chatModel) return;
+        if (CurrentChat == chatModel) return;
 
         await ChangeChannelAsync(chatModel);
 
         if (navigate)
         {
-            _navigationManager.NavigateTo($"Chats/{CurrentChannel?.Id}");
+            _navigationManager.NavigateTo($"Chats/{CurrentChat?.Id}");
         }
     }
 
@@ -96,7 +95,7 @@ internal class ChatGroupManager : IChatGroupManager
     {
         if (model.Id == _userAuthenticationService.UserId) return;
 
-        var openDirectMessageChannelWithUser = DirectMessageChannels.FirstOrDefault(x => x.Other.User.Id == model.Id);
+        var openDirectMessageChannelWithUser = _dms.FirstOrDefault(x => x.Other.Id == model.Id);
         if (openDirectMessageChannelWithUser is not null)
         {
             await OpenChannelAsync(openDirectMessageChannelWithUser);
@@ -114,7 +113,7 @@ internal class ChatGroupManager : IChatGroupManager
             return;
         }
 
-        var channelId = await CreateNewChannelAsync(dm.Other.User);
+        var channelId = await CreateNewChannelAsync(dm.Other);
         if (channelId is not null && GetChannel(channelId) is { } openedChannel)
         {
             await ChangeChannelAsync(openedChannel);
@@ -124,7 +123,45 @@ internal class ChatGroupManager : IChatGroupManager
     public async Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName)
     {
         var result = await _signalrService.ChangeGroupNameAsync(groupChat.Id, newName);
-        return result.ValueOr(false);
+        return result.SuccessAndValueIs(HubResult.Ok);
+    }
+
+    public async Task<bool> DeleteGroupAsync(GroupChatModel groupChat)
+    {
+        var result = await _signalrService.DeleteGroupAsync(groupChat.Id);
+        return result.SuccessAndValueIs(HubResult.Ok);
+    }
+
+    public async Task<bool> KickUserAsync(GroupChatModel groupChat, GroupParticipantModel groupParticipant)
+    {
+        var result = await _signalrService.KickUserAsync(groupChat.Id, groupParticipant.Id());
+        return result.SuccessAndValueIs(HubResult.Ok);
+    }
+
+    public async Task<bool> ChangeUserRoleAsync(GroupChatModel groupChat, GroupParticipantModel groupParticipant, GroupRole newRole)
+    {
+        var result = await _signalrService.ChangeUserRoleAsync(groupChat.Id, groupParticipant.Id(), newRole);
+        return result.SuccessAndValueIs(HubResult.Ok);
+    }
+
+    public async Task<bool> LeaveGroupAsync(GroupChatModel groupChat)
+    {
+        var result = await _signalrService.LeaveGroupAsync(groupChat.Id);
+        if (result.ErrorOrValueIsNot(HubResult.Ok))
+        {
+            return false;
+        }
+
+        _allChats.Remove(groupChat.Id);
+
+        if (CurrentChat == groupChat)
+        {
+            _navigationManager.NavigateTo(Routes.Pages.Chats);
+        }
+
+        ChatListChanged?.Invoke();
+
+        return true;
     }
 
     public async Task<GroupId?> CreateNewChannelAsync(params IEnumerable<UserModel> others)
@@ -142,7 +179,7 @@ internal class ChatGroupManager : IChatGroupManager
         var channelId = await CreateNewChannelAsync(others);
         if (channelId is null) return;
 
-        if (!_allChannels.TryGetValue(channelId, out var createdChannel))
+        if (!_allChats.TryGetValue(channelId, out var createdChannel))
         {
             return;
         }
@@ -150,12 +187,12 @@ internal class ChatGroupManager : IChatGroupManager
         await OpenChannelAsync(createdChannel);
     }
 
-    public async Task AddFriendsToGroupAsync(GroupId groupId, params IEnumerable<UserModel> friends)
+    public async Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends)
     {
         var friendsId = friends.Select(x => x.Id);
-        var result = await _signalrService.AddFriendsToGroupAsync(groupId, friendsId);
+        var result = await _signalrService.AddFriendsToGroupAsync(chat.Id, friendsId);
 
-        if (result.ErrorOrValueIs(false))
+        if (result.ErrorOrValueIsNot(HubResult.Ok))
         {
 
         }
@@ -165,11 +202,11 @@ internal class ChatGroupManager : IChatGroupManager
 
     #region Event Handlers
 
-    private async Task AddedToChannel(IChatGroup group)
+    private async Task AddedToGroup(IChatGroup group)
     {
         await AddChannel(group, false);
 
-        ChannelsListChanged?.Invoke();
+        ChatListChanged?.Invoke();
     }
 
     private async Task ChannelsReceived(IEnumerable<IChatGroup> channels)
@@ -179,30 +216,27 @@ internal class ChatGroupManager : IChatGroupManager
             await AddChannel(channel, true);
         }
 
-        ChannelsListChanged?.Invoke();
+        ChatListChanged?.Invoke();
     }
 
     private void ParticipantsChanged(IChatGroup updatedGroup)
     {
         _logger.LogInformation("Channel {Id} state changed", updatedGroup.Id);
-        if (!_allChannels.TryGetValue(updatedGroup.Id, out var channel))
+        if (!_allChats.TryGetValue(updatedGroup.Id, out var channel))
         {
             AddChannel(updatedGroup, false);
-            ChannelsListChanged?.Invoke();
+            ChatListChanged?.Invoke();
 
             return;
         }
 
-        var others = updatedGroup.Participants
-            .Where(x => x.Id != _userAuthenticationService.UserId)
-            .Select(GroupParticipantProvider);
-
+        var others = updatedGroup.Participants.Select(GroupParticipantProvider);
         channel.UpdateParticipants(others);
     }
 
     private void OnChannelNameChanged(GroupId groupId, string? channelName)
     {
-        if (!_allChannels.TryGetValue(groupId, out var channel))
+        if (!_allChats.TryGetValue(groupId, out var channel))
         {
             _logger.LogInformation("Non-existent channel name changed");
             return;
@@ -215,7 +249,7 @@ internal class ChatGroupManager : IChatGroupManager
 
         groupChat.CustomName = channelName;
 
-        ChannelsListChanged?.Invoke();
+        ChatListChanged?.Invoke();
     }
 
     private void UserIsTyping(GroupId groupId, UserId userId)
@@ -228,6 +262,28 @@ internal class ChatGroupManager : IChatGroupManager
         UpdateTypingState(groupId, userId, isTyping: false);
     }
 
+    private void ParticipantRoleChanged(GroupId groupId, UserId userId, GroupRole role)
+    {
+        if (_allChats.TryGetValue(groupId, out var group))
+        {
+            group.UpdateParticipantRole(userId, role);
+        }
+    }
+
+    private void GroupDeleted(GroupId groupId)
+    {
+        _allChats.Remove(groupId);
+
+        // The current chat is deleted - navigate away
+        if (CurrentChat?.Id == groupId)
+        {
+            CurrentChat = null;
+            _navigationManager.NavigateTo(Routes.Pages.Chats);
+        }
+
+        ChatListChanged?.Invoke();
+    }
+
     #endregion
 
     private GroupParticipantModel GetOrCreateGroupParticipantModel(IGroupParticipant groupParticipant)
@@ -237,24 +293,24 @@ internal class ChatGroupManager : IChatGroupManager
 
     private Task ChangeChannelAsync(ChatModel? channel)
     {
-        if (CurrentChannel == channel)
+        if (CurrentChat == channel)
         {
             return Task.CompletedTask;
         }
 
-        CurrentChannel = channel;
-        if (CurrentChannel is not null)
+        CurrentChat = channel;
+        if (CurrentChat is not null)
         {
-            CurrentChannel.State.UnreadMessages = 0;
+            CurrentChat.State.UnreadMessages = 0;
         }
 
-        ChannelChanged?.Invoke();
-        return ChannelChangedAsync.TryInvoke();
+        ChatChanged?.Invoke();
+        return ChatChangedAsync.TryInvoke();
     }
 
     private Task AddChannel(IChatGroup group, bool bulk)
     {
-        if (_allChannels.ContainsKey(group.Id))
+        if (_allChats.ContainsKey(group.Id))
         {
             return Task.CompletedTask;
         }
@@ -265,24 +321,21 @@ internal class ChatGroupManager : IChatGroupManager
         //     model.State.ScrolledToBeginning = true;
         // }
 
-        _allChannels.Add(model.Id, model);
+        _allChats.Add(model.Id, model);
 
-        if (model is GroupChatModel groupChat)
+        if (model is not DirectMessageModel dm)
         {
-            _groupChats.Add(groupChat);
             return Task.CompletedTask;
         }
 
-        var directMessageChannel = (DirectMessageModel) model;
-        _directMessageChannels.Add(directMessageChannel);
-
-        return UpgradeFakeChanelIfNeeded(directMessageChannel);
+        _dms.Add(dm);
+        return UpgradeFakeChanelIfNeeded(dm);
     }
 
     private Task UpgradeFakeChanelIfNeeded(DirectMessageModel openedDirectMessageModel)
     {
-        if (CurrentChannel is DirectMessageModel dm && dm.IsTemporary() &&
-            dm.Other.User.Id == openedDirectMessageModel.Other.User.Id)
+        if (CurrentChat is DirectMessageModel dm && dm.IsTemporary() &&
+            dm.Other.Id == openedDirectMessageModel.Other.Id)
         {
             return OpenChannelAsync(openedDirectMessageModel);
         }
@@ -295,7 +348,7 @@ internal class ChatGroupManager : IChatGroupManager
         _logger.LogInformation("User {UserId} {Action} typing on channel: {ChannelId}",
             userId, isTyping ? "is now" : "stopped", groupId);
 
-        if (!_allChannels.TryGetValue(groupId, out var channel))
+        if (!_allChats.TryGetValue(groupId, out var channel))
         {
             return;
         }
@@ -333,7 +386,7 @@ internal class ChatGroupManager : IChatGroupManager
         while (await timer.WaitForNextTickAsync())
         {
             var now = DateTime.Now;
-            foreach (var channel in Channels)
+            foreach (var channel in Chats)
             {
                 channel.State.RemoveStaleTyping(now);
             }

@@ -21,16 +21,16 @@ public interface ISignalrFriendService
     event Action<List<PendingFriendRequestDto>>? FriendRequestsReceived;
     event Action<UserId, UserStatus>? FriendStatusChanged;
 
-    Task<SignalrResult<FriendRequestResult>> SendFriendRequestAsync(string recipientUsername);
+    Task<NetworkResult<FriendRequestResult>> SendFriendRequestAsync(string recipientUsername);
 
-    Task<SignalrResult<bool>> CancelFriendRequestAsync(FriendRequestId friendRequestId);
+    Task<NetworkResult<bool>> CancelFriendRequestAsync(FriendRequestId friendRequestId);
 
-    Task<SignalrResult<FriendRequestResponseResult>> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted);
+    Task<NetworkResult<FriendRequestResponseResult>> RespondToFriendRequestAsync(FriendRequestId friendRequestId, bool isAccepted);
 
-    Task<SignalrResult<RemoveFriendResult>> RemoveFriendAsync(UserId friendId);
+    Task<NetworkResult<RemoveFriendResult>> RemoveFriendAsync(UserId friendId);
 
-    Task<SignalrResult<List<UserDto>>> GetFriendListAsync();
+    Task<NetworkResult<List<UserDto>>> GetFriendListAsync();
 
-    Task<SignalrResult<List<PendingFriendRequestDto>>> GetFriendRequestsAsync();
+    Task<NetworkResult<List<PendingFriendRequestDto>>> GetFriendRequestsAsync();
 
 }

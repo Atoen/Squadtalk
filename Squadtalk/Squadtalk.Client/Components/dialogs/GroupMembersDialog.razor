@@ -1,5 +1,52 @@
 <MudDialog ContentClass="mt-n1">
     <DialogContent>
+
+        <MudDialog Visible="_kickDialogVisible" Options="_smallDialogOptions">
+            <DialogContent>
+                @LocalizedText.R.kick_confirm.Format(_selectedUser?.Username())
+            </DialogContent>
+            <DialogActions>
+                <MudButton OnClick="HideKickDialog">
+                    @LocalizedText.R.dialog_cancel
+                </MudButton>
+                <MudButton OnClick="KickSelectedUser" Color="Color.Error">
+                    @LocalizedText.R.kick_from_group
+                </MudButton>
+            </DialogActions>
+        </MudDialog>
+
+        <MudDialog Visible="_roleDialogVisible" Options="_smallDialogOptions">
+            <DialogContent>
+
+                @LocalizedText.R.user_role.Format(_selectedUser?.Username())
+
+                <MudMenu Label="@RoleName(_selectedRole)" Color="Color.Primary">
+                    <MudMenuItem OnClick="() => _selectedRole = GroupRole.Member">
+                        @LocalizedText.R.group_member
+                    </MudMenuItem>
+                    @if (LocalUser.CanAddModerators())
+                    {
+                        <MudMenuItem OnClick="() => _selectedRole = GroupRole.Moderator">
+                            @LocalizedText.R.group_moderator
+                        </MudMenuItem>
+                    }
+                    @if (LocalUser.CanAddAdministrators())
+                    {
+                        <MudMenuItem OnClick="() => _selectedRole = GroupRole.Administrator">
+                            @LocalizedText.R.group_admin
+                        </MudMenuItem>
+                    }
+                </MudMenu>
+            </DialogContent>
+            <DialogActions>
+                <MudButton OnClick="HideRoleDialog">@LocalizedText.R.dialog_cancel</MudButton>
+                <MudButton Color="Color.Primary" OnClick="ModifySelectedUserRole"
+                           Disabled="@(_selectedRole == _selectedUser?.Role)">
+                    @LocalizedText.R.save
+                </MudButton>
+            </DialogActions>
+        </MudDialog>
+
         <MudTabs Centered="true">
             <MudTabPanel Text="@LocalizedText.R.all_members">
 
@@ -15,7 +62,7 @@
                          style="max-height: 300px">
                         @UserAvatar.NoBadgeMedium(participant.User)
 
-                        <div>
+                        <div class="me-auto">
                             <p class="mud-typography-body1">@participant.Username()</p>
                             @if (participant.IsGroupCreator)
                             {
@@ -23,9 +70,23 @@
                             }
                             else
                             {
-                                <p class="mud-typography-body2">@LocalizedText.R.added_by @participant.AddedBy.Username</p>
+                                <p class="mud-typography-body2">
+                                    @LocalizedText.R.added_by @participant.AddedBy.Username
+                                </p>
                             }
                         </div>
+
+                        @if (LocalUser.CanManageRole(participant))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Rounded.Edit"
+                                               OnClick="() => ShowRoleDialog(participant)" Size="Size.Small"/>
+                        }
+
+                        @if (LocalUser.CanKick(participant))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Error"
+                                           OnClick="() => ShowKickDialog(participant)" Size="Size.Small"/>
+                        }
                     </div>
                 }
             </MudTabPanel>
@@ -47,12 +108,22 @@
                          style="max-height: 300px">
                         @UserAvatar.NoBadgeMedium(moderator.User)
 
-                        <div>
+                        <div class="me-auto">
                             <p class="mud-typography-body1">@moderator.Username()</p>
-                            <p class="mud-typography-body2">
-                                @RoleName(moderator)
-                            </p>
+                            <p class="mud-typography-body2">@RoleName(moderator.Role)</p>
                         </div>
+
+                        @if (LocalUser.CanManageRole(moderator))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Rounded.Edit"
+                                           OnClick="() => ShowRoleDialog(moderator)" Size="Size.Small"/>
+                        }
+
+                        @if (LocalUser.CanKick(moderator))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Rounded.PersonRemove" Color="Color.Error"
+                                           OnClick="() => ShowKickDialog(moderator)" Size="Size.Small"/>
+                        }
                     </div>
                 }
             </MudTabPanel>
@@ -60,7 +131,12 @@
     </DialogContent>
 </MudDialog>
 
+@implements ISubscriber<ChatModel>
+@implements IDisposable
+
+@inject IChatManager ChatManager
 @inject LocalizedText LocalizedText
+@inject ILogger<GroupMembersDialog> Logger
 
 @code
 {
@@ -69,6 +145,85 @@
 
     [Parameter, EditorRequired]
     public GroupChatModel GroupChat { get; set; } = default!;
+
+    private GroupParticipantModel LocalUser => GroupChat.LocalUser;
+
+    private bool _kickDialogVisible;
+    private bool _roleDialogVisible;
+
+    private GroupRole _selectedRole;
+    private GroupParticipantModel? _selectedUser;
+
+    private DialogOptions _smallDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.ExtraSmall
+    };
+
+    private void ShowKickDialog(GroupParticipantModel participant)
+    {
+        _selectedUser = participant;
+        _kickDialogVisible = true;
+    }
+
+    private void HideKickDialog()
+    {
+        _selectedUser = null;
+        _kickDialogVisible = false;
+    }
+
+    private void ShowRoleDialog(GroupParticipantModel participant)
+    {
+        _selectedUser = participant;
+        _selectedRole = participant.Role;
+        _roleDialogVisible = true;
+    }
+
+    private void HideRoleDialog()
+    {
+        _selectedUser = null;
+        _roleDialogVisible = false;
+    }
+
+    private async Task KickSelectedUser()
+    {
+        if (_selectedUser is not { } userToKick)
+        {
+            return;
+        }
+
+        if (!LocalUser.CanKick(userToKick))
+        {
+            Logger.LogWarning("Cannot kick {Username} - {Role}", userToKick.Username(), userToKick.Role);
+            return;
+        }
+
+        var success = await ChatManager.KickUserAsync(GroupChat, userToKick);
+        if (success)
+        {
+            _kickDialogVisible = false;
+        }
+    }
+
+    private async Task ModifySelectedUserRole()
+    {
+        if (_selectedUser is not { } user)
+        {
+            return;
+        }
+
+        if (!LocalUser.CanChangeRoleTo(user, _selectedRole))
+        {
+            Logger.LogWarning("Cannot change {Username} role from {CurrentRole} to {NewRole}",
+                user.Username(), user.Role, _selectedRole);
+            return;
+        }
+
+        var success = await ChatManager.ChangeUserRoleAsync(GroupChat, user, _selectedRole);
+        if (success)
+        {
+            _roleDialogVisible = false;
+        }
+    }
 
     private string MemberCountString(int memberCount) => memberCount switch
     {
@@ -82,11 +237,19 @@
         _ => LocalizedText.R.many_moderators
     };
 
-    private string RoleName(GroupParticipantModel participant) => participant.Role switch
+    private string RoleName(GroupRole role) => role switch
     {
         GroupRole.Moderator => LocalizedText.R.group_moderator,
         GroupRole.Administrator => LocalizedText.R.group_admin,
         GroupRole.Owner => LocalizedText.R.group_creator,
         _ => LocalizedText.R.group_member
     };
+
+    public void OnNext(ChatModel value) => StateHasChanged();
+
+    private IDisposable? _subscription;
+
+    protected override void OnInitialized() => _subscription = GroupChat.Subscribe(this);
+
+    public void Dispose() => _subscription?.Dispose();
 }

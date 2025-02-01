@@ -2,6 +2,7 @@ namespace Shared.Enums;
 
 public enum HubResult
 {
-    Success,
-    Fail
+    Ok,
+    Unauthorized,
+    Error
 }

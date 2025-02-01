@@ -69,7 +69,7 @@ internal static class Mappers
             Id = group.Id,
             Participants = group.Participants.Select(x => x.ToDto()).ToList(),
             LastMessage = group.LastMessage?.ToDto(),
-            Name = group.Name,
+            CustomName = group.CustomName,
             Type = group.ChatType
         };
 

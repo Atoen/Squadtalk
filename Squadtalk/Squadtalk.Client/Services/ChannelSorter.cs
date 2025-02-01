@@ -6,7 +6,7 @@ namespace Squadtalk.Client.Services;
 
 internal class ChannelSorter : IChannelSorter
 {
-    private readonly IChatGroupManager _chatGroupManager;
+    private readonly IChatManager _chatManager;
     private readonly ITextChatService _textChatService;
     private readonly ILogger<ChannelSorter> _logger;
 
@@ -26,19 +26,19 @@ internal class ChannelSorter : IChannelSorter
     private bool _shouldSortChannels = true;
 
     public ChannelSorter(
-        IChatGroupManager chatGroupManager,
+        IChatManager chatManager,
         ITextChatService textChatService,
         ILogger<ChannelSorter> logger)
     {
-        _chatGroupManager = chatGroupManager;
+        _chatManager = chatManager;
         _textChatService = textChatService;
         _logger = logger;
 
         _textChatService.MessageReceived += MessageReceived;
-        _chatGroupManager.ChannelsListChanged += OnChatGroupsListChanged;
+        _chatManager.ChatListChanged += OnChatListChanged;
     }
 
-    private void OnChatGroupsListChanged()
+    private void OnChatListChanged()
     {
         _shouldSortChannels = true;
     }
@@ -48,7 +48,7 @@ internal class ChannelSorter : IChannelSorter
         if (!_shouldSortChannels) return;
         _shouldSortChannels = false;
 
-        _channels = _chatGroupManager.Channels.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
+        _channels = _chatManager.Chats.OrderByDescending(x => x.LastMessage?.Timestamp).ToList();
 
         _logger.LogInformation("Channels sorted");
     }

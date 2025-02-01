@@ -9,7 +9,7 @@ public class GroupParticipantModel : IGroupParticipant
 {
     public required UserModel User { get; init; }
 
-    public GroupRole Role { get; init; }
+    public GroupRole Role { get; set; }
 
     public UserModel? AddedBy { get; init; }
 

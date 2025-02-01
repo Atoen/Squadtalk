@@ -75,3 +75,10 @@ public class ChatUserRepository(
             (ApplicationDbContext context, string username) => context.ChatUsers
                 .FirstOrDefault(x => x.Username == username));
 }
+
+public enum GroupInclusionOption
+{
+    DontInclude,
+    Include,
+    IncludeWithParticipants
+}

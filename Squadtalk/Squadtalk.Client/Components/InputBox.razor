@@ -60,7 +60,7 @@
 
 @inject IConnectionService CommunicationService
 @inject ITextChatService TextChatService
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject ILogger<InputBox> Logger
 @inject LocalizedText LocalizedText
 
@@ -98,7 +98,7 @@
 
         if (Chat.IsTemporary())
         {
-            await ChatGroupManager.UpgradeToPersistentChannelAsync(Chat);
+            await ChatManager.UpgradeToPersistentChannelAsync(Chat);
         }
 
         var text = _textField.Value;

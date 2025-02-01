@@ -17,6 +17,4 @@ public static class GroupParticipantModelExtensions
     public static bool IsLocal(this GroupParticipantModel participant) => participant.User.IsLocal;
 
     public static bool IsRemote(this GroupParticipantModel participant) => participant.User.IsRemote;
-
-    public static bool IsModeratorOrAbove(this GroupParticipantModel participant) => participant.Role != GroupRole.Member;
 }

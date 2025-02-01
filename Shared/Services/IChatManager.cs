@@ -1,24 +1,25 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Enums;
 using Shared.Models;
 
 namespace Shared.Services;
 
-public interface IChatGroupManager
+public interface IChatManager
 {
-    event Action? ChannelsListChanged;
-    event Action? ChannelChanged;
-    event Func<Task>? ChannelChangedAsync;
+    event Action? ChatListChanged;
+    event Action? ChatChanged;
+    event Func<Task>? ChatChangedAsync;
 
     Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
 
     ChatModel GlobalChat { get; }
 
-    ChatModel? CurrentChannel { get; }
+    ChatModel? CurrentChat { get; }
 
-    ChannelState? CurrentChannelState => CurrentChannel?.State;
+    ChannelState? CurrentChannelState => CurrentChat?.State;
 
-    IReadOnlyCollection<ChatModel> Channels { get; }
+    IReadOnlyCollection<ChatModel> Chats { get; }
 
     ChatModel? GetChannel(GroupId groupId);
 
@@ -34,9 +35,17 @@ public interface IChatGroupManager
 
     Task CreateAndOpenNewChannelAsync(params IEnumerable<UserModel> others);
 
-    Task AddFriendsToGroupAsync(GroupId groupId, params IEnumerable<UserModel> friends);
+    Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends);
 
     Task ClearChannelSelectionAsync();
 
     Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName);
+
+    Task<bool> DeleteGroupAsync(GroupChatModel groupChat);
+
+    Task<bool> LeaveGroupAsync(GroupChatModel groupChat);
+
+    Task<bool> KickUserAsync(GroupChatModel groupChat, GroupParticipantModel groupParticipant);
+
+    Task<bool> ChangeUserRoleAsync(GroupChatModel groupChat, GroupParticipantModel groupParticipant, GroupRole newRole);
 }

@@ -1,5 +1,6 @@
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 
 namespace Shared.Signalr.Clients;
 
@@ -11,11 +12,15 @@ public interface ITextChatClient
 
     Task UserStoppedTyping(GroupId groupId, UserId userId);
 
-    Task ReceivedChannels(IList<GroupDto> channelDtos);
+    Task ReceivedGroups(IList<GroupDto> channelDtos);
 
     Task AddedToGroup(GroupDto groupDto);
 
     Task GroupParticipantsChanged(GroupDto groupDto);
 
-    Task ChannelNameChanged(GroupId groupId, string? name);
+    Task ParticipantRoleChanged(GroupId groupId, UserId userId, GroupRole groupRole);
+
+    Task GroupNameChanged(GroupId groupId, string? name);
+
+    Task GroupDeleted(GroupId groupId);
 }

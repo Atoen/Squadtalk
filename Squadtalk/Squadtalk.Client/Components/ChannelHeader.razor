@@ -36,8 +36,7 @@
                                 @LocalizedText.R.group_name
                             </MudMenuItem>
 
-                            <MudMenuItem Icon="@Icons.Material.Rounded.Image"
-                                         OnClick="OpenChangeGroupNameDialog">
+                            <MudMenuItem Icon="@Icons.Material.Rounded.Image">
                                 @LocalizedText.R.group_image
                             </MudMenuItem>
 
@@ -69,7 +68,7 @@
                             <MudDivider Class="my-1"/>
 
                             <MudMenuItem Icon="@Icons.Material.Rounded.DeleteForever"
-                                         IconColor="Color.Error">
+                                         IconColor="Color.Error" OnClick="DeleteGroup">
                                 @LocalizedText.R.delete_group
                             </MudMenuItem>
                         }
@@ -86,11 +85,9 @@
 @implements ISubscriber<ChatModel>
 @implements IDisposable
 
-@inject IContactManager ContactManager
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject IVoiceChatService VoiceChatService
 @inject LocalizedText LocalizedText
-@inject IUserAuthenticationService UserAuthenticationService
 @inject IDialogService DialogService
 @inject ILogger<ChannelHeader> Logger
 
@@ -102,7 +99,7 @@
     private string? _formattedName;
 
     private string ChatName => Chat.Name == string.Empty
-        ? _formattedName ??= LocalizedText.R.users_group.Format(UserAuthenticationService.Username)
+        ? _formattedName ??= LocalizedText.R.users_group.Format(Chat.LocalUser.Username())
         : Chat.Name;
 
     private Task StartVoiceCall()
@@ -114,7 +111,7 @@
     {
         Logger.LogInformation("New name {NewName}", newName);
 
-        var changedName = await ChatGroupManager.ChangeGroupChatNameAsync(groupChat, newName);
+        var changedName = await ChatManager.ChangeGroupChatNameAsync(groupChat, newName);
 
         return changedName;
     }
@@ -126,7 +123,7 @@
 
         if (friends.Count != 0)
         {
-            await ChatGroupManager.AddFriendsToGroupAsync(Chat.Id, friends);
+            await ChatManager.AddFriendsToGroupAsync(Chat, friends);
         }
     }
 
@@ -174,7 +171,14 @@
 
     private Task OpenLeaveGroupDialog()
     {
-        return Task.CompletedTask;
+        return DialogService.ShowAsync<LeaveGroupDialog>(
+            LocalizedText.R.leave_group, ManageDialogParameters, DialogOptions);
+    }
+
+    private Task DeleteGroup()
+    {
+        return DialogService.ShowAsync<DeleteGroupDialog>(
+            LocalizedText.R.delete_group, ManageDialogParameters, DialogOptions);
     }
 
     public void OnNext(ChatModel value) => StateHasChanged();

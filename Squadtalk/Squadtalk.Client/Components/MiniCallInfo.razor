@@ -58,7 +58,7 @@
 
 @implements IDisposable
 
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject IVoiceChatService VoiceChatService
 @inject NavigationManager NavigationManager
 @inject ILogger<MiniCallInfo> Logger
@@ -169,7 +169,7 @@
     private Task GoToCallChannel()
     {
         return VoiceChatService.CallChannel is { } channel
-            ? ChatGroupManager.OpenChannelAsync(channel)
+            ? ChatManager.OpenChannelAsync(channel)
             : Task.CompletedTask;
     }
 

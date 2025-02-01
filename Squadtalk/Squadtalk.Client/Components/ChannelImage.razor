@@ -1,16 +1,8 @@
 @switch (Chat)
 {
     case DirectMessageModel dm:
-        @UserAvatar.PrimaryBadge((dm.Other.User, Size))
+        @UserAvatar.PrimaryBadge((dm.Other, Size))
         break;
-
-    case GroupChatModel { Others.Count: 0 }:
-    {
-        <MudAvatar Color="Color.Secondary" Size="Size">
-            <MudIcon Icon="@Icons.Material.Rounded.Group" Size="Size"/>
-        </MudAvatar>
-        break;
-    }
 
     case GroupChatModel { ImageUrl: { } url } groupChat:
     {
@@ -19,7 +11,14 @@
                 <MudImage Src="@url"/>
             </MudAvatar>
         </MudBadge>
+        break;
+    }
 
+    case GroupChatModel { Others.Count: < 2 }:
+    {
+        <MudAvatar Color="Color.Secondary" Size="Size">
+            <MudIcon Icon="@Icons.Material.Rounded.Group" Size="Size"/>
+        </MudAvatar>
         break;
     }
 

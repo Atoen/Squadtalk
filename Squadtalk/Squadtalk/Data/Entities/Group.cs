@@ -11,7 +11,7 @@ public class Group
     public GroupId Id { get; set; } = default!;
 
     [StringLength(IFormValidator.MaximumGroupNameLength)]
-    public string? Name { get; set; }
+    public string? CustomName { get; set; }
 
     public ICollection<GroupParticipant> Participants { get; set; } = default!;
 

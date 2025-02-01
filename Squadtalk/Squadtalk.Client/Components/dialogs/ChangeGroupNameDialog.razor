@@ -26,7 +26,7 @@
     </DialogActions>
 </MudDialog>
 
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject IFormValidator FormValidator
 @inject LocalizedText LocalizedText
 
@@ -64,7 +64,7 @@
 
         _working = true;
 
-        var success = await ChatGroupManager.ChangeGroupChatNameAsync(GroupChat, name);
+        var success = await ChatManager.ChangeGroupChatNameAsync(GroupChat, name);
 
         _working = false;
 

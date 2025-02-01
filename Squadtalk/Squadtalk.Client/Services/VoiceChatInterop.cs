@@ -77,7 +77,7 @@ internal partial class VoiceChatService
             existingParticipant.IsSpeaking = participant.IsSpeaking;
         }
 
-        ParticipantUpdated?.Invoke(participant.Id, _chatGroupManager.GetRequiredChannel(groupId));
+        ParticipantUpdated?.Invoke(participant.Id, _chatManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
@@ -88,20 +88,20 @@ internal partial class VoiceChatService
             _participants[participant.Id] = participant;
         }
 
-        ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
+        ParticipantListUpdated?.Invoke(_chatManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
     public void ParticipantConnectedCallback(CallParticipantModel participant, GroupId groupId)
     {
         _participants[participant.Id] = participant;
-        ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
+        ParticipantListUpdated?.Invoke(_chatManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
     public void ParticipantDisconnectedCallback(CallParticipantModel participant, GroupId groupId)
     {
         _participants.Remove(participant.Id);
-        ParticipantListUpdated?.Invoke(_chatGroupManager.GetRequiredChannel(groupId));
+        ParticipantListUpdated?.Invoke(_chatManager.GetRequiredChannel(groupId));
     }
 }

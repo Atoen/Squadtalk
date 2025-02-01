@@ -43,7 +43,7 @@
 @implements ISubscriber<UserModel>
 
 @inject IContactManager ContactManager
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 @inject LocalizedText LocalizedText
 
 @code
@@ -53,7 +53,7 @@
 
     private async Task MessageFriend()
     {
-        await ChatGroupManager.OpenOrCreateTemporaryDirectMessageChannelAsync(Friend);
+        await ChatManager.OpenOrCreateTemporaryDirectMessageChannelAsync(Friend);
     }
 
     private void StartVoiceCall()

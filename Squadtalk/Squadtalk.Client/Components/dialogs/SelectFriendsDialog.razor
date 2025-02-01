@@ -56,7 +56,7 @@
 
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
-@inject IChatGroupManager ChatGroupManager
+@inject IChatManager ChatManager
 
 @code
 {
@@ -121,7 +121,7 @@
             _searchFilter = searchResult => string.IsNullOrWhiteSpace(_searchValue) ||
                               searchResult.User.Username.Contains(_searchValue, StringComparison.OrdinalIgnoreCase);
         }
-        else if (ChatGroupManager.CurrentChannel is { } channel)
+        else if (ChatManager.CurrentChat is { } channel)
         {
             _searchFilter = searchResult =>
                 !channel.Others.Select(x => x.User).Contains(searchResult.User) &&
@@ -171,14 +171,6 @@
 
         _working = false;
     }
-
-    // private async Task AddFriendsToGroupAsync()
-    // {
-    //     if (_selectedUsers.Count == 0) return;
-    //
-    //     var selectedFriends = _selectedUsers.Select(x => x.User);
-    //     await ChannelManager.AddFriendsToGroupAsync(selectedFriends);
-    // }
 
     private void CloseChip(SearchResult searchResult)
     {

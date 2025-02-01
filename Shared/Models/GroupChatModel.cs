@@ -11,7 +11,7 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
     public override List<GroupParticipantModel> Others { get; }
     public override GroupParticipantModel LocalUser { get; }
 
-    private string? _name;
+    private string? _defaultName;
     public override string Name => CustomName ?? GetOrPrepareName();
 
     private string? _customName;
@@ -52,6 +52,51 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
         }
     }
 
+    public override void UpdateParticipantRole(UserId userId, GroupRole groupRole)
+    {
+        var existingParticipant = Participants.FirstOrDefault(x => x.Id() == userId);
+        if (existingParticipant is not null)
+        {
+            existingParticipant.Role = groupRole;
+            Notify(this);
+        }
+    }
+
+    public override void UpdateParticipants(IEnumerable<GroupParticipantModel> updatedParticipants)
+    {
+        var updated = updatedParticipants.ToList();
+
+        Participants.Clear();
+        Participants.AddRange(updated);
+
+        Others.Clear();
+        Others.AddRange(updated.Where(x => x.IsRemote()));
+
+        _defaultName = null;
+
+        Notify(this);
+    }
+
+    private string GetOrPrepareName()
+    {
+        if (_defaultName is not null)
+        {
+            return _defaultName;
+        }
+
+        _defaultName = Others.Count == 0
+            ? string.Empty // Group with only 1 user has localized default name
+            : string.Join(", ", Others.Take(3).Select(x => x.User.Username));
+
+        return _defaultName;
+    }
+
+    private UserStatus GetStatus()
+    {
+        var hasOnlineUser = Others.Any(x => x.User.Status == UserStatus.Online);
+        return hasOnlineUser ? UserStatus.Online : UserStatus.Offline;
+    }
+
     // Propagating notification about status change
     public void OnNext(UserModel value)
     {
@@ -74,35 +119,5 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
         {
             subscription?.Dispose();
         }
-    }
-
-    public override void UpdateParticipants(IEnumerable<GroupParticipantModel> updatedParticipants)
-    {
-        Others.Clear();
-        Others.AddRange(updatedParticipants);
-
-        _name = null;
-
-        Notify(this);
-    }
-
-    private string GetOrPrepareName()
-    {
-        if (_name is not null)
-        {
-            return _name;
-        }
-
-        _name = Others.Count == 0
-            ? string.Empty // Group with only 1 user has localized default name
-            : string.Join(", ", Others.Take(3).Select(x => x.User.Username));
-
-        return _name;
-    }
-
-    private UserStatus GetStatus()
-    {
-        var hasOnlineUser = Others.Any(x => x.User.Status == UserStatus.Online);
-        return hasOnlineUser ? UserStatus.Online : UserStatus.Offline;
     }
 }
