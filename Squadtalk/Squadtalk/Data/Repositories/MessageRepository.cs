@@ -3,11 +3,10 @@ using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
 using Shared.Models;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 
-namespace Squadtalk.Repositories;
+namespace Squadtalk.Data.Repositories;
 
 public class MessageRepository(
     ApplicationDbContext dbContext,
@@ -30,31 +29,8 @@ public class MessageRepository(
 
     public async Task<Dictionary<GroupId, int>> GetUnreadMessageCountPerGroupAsync(UserId userId)
     {
-        // var groupIds = groups.Select(x => x.Id).ToList();
-        // var grouping = UnreadMessagesPerGroupAsync(DbContext, groupIds, since);
-        //
-        // return await grouping.ToDictionaryAsync(g => g.Key, g => g.Count());
-
-        // Console.WriteLine(new string('\n', 20));
-        //
-        // var a = DbContext.Messages
-        //     .Join(
-        //         DbContext.GroupParticipants,
-        //         message => message.GroupId,
-        //         participant => participant.GroupId,
-        //         (message, participant) => new { message, participant })
-        //     .Where(x => x.participant.UserId == userId && (x.participant.LastSeen == null || x.participant.LastSeen < x.message.Timestamp))
-        //     .GroupBy(x => x.message.GroupId);
-        //
-        // Console.WriteLine(a.ToQueryString());
-        //
-        // var b = await a.ToDictionaryAsync(x => x.Key, x => x.Count());
-        //
-        // Console.WriteLine(new string('\n', 20));
-        //
-        // return b;
-
-        return [];
+        return await UnreadMessagesPerGroupAsync(DbContext, userId)
+            .ToDictionaryAsync(x => x.GroupId, x => x.Unread);
     }
 
     public async Task<Message?> AddMessageAsync(
@@ -107,13 +83,23 @@ public class MessageRepository(
             : default;
     }
 
-    private static readonly Func<ApplicationDbContext, List<GroupId>, DateTimeOffset, IAsyncEnumerable<IGrouping<GroupId, Message>>>
-        UnreadMessagesPerGroupAsync = EF.CompileAsyncQuery(
-            (ApplicationDbContext context, List<GroupId> groupIds, DateTimeOffset since) => context.Messages
+    private readonly record struct UnreadMessagesInChannel(GroupId GroupId, int Unread);
+
+    private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<UnreadMessagesInChannel>> UnreadMessagesPerGroupAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, UserId userId) => context.Messages
                 .AsNoTracking()
-                .Where(x => groupIds.Contains(x.GroupId))
-                .Where(x => x.Timestamp > since)
-                .GroupBy(x => x.GroupId));
+                .Select(x => new { x.GroupId, x.Id })
+                .Join(
+                    context.GroupParticipants.Select(x => new { x.GroupId, x.UserId, x.LastMessageSeenId }),
+                    message => message.GroupId,
+                    participant => participant.GroupId,
+                    (message, participant) => new { message, participant })
+                .Where(x => x.participant.UserId == userId)
+                .Where(x => x.participant.LastMessageSeenId < x.message.Id)
+                .GroupBy(x => x.message.GroupId)
+                .Select(x => new UnreadMessagesInChannel(x.Key, x.Count())));
+
 
     private static readonly Func<ApplicationDbContext, GroupId, IAsyncEnumerable<Message>> MessageFirstPageAsync =
         EF.CompileAsyncQuery(
@@ -130,8 +116,8 @@ public class MessageRepository(
             (ApplicationDbContext context, GroupId groupId, DateTimeOffset cursor) => context.Messages
                 .AsNoTracking()
                 .Where(x => x.GroupId == groupId)
-                .OrderByDescending(x => x.Timestamp)
                 .Where(x => x.Timestamp < cursor)
+                .OrderByDescending(x => x.Timestamp)
                 .Take(PageSize)
                 .Include(x => x.Author)
                 .Reverse());

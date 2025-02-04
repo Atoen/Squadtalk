@@ -286,6 +286,8 @@ internal class ContactManager : IContactManager
         {
             Status = _signalrService.UserStatus,
             Username = _userAuthenticationService.Username,
+            Id = _userAuthenticationService.UserId,
+            IsLocal = true
         };
 
         _userModels.TryAdd(model.Id, model);

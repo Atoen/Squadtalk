@@ -69,7 +69,7 @@ internal class ChatManager : LazyModelCreator, IChatManager
 
     public ChatModel GetRequiredChannel(GroupId groupId) => LazyChannels[groupId];
 
-    public Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel model) => Task.CompletedTask;
+    public Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel otherUser) => Task.CompletedTask;
 
     public Task UpgradeToPersistentChannelAsync(ChatModel chatModel) => Task.CompletedTask;
 
@@ -80,6 +80,8 @@ internal class ChatManager : LazyModelCreator, IChatManager
     public Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends) => Task.CompletedTask;
 
     public Task ClearChannelSelectionAsync() => Task.CompletedTask;
+
+    public Task MarkMessageSeenAsync(ChatModel chat, MessageModel message) => Task.CompletedTask;
 
     public Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName) => Task.FromResult(false);
 

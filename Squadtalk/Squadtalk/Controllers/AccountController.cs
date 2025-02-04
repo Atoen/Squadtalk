@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Shared.Data.TypedIds;
 using Shared.DTOs.Account;
 using Shared.DTOs.Account.Results;
 using Shared.Routing;
@@ -66,7 +67,8 @@ public class AccountController : ControllerBase
             return Conflict(RegisterResultDto.UsernameInUse);
         }
 
-        var user = new ApplicationUser();
+        var user = new ApplicationUser { Id = UserId.New };
+
         await _userStore.SetUserNameAsync(user, registerDto.Username, HttpContext.RequestAborted);
 
         if (_userStore is IUserEmailStore<ApplicationUser> emailStore)
@@ -80,14 +82,13 @@ public class AccountController : ControllerBase
             return BadRequest(RegisterResultDto.FailedToCreateAccount);
         }
 
-        var userId = await _userManager.GetUserIdAsync(user);
         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
         var callbackUrl = Url.Action(
             action: "ConfirmEmail",
             controller: "Account",
-            values: new { userId, code },
+            values: new { userId = user.Id.ToString(), code },
             protocol: Request.Scheme);
 
         if (callbackUrl is null)

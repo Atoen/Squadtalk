@@ -77,6 +77,8 @@ internal class ContactManager : LazyModelCreator, IContactManager
         {
             Status = UserStatus.Unknown,
             Username = _userAuthenticationService.Username,
+            Id = _userAuthenticationService.UserId,
+            IsLocal = true
         };
 
         _userModels.TryAdd(model.Id, model);

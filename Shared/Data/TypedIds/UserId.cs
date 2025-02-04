@@ -26,6 +26,8 @@ public record struct UserId([property: Key(0)] Guid Value) : IGuidIdRecord<UserI
         return success;
     }
 
+    public static implicit operator Guid(UserId userId) => userId.Value;
+
     public override string ToString() => _string ??= Value.ToString();
 
     private string? _string;

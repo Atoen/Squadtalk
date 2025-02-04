@@ -10,21 +10,12 @@ internal static class Mappers
     {
         return new MessageDto
         {
+            Id = message.Id,
             Author = message.Author.ToDto(),
             Content = message.Content,
             Timestamp = message.Timestamp,
             GroupId = message.GroupId,
             Embed = message.Embed?.ToDto()
-        };
-    }
-
-    public static UserDto ToDto(this ApplicationUser user, UserStatus status = UserStatus.Unknown)
-    {
-        return new UserDto
-        {
-            Username = user.UserName!,
-            Id = user.Id,
-            Status = status
         };
     }
 
@@ -47,7 +38,7 @@ internal static class Mappers
             UserId = user.Id,
             Group = group,
             GroupId = group.Id,
-            AddedBy = addedBy,
+            AddedBy = addedBy ?? throw new ArgumentNullException(nameof(addedBy)),
             Role = role
         };
     }
@@ -57,7 +48,7 @@ internal static class Mappers
         return new GroupParticipantDto
         {
             User = participant.User.ToDto(),
-            AddedBy = participant.AddedBy?.ToDto(),
+            AddedBy = participant.AddedBy.ToDto(),
             Role = participant.Role
         };
     }
@@ -75,22 +66,6 @@ internal static class Mappers
 
         return dto;
     }
-
-    // public static MessageDto ToDto(this Group.Message message)
-    // {
-    //     return new MessageDto
-    //     {
-    //         Author = new UserDto
-    //         {
-    //             Username = message.AuthorName,
-    //             Id = message.AuthorId
-    //         },
-    //         Timestamp = message.Timestamp,
-    //         GroupId = message.GroupId,
-    //         Content = message.Content,
-    //         Embed = message.Embed?.ToDto()
-    //     };
-    // }
 
     public static EmbedDto ToDto(this Embed embed)
     {

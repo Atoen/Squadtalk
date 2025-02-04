@@ -10,12 +10,14 @@ public class ChatUser : IChatUser
     public ICollection<GroupParticipant> GroupParticipants { get; set; } = default!;
 
     [NotMapped]
-    public IEnumerable<Group> Groups => GroupParticipants.Select(x => x.Group);
+    public IEnumerable<Group> Groups =>  // GroupParticipants are not always included when querying
+        GroupParticipants is { Count: > 0 } ? GroupParticipants.Select(x => x.Group) : [];
 
     public string Username { get; set; } = default!;
 
-    [Column(nameof(ApplicationUser.Id))]
     public UserId Id { get; set; }
+
+    public DateTimeOffset LastSeen { get; set; }
 
     // DB doesn't store user status
     public UserStatus Status => UserStatus.Unknown;

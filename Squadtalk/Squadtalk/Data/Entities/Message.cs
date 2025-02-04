@@ -7,7 +7,7 @@ namespace Squadtalk.Data.Entities;
 
 public class Message : IChatMessage
 {
-    public uint Id { get; set; }
+    public MessageId Id { get; set; }
 
     public ChatUser Author { get; set; } = default!;
 

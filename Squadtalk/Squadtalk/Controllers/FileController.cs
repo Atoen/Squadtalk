@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using Shared;
 using Shared.Data.TypedIds;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Data.TypedIds;
 using Squadtalk.Extensions;
-using Squadtalk.Repositories;
 using tusdotnet.Interfaces;
 
 namespace Squadtalk.Controllers;

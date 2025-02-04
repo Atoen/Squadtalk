@@ -81,9 +81,9 @@ internal sealed partial class SignalrService : ISignalrTextService
         return InvokeAsync<HubResult>(HubMethods.DeleteGroup, groupId, cancellationToken);
     }
 
-    public Task<NetworkResult> MarkLastSeenAsync(GroupId currentGroupId, GroupId? previousGroupId = null, CancellationToken cancellationToken = default)
+    public Task<NetworkResult> MarkMessageSeenAsync(GroupId groupId, MessageId messageId, CancellationToken cancellationToken = default)
     {
-        return SendAsync(HubMethods.MarkLastSeen, currentGroupId, previousGroupId, cancellationToken);
+        return SendAsync(HubMethods.MarkMessageSeen, groupId, messageId, cancellationToken);
     }
 
     private void RegisterTextHandlers()

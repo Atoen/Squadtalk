@@ -20,7 +20,6 @@ internal class ChatManager : IChatManager
 
     private readonly Dictionary<GroupId, ChatModel> _allChats = [];
     private readonly List<DirectMessageModel> _dms = [];
-    private readonly TimeSpan _lastSeenUpdateInterval = TimeSpan.FromSeconds(20);
 
     public IReadOnlyCollection<ChatModel> Chats => _allChats.Values;
 
@@ -92,18 +91,23 @@ internal class ChatManager : IChatManager
 
     public Task ClearChannelSelectionAsync() => ChangeChannelAsync(null);
 
-    public async Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel model)
+    public async Task MarkMessageSeenAsync(ChatModel chat, MessageModel message)
     {
-        if (model.Id == _userAuthenticationService.UserId) return;
+        await _signalrService.MarkMessageSeenAsync(chat.Id, message.Id);
+    }
 
-        var openDirectMessageChannelWithUser = _dms.FirstOrDefault(x => x.Other.Id == model.Id);
+    public async Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel otherUser)
+    {
+        if (otherUser.Id == _userAuthenticationService.UserId) return;
+
+        var openDirectMessageChannelWithUser = _dms.FirstOrDefault(x => x.Other.Id == otherUser.Id);
         if (openDirectMessageChannelWithUser is not null)
         {
             await OpenChannelAsync(openDirectMessageChannelWithUser);
             return;
         }
 
-        await OpenChannelAsync(DirectMessageModel.CreateTempChannel(model));
+        await OpenChannelAsync(DirectMessageModel.CreateTempChannel(_contactManager.LocalUserModel, otherUser));
     }
 
     public async Task UpgradeToPersistentChannelAsync(ChatModel chatModel)
@@ -299,30 +303,15 @@ internal class ChatManager : IChatManager
             return;
         }
 
-        // Don't update on global chat
-        if (CurrentChat is { } previousChat && !previousChat.IsGlobal())
-        {
-            if (chat is not null)
-            {
-                // Switched from one chat to another
-                await _signalrService.MarkLastSeenAsync(chat.Id, previousChat.Id);
-            }
-            else
-            {
-                // Closed the chat
-                await _signalrService.MarkLastSeenAsync(previousChat.Id);
-            }
-        }
-        else if (chat is not null && !chat.IsGlobal())
-        {
-            // Opened the chat
-            await _signalrService.MarkLastSeenAsync(chat.Id);
-        }
-
         CurrentChat = chat;
 
         if (chat is not null)
         {
+            if (chat.LastMessage is { } lastMessage)
+            {
+                await _signalrService.MarkMessageSeenAsync(chat.Id, lastMessage.Id);
+            }
+
             chat.State.UnreadMessages = 0;
         }
 
@@ -400,18 +389,6 @@ internal class ChatManager : IChatManager
         _logger.LogInformation("Started scanning typing state");
 
         _ = RemoveStaleTypingStates();
-    }
-
-    private async Task UpdateLastSeenLoop()
-    {
-        while (!CurrentChat.IsNullOrSpecial())
-        {
-            await Task.Delay(_lastSeenUpdateInterval);
-            if (CurrentChat is { } chat)
-            {
-                await _signalrService.MarkLastSeenAsync(chat.Id);
-            }
-        }
     }
 
     private async Task RemoveStaleTypingStates()
