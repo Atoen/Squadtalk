@@ -1,4 +1,3 @@
-using Shared.Data.TypedIds;
 using Shared.Models;
 using Shared.Services;
 
@@ -53,10 +52,10 @@ internal class ChannelSorter : IChannelSorter
         _logger.LogInformation("Channels sorted");
     }
 
-    private void MessageReceived(GroupId groupId, MessageModel model)
+    private void MessageReceived(ChatModel chat, MessageModel model)
     {
-        if (groupId != ChatModel.GlobalChatId &&
-            _channels is [var first, ..] && first.Id != groupId)
+        if (chat.Id != ChatModel.GlobalChatId &&
+            _channels is [var first, ..] && first.Id != chat.Id)
         {
             _shouldSortChannels = true;
         }

@@ -4,6 +4,8 @@ namespace Shared.Data;
 
 public interface IChatMessage
 {
+    MessageId Id { get; }
+
     IChatUser Author { get; }
 
     GroupId GroupId { get; }

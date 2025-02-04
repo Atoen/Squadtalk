@@ -1,12 +1,9 @@
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Identity;
-using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
-using Squadtalk.Repositories;
+using Squadtalk.Data.Repositories;
 
 namespace Squadtalk.Services.Prerender;
 
@@ -17,7 +14,6 @@ internal class ConnectionService : IConnectionService
     private readonly FriendRepository _friendRepository;
     private readonly MessageRepository _messageRepository;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly NavigationManager _navigationManager;
     private readonly PrerenderPersistantState _persistState;
 
     event Action<ConnectionStatus>? IConnectionService.ConnectionStatusChanged { add { } remove { } }
@@ -32,7 +28,6 @@ internal class ConnectionService : IConnectionService
         FriendRepository friendRepository,
         MessageRepository messageRepository,
         SignInManager<ApplicationUser> signInManager,
-        NavigationManager navigationManager,
         PrerenderPersistantState persistState)
     {
         _authenticationStateProvider = authenticationStateProvider;
@@ -40,7 +35,6 @@ internal class ConnectionService : IConnectionService
         _friendRepository = friendRepository;
         _messageRepository = messageRepository;
         _signInManager = signInManager;
-        _navigationManager = navigationManager;
         _persistState = persistState;
     }
 
@@ -67,7 +61,6 @@ internal class ConnectionService : IConnectionService
         if (user is null)
         {
             await _signInManager.SignOutAsync();
-            // _navigationManager.NavigateTo(Routes.Pages.Register);
             return;
         }
 

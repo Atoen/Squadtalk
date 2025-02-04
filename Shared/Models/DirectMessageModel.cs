@@ -34,12 +34,14 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
         _subscription = Other.Subscribe(this);
     }
 
-    public static DirectMessageModel CreateTempChannel(UserModel userModel)
+    public static DirectMessageModel CreateTempChannel(UserModel localUser, UserModel other)
     {
-        var id = GroupId.From(userModel.Username);
-        var participant = new GroupParticipantModel { User = userModel };
+        var id = GroupId.From(other.Username);
 
-        return new DirectMessageModel([participant], id)
+        var localParticipant = new GroupParticipantModel { User = localUser };
+        var tempParticipant = new GroupParticipantModel { User = other };
+
+        return new DirectMessageModel([localParticipant, tempParticipant], id)
         {
             IsTemporary = true
         };

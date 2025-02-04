@@ -37,5 +37,5 @@ public interface ISignalrTextService
 
     Task<NetworkResult> UserStoppedTypingAsync(GroupId groupId, CancellationToken cancellationToken = default);
 
-    Task<NetworkResult> MarkLastSeenAsync(GroupId currentGroupId, GroupId? previousGroupId = null, CancellationToken cancellationToken = default);
+    Task<NetworkResult> MarkMessageSeenAsync(GroupId groupId, MessageId messageId, CancellationToken cancellationToken = default);
 }

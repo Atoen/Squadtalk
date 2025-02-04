@@ -1,42 +1,46 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.Results;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 
-namespace Squadtalk.Repositories;
+namespace Squadtalk.Data.Repositories;
 
 public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepository> logger) : RepositoryBase(dbContext, logger)
 {
     public async Task<List<ChatUser>> GetUserFriendsAsync(UserId userId)
     {
+        Logger.LogInformation("Getting user friends");
         return await UserFriendsAsync(DbContext, userId).ToListAsync();
     }
 
     public async Task<List<UserId>> GetUserFriendIdsAsync(UserId userId)
     {
+        Logger.LogInformation("Getting user friends ids");
         return await UserFriendIdsAsync(DbContext, userId).ToListAsync();
     }
 
     public async Task<List<FriendRequest>> GetUserPendingFriendRequests(UserId userId)
     {
+        Logger.LogInformation("Getting user pending friend requests");
         return await UserPendingFriendRequests(DbContext, userId).ToListAsync();
     }
 
     public async Task<FriendRequest?> FindFriendRequestByIdAsync(FriendRequestId friendRequestId)
     {
+        Logger.LogInformation("Getting friend request by id");
         return await FriendRequestByIdAsync(DbContext, friendRequestId);
     }
 
     public async Task<Friendship?> FindFriendshipById(int friendshipId)
     {
+        Logger.LogInformation("Getting friendship by id");
         return await FriendshipByIdAsync(DbContext, friendshipId);
     }
 
     public async Task<SendFriendRequestResult> AddFriendRequestAsync(
         UserId senderId, string recipientUsername, CancellationToken cancellationToken)
     {
-        var output = await DbContext.AddFriendRequest(senderId.Value, recipientUsername).SingleAsync(cancellationToken);
+        var output = await DbContext.AddFriendRequest(senderId, recipientUsername).SingleAsync(cancellationToken);
         if (output is { Status: FriendRequestResult.Success, AddedRequestId: { } id })
         {
             return new SendFriendRequestResult.Success(new FriendRequestId(id));
@@ -68,7 +72,7 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
     public async Task<RespondToFriendRequestResult> RespondToFriendRequestAsync(
         UserId respondingId, FriendRequestId friendRequestId, bool isAccepted, CancellationToken cancellationToken)
     {
-        var output = await DbContext.RespondToFriendRequest(respondingId.Value, friendRequestId.Value, isAccepted).SingleAsync(cancellationToken);
+        var output = await DbContext.RespondToFriendRequest(respondingId, friendRequestId.Value, isAccepted).SingleAsync(cancellationToken);
         var requestingUserId = UserId.From(output.RequesterId ?? Guid.Empty);
 
         if (output is { Status: FriendRequestResponseResult.SuccessAccepted, AddedFriendshipId: { } friendshipId })
@@ -88,7 +92,7 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
     public async Task<RemoveFriendResult> RemoveFriendAsync(
         UserId removingUser, UserId friendToRemove, CancellationToken cancellationToken)
     {
-        var output = await DbContext.RemoveFriend(removingUser.Value, friendToRemove.Value).SingleAsync(cancellationToken);
+        var output = await DbContext.RemoveFriend(removingUser, friendToRemove).SingleAsync(cancellationToken);
         return output.Success ? RemoveFriendResult.Success : RemoveFriendResult.BadRequest;
     }
 
@@ -96,21 +100,21 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Friendships
                 .AsNoTracking()
-                .Where(x => x.User1.Id == userId || x.User2.Id == userId)
-                .Select(x => x.User1.Id == userId ? x.User2 : x.User1));
+                .Where(x => x.User1Id == userId || x.User2Id == userId)
+                .Select(x => x.User1Id == userId ? x.User2 : x.User1));
 
     private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<UserId>> UserFriendIdsAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.Friendships
                 .AsNoTracking()
-                .Where(x => x.User1.Id == userId || x.User2.Id == userId)
-                .Select(x => x.User1.Id == userId ? x.User2.Id : x.User1.Id));
+                .Where(x => x.User1Id == userId || x.User2Id == userId)
+                .Select(x => x.User1Id == userId ? x.User2Id : x.User1Id));
 
     private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<FriendRequest>> UserPendingFriendRequests =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.FriendRequests
                 .Where(x => x.IsAccepted == null)
-                .Where(x => x.Recipient.Id == userId || x.Requester.Id == userId)
+                .Where(x => x.RecipientId == userId || x.RequesterId == userId)
                 .Include(x => x.Requester)
                 .Include(x => x.Recipient));
 

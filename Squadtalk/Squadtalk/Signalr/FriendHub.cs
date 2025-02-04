@@ -4,7 +4,7 @@ using Shared.Enums;
 using Shared.Results;
 using Shared.Signalr;
 using Squadtalk.Data;
-using Squadtalk.Repositories;
+using Squadtalk.Data.Repositories;
 
 namespace Squadtalk.Signalr;
 

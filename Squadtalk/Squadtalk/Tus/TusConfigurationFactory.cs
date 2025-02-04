@@ -3,7 +3,7 @@ using System.Text;
 using Shared;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
-using Squadtalk.Repositories;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Services;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;

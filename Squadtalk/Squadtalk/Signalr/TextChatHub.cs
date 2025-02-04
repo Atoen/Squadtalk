@@ -9,7 +9,7 @@ using Shared.Signalr;
 using Shared.Signalr.Clients;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
-using Squadtalk.Repositories;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Services;
 
 namespace Squadtalk.Signalr;
@@ -42,10 +42,10 @@ public partial class AppHub
         }
     }
 
-    [HubMethodName(HubMethods.MarkLastSeen)]
-    public async Task MarkLastSeen(GroupId groupId, GroupId? previousGroupId, GroupRepository groupRepository)
+    [HubMethodName(HubMethods.MarkMessageSeen)]
+    public async Task MarkMessageSeen(GroupId groupId, MessageId messageId, GroupRepository groupRepository)
     {
-        await groupRepository.MarkLastSeenAsync(groupId, previousGroupId, UserId);
+        await groupRepository.MarkMessageSeenAsync(groupId, UserId, messageId);
     }
 
     [HubMethodName(HubMethods.IsTyping)]

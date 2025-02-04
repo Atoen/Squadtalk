@@ -12,10 +12,10 @@ public class GroupParticipantDto : IGroupParticipant
 
     [Key(1)] public GroupRole Role { get; set; }
 
-    [Key(2)] public UserDto? AddedBy { get; set; }
+    [Key(2)] public UserDto AddedBy { get; set; } = default!;
 
     [IgnoreMember]
-    IChatUser? IGroupParticipant.AddedBy => AddedBy;
+    IChatUser IGroupParticipant.AddedBy => AddedBy;
 
     [IgnoreMember]
     public string Username => User.Username;

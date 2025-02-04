@@ -29,9 +29,9 @@ public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUse
         set => SetField(ref _status, value);
     }
 
-    public UserId Id { get; private init; }
+    public UserId Id { get; init; }
 
-    public bool IsLocal { get; private init; }
+    public bool IsLocal { get; init; }
     public bool IsRemote => !IsLocal;
 
     public static UserModel Create(IChatUser chatUser, UserId localUserId)
@@ -65,4 +65,3 @@ public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUse
 
     public override int GetHashCode() => Id.GetHashCode();
 }
-

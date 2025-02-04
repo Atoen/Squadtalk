@@ -5,8 +5,8 @@ using Shared.Extensions;
 using Shared.Models;
 using Shared.Signalr.Clients;
 using Squadtalk.Data.Entities;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Extensions;
-using Squadtalk.Repositories;
 using Squadtalk.Services;
 
 namespace Squadtalk.Signalr;

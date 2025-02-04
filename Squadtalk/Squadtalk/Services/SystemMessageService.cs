@@ -4,8 +4,8 @@ using Shared.Data.TypedIds;
 using Shared.Enums;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Extensions;
-using Squadtalk.Repositories;
 using Squadtalk.Signalr;
 using tusdotnet.Interfaces;
 

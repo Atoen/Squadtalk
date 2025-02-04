@@ -2,11 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Models;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Extensions;
 
-namespace Squadtalk.Repositories;
+namespace Squadtalk.Data.Repositories;
 
 public class GroupRepository(
     ApplicationDbContext dbContext,
@@ -54,16 +53,9 @@ public class GroupRepository(
         return added ? group : null;
     }
 
-    public async Task MarkLastSeenAsync(GroupId groupId, GroupId? previousGroupId, UserId userId)
+    public async Task MarkMessageSeenAsync(GroupId groupId, UserId userId, MessageId messageId)
     {
-        if (previousGroupId is not null && previousGroupId != groupId)
-        {
-            // await SetLastSeen2Async(DbContext, groupId, previousGroupId, userId);
-        }
-        else
-        {
-            // await SetLastSeenAsync(DbContext, groupId, userId);
-        }
+        await SetMessageSeenAsync(DbContext, groupId, userId, messageId);
     }
 
     public async Task<bool> AddGroupAsync(Group group, CancellationToken cancellationToken = default)
@@ -95,21 +87,12 @@ public class GroupRepository(
                 .ThenInclude(x => x.User)
                 .SingleOrDefault(x => x.Id == groupId));
 
-    // private static readonly Func<ApplicationDbContext, GroupId, UserId, Task<int>> SetLastSeenAsync =
-    //     EF.CompileAsyncQuery(
-    //         (ApplicationDbContext context, GroupId groupId, UserId userId) => context.GroupParticipants
-    //             .Where(x => x.GroupId == groupId && x.UserId == userId)
-    //             .ExecuteUpdate(setter => setter
-    //                 .SetProperty(x => x.LastSeen, DateTimeOffset.Now)));
-    //
-    // private static readonly Func<ApplicationDbContext, GroupId, GroupId, UserId, Task<int>> SetLastSeen2Async =
-    //     EF.CompileAsyncQuery(
-    //     (ApplicationDbContext context, GroupId groupId, GroupId previousGroupId, UserId userId) =>
-    //         context.GroupParticipants
-    //             .Where(x => x.UserId == userId && (x.GroupId == groupId || x.GroupId == previousGroupId.Value))
-    //             .ExecuteUpdate(setter => setter
-    //                 .SetProperty(x => x.LastSeen, DateTimeOffset.Now)));
-
+    private static readonly Func<ApplicationDbContext, GroupId, UserId, MessageId?, Task<int>> SetMessageSeenAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, GroupId groupId, UserId userId, MessageId? messageId) => context.GroupParticipants
+                .Where(x => x.GroupId == groupId && x.UserId == userId)
+                .ExecuteUpdate(setter => setter
+                    .SetProperty(x => x.LastMessageSeenId, messageId)));
 
     private static readonly Func<ApplicationDbContext, GroupId, Task<int>> DeleteGroupByIdAsync =
         EF.CompileAsyncQuery(

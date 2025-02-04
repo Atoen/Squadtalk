@@ -25,7 +25,7 @@ public interface IChatManager
 
     ChatModel GetRequiredChannel(GroupId groupId);
 
-    Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel model);
+    Task OpenOrCreateTemporaryDirectMessageChannelAsync(UserModel otherUser);
 
     Task UpgradeToPersistentChannelAsync(ChatModel chatModel);
 
@@ -38,6 +38,8 @@ public interface IChatManager
     Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends);
 
     Task ClearChannelSelectionAsync();
+
+    Task MarkMessageSeenAsync(ChatModel chat, MessageModel message);
 
     Task<bool> ChangeGroupChatNameAsync(GroupChatModel groupChat, string? newName);
 

@@ -18,7 +18,7 @@ internal class TextChatService : ITextChatService
     private CancellationTokenSource? _cancellationTokenSource;
     private GroupId? _typingChannelId;
 
-    public event Action<GroupId, MessageModel>? MessageReceived;
+    public event Action<ChatModel, MessageModel>? MessageReceived;
 
     public TextChatService(
         IChatManager chatManager,
@@ -147,7 +147,7 @@ internal class TextChatService : ITextChatService
 
         channelState.AddMessage(messageModel);
 
-        MessageReceived?.Invoke(channel.Id, messageModel);
+        MessageReceived?.Invoke(channel, messageModel);
     }
 
     private void UpdateChannelMessageState(ChatModel chatModel, IChatMessage message)

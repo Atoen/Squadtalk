@@ -2,10 +2,9 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
 using Shared.Extensions;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 
-namespace Squadtalk.Repositories;
+namespace Squadtalk.Data.Repositories;
 
 public class ChatUserRepository(
     ApplicationDbContext dbContext,
@@ -43,63 +42,36 @@ public class ChatUserRepository(
 
     private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, UserId userId) => context.Users
-                .Select(x => new ChatUser
-                {
-                    Username = x.UserName!,
-                    Id = x.Id
-                })
+            (ApplicationDbContext context, UserId userId) => context.ChatUsers
                 .SingleOrDefault(x => x.Id == userId));
 
     private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdWithGroupsAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, UserId userId) => context.Users
+            (ApplicationDbContext context, UserId userId) => context.ChatUsers
                 .AsSplitQuery()
                 .Include(x => x.GroupParticipants)
                 .ThenInclude(x => x.Group)
                 .ThenInclude(x => x.Participants)
-                .Select(x => new ChatUser
-                {
-                    Username = x.UserName!,
-                    Id = x.Id,
-                    GroupParticipants = x.GroupParticipants
-                })
                 .SingleOrDefault(x => x.Id == userId));
 
     private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdWithFullGroupsAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, UserId userId) => context.Users
+            (ApplicationDbContext context, UserId userId) => context.ChatUsers
                 .AsSplitQuery()
                 .Include(x => x.GroupParticipants)
                 .ThenInclude(x => x.Group)
                 .ThenInclude(x => x.Participants)
                 .ThenInclude(x => x.User)
-                .Select(x => new ChatUser
-                {
-                    Username = x.UserName!,
-                    Id = x.Id,
-                    GroupParticipants = x.GroupParticipants
-                })
                 .SingleOrDefault(x => x.Id == userId));
 
     private static readonly Func<ApplicationDbContext, List<UserId>, IAsyncEnumerable<ChatUser>> UserListByIdAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, List<UserId> userIds) => context.Users
-                .Select(x => new ChatUser
-                {
-                    Username = x.UserName!,
-                    Id = x.Id
-                })
+            (ApplicationDbContext context, List<UserId> userIds) => context.ChatUsers
                 .Where(x => userIds.Contains(x.Id)));
 
     private static readonly Func<ApplicationDbContext, string, Task<ChatUser?>> UserByNameAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, string username) => context.Users
-                .Select(x => new ChatUser
-                {
-                    Username = x.UserName!,
-                    Id = x.Id,
-                })
+            (ApplicationDbContext context, string username) => context.ChatUsers
                 .FirstOrDefault(x => x.Username == username));
 }
 

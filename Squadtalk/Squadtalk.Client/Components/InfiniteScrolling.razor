@@ -1,5 +1,4 @@
 @using Microsoft.AspNetCore.Components.Rendering
-@using Shared.Data.TypedIds
 
 @if (ChatManager.CurrentChat is { State.ScrolledToBeginning: true } channel)
 {
@@ -90,15 +89,17 @@
         _instance?.InvokeVoid("onNewItems");
     }
 
-    private void MessageReceived(GroupId id, MessageModel message)
+    private void MessageReceived(ChatModel chat, MessageModel message)
     {
-        if (id != ChatManager.CurrentChat?.Id)
+        if (chat != ChatManager.CurrentChat)
         {
             return;
         }
 
         StateHasChanged();
         _jsModule?.InvokeVoid("scrollToBottom");
+
+        _ = ChatManager.MarkMessageSeenAsync(chat, message);
     }
 
     [JSInvokable]

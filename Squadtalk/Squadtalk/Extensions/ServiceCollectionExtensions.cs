@@ -12,7 +12,7 @@ using Shared.Services;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
 using Squadtalk.Data.Entities;
-using Squadtalk.Repositories;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Services;
 using Squadtalk.Services.Prerender;
 

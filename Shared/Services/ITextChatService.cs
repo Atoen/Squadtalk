@@ -5,7 +5,7 @@ namespace Shared.Services;
 
 public interface ITextChatService
 {
-    event Action<GroupId, MessageModel>? MessageReceived;
+    event Action<ChatModel, MessageModel>? MessageReceived;
 
     Task<IList<MessageModel>> GetMessagePageAsync(GroupId groupId, CancellationToken cancellationToken);
 

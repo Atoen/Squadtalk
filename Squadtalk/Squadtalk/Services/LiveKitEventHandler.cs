@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Shared.Data.TypedIds;
 using Squadtalk.Data.LiveKit.Events;
-using Squadtalk.Repositories;
+using Squadtalk.Data.Repositories;
 using Squadtalk.Signalr;
 
 namespace Squadtalk.Services;

@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Shared.Data.TypedIds;
-using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Data.TypedIds;
 using Squadtalk.Services;
 using tusdotnet.Interfaces;
 
-namespace Squadtalk.Repositories;
+namespace Squadtalk.Data.Repositories;
 
 public class FileRepository(
     ApplicationDbContext dbContext,
@@ -51,8 +50,8 @@ public class FileRepository(
 
     private static readonly Func<ApplicationDbContext, GroupId, TusFileId, Task<DbFile?>> FileByGroupPathAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, GroupId groupId, TusFileId fileId) => context.Files
-                .AsNoTracking()
-                .Where(x => x.GroupId == groupId)
-                .SingleOrDefault(x => x.TusId == fileId));
+        (ApplicationDbContext context, GroupId groupId, TusFileId fileId) => context.Files
+            .AsNoTracking()
+            .Where(x => x.GroupId == groupId)
+            .SingleOrDefault(x => x.TusId == fileId));
 }

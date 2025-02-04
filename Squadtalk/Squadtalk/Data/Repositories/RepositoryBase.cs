@@ -1,6 +1,4 @@
-using Squadtalk.Data;
-
-namespace Squadtalk.Repositories;
+namespace Squadtalk.Data.Repositories;
 
 public abstract class RepositoryBase
 {
