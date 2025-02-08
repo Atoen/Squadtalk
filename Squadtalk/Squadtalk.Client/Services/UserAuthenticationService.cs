@@ -15,12 +15,14 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
     private readonly Task<AuthenticationState> _authenticationStateTask = DefaultUnauthenticatedTask;
 
     private readonly ClaimsPrincipal _claimsPrincipal;
+
+    public event Action? LocalUsernameChanged;
     
     public bool IsAuthenticated => _claimsPrincipal is { Identity.IsAuthenticated: true };
 
     public UserId UserId { get; }
 
-    public string Username { get; } = string.Empty;
+    public string Username { get; private set; } = string.Empty;
 
     public string Email { get; } = string.Empty;
 
@@ -46,4 +48,12 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
     }
 
     public override Task<AuthenticationState> GetAuthenticationStateAsync() => _authenticationStateTask;
+
+    public void UpdateLocalUsername(string newUsername)
+    {
+        if (newUsername == Username) return;
+        
+        Username = newUsername;
+        LocalUsernameChanged?.Invoke();
+    }
 }

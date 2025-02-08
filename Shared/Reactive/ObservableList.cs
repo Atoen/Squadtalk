@@ -2,7 +2,9 @@ using System.Collections;
 
 namespace Shared.Reactive;
 
-public class ObservableList<T> : Observable<ObservableList<T>>, IObservableCollection<T>
+public class ObservableList<T> 
+    : Observable<ObservableList<T>>,
+      IObservableCollection<T>
 {
     private readonly List<T> _list;
     
@@ -42,8 +44,7 @@ public class ObservableList<T> : Observable<ObservableList<T>>, IObservableColle
         _list.Clear();
         Notify();
     }
-
-
+    
     public void Refresh(IEnumerable<T> values)
     {
         var startCount = Count;
@@ -57,6 +58,7 @@ public class ObservableList<T> : Observable<ObservableList<T>>, IObservableColle
             Notify();
         }
     }
+    
     public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

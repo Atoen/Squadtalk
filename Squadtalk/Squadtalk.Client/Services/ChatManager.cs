@@ -217,6 +217,8 @@ internal class ChatManager : IChatManager
 
     private async Task ChannelsReceived(IEnumerable<IChatGroup> channels)
     {
+        using var scope = new NotificationScope(_allChats);
+        
         foreach (var channel in channels)
         {
             await AddChannel(channel, true);

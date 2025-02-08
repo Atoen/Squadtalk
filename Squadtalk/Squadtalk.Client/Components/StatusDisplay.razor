@@ -54,6 +54,9 @@ else
     </MudMenu>
 }
 
+@implements ISubscriber
+@implements IDisposable
+
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IContactManager ContactManager
 @inject LocalizedText LocalizedText
@@ -66,13 +69,6 @@ else
 
     private UserStatus Status => ContactManager.UserStatus;
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender) return;
-
-        ContactManager.StatusChanged += StateHasChanged;
-    }
-
     private async Task SetStatusAsync(UserStatus status)
     {
         if (_mudMenu is not null)
@@ -82,4 +78,12 @@ else
 
         await ContactManager.SetStatusAsync(status);
     }
+    
+    protected override void OnInitialized() => _subscription = ContactManager.LocalUserModel.Subscribe(this);
+
+    public void OnChange() => StateHasChanged();
+    
+    private IDisposable? _subscription;
+
+    public void Dispose() => _subscription?.Dispose();
 }

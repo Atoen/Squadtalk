@@ -27,8 +27,6 @@ internal class ContactManager : LazyModelCreator, IContactManager
     public IObservableCollection<UserModel> FriendList => LazyFriends.Values;
     public IObservableCollection<IncomingFriendRequest> IncomingFriendRequests => LazyIncomingFriendRequests.Values;
     public IObservableCollection<OutgoingFriendRequest> OutgoingFriendRequests => ObservableCollection<OutgoingFriendRequest>.Empty;
-    
-    event Action? IContactManager.StatusChanged { add { } remove { } }
 
     public UserStatus UserStatus => UserStatus.Unknown;
 

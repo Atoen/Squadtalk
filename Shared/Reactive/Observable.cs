@@ -3,10 +3,12 @@ using JetBrains.Annotations;
 
 namespace Shared.Reactive;
 
-public abstract class Observable<T> : IObservable where T : class
+public abstract class Observable<T> : IObservable, IUseNotificationScope where T : class
 {
     private List<ISubscriber>? _subscribers;
     private readonly Lock _lock = new();
+    
+    private NotificationScope? _activeScope;
     
     public static explicit operator T(Observable<T> observable)
     {
@@ -52,8 +54,14 @@ public abstract class Observable<T> : IObservable where T : class
         Notify();
     }
 
-    protected void Notify()
+    protected void Notify(bool force = false)
     {
+        if (_activeScope is { } scope && !force)
+        {
+            scope.MarkChanges();
+            return;
+        }
+        
         if (_subscribers is not { Count: > 0 } subscribers)
         {
             return;
@@ -84,5 +92,22 @@ public abstract class Observable<T> : IObservable where T : class
                 }
             }
         }
+    }
+    
+    public void EnterScope(NotificationScope scope)
+    {
+        Console.WriteLine("Entered scope!");
+        _activeScope = scope;
+    }
+
+    public void ExitScope(NotificationScope scope)
+    {
+        Console.WriteLine("Exited scope!");
+        if (scope.HasPendingNotifications)
+        {
+            Notify(force: true);
+        }
+
+        _activeScope = null;
     }
 }

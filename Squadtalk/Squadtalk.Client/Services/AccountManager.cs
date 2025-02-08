@@ -6,7 +6,7 @@ using Squadtalk.Client.Network;
 
 namespace Squadtalk.Client.Services;
 
-internal class AccountManager(IAccountApi accountApi) : IAccountManager
+internal class AccountManager(IAccountApi accountApi, UserAuthenticationService userAuthenticationService) : IAccountManager
 {
     public async Task<LoginResult> LoginAsync(UserLoginDto loginDto)
     {
@@ -85,7 +85,7 @@ internal class AccountManager(IAccountApi accountApi) : IAccountManager
         try
         {
             var response = await accountApi.ChangeUsername(changeUsernameDto).ConfigureAwait(false);
-            return response.Type switch
+            ChangeUsernameResult result = response.Type switch
             {
                 ChangeUsernameResultDto.ResultType.Success => new ChangeUsernameResult.Success(response.NewUsername!),
                 ChangeUsernameResultDto.ResultType.NotChanged => new ChangeUsernameResult.NotChanged(),
@@ -95,6 +95,13 @@ internal class AccountManager(IAccountApi accountApi) : IAccountManager
                 ChangeUsernameResultDto.ResultType.FailedToChange => new ChangeUsernameResult.FailedToChange(),
                 _ => new ChangeUsernameResult.FailedToChange()
             };
+
+            if (result is ChangeUsernameResult.Success success)
+            {
+                userAuthenticationService.UpdateLocalUsername(success.NewUsername);
+            }
+
+            return result;
         }
         catch
         {

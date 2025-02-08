@@ -23,15 +23,6 @@ internal class ContactManager : IContactManager
     private readonly ObservableDictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
     private readonly ObservableDictionary<FriendRequestId, OutgoingFriendRequest> _outgoingFriendRequests = [];
 
-    public event Action? FriendListChanged;
-    public event Action? FriendRequestsChanged;
-    public event Action<IncomingFriendRequest>? FriendRequestReceived;
-    public event Action? StatusChanged
-    {
-        add => _signalrService.UserStatusChanged += value;
-        remove => _signalrService.UserStatusChanged -= value;
-    }
-
     public UserStatus UserStatus => _signalrService.UserStatus;
     public UserModel LocalUserModel { get; }
 
@@ -56,6 +47,7 @@ internal class ContactManager : IContactManager
         UserModelProvider = GetOrCreateUserModel;
         LocalUserModel = CreateLocalUserModel();
 
+        userAuthenticationService.LocalUsernameChanged += LocalUsernameChanged;
         notificationService.FriendRequestAcceptedFromNotification += FriendAcceptedFromNotification;
 
         signalrService.FriendRequestCreated += CreatedFriendRequest;
@@ -66,6 +58,7 @@ internal class ContactManager : IContactManager
         signalrService.FriendListReceived += FriendListReceived;
         signalrService.FriendRequestsReceived += FriendRequestsReceived;
         signalrService.FriendStatusChanged += FriendStatusChanged;
+        signalrService.UserStatusChanged += LocalStatusChanged;
     }
 
     #region Public Methods
@@ -146,8 +139,6 @@ internal class ContactManager : IContactManager
 
         var models = friends.Select(UserModelProvider);
         _friends.Refresh(models);
-
-        FriendListChanged?.Invoke();
     }
 
     public async Task RefreshFriendRequestsAsync()
@@ -157,6 +148,9 @@ internal class ContactManager : IContactManager
         {
             return;
         }
+        
+        using var scope1 = new NotificationScope(_outgoingFriendRequests);
+        using var scope2 = new NotificationScope(_incomingFriendRequests);
 
         _incomingFriendRequests.Clear();
         _outgoingFriendRequests.Clear();
@@ -165,8 +159,6 @@ internal class ContactManager : IContactManager
         {
             AddFriendRequest(request);
         }
-
-        FriendRequestsChanged?.Invoke();
     }
 
     public async Task SetStatusAsync(UserStatus status)
@@ -177,6 +169,11 @@ internal class ContactManager : IContactManager
     #endregion
 
     #region Event Handlers
+    
+    private void LocalUsernameChanged()
+    {
+        LocalUserModel.Username = _userAuthenticationService.Username;
+    }
 
     private async Task FriendAcceptedFromNotification(IncomingFriendRequest incomingFriendRequest)
     {
@@ -184,52 +181,29 @@ internal class ContactManager : IContactManager
         if (result is FriendRequestResponseResult.SuccessAccepted)
         {
             _incomingFriendRequests.Remove(incomingFriendRequest.Id);
-            FriendRequestsChanged?.Invoke();
         }
     }
 
-    private void FriendAdded(UserDto friend)
-    {
-        var friendModel = GetOrCreateUserModel(friend);
-        if (_friends.Add(friendModel))
-        {
-            FriendListChanged?.Invoke();
-        }
-    }
+    private void FriendAdded(UserDto friend) => _friends.Add(GetOrCreateUserModel(friend));
 
-    private void FriendRemoved(UserId friendId)
-    {
-        if (_friends.Remove(friendId))
-        {
-            FriendListChanged?.Invoke();
-        }
-    }
+    private void FriendRemoved(UserId friendId) => _friends.Remove(friendId);
 
-    private void CreatedFriendRequest(PendingFriendRequestDto friendRequest)
-    {
-        if (AddFriendRequest(friendRequest, invokeEvents: true))
-        {
-            FriendRequestsChanged?.Invoke();
-        }
-    }
+    private void CreatedFriendRequest(PendingFriendRequestDto friendRequest) => AddFriendRequest(friendRequest, invokeEvents: true);
 
     private void FriendRequestCancelled(FriendRequestId friendRequestId)
     {
-        if (_incomingFriendRequests.Remove(friendRequestId) || _outgoingFriendRequests.Remove(friendRequestId))
-        {
-            FriendRequestsChanged?.Invoke();
-        }
+        _ = _incomingFriendRequests.Remove(friendRequestId) || _outgoingFriendRequests.Remove(friendRequestId);
     }
 
     private void FriendRequestResponded(FriendRequestResponseDto response)
     {
         if (_incomingFriendRequests.Remove(response.FriendRequestId))
         {
-            FriendRequestsChanged?.Invoke();
+            return;
         }
-        else if (_outgoingFriendRequests.Remove(response.FriendRequestId, out var request))
+
+        if (_outgoingFriendRequests.Remove(response.FriendRequestId, out var request))
         {
-            FriendRequestsChanged?.Invoke();
             if (response.Accepted)
             {
                 _notificationService.UserAcceptedFriendRequest(request);
@@ -244,8 +218,6 @@ internal class ContactManager : IContactManager
             var model = GetOrCreateUserModel(friend);
             _friends[model.Id] = model;
         }
-
-        FriendListChanged?.Invoke();
     }
 
     private void FriendRequestsReceived(List<PendingFriendRequestDto> friendRequests)
@@ -254,8 +226,6 @@ internal class ContactManager : IContactManager
         {
             AddFriendRequest(friendRequest);
         }
-
-        FriendRequestsChanged?.Invoke();
     }
 
     private void FriendStatusChanged(UserId friendId, UserStatus status)
@@ -270,8 +240,11 @@ internal class ContactManager : IContactManager
         _logger.LogInformation("Changing status of {User} to {Status}", friend.Username, status);
 
         friend.Status = status;
-
-        FriendListChanged?.Invoke();
+    }
+    
+    private void LocalStatusChanged()
+    {
+        LocalUserModel.Status = _signalrService.UserStatus;
     }
 
     #endregion
@@ -320,7 +293,6 @@ internal class ContactManager : IContactManager
             if (invokeEvents && added)
             {
                 _notificationService.IncomingFriendRequest(incomingRequest);
-                FriendRequestReceived?.Invoke(incomingRequest);
             }
 
             return added;

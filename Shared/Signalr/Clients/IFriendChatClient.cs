@@ -19,4 +19,6 @@ public interface IFriendChatClient
     Task SelfStatusChanged(UserStatus status);
 
     Task FriendStatusChanged(UserId friendId, UserStatus status);
+
+    Task FriendNameChanged(UserDto userDto);
 }
