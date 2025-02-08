@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Data.TypedIds;
+using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;
@@ -13,9 +14,9 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
 
     private readonly Task<AuthenticationState> _authenticationStateTask = DefaultUnauthenticatedTask;
 
-    public ClaimsPrincipal User { get; }
-
-    public bool IsAuthenticated => User is { Identity.IsAuthenticated: true };
+    private readonly ClaimsPrincipal _claimsPrincipal;
+    
+    public bool IsAuthenticated => _claimsPrincipal is { Identity.IsAuthenticated: true };
 
     public UserId UserId { get; }
 
@@ -27,7 +28,7 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
     {
         if (!state.TryTakeFromJson<UserInfo>(nameof(UserInfo), out var userInfo) || userInfo is null)
         {
-            User = new ClaimsPrincipal();
+            _claimsPrincipal = new ClaimsPrincipal();
             return;
         }
 
@@ -35,13 +36,13 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
         Username = userInfo.Name;
         Email = userInfo.Email;
 
-        User = new ClaimsPrincipal(new ClaimsIdentity([
+        _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, userInfo.UserId),
             new Claim(ClaimTypes.Name, userInfo.Name),
             new Claim(ClaimTypes.Email, userInfo.Email)
         ], authenticationType: nameof(UserAuthenticationService)));
 
-        _authenticationStateTask = Task.FromResult(new AuthenticationState(User));
+        _authenticationStateTask = Task.FromResult(new AuthenticationState(_claimsPrincipal));
     }
 
     public override Task<AuthenticationState> GetAuthenticationStateAsync() => _authenticationStateTask;

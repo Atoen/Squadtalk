@@ -4,7 +4,7 @@ using Shared.Reactive;
 
 namespace Shared.Models;
 
-public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDisposable
+public sealed class DirectMessageModel : ChatModel
 {
     public bool IsTemporary { get; init; }
 
@@ -20,8 +20,6 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
 
     public override UserStatus Status => Other.Status;
 
-    private readonly IDisposable? _subscription;
-
     public DirectMessageModel(IEnumerable<GroupParticipantModel> participants, GroupId id) : base(id)
     {
         Participants = participants.ToList();
@@ -30,8 +28,6 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
         var otherParticipant = Participants.Single(x => x.User.IsRemote);
         Others = [otherParticipant];
         Other = otherParticipant.User;
-
-        _subscription = Other.Subscribe(this);
     }
 
     public static DirectMessageModel CreateTempChannel(UserModel localUser, UserModel other)
@@ -47,7 +43,5 @@ public sealed class DirectMessageModel : ChatModel, ISubscriber<UserModel>, IDis
         };
     }
 
-    public void OnNext(UserModel value) => Notify(this);
-
-    public void Dispose() => _subscription?.Dispose();
+    public override IDisposable? Subscribe(ISubscriber subscriber) => Other.Subscribe(subscriber);
 }

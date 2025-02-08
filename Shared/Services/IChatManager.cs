@@ -2,6 +2,7 @@ using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Models;
+using Shared.Reactive;
 
 namespace Shared.Services;
 
@@ -19,7 +20,7 @@ public interface IChatManager
 
     ChannelState? CurrentChannelState => CurrentChat?.State;
 
-    IReadOnlyCollection<ChatModel> Chats { get; }
+    IObservableCollection<ChatModel> Chats { get; }
 
     ChatModel? GetChannel(GroupId groupId);
 

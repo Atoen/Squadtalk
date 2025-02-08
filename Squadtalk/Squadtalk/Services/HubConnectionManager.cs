@@ -74,7 +74,7 @@ public class HubConnectionManager
         return (UserStatus) (int) result;
     }
 
-    public async Task<Dictionary<UserId, UserStatus>> GetUsersStatusAsync(IEnumerable<UserId> userIds)
+    public async Task<Dictionary<UserId, UserStatus>> GetUsersStatusAsync(params IEnumerable<UserId> userIds)
     {
         var userIdsArray = userIds.ToArray();
         var redisKeys = userIdsArray.Select(id => (RedisValue) id.ToString()).ToArray();

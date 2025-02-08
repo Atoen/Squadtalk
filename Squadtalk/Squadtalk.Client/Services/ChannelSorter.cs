@@ -1,4 +1,5 @@
 using Shared.Models;
+using Shared.Reactive;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;
@@ -11,7 +12,9 @@ internal class ChannelSorter : IChannelSorter
 
     private List<ChatModel> _channels = [];
 
-    public event Action? ChannelsSorted;
+    public IObservableCollection<ChatModel> Channels = new ObservableList<ChatModel>();
+
+    public event Action? ChannelOrderChanged;
 
     public IReadOnlyCollection<ChatModel> SortedChannels
     {
@@ -60,6 +63,6 @@ internal class ChannelSorter : IChannelSorter
             _shouldSortChannels = true;
         }
 
-        ChannelsSorted?.Invoke();
+        ChannelOrderChanged?.Invoke();
     }
 }

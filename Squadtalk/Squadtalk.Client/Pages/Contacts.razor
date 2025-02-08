@@ -22,6 +22,7 @@
     </MudTabPanel>
 </MudTabs>
 
+@implements ISubscriber
 @implements IDisposable
 
 @inject IContactManager ContactManager
@@ -34,22 +35,23 @@
     private object? RequestTabBadgeData =>
         ContactManager.IncomingFriendRequests is { Count: > 0 and var count } ? count : null;
 
-    protected override Task OnInitializedAsync()
-    {
-        return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        ContactManager.FriendRequestsChanged += StateHasChanged;
-
         await ContactManager.RefreshFriendRequestsAsync();
     }
 
-    public void Dispose()
+    protected override Task OnInitializedAsync()
     {
-        ContactManager.FriendRequestsChanged -= StateHasChanged;
+        _subscription = ContactManager.IncomingFriendRequests.Subscribe(this);
+        return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
     }
+
+    private IDisposable? _subscription;
+
+    public void OnChange() => StateHasChanged();
+    
+    public void Dispose() => _subscription?.Dispose();
 }

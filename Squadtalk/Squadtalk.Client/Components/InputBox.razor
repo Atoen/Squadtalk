@@ -55,7 +55,7 @@
     </div>
 </MudPaper>
 
-@implements ISubscriber<ChannelState>
+@implements ISubscriber
 @implements IDisposable
 
 @inject IConnectionService CommunicationService
@@ -143,18 +143,15 @@
         }
     }
 
-    public void OnNext(ChannelState value)
-    {
-        StateHasChanged();
-    }
+    public void OnChange() => StateHasChanged();
 
-    private IDisposable? _disposable;
+    private IDisposable? _subscription;
 
     protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
 
-        _disposable = Chat.State.Subscribe(this);
+        _subscription = Chat.State.Subscribe(this);
         // CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
         // ChannelManager.TypingUsersChanged += TypingUsersChanged;
     }
@@ -163,7 +160,7 @@
     {
         if (!RendererInfo.IsInteractive) return;
 
-        _disposable?.Dispose();
+        _subscription?.Dispose();
         // CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
         // ChannelManager.TypingUsersChanged -= TypingUsersChanged;
 

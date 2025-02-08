@@ -52,6 +52,7 @@
     </DialogActions>
 </MudDialog>
 
+@implements ISubscriber
 @implements IDisposable
 
 @inject LocalizedText LocalizedText
@@ -134,7 +135,7 @@
 
         _searchResults.AddRange(results);
 
-        ContactManager.FriendListChanged += FriendListChanged;
+        _subscription = ContactManager.FriendList.Subscribe(this);
     }
 
     private void FriendListChanged()
@@ -204,10 +205,11 @@
         };
     }
 
-    public void Dispose()
-    {
-        ContactManager.FriendListChanged -= FriendListChanged;
-    }
+    private IDisposable? _subscription;
+
+    public void OnChange() => FriendListChanged();
+
+    public void Dispose() => _subscription?.Dispose();
 
     public enum FriendsSelectionType
     {

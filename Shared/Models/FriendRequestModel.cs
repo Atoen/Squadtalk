@@ -1,4 +1,5 @@
 using Shared.Data.TypedIds;
+using Shared.Reactive;
 
 namespace Shared.Models;
 
@@ -12,10 +13,12 @@ public class IncomingFriendRequest : FriendRequest
     public UserModel From { get; set; } = default!;
 }
 
-public abstract class FriendRequest
+public abstract class FriendRequest : IKeyId<FriendRequestId>
 {
     public DateTimeOffset CreatedAt { get; set; }
     public FriendRequestId Id { get; set; }
+
+    public FriendRequestId Key => Id;
 }
 
 

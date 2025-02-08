@@ -22,7 +22,7 @@
     </div>
 </MudBadge>
 
-@implements Shared.Reactive.ISubscriber<ChatModel>
+@implements ISubscriber
 @implements IDisposable
 
 @inject IChatManager ChatManager
@@ -116,7 +116,7 @@
         }
     }
 
-    public void OnNext(ChatModel value) => StateHasChanged();
+    public void OnChange() => StateHasChanged();
 
     private IDisposable? _subscription;
 

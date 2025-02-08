@@ -1,12 +1,14 @@
+using Shared.Reactive;
+
 namespace Squadtalk.Services.Prerender;
 
 internal abstract class LazyModelCreator(PrerenderPersistantState prerenderPersistantState)
 {
     private bool _modelsCreated;
 
-    protected Dictionary<TKey, TValue> TryCreateModels<TKey, TValue>(
-        ref readonly Dictionary<TKey, TValue>? storage, Dictionary<TKey, TValue> empty)
-        where TKey : notnull
+    protected ObservableDictionary<TKey, TValue> TryCreateModels<TKey, TValue>(
+        ref readonly ObservableDictionary<TKey, TValue>? storage, ObservableDictionary<TKey, TValue> empty)
+        where TKey : notnull where TValue : class, IKeyId<TKey>
     {
         if (!prerenderPersistantState.ContainsData)
         {

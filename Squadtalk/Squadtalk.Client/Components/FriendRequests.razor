@@ -78,6 +78,9 @@
     }
 }
 
+@implements ISubscriber
+@implements IDisposable
+
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
 
@@ -86,11 +89,6 @@
     private bool OutgoingRequestsAvailable => ContactManager.OutgoingFriendRequests.Count != 0;
     private bool IncomingRequestsAvailable => ContactManager.IncomingFriendRequests.Count != 0;
     private bool FriendRequestsAvailable => OutgoingRequestsAvailable || IncomingRequestsAvailable;
-
-    protected override void OnInitialized()
-    {
-        ContactManager.FriendRequestsChanged += StateHasChanged;
-    }
 
     private async Task AcceptFriendRequest(IncomingFriendRequest friendRequest)
     {
@@ -105,5 +103,22 @@
     private async Task CancelFriendRequest(OutgoingFriendRequest friendRequest)
     {
         var result = await ContactManager.CancelFriendRequest(friendRequest);
+    }
+    
+    public void OnChange() => StateHasChanged();
+
+    private IDisposable? _outgoingSubscription;
+    private IDisposable? _incomingSubscription;
+
+    protected override void OnInitialized()
+    {
+        _outgoingSubscription = ContactManager.OutgoingFriendRequests.Subscribe(this);
+        _incomingSubscription = ContactManager.IncomingFriendRequests.Subscribe(this);
+    }
+
+    public void Dispose()
+    {
+        _outgoingSubscription?.Dispose();
+        _incomingSubscription?.Dispose();
     }
 }

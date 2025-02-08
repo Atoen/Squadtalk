@@ -92,7 +92,7 @@
 
         ChatManager.ChatListChanged += StateHasChanged;
         ChatManager.ChatChanged += StateHasChanged;
-        ChannelSorter.ChannelsSorted += StateHasChanged;
+        ChannelSorter.ChannelOrderChanged += StateHasChanged;
     }
 
     public void Dispose()
@@ -101,6 +101,6 @@
 
         ChatManager.ChatListChanged -= StateHasChanged;
         ChatManager.ChatChanged -= StateHasChanged;
-        ChannelSorter.ChannelsSorted -= StateHasChanged;
+        ChannelSorter.ChannelOrderChanged -= StateHasChanged;
     }
 }
