@@ -80,7 +80,10 @@ public partial class AppHub
                     return FriendRequestResponseResult.Error;
                 }
 
-                var userIds = new[] { userId.ToString(), accepted.RequesterId.ToString() };
+                var user1 = friendship.User1;
+                var user2 = friendship.User2;
+                
+                var userIds = new[] { user1.Id.ToString(), user2.Id.ToString() };
 
                 if (accepted.OtherWayRequestId is { } otherWayRequestId)
                 {
@@ -89,8 +92,12 @@ public partial class AppHub
 
                 await Clients.Users(userIds).FriendRequestResponded(requestResponseDto);
 
-                await Clients.User(friendship.User1.Id.ToString()).FriendAdded(friendship.User2.ToDto());
-                await Clients.User(friendship.User2.Id.ToString()).FriendAdded(friendship.User1.ToDto());
+                var statuses = await _connectionManager.GetUsersStatusAsync(user1.Id, user2.Id);
+                var dto1 = user1.ToDto(statuses[user1.Id]);
+                var dto2 = user2.ToDto(statuses[user2.Id]);
+                
+                await Clients.User(friendship.User1.Id.ToString()).FriendAdded(dto2);
+                await Clients.User(friendship.User2.Id.ToString()).FriendAdded(dto1);
                 break;
             }
 
@@ -118,8 +125,8 @@ public partial class AppHub
         {
             var otherUserId = removeFriendDto.FriendId;
 
-            await Clients.User(userId.ToString()).FriendRemoved(otherUserId);
-            await Clients.User(otherUserId.ToString()).FriendRemoved(userId);
+            await Clients.User(userId).FriendRemoved(otherUserId);
+            await Clients.User(otherUserId).FriendRemoved(userId);
         }
 
         return result;
@@ -162,7 +169,7 @@ public partial class AppHub
         var friendsId = await friendRepository.GetUserFriendIdsAsync(userId);
         var idStrings = friendsId.Select(x => x.ToString());
 
-        await Clients.User(userId.ToString()).SelfStatusChanged(currentStatus);
+        await Clients.User(userId).SelfStatusChanged(currentStatus);
 
         await Clients.Users(idStrings).FriendStatusChanged(userId, currentStatus);
     }

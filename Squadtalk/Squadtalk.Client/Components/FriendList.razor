@@ -16,6 +16,9 @@
     <FriendTemplate @key="friend" Friend="friend"/>
 }
 
+@implements ISubscriber
+@implements IDisposable
+
 @inject LocalizedText LocalizedText
 @inject IContactManager ContactManager
 @inject IConnectionService ConnectionService
@@ -24,11 +27,6 @@
 
 @code
 {
-    protected override Task OnInitializedAsync()
-    {
-        return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
-    }
-
     private async Task MessageFriend(UserModel friend)
     {
         await ChatManager.OpenOrCreateTemporaryDirectMessageChannelAsync(friend);
@@ -44,4 +42,16 @@
         Logger.LogInformation("Removing friend");
         await ContactManager.RemoveFriendAsync(friend);
     }
+    
+    protected override Task OnInitializedAsync()
+    {
+        _subscription = ContactManager.FriendList.Subscribe(this);
+        return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
+    }
+    
+    private IDisposable? _subscription;
+    
+    public void OnChange() => StateHasChanged();
+
+    public void Dispose() => _subscription?.Dispose();
 }

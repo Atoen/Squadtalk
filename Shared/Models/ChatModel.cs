@@ -6,7 +6,7 @@ using Shared.Reactive;
 
 namespace Shared.Models;
 
-public abstract class ChatModel : Observable<ChatModel>
+public abstract class ChatModel : Observable<ChatModel>, IKeyId<GroupId>
 {
     public const string GlobalChanelIdValue = "global";
     public static readonly GroupId GlobalChatId = new(GlobalChanelIdValue);
@@ -35,6 +35,8 @@ public abstract class ChatModel : Observable<ChatModel>
 
     public ChannelState State { get; }
 
+    public GroupId Key => Id;
+    
     protected ChatModel(GroupId id)
     {
         Id = id;

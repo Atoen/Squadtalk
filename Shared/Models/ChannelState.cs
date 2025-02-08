@@ -47,7 +47,7 @@ public class ChannelState(ChatModel chat) : Observable<ChannelState>
 
         if (TypingUsers.InsertOrUpdate(typingParticipant.User))
         {
-            Notify(this);
+            Notify();
         }
     }
 
@@ -55,7 +55,7 @@ public class ChannelState(ChatModel chat) : Observable<ChannelState>
     {
         if (TypingUsers.Remove(userId))
         {
-            Notify(this);
+            Notify();
         }
     }
 
@@ -63,7 +63,7 @@ public class ChannelState(ChatModel chat) : Observable<ChannelState>
     {
         if (TypingUsers.RemoveStale(now))
         {
-            Notify(this);
+            Notify();
         }
     }
 

@@ -1,11 +1,6 @@
 namespace Shared.Reactive;
 
-public interface ISubscriber<in T>
+public interface ISubscriber
 {
-    void OnNext(T value);
-}
-
-public interface IObservable<out T>
-{
-    IDisposable? Subscribe(ISubscriber<T> subscriber);
+    void OnChange();
 }

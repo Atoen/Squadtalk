@@ -5,7 +5,7 @@ using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUser
+public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUser, IKeyId<UserId>
 {
     private UserStatus _status;
     private string _avatarUrl = default!;
@@ -30,7 +30,7 @@ public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUse
     }
 
     public UserId Id { get; init; }
-
+    
     public bool IsLocal { get; init; }
     public bool IsRemote => !IsLocal;
 
@@ -45,6 +45,7 @@ public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUse
             _avatarUrl = "user.png"
         };
     }
+    public UserId Key => Id;
 
     public bool Equals(UserModel? other)
     {

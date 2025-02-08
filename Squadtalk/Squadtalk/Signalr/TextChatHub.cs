@@ -143,7 +143,7 @@ public partial class AppHub
 
         var dto = group.ToDto();
         await NotifyNewGroupParticipantsAsync(dto, friendIds);
-        await Clients.User(addingParticipant.UserId.ToString()).GroupParticipantsChanged(dto);
+        await TextGroup(groupId).GroupParticipantsChanged(dto);
 
         return HubResult.Ok;
     }

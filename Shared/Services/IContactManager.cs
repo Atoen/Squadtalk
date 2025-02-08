@@ -2,15 +2,13 @@ using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Models;
+using Shared.Reactive;
 using Shared.Results;
 
 namespace Shared.Services;
 
 public interface IContactManager
 {
-    event Action? FriendListChanged;
-    event Action? FriendRequestsChanged;
-    event Action<IncomingFriendRequest>? FriendRequestReceived;
     event Action? StatusChanged;
 
     UserStatus UserStatus { get; }
@@ -19,10 +17,10 @@ public interface IContactManager
 
     Func<IChatUser, UserModel> UserModelProvider { get; }
 
-    IReadOnlyCollection<UserModel> FriendList { get; }
+    IObservableCollection<UserModel> FriendList { get; }
 
-    IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
-    IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
+    IObservableCollection<IncomingFriendRequest> IncomingFriendRequests { get; }
+    IObservableCollection<OutgoingFriendRequest> OutgoingFriendRequests { get; }
 
     UserModel? FindUserById(UserId userId);
 

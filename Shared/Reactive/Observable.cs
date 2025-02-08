@@ -3,9 +3,9 @@ using JetBrains.Annotations;
 
 namespace Shared.Reactive;
 
-public abstract class Observable<T> : IObservable<T> where T : class, IObservable<T>
+public abstract class Observable<T> : IObservable where T : class
 {
-    private List<ISubscriber<T>>? _subscribers;
+    private List<ISubscriber>? _subscribers;
     private readonly Lock _lock = new();
     
     public static explicit operator T(Observable<T> observable)
@@ -17,7 +17,7 @@ public abstract class Observable<T> : IObservable<T> where T : class, IObservabl
     }
 
     [MustUseReturnValue]
-    public IDisposable? Subscribe(ISubscriber<T> subscriber)
+    public virtual IDisposable? Subscribe(ISubscriber subscriber)
     {
         if (!OperatingSystem.IsBrowser()) return null;
 
@@ -49,10 +49,10 @@ public abstract class Observable<T> : IObservable<T> where T : class, IObservabl
         }
 
         field = value;
-        Notify((T) this);
+        Notify();
     }
 
-    protected void Notify(T value)
+    protected void Notify()
     {
         if (_subscribers is not { Count: > 0 } subscribers)
         {
@@ -63,12 +63,12 @@ public abstract class Observable<T> : IObservable<T> where T : class, IObservabl
         {
             foreach (var subscriber in subscribers)
             {
-                subscriber.OnNext(value);
+                subscriber.OnChange();
             }
         }
     }
 
-    private class Unsubscriber(List<ISubscriber<T>> subscribers, ISubscriber<T> subscriber, Lock @lock) : IDisposable
+    private class Unsubscriber(List<ISubscriber> subscribers, ISubscriber subscriber, Lock @lock) : IDisposable
     {
         public void Dispose()
         {

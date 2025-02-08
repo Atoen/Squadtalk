@@ -82,7 +82,7 @@
     }
 </MudPaper>
 
-@implements ISubscriber<ChatModel>
+@implements ISubscriber
 @implements IDisposable
 
 @inject IChatManager ChatManager
@@ -181,7 +181,7 @@
             LocalizedText.R.delete_group, ManageDialogParameters, DialogOptions);
     }
 
-    public void OnNext(ChatModel value) => StateHasChanged();
+    public void OnChange() => StateHasChanged();
 
     private IDisposable? _subscription;
 

@@ -28,6 +28,8 @@ public record struct UserId([property: Key(0)] Guid Value) : IGuidIdRecord<UserI
 
     public static implicit operator Guid(UserId userId) => userId.Value;
 
+    public static implicit operator string(UserId userId) => userId.ToString();
+
     public override string ToString() => _string ??= Value.ToString();
 
     private string? _string;

@@ -90,10 +90,17 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
     }
 
     public async Task<RemoveFriendResult> RemoveFriendAsync(
-        UserId removingUser, UserId friendToRemove, CancellationToken cancellationToken)
+        UserId removingUserId, UserId friendToRemoveId, CancellationToken cancellationToken)
     {
-        var output = await DbContext.RemoveFriend(removingUser, friendToRemove).SingleAsync(cancellationToken);
-        return output.Success ? RemoveFriendResult.Success : RemoveFriendResult.BadRequest;
+        var (id1, id2) = removingUserId.Value < friendToRemoveId.Value
+            ? (removingUserId, friendToRemoveId)
+            : (friendToRemoveId, removingUserId);
+
+        var removedRows = await DbContext.Friendships
+            .Where(x => x.User1Id == id1 && x.User2Id == id2)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        return removedRows == 1 ? RemoveFriendResult.Success : RemoveFriendResult.BadRequest;
     }
 
     private static readonly Func<ApplicationDbContext, UserId, IAsyncEnumerable<ChatUser>> UserFriendsAsync =

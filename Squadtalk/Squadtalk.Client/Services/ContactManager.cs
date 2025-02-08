@@ -3,6 +3,7 @@ using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
 using Shared.Enums;
 using Shared.Models;
+using Shared.Reactive;
 using Shared.Results;
 using Shared.Services;
 using Squadtalk.Client.Services.SignalR;
@@ -17,10 +18,10 @@ internal class ContactManager : IContactManager
     private readonly ILogger<ContactManager> _logger;
 
     private readonly Dictionary<UserId, UserModel> _userModels = [];
-    private readonly Dictionary<UserId, UserModel> _friends = [];
+    private readonly ObservableDictionary<UserId, UserModel> _friends = [];
 
-    private readonly Dictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
-    private readonly Dictionary<FriendRequestId, OutgoingFriendRequest> _outgoingFriendRequests = [];
+    private readonly ObservableDictionary<FriendRequestId, IncomingFriendRequest> _incomingFriendRequests = [];
+    private readonly ObservableDictionary<FriendRequestId, OutgoingFriendRequest> _outgoingFriendRequests = [];
 
     public event Action? FriendListChanged;
     public event Action? FriendRequestsChanged;
@@ -36,10 +37,10 @@ internal class ContactManager : IContactManager
 
     public Func<IChatUser, UserModel> UserModelProvider { get; }
 
-    public IReadOnlyCollection<UserModel> FriendList => _friends.Values;
+    public IObservableCollection<UserModel> FriendList => _friends.Values;
 
-    public IReadOnlyCollection<IncomingFriendRequest> IncomingFriendRequests => _incomingFriendRequests.Values;
-    public IReadOnlyCollection<OutgoingFriendRequest> OutgoingFriendRequests => _outgoingFriendRequests.Values;
+    public IObservableCollection<IncomingFriendRequest> IncomingFriendRequests => _incomingFriendRequests.Values;
+    public IObservableCollection<OutgoingFriendRequest> OutgoingFriendRequests => _outgoingFriendRequests.Values;
 
     public ContactManager(
         SignalrService signalrService,
@@ -126,7 +127,7 @@ internal class ContactManager : IContactManager
     public async Task<RemoveFriendResult> RemoveFriendAsync(UserModel friend)
     {
         var result = await _signalrService.RemoveFriendAsync(friend.Id);
-        if (result.ErrorOrValueIsNot(RemoveFriendResult.Error))
+        if (result.ErrorOrValueIsNot(RemoveFriendResult.Success))
         {
             _notificationService.FailedToRemoveFriend(friend);
             return RemoveFriendResult.Error;
@@ -143,13 +144,8 @@ internal class ContactManager : IContactManager
             return;
         }
 
-        var models = friends.Select(UserModelProvider).ToList();
-
-        _friends.Clear();
-        foreach (var model in models)
-        {
-            _friends.TryAdd(model.Id, model);
-        }
+        var models = friends.Select(UserModelProvider);
+        _friends.Refresh(models);
 
         FriendListChanged?.Invoke();
     }
@@ -195,7 +191,7 @@ internal class ContactManager : IContactManager
     private void FriendAdded(UserDto friend)
     {
         var friendModel = GetOrCreateUserModel(friend);
-        if (_friends.TryAdd(friendModel.Id, friendModel))
+        if (_friends.Add(friendModel))
         {
             FriendListChanged?.Invoke();
         }
@@ -287,7 +283,8 @@ internal class ContactManager : IContactManager
             Status = _signalrService.UserStatus,
             Username = _userAuthenticationService.Username,
             Id = _userAuthenticationService.UserId,
-            IsLocal = true
+            IsLocal = true,
+            AvatarUrl = "user.png"
         };
 
         _userModels.TryAdd(model.Id, model);
@@ -307,7 +304,7 @@ internal class ContactManager : IContactManager
                 To = GetOrCreateUserModel(requestDto.Recipient)
             };
 
-            return _outgoingFriendRequests.TryAdd(outgoingRequest.Id, outgoingRequest);
+            return _outgoingFriendRequests.Add(outgoingRequest);
         }
 
         if (requestDto.Recipient.Id == currentUserId)
@@ -319,7 +316,7 @@ internal class ContactManager : IContactManager
                 From = GetOrCreateUserModel(requestDto.Requester)
             };
 
-            var added = _incomingFriendRequests.TryAdd(incomingRequest.Id, incomingRequest);
+            var added = _incomingFriendRequests.Add(incomingRequest);
             if (invokeEvents && added)
             {
                 _notificationService.IncomingFriendRequest(incomingRequest);

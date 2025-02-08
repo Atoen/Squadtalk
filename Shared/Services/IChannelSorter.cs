@@ -4,7 +4,7 @@ namespace Shared.Services;
 
 public interface IChannelSorter
 {
-    event Action? ChannelsSorted;
+    event Action? ChannelOrderChanged;
 
     IReadOnlyCollection<ChatModel> SortedChannels { get; }
 }

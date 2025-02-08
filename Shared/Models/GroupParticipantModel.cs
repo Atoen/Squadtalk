@@ -2,10 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
+using Shared.Reactive;
 
 namespace Shared.Models;
 
-public class GroupParticipantModel : IGroupParticipant
+public class GroupParticipantModel : IObservable, IGroupParticipant
 {
     public required UserModel User { get; init; }
 
@@ -30,5 +31,7 @@ public class GroupParticipantModel : IGroupParticipant
     string IChatUser.Username => User.Username;
     UserId IChatUser.Id => User.Id;
     UserStatus IChatUser.Status => User.Status;
+    
+    public IDisposable? Subscribe(ISubscriber subscriber) => User.Subscribe(subscriber);
 }
 

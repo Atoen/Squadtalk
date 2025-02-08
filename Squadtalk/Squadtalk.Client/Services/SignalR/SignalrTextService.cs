@@ -109,8 +109,8 @@ internal sealed partial class SignalrService : ISignalrTextService
         _connection.On<GroupId, UserId>(nameof(ITextChatClient.UserStoppedTyping), (channelId, userId) =>
             UserStoppedTyping?.Invoke(channelId, userId));
 
-        _connection.On<GroupId, UserId, GroupRole>(nameof(ITextChatClient.ParticipantRoleChanged), (grupId, userId, role) =>
-            ParticipantRoleChanged?.Invoke(grupId, userId, role));
+        _connection.On<GroupId, UserId, GroupRole>(nameof(ITextChatClient.ParticipantRoleChanged), (groupId, userId, role) =>
+            ParticipantRoleChanged?.Invoke(groupId, userId, role));
 
         _connection.On<GroupId>(nameof(ITextChatClient.GroupDeleted), groupId =>
             GroupDeleted?.Invoke(groupId));

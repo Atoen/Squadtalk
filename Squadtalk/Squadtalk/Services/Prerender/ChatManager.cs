@@ -2,21 +2,22 @@ using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Models;
+using Shared.Reactive;
 using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
 internal class ChatManager : LazyModelCreator, IChatManager
 {
-    private static readonly Dictionary<GroupId, ChatModel> EmptyChannels = [];
+    private static readonly ObservableDictionary<GroupId, ChatModel> EmptyChannels = [];
 
     private readonly IContactManager _contactManager;
 
-    private Dictionary<GroupId, ChatModel>? _channels;
+    private ObservableDictionary<GroupId, ChatModel>? _channels;
 
-    private Dictionary<GroupId, ChatModel> LazyChannels => TryCreateModels(ref _channels, EmptyChannels);
+    private ObservableDictionary<GroupId, ChatModel> LazyChannels => TryCreateModels(ref _channels, EmptyChannels);
 
-    public IReadOnlyCollection<ChatModel> Chats => LazyChannels.Values;
+    public IObservableCollection<ChatModel> Chats => LazyChannels.Values;
 
     public Func<IGroupParticipant, GroupParticipantModel> GroupParticipantProvider { get; }
 
@@ -49,7 +50,7 @@ internal class ChatManager : LazyModelCreator, IChatManager
 
         var channelModels = channels
             .Select(x => ChatModel.Create(x, GroupParticipantProvider))
-            .ToDictionary(x => x.Id, x => x);
+            .ToObservableDictionary(x => x.Id, x => x);
 
         _channels = channelModels;
     }

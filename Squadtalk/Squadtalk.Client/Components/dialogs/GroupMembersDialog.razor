@@ -131,7 +131,7 @@
     </DialogContent>
 </MudDialog>
 
-@implements ISubscriber<ChatModel>
+@implements ISubscriber
 @implements IDisposable
 
 @inject IChatManager ChatManager
@@ -154,7 +154,7 @@
     private GroupRole _selectedRole;
     private GroupParticipantModel? _selectedUser;
 
-    private DialogOptions _smallDialogOptions = new()
+    private readonly DialogOptions _smallDialogOptions = new()
     {
         MaxWidth = MaxWidth.ExtraSmall
     };
@@ -245,7 +245,7 @@
         _ => LocalizedText.R.group_member
     };
 
-    public void OnNext(ChatModel value) => StateHasChanged();
+    public void OnChange() => StateHasChanged();
 
     private IDisposable? _subscription;
 

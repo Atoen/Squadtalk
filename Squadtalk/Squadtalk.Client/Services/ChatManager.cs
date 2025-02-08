@@ -4,6 +4,7 @@ using Shared.Data.TypedIds;
 using Shared.Enums;
 using Shared.Extensions;
 using Shared.Models;
+using Shared.Reactive;
 using Shared.Routing;
 using Shared.Services;
 using Squadtalk.Client.Services.SignalR;
@@ -18,10 +19,10 @@ internal class ChatManager : IChatManager
     private readonly ILogger<ChatManager> _logger;
     private readonly NavigationManager _navigationManager;
 
-    private readonly Dictionary<GroupId, ChatModel> _allChats = [];
+    private readonly ObservableDictionary<GroupId, ChatModel> _allChats = [];
     private readonly List<DirectMessageModel> _dms = [];
 
-    public IReadOnlyCollection<ChatModel> Chats => _allChats.Values;
+    public IObservableCollection<ChatModel> Chats => _allChats.Values;
 
     public event Action? ChatListChanged;
     public event Action? ChatChanged;
@@ -332,7 +333,7 @@ internal class ChatManager : IChatManager
         //     model.State.ScrolledToBeginning = true;
         // }
 
-        _allChats.Add(model.Id, model);
+        _allChats.Add(model);
 
         if (model is not DirectMessageModel dm)
         {

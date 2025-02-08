@@ -5,10 +5,10 @@ using Shared.Reactive;
 
 namespace Shared.Models;
 
-public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposable
+public sealed class GroupChatModel : ChatModel, ISubscriber, IDisposable
 {
     public override List<GroupParticipantModel> Participants { get; }
-    public override List<GroupParticipantModel> Others { get; }
+    public override ObservableItemList<GroupParticipantModel> Others { get; }
     public override GroupParticipantModel LocalUser { get; }
 
     private string? _defaultName;
@@ -22,34 +22,21 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
         set => SetField(ref _customName, value);
     }
 
-    private UserStatus _previousStatus;
     public override UserStatus Status => GetStatus();
 
     public bool HasOnlineStatus => Status == UserStatus.Online;
+
+    private readonly IDisposable? _subscription;
 
     public GroupChatModel(IEnumerable<GroupParticipantModel> participants, GroupId id, string? customName = null) : base(id)
     {
         _customName = customName;
 
         Participants = participants.OrderBy(x => x.Username()).ToList();
-        Others = Participants.Where(x => x.User.IsRemote).ToList();
         LocalUser = Participants.Single(x => x.User.IsLocal);
-
-        Subscribe(Others);
-    }
-
-    private readonly List<IDisposable?> _subscriptions = [];
-
-    private void Subscribe(List<GroupParticipantModel> participants)
-    {
-        foreach (var participant in participants)
-        {
-            var subscription = participant.User.Subscribe(this);
-            if (subscription is not null)
-            {
-                _subscriptions.Add(subscription);
-            }
-        }
+        
+        Others = Participants.Where(x => x.User.IsRemote).ToObservableItemList();
+        _subscription = Others.Subscribe(this);
     }
 
     public override void UpdateParticipantRole(UserId userId, GroupRole groupRole)
@@ -58,7 +45,7 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
         if (existingParticipant is not null)
         {
             existingParticipant.Role = groupRole;
-            Notify(this);
+            Notify();
         }
     }
 
@@ -69,12 +56,14 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
         Participants.Clear();
         Participants.AddRange(updated);
 
-        Others.Clear();
-        Others.AddRange(updated.Where(x => x.IsRemote()));
+        Others.Refresh(updated.Where(x => x.IsRemote()));
+        
+        var localRole = Participants.Single(x => x.IsLocal()).Role;
+        LocalUser.Role = localRole;
 
         _defaultName = null;
 
-        Notify(this);
+        Notify();
     }
 
     private string GetOrPrepareName()
@@ -97,27 +86,11 @@ public sealed class GroupChatModel : ChatModel, ISubscriber<UserModel>, IDisposa
         return hasOnlineUser ? UserStatus.Online : UserStatus.Offline;
     }
 
-    // Propagating notification about status change
-    public void OnNext(UserModel value)
-    {
-        var status = GetStatus();
-        if (status != _previousStatus)
-        {
-            _previousStatus = status;
-            Notify(this);
-        }
-    }
-
+    public void OnChange() => Notify();
+    
     public void Dispose()
     {
-        if (_subscriptions is not { Count: > 0 })
-        {
-            return;
-        }
-
-        foreach (var subscription in _subscriptions)
-        {
-            subscription?.Dispose();
-        }
+        _subscription?.Dispose();
+        Others.Dispose();
     }
 }

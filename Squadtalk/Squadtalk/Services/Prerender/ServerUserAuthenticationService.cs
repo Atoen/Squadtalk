@@ -5,9 +5,9 @@ using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
-public class ServerUserAuthenticationService : IUserAuthenticationService
+internal class ServerUserAuthenticationService : IUserAuthenticationService
 {
-    public ClaimsPrincipal User { get; }
+    private readonly ClaimsPrincipal _claimsPrincipal;
 
     public bool IsAuthenticated { get; }
 
@@ -22,18 +22,18 @@ public class ServerUserAuthenticationService : IUserAuthenticationService
         var user = httpContextAccessor.HttpContext?.User;
         if (user is null)
         {
-            User = new ClaimsPrincipal(new ClaimsIdentity());
+            _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
             IsAuthenticated = false;
             return;
         }
 
-        User = user;
+        _claimsPrincipal = user;
         IsAuthenticated = user.Identity is { IsAuthenticated: true };
 
         if (IsAuthenticated)
         {
-            UserId = UserId.Parse(User.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-            Username = User.GetRequiredClaimValue(ClaimTypes.Name);
+            UserId = UserId.Parse(_claimsPrincipal.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+            Username = _claimsPrincipal.GetRequiredClaimValue(ClaimTypes.Name);
             Email = user.GetRequiredClaimValue(ClaimTypes.Email);
         }
     }

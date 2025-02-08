@@ -39,8 +39,8 @@
     </div>
 </div>
 
+@implements ISubscriber
 @implements IDisposable
-@implements ISubscriber<UserModel>
 
 @inject IContactManager ContactManager
 @inject IChatManager ChatManager
@@ -66,10 +66,7 @@
         await ContactManager.RemoveFriendAsync(Friend);
     }
 
-    public void OnNext(UserModel value)
-    {
-        StateHasChanged();
-    }
+    public void OnChange() => StateHasChanged();
 
     private IDisposable? _subscription;
 
