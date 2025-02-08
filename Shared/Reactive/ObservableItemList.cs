@@ -2,7 +2,11 @@ using System.Collections;
 
 namespace Shared.Reactive;
 
-public sealed class ObservableItemList<T> : Observable<ObservableItemList<T>>, IObservableCollection<T>, ISubscriber, IDisposable
+public sealed class ObservableItemList<T> 
+    : Observable<ObservableItemList<T>>,
+        IObservableCollection<T>,
+        ISubscriber,
+        IDisposable
     where T : IObservable
 {
     private readonly List<T> _list;

@@ -4,6 +4,8 @@ namespace Shared.Services;
 
 public interface IUserAuthenticationService
 {
+    event Action? LocalUsernameChanged;
+    
     bool IsAuthenticated { get; }
 
     UserId UserId { get; }

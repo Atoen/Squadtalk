@@ -7,8 +7,8 @@ namespace Squadtalk.Services.Prerender;
 
 internal class ServerUserAuthenticationService : IUserAuthenticationService
 {
-    private readonly ClaimsPrincipal _claimsPrincipal;
-
+    event Action? IUserAuthenticationService.LocalUsernameChanged { add { } remove { } }
+    
     public bool IsAuthenticated { get; }
 
     public UserId UserId { get; }
@@ -22,18 +22,16 @@ internal class ServerUserAuthenticationService : IUserAuthenticationService
         var user = httpContextAccessor.HttpContext?.User;
         if (user is null)
         {
-            _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity());
             IsAuthenticated = false;
             return;
         }
 
-        _claimsPrincipal = user;
         IsAuthenticated = user.Identity is { IsAuthenticated: true };
 
         if (IsAuthenticated)
         {
-            UserId = UserId.Parse(_claimsPrincipal.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
-            Username = _claimsPrincipal.GetRequiredClaimValue(ClaimTypes.Name);
+            UserId = UserId.Parse(user.GetRequiredClaimValue(ClaimTypes.NameIdentifier));
+            Username = user.GetRequiredClaimValue(ClaimTypes.Name);
             Email = user.GetRequiredClaimValue(ClaimTypes.Email);
         }
     }

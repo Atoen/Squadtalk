@@ -1,3 +1,4 @@
+using Shared.Data;
 using Shared.DTOs.Chat;
 using Shared.Enums;
 using Squadtalk.Data.Entities;
@@ -19,8 +20,13 @@ internal static class Mappers
         };
     }
 
-    public static UserDto ToDto(this ChatUser user, UserStatus status = UserStatus.Unknown)
+    public static UserDto ToDto(this IChatUser user, UserStatus status = UserStatus.Unknown)
     {
+        if (user is UserDto dto)
+        {
+            return dto;
+        }
+        
         return new UserDto
         {
             Username = user.Username,

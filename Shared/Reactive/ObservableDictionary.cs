@@ -3,9 +3,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Shared.Reactive;
 
-public class ObservableDictionary<TKey, TValue> : Observable<ObservableDictionary<TKey, TValue>>, IObservableCollection<KeyValuePair<TKey, TValue>>
-    where TValue : class, IKeyId<TKey>
+public class ObservableDictionary<TKey, TValue>
+    : Observable<ObservableDictionary<TKey, TValue>>, 
+      IObservableCollection<KeyValuePair<TKey, TValue>>
     where TKey : notnull
+    where TValue : class, IKeyId<TKey>
 {
     private readonly Dictionary<TKey, TValue> _dictionary;
     private ValueCollection? _values;

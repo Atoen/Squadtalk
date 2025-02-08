@@ -9,8 +9,6 @@ namespace Shared.Services;
 
 public interface IContactManager
 {
-    event Action? StatusChanged;
-
     UserStatus UserStatus { get; }
 
     UserModel LocalUserModel { get; }

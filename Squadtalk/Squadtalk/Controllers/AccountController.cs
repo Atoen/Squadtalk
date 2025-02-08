@@ -3,13 +3,17 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.WebUtilities;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Account;
 using Shared.DTOs.Account.Results;
 using Shared.Routing;
 using Shared.Services;
+using Squadtalk.Data;
 using Squadtalk.Data.Entities;
+using Squadtalk.Data.Repositories;
+using Squadtalk.Signalr;
 
 namespace Squadtalk.Controllers;
 
@@ -184,7 +188,10 @@ public class AccountController : ControllerBase
 
     [Authorize]
     [HttpPost(Routes.RelativeEndpoints.ChangeUsername)]
-    public async Task<ActionResult> ChangeUsername(ChangeUsernameDto changeUsernameDto)
+    public async Task<ActionResult> ChangeUsername(
+        ChangeUsernameDto changeUsernameDto,
+        [FromServices] IHubContext<AppHub, IChatClient> hubContext,
+        [FromServices] FriendRepository friendRepository)
     {
         var user = await _userManager.FindByIdAsync(changeUsernameDto.UserId);
         if (user is null)
@@ -216,6 +223,12 @@ public class AccountController : ControllerBase
         }
 
         await _signInManager.RefreshSignInAsync(user);
+
+        var userFriendIds = await friendRepository.GetUserFriendIdsAsync(user.Id);
+        var idStrings = userFriendIds.Select(x => x.ToString());
+
+        await hubContext.Clients.Users(idStrings).FriendNameChanged(user.ToDto());
+        
         return Ok(ChangeUsernameResultDto.Success(changeUsernameDto.NewUsername));
     }
 
