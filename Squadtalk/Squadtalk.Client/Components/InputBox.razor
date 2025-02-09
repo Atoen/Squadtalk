@@ -79,11 +79,6 @@
     private bool Disable => !CommunicationService.Connected;
     private string Placeholder { get; set; } = default!;
 
-    protected override void OnInitialized()
-    {
-        Placeholder = LocalizedText.R.write_to_channel.Format(Chat.Name);
-    }
-
     private Task OnKeyDown(KeyboardEventArgs e)
     {
         _inputPreventDefault = false;
@@ -112,6 +107,8 @@
 
     private void TextFieldValueChanged()
     {
+        if (Chat.IsNullOrSpecial()) return;
+        
         var channelId = Chat.Id;
 
         if (_textField.Value is null or { Length: 0 })
@@ -147,13 +144,10 @@
 
     private IDisposable? _subscription;
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (!firstRender) return;
-
+        Placeholder = LocalizedText.R.write_to_channel.Format(Chat.Name);
         _subscription = Chat.State.Subscribe(this);
-        // CommunicationService.ConnectionStatusChanged += ConnectionStatusChanged;
-        // ChannelManager.TypingUsersChanged += TypingUsersChanged;
     }
 
     public void Dispose()
@@ -161,8 +155,6 @@
         if (!RendererInfo.IsInteractive) return;
 
         _subscription?.Dispose();
-        // CommunicationService.ConnectionStatusChanged -= ConnectionStatusChanged;
-        // ChannelManager.TypingUsersChanged -= TypingUsersChanged;
 
         if (_isTyping)
         {

@@ -148,9 +148,9 @@ public static class JSExtensions
         {
             var module = await jsRuntime.InvokeAsync<IJSObjectReference>("import", path);
             await module.InvokeVoidAsync("Init", args);
-            
+
             Console.WriteLine($"Loaded module {path}");
-            
+
             return module;
         }
         catch

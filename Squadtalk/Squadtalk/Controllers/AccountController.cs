@@ -228,7 +228,7 @@ public class AccountController : ControllerBase
         var idStrings = userFriendIds.Select(x => x.ToString());
 
         await hubContext.Clients.Users(idStrings).FriendNameChanged(user.ToDto());
-        
+
         return Ok(ChangeUsernameResultDto.Success(changeUsernameDto.NewUsername));
     }
 

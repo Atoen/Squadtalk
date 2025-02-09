@@ -33,7 +33,7 @@ public class ChannelState(ChatModel chat) : Observable<ChannelState>
 
         if (Cursor == default)
         {
-            Cursor = TextChannelCursor.New;
+            Cursor = new TextChannelCursor(message.Id);
         }
     }
 

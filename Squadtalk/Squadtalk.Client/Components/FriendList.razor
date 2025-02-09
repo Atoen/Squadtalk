@@ -42,15 +42,15 @@
         Logger.LogInformation("Removing friend");
         await ContactManager.RemoveFriendAsync(friend);
     }
-    
+
     protected override Task OnInitializedAsync()
     {
         _subscription = ContactManager.FriendList.Subscribe(this);
         return RendererInfo.IsInteractive ? Task.CompletedTask : ConnectionService.ConnectAsync();
     }
-    
+
     private IDisposable? _subscription;
-    
+
     public void OnChange() => StateHasChanged();
 
     public void Dispose() => _subscription?.Dispose();

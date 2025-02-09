@@ -82,7 +82,7 @@ public partial class AppHub
 
                 var user1 = friendship.User1;
                 var user2 = friendship.User2;
-                
+
                 var userIds = new[] { user1.Id.ToString(), user2.Id.ToString() };
 
                 if (accepted.OtherWayRequestId is { } otherWayRequestId)
@@ -95,7 +95,7 @@ public partial class AppHub
                 var statuses = await _connectionManager.GetUsersStatusAsync(user1.Id, user2.Id);
                 var dto1 = user1.ToDto(statuses[user1.Id]);
                 var dto2 = user2.ToDto(statuses[user2.Id]);
-                
+
                 await Clients.User(friendship.User1.Id.ToString()).FriendAdded(dto2);
                 await Clients.User(friendship.User2.Id.ToString()).FriendAdded(dto1);
                 break;

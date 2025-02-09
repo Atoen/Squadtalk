@@ -60,7 +60,7 @@ internal class ChatManager : LazyModelCreator, IChatManager
         return GroupParticipantModel.Create(groupParticipant, _contactManager.UserModelProvider);
     }
 
-    public Task OpenChannelAsync(ChatModel chatModel, bool navigate = true)
+    public Task OpenChannelAsync(ChatModel chatModel, bool navigate = true, bool replace = false)
     {
         CurrentChat = chatModel;
         return Task.CompletedTask;
@@ -74,13 +74,13 @@ internal class ChatManager : LazyModelCreator, IChatManager
 
     public Task UpgradeToPersistentChannelAsync(ChatModel chatModel) => Task.CompletedTask;
 
-    public Task<GroupId?> CreateNewChannelAsync(params IEnumerable<UserModel> others) => Task.FromResult<GroupId?>(null);
+    public Task<ChatModel?> CreateNewChatAsync(params IEnumerable<UserModel> others) => Task.FromResult<ChatModel?>(null);
 
     public Task CreateAndOpenNewChannelAsync(params IEnumerable<UserModel> others) => Task.CompletedTask;
 
     public Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends) => Task.CompletedTask;
 
-    public Task ClearChannelSelectionAsync() => Task.CompletedTask;
+    public void ClearChannelSelection() {}
 
     public Task MarkMessageSeenAsync(ChatModel chat, MessageModel message) => Task.CompletedTask;
 

@@ -5,7 +5,7 @@ namespace Shared.Data;
 public interface IMessageEmbed
 {
     EmbedType Type { get; }
-    
+
     Dictionary<string, string> Data { get; }
 
     public string this[string key]

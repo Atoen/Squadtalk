@@ -30,7 +30,7 @@ public class UserModel : Observable<UserModel>, IEquatable<UserModel?>, IChatUse
     }
 
     public UserId Id { get; init; }
-    
+
     public bool IsLocal { get; init; }
     public bool IsRemote => !IsLocal;
 

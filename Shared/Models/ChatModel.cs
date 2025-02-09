@@ -36,7 +36,7 @@ public abstract class ChatModel : Observable<ChatModel>, IKeyId<GroupId>
     public ChannelState State { get; }
 
     public GroupId Key => Id;
-    
+
     protected ChatModel(GroupId id)
     {
         Id = id;

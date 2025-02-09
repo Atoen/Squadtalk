@@ -18,11 +18,9 @@ public class MessageRepository(
 
     public async Task<List<Message>> GetPageAsync(GroupId groupId, TextChannelCursor cursor, CancellationToken cancellationToken = default)
     {
-        var timestamp = new DateTimeOffset(cursor.Value, TimeSpan.Zero);
-
         var page = cursor == default
             ? MessageFirstPageAsync(DbContext, groupId)
-            : MessagePageByCursorAsync(DbContext, groupId, timestamp);
+            : MessagePageByCursorAsync(DbContext, groupId, cursor.Value);
 
         return await page.ToListAsync(cancellationToken);
     }
@@ -111,12 +109,12 @@ public class MessageRepository(
                 .Include(x => x.Author)
                 .Reverse());
 
-    private static readonly Func<ApplicationDbContext, GroupId, DateTimeOffset, IAsyncEnumerable<Message>> MessagePageByCursorAsync =
+    private static readonly Func<ApplicationDbContext, GroupId, MessageId, IAsyncEnumerable<Message>> MessagePageByCursorAsync =
         EF.CompileAsyncQuery(
-            (ApplicationDbContext context, GroupId groupId, DateTimeOffset cursor) => context.Messages
+            (ApplicationDbContext context, GroupId groupId, MessageId cursor) => context.Messages
                 .AsNoTracking()
                 .Where(x => x.GroupId == groupId)
-                .Where(x => x.Timestamp < cursor)
+                .Where(x => x.Id < cursor)
                 .OrderByDescending(x => x.Timestamp)
                 .Take(PageSize)
                 .Include(x => x.Author)

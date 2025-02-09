@@ -21,7 +21,7 @@ public static class UserStatusExtensions
     };
 
     private const string ColorPrefix = "color:";
-    
+
     public static string ColorStyle(this UserStatus status) => status switch
     {
         UserStatus.Online => ColorPrefix + "var(--mud-palette-success)",

@@ -65,9 +65,14 @@
         }
 
         VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        ChatManager.ChatChanged += StateHasChanged;
+        ChatManager.ChatChanged += ChatChanged;
 
         await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
+    }
+
+    private void ChatChanged()
+    {
+        _channel = ChatManager.CurrentChat;
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -78,9 +83,9 @@
     public async ValueTask DisposeAsync()
     {
         VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
-        ChatManager.ChatChanged -= StateHasChanged;
+        ChatManager.ChatChanged -= ChatChanged;
 
-        await ChatManager.ClearChannelSelectionAsync();
+        ChatManager.ClearChannelSelection();
 
         if (FileTransferService.UploadChannel is not { } channel) return;
 

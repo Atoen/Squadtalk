@@ -14,7 +14,7 @@ public static class FileSizeConverter
             ? ConvertToHumanReadableSize(parsed)
             : string.Empty;
     }
-    
+
     public static string ConvertToHumanReadableSize(long length)
     {
         static string Format(double num) => num.ToString("F2", CultureInfo.InvariantCulture);

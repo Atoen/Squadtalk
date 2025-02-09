@@ -26,7 +26,7 @@ internal static class Mappers
         {
             return dto;
         }
-        
+
         return new UserDto
         {
             Username = user.Username,

@@ -8,7 +8,7 @@ namespace Squadtalk.Services.Prerender;
 internal class ServerUserAuthenticationService : IUserAuthenticationService
 {
     event Action? IUserAuthenticationService.LocalUsernameChanged { add { } remove { } }
-    
+
     public bool IsAuthenticated { get; }
 
     public UserId UserId { get; }

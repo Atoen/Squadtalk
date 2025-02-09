@@ -9,16 +9,16 @@ public static class ClaimsPrincipalExtensions
     {
         var claim = principal.Claims.FirstOrDefault(x => x.Type == claimType);
         return claim?.Value;
-    }        
+    }
 
     public static string GetRequiredClaimValue(this ClaimsPrincipal principal, string claimType)
     {
         var claim = principal.Claims.FirstOrDefault(x => x.Type == claimType);
-        if (claim is null) 
+        if (claim is null)
         {
             throw new Exception("Required Claim not found");
         }
-        
+
         return claim.Value;
     }
 

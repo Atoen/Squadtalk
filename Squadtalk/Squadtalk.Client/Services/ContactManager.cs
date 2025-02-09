@@ -148,7 +148,7 @@ internal class ContactManager : IContactManager
         {
             return;
         }
-        
+
         using var scope1 = new NotificationScope(_outgoingFriendRequests);
         using var scope2 = new NotificationScope(_incomingFriendRequests);
 
@@ -169,7 +169,7 @@ internal class ContactManager : IContactManager
     #endregion
 
     #region Event Handlers
-    
+
     private void LocalUsernameChanged()
     {
         LocalUserModel.Username = _userAuthenticationService.Username;
@@ -241,7 +241,7 @@ internal class ContactManager : IContactManager
 
         friend.Status = status;
     }
-    
+
     private void LocalStatusChanged()
     {
         LocalUserModel.Status = _signalrService.UserStatus;

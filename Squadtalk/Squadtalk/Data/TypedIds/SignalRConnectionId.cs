@@ -11,7 +11,7 @@ public record SignalRConnectionId(string Value) : StringIdRecord(Value), IString
     public override string ToString() => Value;
 
     public static SignalRConnectionId From(string value) => new(value);
-    
+
     public static SignalRConnectionId New(StringIdValueFormat format = StringIdValueFormat.GuidN) =>
         new(GetFormattedValue(format));
 }

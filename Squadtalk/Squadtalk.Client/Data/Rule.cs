@@ -9,7 +9,7 @@ public record Rule
 
     [JsonPropertyName("b")]
     public string Attacked { get; }
-    
+
     public Rule()
     {
         // if (attacker == attacked)
@@ -20,13 +20,13 @@ public record Rule
         Attacker = string.Empty;
         Attacked = string.Empty;
     }
-    
+
     [JsonConstructor]
     public Rule(string attacker, string attacked)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(attacker);
         ArgumentException.ThrowIfNullOrWhiteSpace(attacked);
-        
+
         if (attacker == attacked)
         {
             throw new InvalidOperationException("Attacker cannot be the same as attacked.");
@@ -36,7 +36,7 @@ public record Rule
         {
             throw new InvalidOperationException($"Attacker has invalid color: {attacker}");
         }
-        
+
         if (!AvailableColors.Any(x => x.Equals(attacked, StringComparison.InvariantCultureIgnoreCase)))
         {
             throw new InvalidOperationException($"Attacked has invalid color: {attacked}");

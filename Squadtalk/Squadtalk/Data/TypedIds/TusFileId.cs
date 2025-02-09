@@ -11,7 +11,7 @@ public record TusFileId(string Value): StringIdRecord(Value), IStringIdRecord<Tu
     public override string ToString() => Value;
 
     public static TusFileId From(string value) => new(value);
-    
+
     public static TusFileId New(StringIdValueFormat format = StringIdValueFormat.GuidN) =>
         new(GetFormattedValue(format));
 }

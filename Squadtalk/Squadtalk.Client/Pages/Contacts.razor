@@ -52,6 +52,6 @@
     private IDisposable? _subscription;
 
     public void OnChange() => StateHasChanged();
-    
+
     public void Dispose() => _subscription?.Dispose();
 }

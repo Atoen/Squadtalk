@@ -78,11 +78,11 @@ else
 
         await ContactManager.SetStatusAsync(status);
     }
-    
+
     protected override void OnInitialized() => _subscription = ContactManager.LocalUserModel.Subscribe(this);
 
     public void OnChange() => StateHasChanged();
-    
+
     private IDisposable? _subscription;
 
     public void Dispose() => _subscription?.Dispose();

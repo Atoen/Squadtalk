@@ -31,7 +31,7 @@ public class GroupParticipantModel : IObservable, IGroupParticipant
     string IChatUser.Username => User.Username;
     UserId IChatUser.Id => User.Id;
     UserStatus IChatUser.Status => User.Status;
-    
+
     public IDisposable? Subscribe(ISubscriber subscriber) => User.Subscribe(subscriber);
 }
 

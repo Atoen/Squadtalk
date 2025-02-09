@@ -21,7 +21,7 @@ public class FileModel
             Type = GetType(name)
         };
     }
-    
+
     private const string Pdf = "pdf";
     private const string Text = "txt";
     private static readonly List<string> Archive = ["zip", "rar", "7z"];

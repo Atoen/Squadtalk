@@ -12,8 +12,8 @@ public interface ISignalrTextService
     event Action<GroupId, string?>? ChannelNameChanged;
 
     event Action<GroupDto>? GroupParticipantsChanged;
-    event Func<GroupDto, Task>? AddedToGroup;
-    event Func<IEnumerable<GroupDto>, Task>? ChannelsReceived;
+    event Action<GroupDto>? AddedToGroup;
+    event Action<IEnumerable<GroupDto>>? ChannelsReceived;
 
     event Action<GroupId, UserId>? UserIsTyping;
     event Action<GroupId, UserId>? UserStoppedTyping;
@@ -25,7 +25,7 @@ public interface ISignalrTextService
 
     Task<NetworkResult<List<MessageDto>>> GetMessagePageAsync(GroupId groupId, TextChannelCursor cursor = default, CancellationToken cancellationToken = default);
 
-    Task<NetworkResult<GroupId?>> CreateGroupAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
+    Task<NetworkResult<GroupDto?>> CreateGroupAsync(IEnumerable<UserId> participants, CancellationToken cancellationToken = default);
 
     Task<NetworkResult<HubResult>> AddFriendsToGroupAsync(GroupId groupId, IEnumerable<UserId> friends, CancellationToken cancellationToken = default);
 
