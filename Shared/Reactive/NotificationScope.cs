@@ -3,7 +3,7 @@ namespace Shared.Reactive;
 public struct NotificationScope : IDisposable
 {
     private readonly IUseNotificationScope _scoped;
-    
+
     public bool HasPendingNotifications { get; private set; }
 
     public NotificationScope(IUseNotificationScope scoped)
@@ -19,7 +19,7 @@ public struct NotificationScope : IDisposable
 
 public interface IUseNotificationScope
 {
-    void EnterScope(NotificationScope scope);
-    
-    void ExitScope(NotificationScope scope);
+    void EnterScope(in NotificationScope scope);
+
+    void ExitScope(in NotificationScope scope);
 }

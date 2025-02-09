@@ -321,7 +321,7 @@ public partial class AppHub
     }
 
     [HubMethodName(HubMethods.CreateGroup)]
-    public async Task<GroupId?> CreateGroup(
+    public async Task<GroupDto?> CreateGroup(
         List<UserId> participantIds, GroupRepository groupRepository, SystemMessageService systemMessageService)
     {
         var creatingUserId = UserId;
@@ -343,14 +343,16 @@ public partial class AppHub
             return null;
         }
 
-        await NotifyNewGroupParticipantsAsync(group.ToDto(), group.Participants.Select(x => x.UserId));
+        var dto = group.ToDto();
+
+        await NotifyNewGroupParticipantsAsync(dto, group.Participants.Select(x => x.UserId));
 
         if (group.ChatType != ChatType.DirectMessage)
         {
             await systemMessageService.SendGroupCreatedMessageAsync(creatingUser, group.Id);
         }
 
-        return group.Id;
+        return dto;
     }
 
     private async Task NotifyNewGroupParticipantsAsync(GroupDto groupDto, IEnumerable<UserId> participantsToNotify)

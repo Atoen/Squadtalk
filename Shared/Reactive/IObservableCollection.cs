@@ -7,7 +7,7 @@ public interface IObservableCollection<out T> : IObservable, IReadOnlyCollection
 public class ObservableCollection<T> : IObservableCollection<T>
 {
     public static readonly IObservableCollection<T> Empty = new ObservableCollection<T>();
-    
+
     public IDisposable? Subscribe(ISubscriber subscriber) => null;
 
     public IEnumerator<T> GetEnumerator() => Enumerable.Empty<T>().GetEnumerator();

@@ -11,7 +11,7 @@ public static class DelegateExtensions
 
         return Task.CompletedTask;
     }
-    
+
     public static Task TryInvoke<T>(this Func<T, Task>? @delegate, T arg)
     {
         if (@delegate is not null)
@@ -21,7 +21,7 @@ public static class DelegateExtensions
 
         return Task.CompletedTask;
     }
-    
+
     public static Task TryInvoke(this Func<Task>? @delegate)
     {
         if (@delegate is not null)

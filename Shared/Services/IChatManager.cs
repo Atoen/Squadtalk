@@ -30,15 +30,15 @@ public interface IChatManager
 
     Task UpgradeToPersistentChannelAsync(ChatModel chatModel);
 
-    Task OpenChannelAsync(ChatModel chatModel, bool navigate = true);
+    Task OpenChannelAsync(ChatModel chatModel, bool navigate = true, bool replace = false);
 
-    Task<GroupId?> CreateNewChannelAsync(params IEnumerable<UserModel> others);
+    Task<ChatModel?> CreateNewChatAsync(params IEnumerable<UserModel> others);
 
     Task CreateAndOpenNewChannelAsync(params IEnumerable<UserModel> others);
 
     Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends);
 
-    Task ClearChannelSelectionAsync();
+    void ClearChannelSelection();
 
     Task MarkMessageSeenAsync(ChatModel chat, MessageModel message);
 

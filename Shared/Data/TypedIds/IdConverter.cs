@@ -9,12 +9,12 @@ public class StringIdConverter<T> : TypeConverter where T : class, IStringIdReco
     {
         return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
     }
-    
+
     public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
     {
         return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
     }
-    
+
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
         return value is string val
@@ -37,13 +37,13 @@ public class GuidIdConverter<T> : TypeConverter where T : struct, IGuidIdRecord<
         return sourceType == typeof(Guid) || sourceType == typeof(string)
                                           || base.CanConvertFrom(context, sourceType);
     }
-    
+
     public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
     {
-        return destinationType == typeof(Guid) || destinationType == typeof(string) 
+        return destinationType == typeof(Guid) || destinationType == typeof(string)
                                                || base.CanConvertTo(context, destinationType);
     }
-    
+
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
         return value switch

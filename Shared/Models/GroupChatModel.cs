@@ -34,7 +34,7 @@ public sealed class GroupChatModel : ChatModel, ISubscriber, IDisposable
 
         Participants = participants.OrderBy(x => x.Username()).ToList();
         LocalUser = Participants.Single(x => x.User.IsLocal);
-        
+
         Others = Participants.Where(x => x.User.IsRemote).ToObservableItemList();
         _subscription = Others.Subscribe(this);
     }
@@ -57,7 +57,7 @@ public sealed class GroupChatModel : ChatModel, ISubscriber, IDisposable
         Participants.AddRange(updated);
 
         Others.Refresh(updated.Where(x => x.IsRemote()));
-        
+
         var localRole = Participants.Single(x => x.IsLocal()).Role;
         LocalUser.Role = localRole;
 
@@ -87,7 +87,7 @@ public sealed class GroupChatModel : ChatModel, ISubscriber, IDisposable
     }
 
     public void OnChange() => Notify();
-    
+
     public void Dispose()
     {
         _subscription?.Dispose();

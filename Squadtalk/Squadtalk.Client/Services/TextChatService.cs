@@ -1,6 +1,7 @@
 using Shared.Data;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Chat;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Services;
 using Squadtalk.Client.Services.SignalR;
@@ -40,12 +41,19 @@ internal class TextChatService : ITextChatService
     {
         if (_chatManager.CurrentChat is not { Id: var channelId }) return;
 
-        await _signalrTextService.SendMessageAsync(message, channelId, cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation("Sending message: {Text} on channel: {Id}", message, channelId);
+
+        await _signalrTextService.SendMessageAsync(message, channelId, cancellationToken);
     }
 
     public void StartedTyping(GroupId groupId)
     {
         if (_typingChannelId == groupId || _typingChannelId == _chatManager.GlobalChat.Id)
+        {
+            return;
+        }
+
+        if (_signalrTextService.UserStatus == UserStatus.Offline)
         {
             return;
         }
@@ -76,7 +84,7 @@ internal class TextChatService : ITextChatService
             return Array.Empty<MessageModel>();
         }
 
-        channelState.Cursor = new TextChannelCursor(page[0].Timestamp.UtcTicks);
+        channelState.Cursor = new TextChannelCursor(page[0].Id);
         return _modelService.CreateModelPage(page, channelState);
     }
 

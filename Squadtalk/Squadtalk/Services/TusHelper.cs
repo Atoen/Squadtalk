@@ -11,7 +11,7 @@ public class TusHelper
     public string StorePath { get; }
 
     public TusDiskStore DiskStore { get; }
-        
+
     public TusHelper(IConfiguration configuration, ILogger<TusHelper> logger)
     {
         _logger = logger;
@@ -41,7 +41,7 @@ public class TusHelper
     public static string FormatMetadata(Dictionary<string, string> metadata)
     {
         var builder = new StringBuilder();
-        
+
         foreach (var (key, value) in metadata)
         {
             var base64 = value.ToBase64();

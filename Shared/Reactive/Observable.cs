@@ -7,9 +7,9 @@ public abstract class Observable<T> : IObservable, IUseNotificationScope where T
 {
     private List<ISubscriber>? _subscribers;
     private readonly Lock _lock = new();
-    
+
     private NotificationScope? _activeScope;
-    
+
     public static explicit operator T(Observable<T> observable)
     {
         var value = observable as T;
@@ -32,18 +32,18 @@ public abstract class Observable<T> : IObservable, IUseNotificationScope where T
             if (!_subscribers.Contains(subscriber))
             {
                 _subscribers.Add(subscriber);
-                Console.WriteLine($"[{typeof(Observable<T>)}] Subscribed!");
+                Console.WriteLine($"[{typeof(Observable<T>)}] Subscribed! {_subscribers.Count}");
             }
             else
             {
-                Console.WriteLine($"[{typeof(Observable<T>)}] Failed to subscribe!");
+                Console.WriteLine($"[{typeof(Observable<T>)}] Failed to subscribe!, {_subscribers.Count}");
             }
         }
 
         return new Unsubscriber(_subscribers, subscriber, _lock);
     }
 
-    private protected void SetField<TField>(ref TField field, TField value)
+    protected void SetField<TField>(ref TField field, TField value)
     {
         if (EqualityComparer<TField>.Default.Equals(field, value))
         {
@@ -84,25 +84,23 @@ public abstract class Observable<T> : IObservable, IUseNotificationScope where T
             {
                 if (subscribers.Remove(subscriber))
                 {
-                    Console.WriteLine($"[{typeof(Observable<T>)}] Unsubscribed!");
+                    Console.WriteLine($"[{typeof(Observable<T>)}] Unsubscribed!, {subscribers.Count}");
                 }
                 else
                 {
-                    Console.WriteLine($"[{typeof(Observable<T>)}] Failed to unsubscribe!");
+                    Console.WriteLine($"[{typeof(Observable<T>)}] Failed to unsubscribe!, {subscribers.Count}");
                 }
             }
         }
     }
-    
-    public void EnterScope(NotificationScope scope)
+
+    public void EnterScope(in NotificationScope scope)
     {
-        Console.WriteLine("Entered scope!");
         _activeScope = scope;
     }
 
-    public void ExitScope(NotificationScope scope)
+    public void ExitScope(in NotificationScope scope)
     {
-        Console.WriteLine("Exited scope!");
         if (scope.HasPendingNotifications)
         {
             Notify(force: true);

@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Data.TypedIds;
-using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services;
@@ -17,7 +16,7 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
     private readonly ClaimsPrincipal _claimsPrincipal;
 
     public event Action? LocalUsernameChanged;
-    
+
     public bool IsAuthenticated => _claimsPrincipal is { Identity.IsAuthenticated: true };
 
     public UserId UserId { get; }
@@ -52,7 +51,7 @@ internal class UserAuthenticationService : AuthenticationStateProvider, IUserAut
     public void UpdateLocalUsername(string newUsername)
     {
         if (newUsername == Username) return;
-        
+
         Username = newUsername;
         LocalUsernameChanged?.Invoke();
     }

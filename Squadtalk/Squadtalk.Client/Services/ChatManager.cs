@@ -78,19 +78,31 @@ internal class ChatManager : IChatManager
         return groupId == GlobalChat.Id ? GlobalChat : _allChats[groupId];
     }
 
-    public async Task OpenChannelAsync(ChatModel chatModel, bool navigate = true)
+    public async Task OpenChannelAsync(ChatModel chat, bool navigate = true, bool replace = false)
     {
-        if (CurrentChat == chatModel) return;
+        if (CurrentChat == chat) return;
 
-        await ChangeChannelAsync(chatModel);
+        _logger.LogInformation("Opening channel {Id}", chat.Id);
+
+        CurrentChat = chat;
+
+        if (chat.LastMessage is { } lastMessage)
+        {
+            await _signalrService.MarkMessageSeenAsync(chat.Id, lastMessage.Id);
+        }
+
+        chat.State.UnreadMessages = 0;
+
+        ChatChanged?.Invoke();
+        await ChatChangedAsync.TryInvoke();
 
         if (navigate)
         {
-            _navigationManager.NavigateTo($"Chats/{CurrentChat?.Id}");
+            _navigationManager.NavigateTo($"Chats/{CurrentChat?.Id}", replace: replace);
         }
     }
 
-    public Task ClearChannelSelectionAsync() => ChangeChannelAsync(null);
+    public void ClearChannelSelection() => CurrentChat = null;
 
     public async Task MarkMessageSeenAsync(ChatModel chat, MessageModel message)
     {
@@ -113,16 +125,22 @@ internal class ChatManager : IChatManager
 
     public async Task UpgradeToPersistentChannelAsync(ChatModel chatModel)
     {
+        _logger.LogInformation("Upgrading channel");
+
         if (chatModel is not DirectMessageModel dm)
         {
             _logger.LogError("Only direct message channels can be temporary");
             return;
         }
 
-        var channelId = await CreateNewChannelAsync(dm.Other);
-        if (channelId is not null && GetChannel(channelId) is { } openedChannel)
+        var chat = await CreateNewChatAsync(dm.Other);
+
+        _logger.LogInformation("Result id: {GroupId}", chat);
+
+        if (chat is not null)
         {
-            await ChangeChannelAsync(openedChannel);
+            _logger.LogInformation("Opening upgraded channel");
+            await OpenChannelAsync(chat, replace: true);
         }
     }
 
@@ -170,27 +188,25 @@ internal class ChatManager : IChatManager
         return true;
     }
 
-    public async Task<GroupId?> CreateNewChannelAsync(params IEnumerable<UserModel> others)
+    public async Task<ChatModel?> CreateNewChatAsync(params IEnumerable<UserModel> others)
     {
         var participantsId = others
             .Select(x => x.Id)
             .Append(_userAuthenticationService.UserId);
 
         var result = await _signalrService.CreateGroupAsync(participantsId);
-        return result.Value;
+        return result.SuccessAndValueIsNot(null)
+            ? AddChannel(result.Value!, false)
+            : null;
     }
 
     public async Task CreateAndOpenNewChannelAsync(params IEnumerable<UserModel> others)
     {
-        var channelId = await CreateNewChannelAsync(others);
-        if (channelId is null) return;
-
-        if (!_allChats.TryGetValue(channelId, out var createdChannel))
+        var chat = await CreateNewChatAsync(others);
+        if (chat is not null)
         {
-            return;
+            await OpenChannelAsync(chat);
         }
-
-        await OpenChannelAsync(createdChannel);
     }
 
     public async Task AddFriendsToGroupAsync(ChatModel chat, params IEnumerable<UserModel> friends)
@@ -208,20 +224,20 @@ internal class ChatManager : IChatManager
 
     #region Event Handlers
 
-    private async Task AddedToGroup(IChatGroup group)
+    private void AddedToGroup(IChatGroup group)
     {
-        await AddChannel(group, false);
+        AddChannel(group, false);
 
         ChatListChanged?.Invoke();
     }
 
-    private async Task ChannelsReceived(IEnumerable<IChatGroup> channels)
+    private void ChannelsReceived(IEnumerable<IChatGroup> channels)
     {
         using var scope = new NotificationScope(_allChats);
-        
+
         foreach (var channel in channels)
         {
-            await AddChannel(channel, true);
+            AddChannel(channel, true);
         }
 
         ChatListChanged?.Invoke();
@@ -299,62 +315,41 @@ internal class ChatManager : IChatManager
         return GroupParticipantModel.Create(groupParticipant, _contactManager.UserModelProvider);
     }
 
-    private async Task ChangeChannelAsync(ChatModel? chat)
+    private ChatModel AddChannel(IChatGroup group, bool bulk)
     {
-        if (CurrentChat == chat)
+        if (_allChats.TryGetValue(group.Id, out var existingModel))
+        {
+            return existingModel;
+        }
+
+        var model = ChatModel.Create(group, GroupParticipantProvider);
+        if (!bulk)
+        {
+            model.State.ScrolledToBeginning = true;
+        }
+
+        _allChats.Add(model);
+
+        if (model is DirectMessageModel dm)
+        {
+            _dms.Add(dm);
+            UpgradeTemporaryChatIfNeeded(dm);
+        }
+
+        return model;
+    }
+
+    private void UpgradeTemporaryChatIfNeeded(DirectMessageModel addedChannel)
+    {
+        if (CurrentChat is not DirectMessageModel dm)
         {
             return;
         }
 
-        CurrentChat = chat;
-
-        if (chat is not null)
+        if (dm.IsTemporary && dm.Other.Id == addedChannel.Other.Id)
         {
-            if (chat.LastMessage is { } lastMessage)
-            {
-                await _signalrService.MarkMessageSeenAsync(chat.Id, lastMessage.Id);
-            }
-
-            chat.State.UnreadMessages = 0;
+            _ = OpenChannelAsync(addedChannel, replace: true);
         }
-
-        ChatChanged?.Invoke();
-        await ChatChangedAsync.TryInvoke();
-    }
-
-    private Task AddChannel(IChatGroup group, bool bulk)
-    {
-        if (_allChats.ContainsKey(group.Id))
-        {
-            return Task.CompletedTask;
-        }
-
-        var model = ChatModel.Create(group, GroupParticipantProvider);
-        // if (!bulk)
-        // {
-        //     model.State.ScrolledToBeginning = true;
-        // }
-
-        _allChats.Add(model);
-
-        if (model is not DirectMessageModel dm)
-        {
-            return Task.CompletedTask;
-        }
-
-        _dms.Add(dm);
-        return UpgradeFakeChanelIfNeeded(dm);
-    }
-
-    private Task UpgradeFakeChanelIfNeeded(DirectMessageModel openedDirectMessageModel)
-    {
-        if (CurrentChat is DirectMessageModel dm && dm.IsTemporary() &&
-            dm.Other.Id == openedDirectMessageModel.Other.Id)
-        {
-            return OpenChannelAsync(openedDirectMessageModel);
-        }
-
-        return Task.CompletedTask;
     }
 
     private void UpdateTypingState(GroupId groupId, UserId userId, bool isTyping)

@@ -12,7 +12,7 @@ public class ImagePreviewGenerator
 {
     private readonly TusHelper _tusHelper;
     private readonly ILogger<ImagePreviewGenerator> _logger;
-    
+
     private readonly PngEncoder _pngEncoder = new();
 
     public ImagePreviewGenerator(TusHelper tusHelper, ILogger<ImagePreviewGenerator> logger)
@@ -53,7 +53,7 @@ public class ImagePreviewGenerator
 
         using var image = await Image.LoadAsync(fileContent, cancellationToken);
         var targetSize = GetResizedDimensions(image.Size);
-        
+
         image.Mutate(x => x.Resize(targetSize.Width, targetSize.Height, KnownResamplers.Box));
 
         using var stream = new MemoryStream();
@@ -73,12 +73,12 @@ public class ImagePreviewGenerator
             { EmbedData.ImageWidth, image.Width.ToString() },
             { EmbedData.ImageHeight, image.Height.ToString() }
         };
-        
+
         var formattedMetadata = TusHelper.FormatMetadata(previewMetadata);
         var fileId = await _tusHelper.CreateFileAsync(stream, fileSize, formattedMetadata, cancellationToken);
 
-        return fileId is not null 
-            ? new ImagePreviewData(fileId, previewName, image.Size) 
+        return fileId is not null
+            ? new ImagePreviewData(fileId, previewName, image.Size)
             : null;
     }
 

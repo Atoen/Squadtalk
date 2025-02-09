@@ -4,22 +4,22 @@ using System.Diagnostics.CodeAnalysis;
 namespace Shared.Reactive;
 
 public class ObservableDictionary<TKey, TValue>
-    : Observable<ObservableDictionary<TKey, TValue>>, 
+    : Observable<ObservableDictionary<TKey, TValue>>,
       IObservableCollection<KeyValuePair<TKey, TValue>>
     where TKey : notnull
     where TValue : class, IKeyId<TKey>
 {
     private readonly Dictionary<TKey, TValue> _dictionary;
     private ValueCollection? _values;
-    
+
     public TValue this[TKey key]
     {
         get => _dictionary[key];
         set => _dictionary[key] = value;
     }
-    
+
     public int Count => _dictionary.Count;
-    
+
     public ObservableDictionary() => _dictionary = [];
 
     public ObservableDictionary(Dictionary<TKey, TValue> dictionary) => _dictionary = dictionary;
@@ -36,20 +36,20 @@ public class ObservableDictionary<TKey, TValue>
 
         return added;
     }
-    
+
     public void AddMany(params IEnumerable<TValue> values)
     {
         foreach (var value in values)
         {
             _dictionary.Add(value.Key, value);
         }
-        
+
         Notify();
     }
-    
+
     public bool ContainsKey(TKey key) => _dictionary.ContainsKey(key);
 
-    public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => 
+    public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) =>
         _dictionary.TryGetValue(key, out value);
 
     public TValue? GetValueOrDefault(TKey key) => _dictionary.GetValueOrDefault(key);
@@ -66,7 +66,7 @@ public class ObservableDictionary<TKey, TValue>
 
         return removed;
     }
-    
+
     public bool Remove(TKey key, [MaybeNullWhen(false)] out TValue value)
     {
         var removed = _dictionary.Remove(key, out value);
@@ -74,10 +74,10 @@ public class ObservableDictionary<TKey, TValue>
         {
             Notify();
         }
-        
+
         return removed;
     }
-    
+
     public bool Remove(TValue value)
     {
         var removed = _dictionary.Remove(value.Key);
@@ -92,7 +92,7 @@ public class ObservableDictionary<TKey, TValue>
     public void Clear()
     {
         if (Count == 0) return;
-        
+
         _dictionary.Clear();
         Notify();
     }
@@ -116,7 +116,7 @@ public class ObservableDictionary<TKey, TValue>
     private sealed class ValueCollection(ObservableDictionary<TKey, TValue> observableDictionary) : IObservableCollection<TValue>
     {
         public IDisposable? Subscribe(ISubscriber subscriber) => observableDictionary.Subscribe(subscriber);
-        
+
         public IEnumerator<TValue> GetEnumerator() => observableDictionary._dictionary.Values.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -36,7 +36,7 @@ public static class ConfigurationExtensions
         var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
         var logger = factory.CreateLogger(typeof(ConfigurationExtensions));
         logger.LogCritical("Connection string {ConnectionString} not found", name);
-        
+
         throw new ArgumentNullException(nameof(name), $"Connection string {name} not found");
     }
 
