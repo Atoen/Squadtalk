@@ -1,6 +1,7 @@
 using System.Net;
 using MessagePack;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Routing;
@@ -35,6 +36,14 @@ builder.Services.AddControllers();
 builder.Services.AddResponseCompression();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.All;
+
+    var proxyAddress = IPAddress.Parse(builder.Configuration.GetString("ProxyAddress"));
+    options.KnownProxies.Add(proxyAddress);
+});
 
 builder.ConfigureAuthentication();
 
@@ -101,6 +110,7 @@ var app = builder.Build();
 app.SetupRedisData();
 
 app.UseCors(corsPolicy);
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
