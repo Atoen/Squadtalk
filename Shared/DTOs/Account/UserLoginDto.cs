@@ -5,7 +5,7 @@ namespace Shared.DTOs.Account;
 public class UserLoginDto
 {
     [Required]
-    public required string Username { get; init; }
+    public required string UsernameOrEmail { get; init; }
 
     [Required]
     [DataType(DataType.Password)]

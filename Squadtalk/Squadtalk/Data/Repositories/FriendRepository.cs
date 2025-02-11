@@ -9,31 +9,26 @@ public class FriendRepository(ApplicationDbContext dbContext, ILogger<FriendRepo
 {
     public async Task<List<ChatUser>> GetUserFriendsAsync(UserId userId)
     {
-        Logger.LogInformation("Getting user friends");
         return await UserFriendsAsync(DbContext, userId).ToListAsync();
     }
 
     public async Task<List<UserId>> GetUserFriendIdsAsync(UserId userId)
     {
-        Logger.LogInformation("Getting user friends ids");
         return await UserFriendIdsAsync(DbContext, userId).ToListAsync();
     }
 
     public async Task<List<FriendRequest>> GetUserPendingFriendRequests(UserId userId)
     {
-        Logger.LogInformation("Getting user pending friend requests");
         return await UserPendingFriendRequests(DbContext, userId).ToListAsync();
     }
 
     public async Task<FriendRequest?> FindFriendRequestByIdAsync(FriendRequestId friendRequestId)
     {
-        Logger.LogInformation("Getting friend request by id");
         return await FriendRequestByIdAsync(DbContext, friendRequestId);
     }
 
     public async Task<Friendship?> FindFriendshipById(int friendshipId)
     {
-        Logger.LogInformation("Getting friendship by id");
         return await FriendshipByIdAsync(DbContext, friendshipId);
     }
 

@@ -27,7 +27,7 @@ internal class AccountManager : IAccountManager
 
     public async Task<LoginResult> LoginAsync(UserLoginDto loginDto)
     {
-        var result = await _signInManager.PasswordSignInAsync(loginDto.Username, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
+        var result = await _signInManager.PasswordSignInAsync(loginDto.UsernameOrEmail, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
         if (!result.Succeeded)
         {
             return new LoginResult.Fail();

@@ -82,10 +82,12 @@ check_email_for_password_reset: Proszę sprawdź swój e-mail, aby zresetować s
 invalid_password_reset_link: Link do resetowania hasła jest nieprawidłowy lub wygasł.
 email_is_invalid: Podany adres e-mail jest nieprawidłowy.
 email_is_required: Proszę podać adres e-mail.
+username_or_email_is_required: Proszę podać nazwę użytkownika lub adres email.
 username_is_required: Proszę podać nazwę użytkownika.
 password_is_required: Proszę podać hasło.
 email: Adres e-mail
 username: Nazwa użytkownika
+username_or_email: Nazwa użytkownika lub adres email 
 password: Hasło
 confirm_password: Powtórz nowe hasło
 failed_to_request_password_reset_code_template: "Nie udało się zażądać resetowania hasła (kod błędu: {0})"

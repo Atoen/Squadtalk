@@ -43,11 +43,19 @@ public class AccountController : ControllerBase
         _accountManager = accountManager;
         _logger = logger;
     }
-
+    
     [HttpPost(Routes.RelativeEndpoints.Login)]
     public async Task<ActionResult> LoginUser(UserLoginDto loginDto)
     {
-        var result = await _signInManager.PasswordSignInAsync(loginDto.Username, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
+        var user = await _userManager.FindByNameAsync(loginDto.UsernameOrEmail)
+                ?? await _userManager.FindByEmailAsync(loginDto.UsernameOrEmail);
+
+        if (user == null)
+        {
+            return Unauthorized(LoginResultDto.Fail);
+        }
+        
+        var result = await _signInManager.PasswordSignInAsync(user, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
         if (!result.Succeeded)
         {
             return Unauthorized(LoginResultDto.Fail);
@@ -55,7 +63,7 @@ public class AccountController : ControllerBase
 
         return Ok(LoginResultDto.Success);
     }
-
+    
     [HttpPost(Routes.RelativeEndpoints.Register)]
     public async Task<ActionResult> RegisterUser(UserRegisterDto registerDto)
     {

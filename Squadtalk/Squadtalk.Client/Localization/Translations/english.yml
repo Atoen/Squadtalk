@@ -86,10 +86,12 @@ check_email_for_password_reset: Please check your email to reset your password.
 invalid_password_reset_link: The password reset link is invalid or expired.
 email_is_invalid: The email address you entered is invalid.
 email_is_required: Please enter your email address.
-username_is_required: Please enter a username.
+username_or_email_is_required: Proszę podać nazwę użytkownika lub adres email.
+username_is_required: Please enter username.
 password_is_required: Please enter your password.
 email: Email address
 username: Username
+username_or_email: Username or email
 password: Password
 confirm_password: Confirm your password
 failed_to_request_password_reset_code_template: "Failed to request password reset (error code: {0})"

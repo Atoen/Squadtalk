@@ -8,8 +8,8 @@
 
             <MudText Typo="Typo.h5" Color="Color.Primary">@LocalizedText.R.login</MudText>
 
-            <MudTextField T="string" Label="@LocalizedText.R.username" Required="true"
-                          RequiredError="@LocalizedText.R.username_is_required" @ref="_usernameField"/>
+            <MudTextField T="string" Label="@LocalizedText.R.username_or_email" Required="true"
+                          RequiredError="@LocalizedText.R.username_or_email_is_required" @ref="_usernameField"/>
 
             <MudTextField T="string" Label="@LocalizedText.R.password" Required="true"
                           RequiredError="@LocalizedText.R.password_is_required"
@@ -83,7 +83,7 @@
 
         var data = new UserLoginDto
         {
-            Username = _usernameField.Value!,
+            UsernameOrEmail = _usernameField.Value!,
             Password = _passwordField.Value!,
             Remember = _rememberCheckBox.Value
         };

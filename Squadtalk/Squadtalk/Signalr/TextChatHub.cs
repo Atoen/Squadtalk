@@ -54,8 +54,6 @@ public partial class AppHub
         var userId = UserId;
         var shouldUpdate = await _connectionManager.SetUserIsTypingAsync(groupId, userId);
 
-        _logger.LogInformation("User {Id} is typing on channel {ChannelId}. Should update: {State}", userId, groupId, shouldUpdate);
-
         if (shouldUpdate)
         {
             await Clients.OthersInGroup(groupId).UserIsTyping(groupId, userId);
@@ -67,8 +65,6 @@ public partial class AppHub
     {
         var userId = UserId;
         var shouldUpdate = await _connectionManager.SetUserStoppedTyping(groupId, userId);
-
-        _logger.LogInformation("User {Id} stopped typing. Should update: {State}", userId, shouldUpdate);
 
         if (shouldUpdate)
         {
@@ -278,6 +274,12 @@ public partial class AppHub
         if (!group.Participants.Remove(participant))
         {
             return HubResult.Error;
+        }
+
+        if (group.Participants.Count == 0)
+        {
+            await groupRepository.DeleteGroupAsync(group);
+            return HubResult.Ok;
         }
 
         if (!await groupRepository.UpdateGroupAsync(group))

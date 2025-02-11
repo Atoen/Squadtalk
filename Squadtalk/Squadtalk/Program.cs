@@ -24,7 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseKestrel(options =>
 {
-    options.Listen(IPAddress.Any, 1235);
+    options.Listen(IPAddress.Loopback, 1235);
 });
 
 // Add services to the container.
@@ -49,8 +49,10 @@ builder.ConfigureAuthentication();
 
 var postgresConnectionString = builder.Configuration.GetRequiredConnectionString("postgres");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(postgresConnectionString));
+builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
+{
+    options.UseNpgsql(postgresConnectionString);
+});
 
 var redisConnectionString = builder.Configuration.GetRequiredConnectionString("redis");
 
@@ -98,7 +100,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicy, policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("app.squadtalk.net")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .WithExposedHeaders(CorsHelper.GetExposedHeaders());

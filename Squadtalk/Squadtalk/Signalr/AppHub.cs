@@ -43,7 +43,6 @@ public partial class AppHub : Hub<IChatClient>
         }
 
         var (statusChanged, currentStatus) = await _connectionManager.ConnectionStartedAsync(user.Id, Context.ConnectionId);
-        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.Username, statusChanged, currentStatus);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, ChatModel.GlobalChatId);
 
@@ -73,7 +72,6 @@ public partial class AppHub : Hub<IChatClient>
         }
 
         var (statusChanged, currentStatus) = await _connectionManager.ConnectionClosedAsync(user.Id, Context.ConnectionId);
-        _logger.LogInformation("User {Username} status changed: {Changed}, now: {Current}", user.Username, statusChanged, currentStatus);
 
         if (statusChanged)
         {
