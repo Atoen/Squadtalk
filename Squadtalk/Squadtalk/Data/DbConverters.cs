@@ -13,3 +13,5 @@ public class FriendRequestIdConverter() : ValueConverter<FriendRequestId, int>(x
 public class TusFileIdConverter() : ValueConverter<TusFileId, string>(x => x.Value, x => new TusFileId(x));
 
 public class MessageIdConverter() : ValueConverter<MessageId, uint>(x => x.Value, x => new MessageId(x));
+
+public class DateTimeOffsetConverter() : ValueConverter<DateTimeOffset, DateTimeOffset>(x => x.ToUniversalTime(), x => x.ToLocalTime());

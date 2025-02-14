@@ -61,7 +61,7 @@ public abstract class Observable<T> : IObservable, IUseNotificationScope where T
             scope.MarkChanges();
             return;
         }
-        
+
         if (_subscribers is not { Count: > 0 } subscribers)
         {
             return;

@@ -108,7 +108,7 @@
     private void TextFieldValueChanged()
     {
         if (Chat.IsNullOrSpecial()) return;
-        
+
         var channelId = Chat.Id;
 
         if (_textField.Value is null or { Length: 0 })

@@ -5,57 +5,58 @@ using MimeKit.Text;
 using Polly;
 using Polly.Registry;
 using Polly.Retry;
+using Squadtalk.Configuration;
 using Squadtalk.Data.Entities;
-using Squadtalk.Extensions;
 
 namespace Squadtalk.Services;
 
-internal sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
+public interface IEmailSender
+{
+    Task SendConfirmationLinkAsync(string username, string email, string confirmationLink);
+
+    Task SendPasswordResetLinkAsync(string username, string email, string resetLink);
+
+    Task SendPasswordResetCodeAsync(string username, string email, string resetCode);
+}
+
+internal sealed class EmailSender : IEmailSender, IDisposable
 {
     private readonly SmtpClient _client;
+    private readonly EmailConfiguration _configuration;
     private readonly ILogger<EmailSender> _logger;
     private readonly ResiliencePipelineRegistry<string> _registry;
 
     private readonly MailboxAddress _sender;
-    private readonly string _password;
-    private readonly string _host;
-    private readonly int _port;
 
-    public EmailSender(SmtpClient client, IConfiguration configuration, ILogger<EmailSender> logger, ResiliencePipelineRegistry<string> registry)
+    public EmailSender(SmtpClient client, EmailConfiguration configuration, ILogger<EmailSender> logger, ResiliencePipelineRegistry<string> registry)
     {
         _client = client;
+        _configuration = configuration;
         _logger = logger;
         _registry = registry;
 
-        _password = configuration.GetString("Mail:Password");
-        _host = configuration.GetString("Mail:Host");
-
-        var senderName = configuration.GetString("Mail:Username");
-        var senderAddress = configuration.GetString("Mail:Address");
-
-        _sender = new MailboxAddress(senderName, senderAddress);
-        _port = Convert.ToInt32(configuration["Mail:Port"]);
+        _sender = new MailboxAddress(configuration.Username, configuration.Address);
     }
 
-    public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
+    public Task SendConfirmationLinkAsync(string username, string email, string confirmationLink)
     {
-        var message = CreateMessage(user.UserName!, email, "Confirm your email",
+        var message = CreateMessage(username, email, "Confirm your email",
             $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
 
         return TrySendAsync(message, email);
     }
 
-    public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink)
+    public Task SendPasswordResetLinkAsync(string username, string email, string resetLink)
     {
-        var message = CreateMessage(user.UserName!, email, "Reset your password",
+        var message = CreateMessage(username, email, "Reset your password",
             $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
 
         return TrySendAsync(message, email);
     }
 
-    public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode)
+    public Task SendPasswordResetCodeAsync(string username, string email, string resetCode)
     {
-        var message = CreateMessage(user.UserName!, email, "Reset your password",
+        var message = CreateMessage(username, email, "Reset your password",
             $"Please reset your password using the following code: {resetCode}");
 
         return TrySendAsync(message, email);
@@ -63,18 +64,12 @@ internal sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
 
     private async Task ConnectAsync()
     {
-        await _client.ConnectAsync(_host, _port, true);
-        await _client.AuthenticateAsync(_sender.Address, _password);
+        await _client.ConnectAsync(_configuration.Host, _configuration.Port, true);
+        await _client.AuthenticateAsync(_sender.Address, _configuration.Password);
     }
 
-    private async Task TrySendAsync(MimeMessage? message, string address)
+    private async Task TrySendAsync(MimeMessage message, string address)
     {
-        if (message is null)
-        {
-            _logger.LogWarning("MimeMessage is null");
-            return;
-        }
-
         var pipeline = _registry.GetOrAddPipeline("smtp", builder =>
         {
             builder.AddRetry(new RetryStrategyOptions
@@ -110,26 +105,18 @@ internal sealed class EmailSender : IEmailSender<ApplicationUser>, IDisposable
         await _client.SendAsync(message);
     }
 
-    private MimeMessage? CreateMessage(string username, string email, string subject, string body)
+    private MimeMessage CreateMessage(string username, string email, string subject, string body)
     {
-        try
+        return new MimeMessage
         {
-            return new MimeMessage
+            From = { _sender },
+            To = { new MailboxAddress(username, email) },
+            Subject = subject,
+            Body = new TextPart(TextFormat.Html)
             {
-                From = { _sender },
-                To = { new MailboxAddress(username, email) },
-                Subject = subject,
-                Body = new TextPart(TextFormat.Html)
-                {
-                    Text = body
-                }
-            };
-        }
-        catch (Exception e)
-        {
-            _logger.LogWarning(e, "Failed to create MimeMessage");
-            return null;
-        }
+                Text = body
+            }
+        };
     }
 
     public void Dispose()

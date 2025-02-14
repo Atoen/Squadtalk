@@ -1,6 +1,7 @@
 using System.Text;
 using Shared.Extensions;
-using Squadtalk.Extensions;
+using Squadtalk.Configuration;
+using Squadtalk.Data.TypedIds;
 using tusdotnet.Stores;
 
 namespace Squadtalk.Services;
@@ -12,15 +13,15 @@ public class TusHelper
 
     public TusDiskStore DiskStore { get; }
 
-    public TusHelper(IConfiguration configuration, ILogger<TusHelper> logger)
+    public TusHelper(TusConfiguration configuration, ILogger<TusHelper> logger)
     {
         _logger = logger;
 
-        StorePath = configuration.GetString("Tus:Path");
+        StorePath = configuration.StorePath;
         DiskStore = new TusDiskStore(StorePath);
     }
 
-    public async Task<string?> CreateFileAsync(Stream stream, long fileSize, string metadata, CancellationToken cancellationToken)
+    public async Task<TusFileId?> CreateFileAsync(Stream stream, long fileSize, string metadata, CancellationToken cancellationToken)
     {
         try
         {
@@ -29,7 +30,7 @@ public class TusHelper
             await DiskStore.SetUploadLengthAsync(fileId, fileSize, cancellationToken);
             await DiskStore.AppendDataAsync(fileId, stream, cancellationToken);
 
-            return fileId;
+            return new TusFileId(fileId);
         }
         catch (Exception e)
         {

@@ -165,5 +165,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         configurationBuilder
             .Properties<MessageId>()
             .HaveConversion<MessageIdConverter>();
+
+        configurationBuilder
+            .Properties<DateTimeOffset>()
+            .HaveConversion<DateTimeOffsetConverter>();
     }
 }

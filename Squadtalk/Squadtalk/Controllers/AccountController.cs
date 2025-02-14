@@ -5,14 +5,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.WebUtilities;
+using Quartz;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Account;
 using Shared.DTOs.Account.Results;
 using Shared.Routing;
-using Shared.Services;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Data.Repositories;
+using Squadtalk.Jobs;
 using Squadtalk.Signalr;
 
 namespace Squadtalk.Controllers;
@@ -25,7 +26,7 @@ public class AccountController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserStore<ApplicationUser> _userStore;
     private readonly IEmailSender<ApplicationUser> _emailSender;
-    private readonly IAccountManager _accountManager;
+    private readonly ISchedulerFactory _schedulerFactory;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
@@ -33,17 +34,17 @@ public class AccountController : ControllerBase
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         IEmailSender<ApplicationUser> emailSender,
-        IAccountManager accountManager,
+        ISchedulerFactory schedulerFactory,
         ILogger<AccountController> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userStore = userStore;
         _emailSender = emailSender;
-        _accountManager = accountManager;
+        _schedulerFactory = schedulerFactory;
         _logger = logger;
     }
-    
+
     [HttpPost(Routes.RelativeEndpoints.Login)]
     public async Task<ActionResult> LoginUser(UserLoginDto loginDto)
     {
@@ -54,7 +55,7 @@ public class AccountController : ControllerBase
         {
             return Unauthorized(LoginResultDto.Fail);
         }
-        
+
         var result = await _signInManager.PasswordSignInAsync(user, loginDto.Password, loginDto.Remember, lockoutOnFailure: false);
         if (!result.Succeeded)
         {
@@ -63,7 +64,7 @@ public class AccountController : ControllerBase
 
         return Ok(LoginResultDto.Success);
     }
-    
+
     [HttpPost(Routes.RelativeEndpoints.Register)]
     public async Task<ActionResult> RegisterUser(UserRegisterDto registerDto)
     {
@@ -97,20 +98,35 @@ public class AccountController : ControllerBase
         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-        var callbackUrl = Url.Action(
+        var url = Url.Action(
             action: "ConfirmEmail",
             controller: "Account",
-            values: new { userId = user.Id.ToString(), code },
+            values: new { userId = UserId.New.ToString(), code },
             protocol: Request.Scheme);
 
-        if (callbackUrl is null)
+        if (url is null)
         {
             _logger.LogError("Callback url is null");
+            return Problem();
         }
-        else
+
+        var scheduler = await _schedulerFactory.GetScheduler();
+
+        var jobData = new JobDataMap
         {
-            await _emailSender.SendConfirmationLinkAsync(user, registerDto.Email, callbackUrl);
-        }
+            { SendEmailVerificationJob.RecipientEmail, user.Email! },
+            { SendEmailVerificationJob.RecipientUsername, user.UserName! },
+            { SendEmailVerificationJob.VerificationLink, url }
+        };
+
+        var trigger = TriggerBuilder.Create()
+            .ForJob(SendEmailVerificationJob.JobName)
+            .WithIdentity($"trigger-send-verification-email-{user.Id}")
+            .UsingJobData(jobData)
+            .StartNow()
+            .Build();
+
+        await scheduler.ScheduleJob(trigger);
 
         await _signInManager.SignInAsync(user, isPersistent: false);
 
@@ -169,8 +185,24 @@ public class AccountController : ControllerBase
         var code = await _userManager.GeneratePasswordResetTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-        var callbackUrl = $"{Request.Scheme}://{Request.Host}{Routes.Pages.ResetPassword}?userId={user.Id}&code={code}";
-        await _emailSender.SendPasswordResetLinkAsync(user, forgotPasswordDto.Email, callbackUrl);
+        var url = $"{Request.Scheme}://{Request.Host}{Routes.Pages.ResetPassword}?userId={user.Id}&code={code}";
+
+        var scheduler = await _schedulerFactory.GetScheduler();
+
+        var jobData = new JobDataMap
+        {
+            { SendPasswordResetEmailJob.RecipientEmail, user.Email! },
+            { SendPasswordResetEmailJob.RecipientUsername, user.UserName! },
+            { SendPasswordResetEmailJob.ResetLink, url }
+        };
+
+        var trigger = TriggerBuilder.Create()
+            .ForJob(SendPasswordResetEmailJob.JobName)
+            .UsingJobData(jobData)
+            .StartNow()
+            .Build();
+
+        await scheduler.ScheduleJob(trigger);
 
         return Ok();
     }
@@ -270,21 +302,34 @@ public class AccountController : ControllerBase
         var code = await _userManager.GenerateChangeEmailTokenAsync(user, changeEmailDto.NewEmail);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-        var callbackUrl = Url.Action(
+        var url = Url.Action(
             action: "ConfirmEmailChange",
             controller: "Account",
             values: new { userId = changeEmailDto.UserId, email = changeEmailDto.NewEmail, code },
             protocol: Request.Scheme);
 
-        if (callbackUrl is null)
+        if (url is null)
         {
             _logger.LogError("Callback url is null");
-        }
-        else
-        {
-            await _emailSender.SendConfirmationLinkAsync(user, changeEmailDto.NewEmail, callbackUrl);
+            return Problem();
         }
 
+        var scheduler = await _schedulerFactory.GetScheduler();
+
+        var jobData = new JobDataMap
+        {
+            { SendEmailVerificationJob.RecipientEmail, user.Email! },
+            { SendEmailVerificationJob.RecipientUsername, user.UserName! },
+            { SendEmailVerificationJob.VerificationLink, url }
+        };
+
+        var trigger = TriggerBuilder.Create()
+            .ForJob(SendEmailVerificationJob.JobName)
+            .UsingJobData(jobData)
+            .StartNow()
+            .Build();
+
+        await scheduler.ScheduleJob(trigger);
         return Ok(ChangeEmailResultDto.ConfirmationSent);
     }
 
