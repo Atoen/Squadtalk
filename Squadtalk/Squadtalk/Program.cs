@@ -92,8 +92,8 @@ app.MapHub<AppHub>("/chathub", options => options.AllowStatefulReconnects = true
 
 app.MapTus("/Upload", TusConfigurationFactory.GetConfiguration);
 
-app.MapPrometheusScrapingEndpoint()
-    .RequireHost("localhost");
+// app.MapPrometheusScrapingEndpoint()
+//     .RequireHost("localhost");
 
 app.MapFallback(context =>
 {

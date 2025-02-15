@@ -1,0 +1,96 @@
+<div class="d-flex justify-center gap-2 mb-2">
+
+    <MudTooltip Text="@MicrophoneTooltipText">
+        <MudButtonGroup Color="MicrophoneButtonColor" Variant="Variant.Filled">
+            <MudIconButton Icon="@MicrophoneIcon"
+                           OnClick="RtcMediaControl.ToggleMicrophoneAsync"
+                           Disabled="@(!RtcMediaControl.MicrophoneAvailable)"/>
+            <MudMenu Icon="@Icons.Material.Rounded.ArrowDropDown"
+                     Disabled="@(!RtcMediaControl.MicrophoneAvailable)">
+                @foreach (var microphone in RtcMediaControl.Microphones)
+                {
+                    var icon = RtcMediaControl.SelectedMicrophone == microphone
+                        ? Icons.Material.Rounded.Check : null;
+
+                    <MudMenuItem OnClick="() => RtcMediaControl.SelectMicrophoneAsync(microphone)"
+                                 Icon="@icon">
+                        @microphone.LabelOrDefault
+                    </MudMenuItem>
+                }
+            </MudMenu>
+        </MudButtonGroup>
+    </MudTooltip>
+
+    <MudTooltip Text="@CameraTooltipText">
+        <MudButtonGroup Color="CameraButtonColor" Variant="Variant.Filled">
+            <MudIconButton Icon="@CameraIcon"
+                           OnClick="RtcMediaControl.ToggleCameraAsync"
+                           Disabled="@(!RtcMediaControl.CameraAvailable)"/>
+            <MudMenu Icon="@Icons.Material.Rounded.ArrowDropDown"
+                     Disabled="@(!RtcMediaControl.CameraAvailable)">
+                @foreach (var camera in RtcMediaControl.Cameras)
+                {
+                    var icon = RtcMediaControl.SelectedCamera == camera
+                        ? Icons.Material.Rounded.Check : null;
+
+                    <MudMenuItem OnClick="() => RtcMediaControl.SelectCameraAsync(camera)"
+                                 Icon="@icon">
+                        @camera.LabelOrDefault
+                    </MudMenuItem>
+                }
+            </MudMenu>
+        </MudButtonGroup>
+    </MudTooltip>
+
+    <MudTooltip Text="@ScreenShareTooltipText">
+        <MudButton Color="ScreenShareButtonColor" Variant="Variant.Filled"
+                   OnClick="RtcMediaControl.ToggleScreenShareAsync">
+            <MudIcon Icon="@ScreenShareIcon" Class="mx-1"/>
+        </MudButton>
+    </MudTooltip>
+
+    <MudTooltip Text="Leave call">
+        <MudButton Color="Color.Error" Variant="Variant.Filled">
+            <MudIcon Icon="@Icons.Material.Rounded.CallEnd" Class="mx-1"/>
+        </MudButton>
+    </MudTooltip>
+
+</div>
+
+@inject IRtcMediaControlService RtcMediaControl
+@inject LocalizedText LocalizedText
+
+@* TODO: use localized text *@
+
+@code
+{
+    private Color MicrophoneButtonColor => RtcMediaControl.MicrophoneEnabled ? Color.Success : Color.Dark;
+    private Color CameraButtonColor => RtcMediaControl.CameraEnabled ? Color.Success : Color.Dark;
+    private Color ScreenShareButtonColor => RtcMediaControl.ScreenShareEnabled ? Color.Success : Color.Dark;
+
+    private string MicrophoneIcon => RtcMediaControl.MicrophoneEnabled
+        ? Icons.Material.Rounded.Mic : Icons.Material.Rounded.MicOff;
+
+    private string CameraIcon => RtcMediaControl.CameraEnabled
+        ? Icons.Material.Rounded.Videocam : Icons.Material.Rounded.VideocamOff;
+
+    private string ScreenShareIcon => RtcMediaControl.ScreenShareEnabled
+        ? Icons.Material.Rounded.ScreenShare : Icons.Material.Rounded.StopScreenShare;
+
+    private string MicrophoneTooltipText => RtcMediaControl switch
+    {
+        { MicrophoneAvailable: false } => "Microphone is unavailable",
+        { MicrophoneEnabled: false } => "Enable microphone",
+        _ => "Disable microphone"
+    };
+
+    private string CameraTooltipText => RtcMediaControl switch
+    {
+        { CameraAvailable: false } => "Camera is unavailable",
+        { CameraEnabled: false } => "Enable camera",
+        _ => "Disable camera"
+    };
+
+    private string ScreenShareTooltipText => RtcMediaControl.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
+
+}

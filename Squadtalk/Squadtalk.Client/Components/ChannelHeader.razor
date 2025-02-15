@@ -1,92 +1,103 @@
 @using Squadtalk.Client.Components.dialogs
 
-<MudPaper Class="d-flex mud-theme-primary align-center mx-1">
-    <div class="mud-typography-h6 order-2 mx-2">@ChatName</div>
+<MudPaper Class="d-flex flex-column mud-theme-primary align-center mx-1">
 
-    @if (!Chat.IsGlobal())
+    <div class="d-flex align-center mud-width-full">
+        <div class="mud-typography-h6 order-2 mx-2">@ChatName</div>
+
+        @if (!Chat.IsGlobal())
+        {
+            <div class="order-1 d-flex ps-2">
+                <ChannelImage Chat="Chat" Small="true"/>
+            </div>
+
+            <div class="order-3 d-flex ms-auto">
+                @if (!Chat.HasActiveCall())
+                {
+                    <MudTooltip Text="@LocalizedText.R.start_call" Class="z-100">
+                        <MudIconButton Icon="@Icons.Material.Rounded.Call" Color="Color.Inherit"
+                                       OnClick="StartVoiceCall"/>
+                    </MudTooltip>
+                }
+
+                @if (Chat is GroupChatModel)
+                {
+                    <MudTooltip Text="@LocalizedText.R.add_friends_to_group" Class="z-100">
+                        <MudIconButton Icon="@Icons.Material.Rounded.PersonAddAlt"
+                                       Color="Color.Inherit" OnClick="OpenAddToGroupDialog"/>
+                    </MudTooltip>
+
+                    <MudTooltip Text="@LocalizedText.R.manage_group" Class="z-100">
+                        <MudMenu Icon="@Icons.Material.Rounded.Settings" ListClass="pa-1 z-90"
+                                 Color="Color.Inherit" Dense="true" MaxHeight="300"
+                                 AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+
+                            @if (Chat.LocalUser.CanChangeGroupNameAndImage())
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Rounded.Edit"
+                                             OnClick="OpenChangeGroupNameDialog">
+                                    @LocalizedText.R.group_name
+                                </MudMenuItem>
+
+                                <MudMenuItem Icon="@Icons.Material.Rounded.Image">
+                                    @LocalizedText.R.group_image
+                                </MudMenuItem>
+
+                                <MudDivider Class="my-1"/>
+                            }
+
+                            <MudMenuItem Icon="@Icons.Material.Rounded.People"
+                                         OnClick="OpenGroupMembersDialog">
+                                @LocalizedText.R.group_members
+                            </MudMenuItem>
+
+                            @if (Chat.LocalUser.CanAddNewMembers())
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Rounded.PersonAddAlt"
+                                             OnClick="OpenAddToGroupDialog">
+                                    @LocalizedText.R.add_friends_to_group
+                                </MudMenuItem>
+                            }
+
+                            <MudDivider Class="my-1"/>
+
+                            <MudMenuItem Icon="@Icons.Material.Rounded.ExitToApp"
+                                         IconColor="Color.Error" OnClick="OpenLeaveGroupDialog">
+                                @LocalizedText.R.leave_group
+                            </MudMenuItem>
+
+                            @if (Chat.LocalUser.CanDeleteGroup())
+                            {
+                                <MudDivider Class="my-1"/>
+
+                                <MudMenuItem Icon="@Icons.Material.Rounded.DeleteForever"
+                                             IconColor="Color.Error" OnClick="DeleteGroup">
+                                    @LocalizedText.R.delete_group
+                                </MudMenuItem>
+                            }
+
+                        </MudMenu>
+                    </MudTooltip>
+                }
+            </div>
+        }
+
+    </div>
+
+    @if (Chat.HasActiveCall() || true)
     {
-        <div class="order-1 d-flex ps-2">
-            <ChannelImage Chat="Chat" Small="true"/>
-        </div>
+        <MudDivider/>
 
-        <div class="order-3 d-flex ms-auto">
-            @if (!VoiceChatService.ActiveCallOnCurrentChannel)
-            {
-                <MudTooltip Text="@LocalizedText.R.start_call" Class="z-100">
-                    <MudIconButton Icon="@Icons.Material.Rounded.Call" Color="Color.Inherit"/>
-                </MudTooltip>
-            }
-
-            @if (Chat is GroupChatModel)
-            {
-                <MudTooltip Text="@LocalizedText.R.add_friends_to_group" Class="z-100">
-                    <MudIconButton Icon="@Icons.Material.Rounded.PersonAddAlt"
-                                   Color="Color.Inherit" OnClick="OpenAddToGroupDialog"/>
-                </MudTooltip>
-
-                <MudTooltip Text="@LocalizedText.R.manage_group" Class="z-100">
-                    <MudMenu Icon="@Icons.Material.Rounded.Settings" ListClass="pa-1 z-90"
-                             Color="Color.Inherit" Dense="true" MaxHeight="300"
-                             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-
-                        @if (Chat.LocalUser.CanChangeGroupNameAndImage())
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Rounded.Edit"
-                                         OnClick="OpenChangeGroupNameDialog">
-                                @LocalizedText.R.group_name
-                            </MudMenuItem>
-
-                            <MudMenuItem Icon="@Icons.Material.Rounded.Image">
-                                @LocalizedText.R.group_image
-                            </MudMenuItem>
-
-                            <MudDivider Class="my-1"/>
-                        }
-
-                        <MudMenuItem Icon="@Icons.Material.Rounded.People"
-                                     OnClick="OpenGroupMembersDialog">
-                            @LocalizedText.R.group_members
-                        </MudMenuItem>
-
-                        @if (Chat.LocalUser.CanAddNewMembers())
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Rounded.PersonAddAlt"
-                                         OnClick="OpenAddToGroupDialog">
-                                @LocalizedText.R.add_friends_to_group
-                            </MudMenuItem>
-                        }
-
-                        <MudDivider Class="my-1"/>
-
-                        <MudMenuItem Icon="@Icons.Material.Rounded.ExitToApp"
-                                     IconColor="Color.Error" OnClick="OpenLeaveGroupDialog">
-                            @LocalizedText.R.leave_group
-                        </MudMenuItem>
-
-                        @if (Chat.LocalUser.CanDeleteGroup())
-                        {
-                            <MudDivider Class="my-1"/>
-
-                            <MudMenuItem Icon="@Icons.Material.Rounded.DeleteForever"
-                                         IconColor="Color.Error" OnClick="DeleteGroup">
-                                @LocalizedText.R.delete_group
-                            </MudMenuItem>
-                        }
-
-                    </MudMenu>
-                </MudTooltip>
-            }
-        </div>
-
-        @* <VoiceCallStatus/> *@
+        <CallStatus Chat="Chat"/>
     }
+
 </MudPaper>
 
 @implements ISubscriber
 @implements IDisposable
 
 @inject IChatManager ChatManager
-@inject IVoiceChatService VoiceChatService
+@inject IRtcConnectionService RtcConnectionService
 @inject LocalizedText LocalizedText
 @inject IDialogService DialogService
 @inject ILogger<ChannelHeader> Logger
@@ -104,7 +115,7 @@
 
     private Task StartVoiceCall()
     {
-        return VoiceChatService.StartCallAsync(Chat.Id);
+        return RtcConnectionService.StartCallAsync(Chat);
     }
 
     private async Task<bool> ChangeGroupName(GroupChatModel groupChat, string? newName)

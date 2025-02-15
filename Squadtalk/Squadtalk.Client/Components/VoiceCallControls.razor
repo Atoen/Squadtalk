@@ -85,7 +85,7 @@
 </div>
 @implements IDisposable
 
-@inject IVoiceChatService VoiceChatService
+@inject IVoiceChatServiceOld VoiceChatServiceOld
 
 @code {
     private MediaDeviceModel? _selectedMicrophone;
@@ -99,35 +99,35 @@
     // private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
     // private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
 
-    private string MicrophoneTooltipText => VoiceChatService switch
+    private string MicrophoneTooltipText => VoiceChatServiceOld switch
     {
         { MicrophoneAvailable: false } => "Microphone is unavailable",
         { MicrophoneEnabled: false } => "Enable microphone",
         _ => "Disable microphone"
     };
 
-    private string CameraTooltipText => VoiceChatService switch
+    private string CameraTooltipText => VoiceChatServiceOld switch
     {
         { CameraAvailable: false } => "Camera is unavailable",
         { CameraEnabled: false } => "Enable camera",
         _ => "Disable camera"
     };
 
-    private string ScreenShareTooltipText => VoiceChatService.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
+    private string ScreenShareTooltipText => VoiceChatServiceOld.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
 
     protected override void OnInitialized()
     {
-        VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
-        VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        VoiceChatService.MicrophoneListUpdated += StateHasChanged;
-        VoiceChatService.CameraListUpdated += StateHasChanged;
+        VoiceChatServiceOld.LocalParticipantStateUpdated += StateHasChanged;
+        VoiceChatServiceOld.CurrentChannelCallChanged += StateHasChanged;
+        VoiceChatServiceOld.MicrophoneListUpdated += StateHasChanged;
+        VoiceChatServiceOld.CameraListUpdated += StateHasChanged;
     }
 
     public void Dispose()
     {
-        VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
-        VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
-        VoiceChatService.MicrophoneListUpdated -= StateHasChanged;
-        VoiceChatService.CameraListUpdated -= StateHasChanged;
+        VoiceChatServiceOld.LocalParticipantStateUpdated -= StateHasChanged;
+        VoiceChatServiceOld.CurrentChannelCallChanged -= StateHasChanged;
+        VoiceChatServiceOld.MicrophoneListUpdated -= StateHasChanged;
+        VoiceChatServiceOld.CameraListUpdated -= StateHasChanged;
     }
 }

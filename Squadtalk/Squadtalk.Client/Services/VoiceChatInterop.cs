@@ -4,7 +4,7 @@ using Shared.Models;
 
 namespace Squadtalk.Client.Services;
 
-internal partial class VoiceChatService
+internal partial class VoiceChatServiceOld
 {
     [JSInvokable]
     public void DisconnectedCallback(DisconnectReason reason)
@@ -64,7 +64,7 @@ internal partial class VoiceChatService
     }
 
     [JSInvokable]
-    public void ParticipantUpdatedCallback(CallParticipantModel participant, GroupId groupId)
+    public void ParticipantUpdatedCallback(CallParticipantModelOld participant, GroupId groupId)
     {
         if (!_participants.TryAdd(participant.Id, participant))
         {
@@ -81,7 +81,7 @@ internal partial class VoiceChatService
     }
 
     [JSInvokable]
-    public void ParticipantListReceivedCallback(List<CallParticipantModel> participants, GroupId groupId)
+    public void ParticipantListReceivedCallback(List<CallParticipantModelOld> participants, GroupId groupId)
     {
         foreach (var participant in participants)
         {
@@ -92,14 +92,14 @@ internal partial class VoiceChatService
     }
 
     [JSInvokable]
-    public void ParticipantConnectedCallback(CallParticipantModel participant, GroupId groupId)
+    public void ParticipantConnectedCallback(CallParticipantModelOld participant, GroupId groupId)
     {
         _participants[participant.Id] = participant;
         ParticipantListUpdated?.Invoke(_chatManager.GetRequiredChannel(groupId));
     }
 
     [JSInvokable]
-    public void ParticipantDisconnectedCallback(CallParticipantModel participant, GroupId groupId)
+    public void ParticipantDisconnectedCallback(CallParticipantModelOld participant, GroupId groupId)
     {
         _participants.Remove(participant.Id);
         ParticipantListUpdated?.Invoke(_chatManager.GetRequiredChannel(groupId));

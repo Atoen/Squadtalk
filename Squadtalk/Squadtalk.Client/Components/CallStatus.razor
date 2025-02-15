@@ -1,0 +1,21 @@
+<div class="d-flex flex-column align-center">
+    <div class="d-flex">
+        @foreach (var friend in ContactManager.FriendList)
+        {
+            <div class="rounded d-flex flex-column ma-1 align-center" style="background: red">
+                @UserAvatar.NoBadgeMedium(friend)
+                @friend.Username
+            </div>
+        }
+    </div>
+
+    <CallMediaControls/>
+</div>
+
+@inject IContactManager ContactManager
+
+@code
+{
+   [Parameter, EditorRequired]
+   public ChatModel Chat { get; set; } = default!;
+}

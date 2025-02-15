@@ -8,7 +8,7 @@ namespace Shared.Services;
 
 public delegate void ErrorNotificationHandler(string title, string message);
 
-public interface IVoiceChatService
+public interface IVoiceChatServiceOld
 {
     [MemberNotNullWhen(true, nameof(CallChannel))]
     bool ConnectedToVoiceCall { get; }
@@ -38,7 +38,7 @@ public interface IVoiceChatService
 
     IEnumerable<MediaDeviceModel> Cameras { get; }
 
-    IEnumerable<CallParticipantModel> ActiveCallParticipants { get; }
+    IEnumerable<CallParticipantModelOld> ActiveCallParticipants { get; }
 
     event Action? MicrophoneListUpdated;
     event Action? CameraListUpdated;
@@ -61,13 +61,13 @@ public interface IVoiceChatService
 
     Task LeaveCallAsync();
 
-    Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone);
+    Task ChangeVolumeAsync(CallParticipantModelOld participant, Volume volume, AudioSource audioSource = AudioSource.Microphone);
 
-    Task<Volume> GetUserVolumeAsync(CallParticipantModel participantModel);
+    Task<Volume> GetUserVolumeAsync(CallParticipantModelOld participantModelOld);
 
     Task SwapCameraAsync();
 
-    Task MaximizeVideoAsync(CallParticipantModel participant, VideoSource videoSource);
+    Task MaximizeVideoAsync(CallParticipantModelOld participant, VideoSource videoSource);
 
     Task MinimizeVideoAsync();
 

@@ -7,7 +7,7 @@ builder.WebHost.UseKestrel(options =>
     options.Listen(IPAddress.Any, 1230, listenOptions =>
     {
         listenOptions.UseHttps();
-    } );
+    });
 });
 
 builder.Services.AddReverseProxy()

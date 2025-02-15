@@ -1,6 +1,6 @@
 <div class="call-participant">
     <img class="avatar" style="@AvatarBorderStyle" src="user.png" alt="Avatar" draggable="false"/>
-    <div class="username">@Model.Username</div>
+    <div class="username">@ModelOld.Username</div>
     <div class="status">
         @* *@
         @* @if (Model.Remote) *@
@@ -37,22 +37,22 @@
 
 @using Shared.Data.TypedIds
 @implements IDisposable
-@inject IVoiceChatService VoiceChatService
-@inject ILogger<CallParticipantModel> Logger
+@inject IVoiceChatServiceOld VoiceChatServiceOld
+@inject ILogger<CallParticipantModelOld> Logger
 
 @code {
 
-    [Parameter, EditorRequired] public CallParticipantModel Model { get; set; } = default!;
+    [Parameter, EditorRequired] public CallParticipantModelOld ModelOld { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        VoiceChatService.ParticipantUpdated += ParticipantUpdated;
-        _volume = await VoiceChatService.GetUserVolumeAsync(Model);
+        VoiceChatServiceOld.ParticipantUpdated += ParticipantUpdated;
+        _volume = await VoiceChatServiceOld.GetUserVolumeAsync(ModelOld);
     }
 
     private void ParticipantUpdated(UserId userId, ChatModel chatModel)
     {
-        if (Model.Id == userId)
+        if (ModelOld.Id == userId)
         {
             StateHasChanged();
         }
@@ -60,7 +60,7 @@
 
     private int _volume;
 
-    private int Volume => Model.Volume.Value;
+    private int Volume => ModelOld.Volume.Value;
     private bool _firstChange = true;
 
     private async Task VolumeChanged(int value)
@@ -72,14 +72,14 @@
         }
 
         _volume = value;
-        await VoiceChatService.ChangeVolumeAsync(Model, new Volume(value));
+        await VoiceChatServiceOld.ChangeVolumeAsync(ModelOld, new Volume(value));
     }
 
-    private Task ShowCamera() => VoiceChatService.MaximizeVideoAsync(Model, VideoSource.Camera);
+    private Task ShowCamera() => VoiceChatServiceOld.MaximizeVideoAsync(ModelOld, VideoSource.Camera);
 
-    private Task ShowScreenShare() => VoiceChatService.MaximizeVideoAsync(Model, VideoSource.ScreenShare);
+    private Task ShowScreenShare() => VoiceChatServiceOld.MaximizeVideoAsync(ModelOld, VideoSource.ScreenShare);
 
-    private string AvatarBorderStyle => Model.IsSpeaking ? "border-color: limegreen;" : string.Empty;
+    private string AvatarBorderStyle => ModelOld.IsSpeaking ? "border-color: limegreen;" : string.Empty;
 
     // private IconName VolumeIcon => _volume switch
     // {
@@ -111,6 +111,6 @@
 
     public void Dispose()
     {
-        VoiceChatService.ParticipantUpdated -= ParticipantUpdated;
+        VoiceChatServiceOld.ParticipantUpdated -= ParticipantUpdated;
     }
 }

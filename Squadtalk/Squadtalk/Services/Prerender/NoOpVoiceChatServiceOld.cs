@@ -4,7 +4,7 @@ using Shared.Services;
 
 namespace Squadtalk.Services.Prerender;
 
-internal class NoOpVoiceChatService : IVoiceChatService
+internal class NoOpVoiceChatServiceOld : IVoiceChatServiceOld
 {
     public bool ConnectedToVoiceCall { get; }
     public bool ConnectedToVoiceCallOnCurrentChannel { get; }
@@ -19,7 +19,7 @@ internal class NoOpVoiceChatService : IVoiceChatService
     public ConnectionQuality ConnectionQuality { get; }
     public IEnumerable<MediaDeviceModel> Microphones { get; }
     public IEnumerable<MediaDeviceModel> Cameras { get; }
-    public IEnumerable<CallParticipantModel> ActiveCallParticipants { get; }
+    public IEnumerable<CallParticipantModelOld> ActiveCallParticipants { get; }
     public event Action? MicrophoneListUpdated;
     public event Action? CameraListUpdated;
     public event ErrorNotificationHandler? Error;
@@ -35,10 +35,10 @@ internal class NoOpVoiceChatService : IVoiceChatService
     public Task AcceptCallAsync(GroupId groupId) => throw new NotImplementedException();
     public Task DeclineCallAsync(GroupId groupId) => throw new NotImplementedException();
     public Task LeaveCallAsync() => throw new NotImplementedException();
-    public Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone) => throw new NotImplementedException();
-    public Task<Volume> GetUserVolumeAsync(CallParticipantModel participantModel) => throw new NotImplementedException();
+    public Task ChangeVolumeAsync(CallParticipantModelOld participant, Volume volume, AudioSource audioSource = AudioSource.Microphone) => throw new NotImplementedException();
+    public Task<Volume> GetUserVolumeAsync(CallParticipantModelOld participantModelOld) => throw new NotImplementedException();
     public Task SwapCameraAsync() => throw new NotImplementedException();
-    public Task MaximizeVideoAsync(CallParticipantModel participant, VideoSource videoSource) => throw new NotImplementedException();
+    public Task MaximizeVideoAsync(CallParticipantModelOld participant, VideoSource videoSource) => throw new NotImplementedException();
     public Task MinimizeVideoAsync() => throw new NotImplementedException();
     public Task SelectMicrophoneAsync(MediaDeviceModel microphone) => throw new NotImplementedException();
     public Task SelectCameraAsync(MediaDeviceModel camera) => throw new NotImplementedException();

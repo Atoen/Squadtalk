@@ -14,16 +14,16 @@ using Squadtalk.Client.Services.SignalR.Interfaces;
 
 namespace Squadtalk.Client.Services;
 
-internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDisposable
+internal sealed partial class VoiceChatServiceOld : IVoiceChatServiceOld, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
     private readonly ISignalrRTCService _signalrRTCService;
     private readonly IChatManager _chatManager;
     private readonly UserVolumeManager _volumeManager;
     private readonly IUserAuthenticationService _userAuthenticationService;
-    private readonly ILogger<VoiceChatService> _logger;
+    private readonly ILogger<VoiceChatServiceOld> _logger;
 
-    private readonly DotNetObjectReference<VoiceChatService> _dotNetObjectReference;
+    private readonly DotNetObjectReference<VoiceChatServiceOld> _dotNetObjectReference;
     private IJSObjectReference? _jsModule;
 
     public bool ConnectedToVoiceCall { get; private set; }
@@ -42,12 +42,12 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
 
     public ConnectionQuality ConnectionQuality { get; private set; } = ConnectionQuality.Unknown;
 
-    public IEnumerable<CallParticipantModel> ActiveCallParticipants => _participants.Values;
+    public IEnumerable<CallParticipantModelOld> ActiveCallParticipants => _participants.Values;
 
     public IEnumerable<MediaDeviceModel> Microphones => _microphones;
     public IEnumerable<MediaDeviceModel> Cameras => _cameras;
 
-    private readonly Dictionary<UserId, CallParticipantModel> _participants = [];
+    private readonly Dictionary<UserId, CallParticipantModelOld> _participants = [];
     private readonly List<MediaDeviceModel> _microphones = [];
     private readonly List<MediaDeviceModel> _cameras = [];
 
@@ -62,13 +62,13 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
     public event Action<UserId, ChatModel>? ParticipantUpdated;
     public event Action? LocalParticipantStateUpdated;
 
-    public VoiceChatService(
+    public VoiceChatServiceOld(
         IJSRuntime jsRuntime,
         SignalrService signalrRTCService,
         IChatManager chatManager,
         UserVolumeManager volumeManager,
         IUserAuthenticationService userAuthenticationService,
-        ILogger<VoiceChatService> logger)
+        ILogger<VoiceChatServiceOld> logger)
     {
         _jsRuntime = jsRuntime;
         _signalrRTCService = signalrRTCService;
@@ -144,7 +144,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         _participants.Clear();
     }
 
-    public async Task ChangeVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone)
+    public async Task ChangeVolumeAsync(CallParticipantModelOld participant, Volume volume, AudioSource audioSource = AudioSource.Microphone)
     {
         var result = await _jsModule.TryInvokeVoidAsync2("ChangeVolume", participant.Id, volume.Value);
         if (result.IsFailed)
@@ -156,7 +156,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         await _volumeManager.SaveUserVolumeAsync(participant.Id, volume);
     }
 
-    public async Task<Volume> GetUserVolumeAsync(CallParticipantModel participant)
+    public async Task<Volume> GetUserVolumeAsync(CallParticipantModelOld participant)
     {
         return await _volumeManager.GetUserVolumeAsync(participant.Id);
     }
@@ -167,7 +167,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
         NotifyIfFailed(result);
     }
 
-    public async Task MaximizeVideoAsync(CallParticipantModel participant, VideoSource videoSource)
+    public async Task MaximizeVideoAsync(CallParticipantModelOld participant, VideoSource videoSource)
     {
         var result = await _jsModule.TryInvokeVoidAsync2("MaximizeVideo", participant.Id, videoSource);
         NotifyIfFailed(result);
@@ -244,7 +244,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
 
     public async Task<bool> CheckIfChannelHasActiveCallAsync(ChatModel chat)
     {
-        var hasCall = await _signalrRTCService.ChannelHasActiveCall(chat.Id);
+        var hasCall = await _signalrRTCService.GroupHasActiveCall(chat.Id);
 
         if (hasCall.IsError)
         {
@@ -307,7 +307,7 @@ internal sealed partial class VoiceChatService : IVoiceChatService, IAsyncDispos
 
         if (!_participants.ContainsKey(accepting.Id))
         {
-            _participants[accepting.Id] = new CallParticipantModel
+            _participants[accepting.Id] = new CallParticipantModelOld
             {
                 Username = accepting.Username,
                 ConnectionQuality = ConnectionQuality.Unknown

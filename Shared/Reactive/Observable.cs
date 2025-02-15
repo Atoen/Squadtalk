@@ -40,7 +40,7 @@ public abstract class Observable<T> : IObservable, IUseNotificationScope where T
             }
         }
 
-        return new Unsubscriber(_subscribers, subscriber, _lock);
+        return new Unsubscriber(this, subscriber);
     }
 
     protected void SetField<TField>(ref TField field, TField value)
@@ -76,22 +76,30 @@ public abstract class Observable<T> : IObservable, IUseNotificationScope where T
         }
     }
 
-    private class Unsubscriber(List<ISubscriber> subscribers, ISubscriber subscriber, Lock @lock) : IDisposable
+    private void ClearSubscriber(ISubscriber subscriber)
     {
-        public void Dispose()
+        if (_subscribers is not { Count: > 0 } subscribers)
         {
-            lock (@lock)
+            Console.WriteLine($"[{typeof(Observable<T>)}] Failed to unsubscribe!");
+            return;
+        }
+
+        lock (_lock)
+        {
+            if (subscribers.Remove(subscriber))
             {
-                if (subscribers.Remove(subscriber))
-                {
-                    Console.WriteLine($"[{typeof(Observable<T>)}] Unsubscribed!, {subscribers.Count}");
-                }
-                else
-                {
-                    Console.WriteLine($"[{typeof(Observable<T>)}] Failed to unsubscribe!, {subscribers.Count}");
-                }
+                Console.WriteLine($"[{typeof(Observable<T>)}] Unsubscribed!, {subscribers.Count}");
+            }
+            else
+            {
+                Console.WriteLine($"[{typeof(Observable<T>)}] Failed to unsubscribe!, {subscribers.Count}");
             }
         }
+    }
+
+    private sealed class Unsubscriber(Observable<T> observable, ISubscriber subscriber) : IDisposable
+    {
+        public void Dispose() => observable.ClearSubscriber(subscriber);
     }
 
     public void EnterScope(in NotificationScope scope)

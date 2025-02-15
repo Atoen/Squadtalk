@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.SignalR;
 using Shared.Data.TypedIds;
 using Shared.DTOs;
+using Shared.Signalr;
 using Shared.Signalr.Clients;
 using Squadtalk.Data;
+using Squadtalk.Extensions;
 using Squadtalk.Services;
 
 namespace Squadtalk.Signalr;
@@ -15,8 +18,12 @@ public partial class AppHub
 
     public bool Ping() => true;
 
+    [HubMethodName(HubMethods.GetRtcEndpoint)]
+    public string GetRtcEndpoint(IConfiguration configuration) => configuration.GetString("RtcEndpoint");
+
+    [HubMethodName(HubMethods.StartVoiceCall)]
     public async Task<RoomTokenDto?> StartCall(
-        GroupId groupId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
+        GroupId groupId, VoiceCallManagerOld voiceCallManagerOld, LiveKitService liveKitService)
     {
         var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
@@ -25,13 +32,18 @@ public partial class AppHub
             return null;
         }
 
-        voiceCallManager.VoiceCallInitiated(participant, groupId);
+        voiceCallManagerOld.VoiceCallInitiated(participant, groupId);
 
-        return liveKitService.CreateRoomToken(Context.User, groupId);
+        var token = liveKitService.CreateRoomToken(participant, groupId);
+
+        _logger.LogInformation("Token: {Token}", token.Token);
+
+        return token;
     }
 
+    [HubMethodName(HubMethods.AcceptCall)]
     public async Task<RoomTokenDto?> AcceptCall(
-        GroupId groupId, VoiceCallManager voiceCallManager, LiveKitService liveKitService)
+        GroupId groupId, VoiceCallManagerOld voiceCallManagerOld, LiveKitService liveKitService)
     {
         var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
@@ -40,19 +52,20 @@ public partial class AppHub
             return null;
         }
 
-        voiceCallManager.VoiceCallInitiated(participant, groupId);
+        voiceCallManagerOld.VoiceCallInitiated(participant, groupId);
 
-        if (!voiceCallManager.ChannelHasActiveCall(groupId))
+        if (!voiceCallManagerOld.ChannelHasActiveCall(groupId))
         {
             return null;
         }
 
         await OthersInVoiceGroup(groupId).CallAccepted(groupId, participant.ToDto());
 
-        return liveKitService.CreateRoomToken(Context.User, groupId);
+        return liveKitService.CreateRoomToken(participant, groupId);
     }
 
-    public async Task DeclineCall(GroupId groupId, VoiceCallManager voiceCallManager)
+    [HubMethodName(HubMethods.DeclineCall)]
+    public async Task DeclineCall(GroupId groupId, VoiceCallManagerOld voiceCallManagerOld)
     {
         var participant = await GetParticipatingUserWithGroups(groupId);
         if (participant is null)
@@ -60,7 +73,7 @@ public partial class AppHub
             return;
         }
 
-        var room = voiceCallManager.ActiveRooms.SingleOrDefault(x => x.GroupId == groupId);
+        var room = voiceCallManagerOld.ActiveRooms.SingleOrDefault(x => x.GroupId == groupId);
         if (room is null)
         {
             return;
@@ -69,14 +82,14 @@ public partial class AppHub
         await OthersInVoiceGroup(groupId).CallDeclined(participant.ToDto(), groupId);
     }
 
-    public async Task<bool> ChannelHasActiveCall(GroupId groupId, VoiceCallManager voiceCallManager)
+    [HubMethodName(HubMethods.GroupHasActiveCall)]
+    public async Task<bool> ChannelHasActiveCall(GroupId groupId, RtcConnectionManager connectionManager)
     {
-        var participant = await GetParticipatingUserWithGroups(groupId);
-        if (participant is null)
+        if (!await UserParticipatesInChannelAsync(groupId))
         {
             return false;
         }
 
-        return voiceCallManager.ChannelHasActiveCall(groupId);
+        return await connectionManager.ChannelHasActiveCallAsync(groupId);
     }
 }

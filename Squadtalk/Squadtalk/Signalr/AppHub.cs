@@ -93,5 +93,12 @@ public partial class AppHub : Hub<IChatClient>
         return user;
     }
 
+    private Task<bool> UserParticipatesInChannelAsync(GroupId groupId)
+    {
+        return groupId == ChatModel.GlobalChatId
+            ? Task.FromResult(true)
+            : _userRepository.UserParticipatesInGroupAsync(UserId, groupId);
+    }
+
     private UserId UserId => Context.User!.GetRequiredUserId();
 }

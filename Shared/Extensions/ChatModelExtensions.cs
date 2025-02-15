@@ -24,6 +24,8 @@ public static class ChatModelExtensions
 
     public static bool HasUnreadMessages(this ChatModel chatModel) => chatModel.State.UnreadMessages != 0;
 
+    public static bool HasActiveCall(this ChatModel chatModel) => chatModel.State.HasActiveCall;
+
     public static bool IsSomeoneTyping(this ChatModel chatModel) => chatModel.State.TypingUsers.Count != 0;
 
     public static IReadOnlyCollection<TypingUser> TypingUsers(this ChatModel chatModel) => chatModel.State.TypingUsers.Typing;

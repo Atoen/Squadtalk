@@ -11,11 +11,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MudBlazor.Services;
-using Npgsql;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Polly.Registry;
 using Quartz;
 using Quartz.AspNetCore;
@@ -40,6 +35,7 @@ public static class ApplicationBuilderExtensions
     public static WebApplicationBuilder ConfigureAuthentication(this WebApplicationBuilder builder)
     {
         builder.Services
+            // .AddTransient<IClaimsTransformation, UserClaimsTransformation>()
             .AddCascadingAuthenticationState()
             .AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
 
@@ -269,7 +265,7 @@ public static class ApplicationBuilderExtensions
         services.AddSingleton<SmtpClient>();
         services.AddSingleton<ResiliencePipelineRegistry<string>>();
         services.AddSingleton<HubConnectionManager>();
-        services.AddSingleton<VoiceCallManager>();
+        services.AddSingleton<VoiceCallManagerOld>();
 
         services.AddTransient<LiveKitEventHandler>();
         services.AddSingleton<LiveKitService>();
@@ -283,8 +279,13 @@ public static class ApplicationBuilderExtensions
         services.AddScoped<ITextChatService, TextChatService>();
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IChannelSorter, ChannelSorter>();
+
+        services.AddSingleton<IRtcConnectionService, RtcConnectionService>();
+        services.AddSingleton<IRtcMediaControlService, RtcMediaControlService>();
+        services.AddSingleton<RtcConnectionManager>();
+
         services.AddScoped<IFileTransferService, FileTransferService>();
-        services.AddScoped<IVoiceChatService, NoOpVoiceChatService>();
+        services.AddScoped<IVoiceChatServiceOld, NoOpVoiceChatServiceOld>();
 
         services.AddScoped<EmbedService>();
         services.AddScoped<ImagePreviewGenerator>();

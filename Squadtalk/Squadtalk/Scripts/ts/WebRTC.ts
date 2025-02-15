@@ -267,21 +267,16 @@ const updateLocalState = () => {
 }
 
 const mapParticipant = (participant: lk.Participant) => {
-    let totalBitrate = 0;
-    for (const t of participant.trackPublications.values()) {
-        if (t.track) totalBitrate += t.track.currentBitrate;
-    }
 
     return ({
         Username: participant.name,
         Id: participant.identity,
         Sid: participant.sid,
-        Remote: !participant.isLocal,
+        IsRemote: !participant.isLocal,
         MicrophoneOn: participant.isMicrophoneEnabled,
         CameraOn: participant.isCameraEnabled,
         ScreenShareOn: participant.isScreenShareEnabled,
         ConnectionQuality: participant.connectionQuality,
-        Bitrate: Math.round(totalBitrate),
         IsSpeaking: participant.isSpeaking
     });
 };

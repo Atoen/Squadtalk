@@ -33,7 +33,7 @@
 @inject IChatManager ChatManager
 @inject IFileTransferService FileTransferService
 @inject NavigationManager NavigationManager
-@inject IVoiceChatService VoiceChatService
+@inject IRtcConnectionService RtcConnectionService
 @inject IConnectionService ConnectionService
 
 @code {
@@ -64,10 +64,7 @@
             _channel = currentChannel;
         }
 
-        VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        ChatManager.ChatChanged += ChatChanged;
-
-        await VoiceChatService.CheckIfChannelHasActiveCallAsync(VoiceChatService.CurrentChannel!);
+        await RtcConnectionService.GroupHasActiveCallAsync(_channel);
     }
 
     private void ChatChanged()
@@ -75,14 +72,8 @@
         _channel = ChatManager.CurrentChat;
     }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        return firstRender ? VoiceChatService.InitializeAsync() : Task.CompletedTask;
-    }
-
     public async ValueTask DisposeAsync()
     {
-        VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
         ChatManager.ChatChanged -= ChatChanged;
 
         ChatManager.ClearChannelSelection();

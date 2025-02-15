@@ -13,8 +13,8 @@ public class HubConnectionManager
 
     private static readonly object ZeroKeys = 0;
 
-    private static readonly byte[] TypingUserChannelsPrefix = "user:typing:channels:"u8.ToArray();
-    private static readonly byte[] UserConnectionsPrefix = "user:connections:"u8.ToArray();
+    private static readonly RedisKey TypingUserChannelsPrefix = "user:typing:channels:"u8.ToArray();
+    private static readonly RedisKey UserConnectionsPrefix = "user:connections:"u8.ToArray();
 
     public HubConnectionManager(
         IConnectionMultiplexer connectionMultiplexer,

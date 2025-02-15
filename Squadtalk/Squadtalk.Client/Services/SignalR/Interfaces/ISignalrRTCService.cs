@@ -19,5 +19,5 @@ public interface ISignalrRTCService
 
     Task<NetworkResult> DeclineCallAsync(GroupId id);
 
-    Task<NetworkResult<bool>> ChannelHasActiveCall(GroupId id);
+    Task<NetworkResult<bool>> GroupHasActiveCall(GroupId id);
 }

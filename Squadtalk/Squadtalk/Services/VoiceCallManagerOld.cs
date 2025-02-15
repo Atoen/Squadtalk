@@ -6,7 +6,7 @@ using Squadtalk.Data.LiveKit.DTOs;
 
 namespace Squadtalk.Services;
 
-public class VoiceCallManager(ILogger<VoiceCallManager> logger)
+public class VoiceCallManagerOld(ILogger<VoiceCallManagerOld> logger)
 {
     public IEnumerable<Room> ActiveRooms => _rooms.Values;
 

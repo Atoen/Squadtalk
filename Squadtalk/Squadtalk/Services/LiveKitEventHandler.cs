@@ -8,7 +8,7 @@ namespace Squadtalk.Services;
 
 public class LiveKitEventHandler(
     IHubContext<AppHub, IChatClient> hubContext,
-    VoiceCallManager voiceCallManager,
+    VoiceCallManagerOld voiceCallManagerOld,
     SystemMessageService systemMessageService,
     ChatUserRepository chatUserRepository,
     ILogger<LiveKitEventHandler> logger)
@@ -32,7 +32,7 @@ public class LiveKitEventHandler(
         var dto = roomStartedEvent.Room;
         logger.LogInformation("Room {Room} started", dto.GroupId);
 
-        var initiatorId = voiceCallManager.AddRoom(dto);
+        var initiatorId = voiceCallManagerOld.AddRoom(dto);
         await hubContext.Clients.Group(dto.GroupId).IncomingCall(dto.GroupId, initiatorId);
 
         var user = await chatUserRepository.FindUserByIdAsync(initiatorId);
@@ -50,7 +50,7 @@ public class LiveKitEventHandler(
         var dto = roomFinishedEvent.Room;
         var channelId = dto.GroupId;
 
-        var removedRoom = voiceCallManager.RemoveRoom(channelId, out var data);
+        var removedRoom = voiceCallManagerOld.RemoveRoom(channelId, out var data);
         if (!removedRoom)
         {
             logger.LogInformation("Room {Room} finished. Call already ended", channelId);
@@ -68,7 +68,7 @@ public class LiveKitEventHandler(
         var participantDto = participantJoinedEvent.Participant;
         var roomDto = participantJoinedEvent.Room;
 
-        await voiceCallManager.AddParticipantAsync(participantDto, roomDto.GroupId);
+        await voiceCallManagerOld.AddParticipantAsync(participantDto, roomDto.GroupId);
         logger.LogInformation("Participant {Participant} joined room {Room}", participantDto.Username, roomDto.GroupId);
     }
 
@@ -78,10 +78,10 @@ public class LiveKitEventHandler(
         var roomDto = participantLeftEvent.Room;
         var channelId = roomDto.GroupId;
 
-        var roomIsEmpty = await voiceCallManager.RemoveParticipantAsync(participantDto, channelId);
+        var roomIsEmpty = await voiceCallManagerOld.RemoveParticipantAsync(participantDto, channelId);
         logger.LogInformation("Participant {Participant} left room {Room}", participantDto.Username, channelId);
 
-        if (roomIsEmpty && voiceCallManager.RemoveRoom(channelId, out var data))
+        if (roomIsEmpty && voiceCallManagerOld.RemoveRoom(channelId, out var data))
         {
             var (initiatorId, callDuration, callMissed) = data;
             await NotifyAboutCallEnded(channelId, initiatorId, callDuration, callMissed, roomDto.CallId);

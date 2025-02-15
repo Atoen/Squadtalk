@@ -25,7 +25,6 @@ public class AccountController : ControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserStore<ApplicationUser> _userStore;
-    private readonly IEmailSender<ApplicationUser> _emailSender;
     private readonly ISchedulerFactory _schedulerFactory;
     private readonly ILogger<AccountController> _logger;
 
@@ -33,14 +32,12 @@ public class AccountController : ControllerBase
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
-        IEmailSender<ApplicationUser> emailSender,
         ISchedulerFactory schedulerFactory,
         ILogger<AccountController> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userStore = userStore;
-        _emailSender = emailSender;
         _schedulerFactory = schedulerFactory;
         _logger = logger;
     }

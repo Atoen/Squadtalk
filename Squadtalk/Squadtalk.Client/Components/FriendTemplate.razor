@@ -45,6 +45,7 @@
 @inject IContactManager ContactManager
 @inject IChatManager ChatManager
 @inject LocalizedText LocalizedText
+@inject IVoiceChatServiceOld VoiceChatServiceOld
 
 @code
 {
@@ -56,9 +57,9 @@
         await ChatManager.OpenOrCreateTemporaryDirectMessageChannelAsync(Friend);
     }
 
-    private void StartVoiceCall()
+    private async Task StartVoiceCall()
     {
-
+        // await VoiceChatService.StartCallAsync()
     }
 
     private async Task RemoveFriend()

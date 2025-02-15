@@ -40,6 +40,11 @@ public class ChatUserRepository(
         return await users.ToListAsync();
     }
 
+    public async Task<bool> UserParticipatesInGroupAsync(UserId userId, GroupId groupId)
+    {
+        return await GroupParticipantExistsAsync(DbContext, userId, groupId);
+    }
+
     private static readonly Func<ApplicationDbContext, UserId, Task<ChatUser?>> UserByIdAsync =
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, UserId userId) => context.ChatUsers
@@ -68,6 +73,11 @@ public class ChatUserRepository(
         EF.CompileAsyncQuery(
             (ApplicationDbContext context, List<UserId> userIds) => context.ChatUsers
                 .Where(x => userIds.Contains(x.Id)));
+
+    private static readonly Func<ApplicationDbContext, UserId, GroupId, Task<bool>> GroupParticipantExistsAsync =
+        EF.CompileAsyncQuery(
+            (ApplicationDbContext context, UserId userId, GroupId groupId) => context.GroupParticipants
+                .Any(x => x.UserId == userId && x.GroupId == groupId));
 
     private static readonly Func<ApplicationDbContext, string, Task<ChatUser?>> UserByNameAsync =
         EF.CompileAsyncQuery(

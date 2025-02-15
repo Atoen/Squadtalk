@@ -59,7 +59,7 @@
 @implements IDisposable
 
 @inject IChatManager ChatManager
-@inject IVoiceChatService VoiceChatService
+@inject IVoiceChatServiceOld VoiceChatServiceOld
 @inject NavigationManager NavigationManager
 @inject ILogger<MiniCallInfo> Logger
 @inject IConnectionService ConnectionService
@@ -74,11 +74,11 @@
     private bool ShouldDisplay => ShouldDisplayDesktopLayout || ShouldDisplayMobileLayout;
 
     private bool ShouldDisplayDesktopLayout => MediaQueryService.UseDesktopLayout &&
-                                               VoiceChatService.ConnectedToVoiceCall;
+                                               VoiceChatServiceOld.ConnectedToVoiceCall;
 
     private bool ShouldDisplayMobileLayout => MediaQueryService.UseMobileLayout &&
-                                              VoiceChatService.ConnectedToVoiceCall &&
-                                              !VoiceChatService.ConnectedToVoiceCallOnCurrentChannel;
+                                              VoiceChatServiceOld.ConnectedToVoiceCall &&
+                                              !VoiceChatServiceOld.ConnectedToVoiceCallOnCurrentChannel;
 
     // private ButtonColor MicrophoneButtonColor => VoiceChatService.MicrophoneEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
     // private ButtonColor CameraButtonColor => VoiceChatService.CameraEnabled ? ButtonColor.Primary : ButtonColor.Secondary;
@@ -88,21 +88,21 @@
     // private IconName CameraIconName => VoiceChatService.CameraEnabled ? IconName.CameraVideoFill : IconName.CameraVideoOffFill;
     // private IconName ScreenShareIconName => VoiceChatService.ScreenShareEnabled ? IconName.DisplayFill : IconName.Display;
 
-    private string MicrophoneTooltipText => VoiceChatService switch
+    private string MicrophoneTooltipText => VoiceChatServiceOld switch
     {
         { MicrophoneAvailable: false } => "Microphone is unavailable",
         { MicrophoneEnabled: false } => "Enable microphone",
         _ => "Disable microphone"
     };
 
-    private string CameraTooltipText => VoiceChatService switch
+    private string CameraTooltipText => VoiceChatServiceOld switch
     {
         { CameraAvailable: false } => "Camera is unavailable",
         { CameraEnabled: false } => "Enable camera",
         _ => "Disable camera"
     };
 
-    private string ScreenShareTooltipText => VoiceChatService.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
+    private string ScreenShareTooltipText => VoiceChatServiceOld.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
 
     // private IconName ConnectionQualityIcon => VoiceChatService.ConnectionQuality switch
     // {
@@ -124,8 +124,8 @@
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += NavigationChanged;
-        VoiceChatService.CurrentChannelCallChanged += StateHasChanged;
-        VoiceChatService.LocalParticipantStateUpdated += StateHasChanged;
+        VoiceChatServiceOld.CurrentChannelCallChanged += StateHasChanged;
+        VoiceChatServiceOld.LocalParticipantStateUpdated += StateHasChanged;
         MediaQueryService.MediaMatchesChanged += StateHasChanged;
     }
 
@@ -136,7 +136,7 @@
 
     private void ConnectionQualityClicked()
     {
-        _measurePing = !_measurePing && VoiceChatService.ConnectedToVoiceCall;
+        _measurePing = !_measurePing && VoiceChatServiceOld.ConnectedToVoiceCall;
         if (_measurePing)
         {
             _ = MeasurePingAsync();
@@ -160,7 +160,7 @@
 
     private void ChannelNameChanged(GroupChatModel groupChat)
     {
-        if (VoiceChatService.CallChannel == groupChat)
+        if (VoiceChatServiceOld.CallChannel == groupChat)
         {
             StateHasChanged();
         }
@@ -168,7 +168,7 @@
 
     private Task GoToCallChannel()
     {
-        return VoiceChatService.CallChannel is { } channel
+        return VoiceChatServiceOld.CallChannel is { } channel
             ? ChatManager.OpenChannelAsync(channel)
             : Task.CompletedTask;
     }
@@ -180,8 +180,8 @@
         _periodicTimer.Dispose();
 
         NavigationManager.LocationChanged -= NavigationChanged;
-        VoiceChatService.CurrentChannelCallChanged -= StateHasChanged;
-        VoiceChatService.LocalParticipantStateUpdated -= StateHasChanged;
+        VoiceChatServiceOld.CurrentChannelCallChanged -= StateHasChanged;
+        VoiceChatServiceOld.LocalParticipantStateUpdated -= StateHasChanged;
         MediaQueryService.MediaMatchesChanged -= StateHasChanged;
     }
 }

@@ -7,6 +7,7 @@ using Shared.Services;
 using Squadtalk.Client.Extensions;
 using Squadtalk.Client.Localization;
 using Squadtalk.Client.Services;
+using Squadtalk.Client.Services.Rtc;
 using Squadtalk.Client.Services.SignalR;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -36,8 +37,13 @@ builder.Services.AddScoped<IMessageModelService, MessageModelService>();
 builder.Services.AddScoped<ClientPersistantState>();
 
 builder.Services.AddScoped<IChannelSorter, ChannelSorter>();
+
+builder.Services.AddScoped<VoiceChatInterop>();
+builder.Services.AddScoped<IRtcConnectionService, RtcConnectionService>();
+builder.Services.AddScoped<IRtcMediaControlService, RtcMediaControlService>();
+
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
-builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
+builder.Services.AddScoped<IVoiceChatServiceOld, VoiceChatServiceOld>();
 builder.Services.AddScoped<UserVolumeManager>();
 
 builder.Services.AddScoped<ContactTabState>();

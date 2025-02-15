@@ -1,0 +1,11 @@
+namespace Squadtalk.Client.Services.Rtc;
+
+public class MediaDeviceInfo
+{
+    public string Label { get; set; } = default!;
+    public string Id { get; set; } = default!;
+
+    public bool IsUnknown => string.IsNullOrEmpty(Label);
+
+    public string LabelOrDefault(string defaultName) => IsUnknown ? defaultName : Label;
+}

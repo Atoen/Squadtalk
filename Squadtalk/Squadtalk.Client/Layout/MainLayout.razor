@@ -33,7 +33,7 @@
 @implements IDisposable
 
 @inject IConnectionService ConnectionService
-@inject IVoiceChatService VoiceChatService
+@inject IVoiceChatServiceOld VoiceChatServiceOld
 @inject IUserPreferencesService UserPreferences
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IContactManager ContactManager
@@ -60,14 +60,14 @@
     {
         if (!firstRender) return;
 
-        VoiceChatService.CallIncoming += CallIncoming;
+        VoiceChatServiceOld.CallIncoming += CallIncoming;
         UserPreferences.UseDarkModeChanged += StateHasChanged;
         UserPreferences.PaletteChanged += PaletteChanged;
 
         if (UserAuthenticationService.IsAuthenticated)
         {
             await ContactManager.RefreshFriendListAsync();
-            await VoiceChatService.InitializeAsync();
+            await VoiceChatServiceOld.InitializeAsync();
         }
     }
 
@@ -104,11 +104,11 @@
 
         if (accepted)
         {
-            await VoiceChatService.AcceptCallAsync(groupId);
+            await VoiceChatServiceOld.AcceptCallAsync(groupId);
         }
         else
         {
-            await VoiceChatService.DeclineCallAsync(groupId);
+            await VoiceChatServiceOld.DeclineCallAsync(groupId);
         }
     }
 
@@ -118,7 +118,7 @@
 
         if (RendererInfo.IsInteractive)
         {
-            VoiceChatService.CallIncoming -= CallIncoming;
+            VoiceChatServiceOld.CallIncoming -= CallIncoming;
             UserPreferences.UseDarkModeChanged -= StateHasChanged;
             UserPreferences.PaletteChanged -= PaletteChanged;
         }

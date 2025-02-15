@@ -24,4 +24,11 @@ public static class HubMethods
     public const string LeaveGroup = nameof(LeaveGroup);
     public const string DeleteGroup = nameof(DeleteGroup);
     public const string MarkMessageSeen = nameof(MarkMessageSeen);
+
+    public const string GetRtcEndpoint = nameof(GetRtcEndpoint);
+    public const string GroupHasActiveCall = nameof(GroupHasActiveCall);
+    public const string StartVoiceCall = nameof(StartVoiceCall);
+    public const string AcceptCall = nameof(AcceptCall);
+    public const string DeclineCall = nameof(DeclineCall);
+    public const string LeaveCall = nameof(LeaveCall);
 }
