@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Signalr;
 using Shared.Signalr.Clients;
+using Squadtalk.Configuration;
 using Squadtalk.Data;
-using Squadtalk.Extensions;
 using Squadtalk.Services;
 
 namespace Squadtalk.Signalr;
@@ -19,7 +20,7 @@ public partial class AppHub
     public bool Ping() => true;
 
     [HubMethodName(HubMethods.GetRtcEndpoint)]
-    public string GetRtcEndpoint(IConfiguration configuration) => configuration.GetString("RtcEndpoint");
+    public string GetRtcEndpoint(IOptions<RtcConfiguration> options) => options.Value.RtcEndpoint;
 
     [HubMethodName(HubMethods.StartVoiceCall)]
     public async Task<RoomTokenDto?> StartCall(

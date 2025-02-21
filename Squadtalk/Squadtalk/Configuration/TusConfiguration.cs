@@ -2,5 +2,5 @@ namespace Squadtalk.Configuration;
 
 public class TusConfiguration
 {
-    public string StorePath { get; set; } = null!;
+    public string StorePath { get; init; } = null!;
 }

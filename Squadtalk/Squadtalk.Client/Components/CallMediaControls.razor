@@ -1,4 +1,4 @@
-<div class="d-flex justify-center gap-2 mb-2">
+<div class="d-flex justify-center gap-2 mb-1">
 
     <MudTooltip Text="@MicrophoneTooltipText">
         <MudButtonGroup Color="MicrophoneButtonColor" Variant="Variant.Filled">
@@ -49,7 +49,7 @@
         </MudButton>
     </MudTooltip>
 
-    <MudTooltip Text="Leave call">
+    <MudTooltip Text="@LocalizedText.R.leave_call">
         <MudButton Color="Color.Error" Variant="Variant.Filled">
             <MudIcon Icon="@Icons.Material.Rounded.CallEnd" Class="mx-1"/>
         </MudButton>
@@ -59,8 +59,6 @@
 
 @inject IRtcMediaControlService RtcMediaControl
 @inject LocalizedText LocalizedText
-
-@* TODO: use localized text *@
 
 @code
 {
@@ -79,18 +77,19 @@
 
     private string MicrophoneTooltipText => RtcMediaControl switch
     {
-        { MicrophoneAvailable: false } => "Microphone is unavailable",
-        { MicrophoneEnabled: false } => "Enable microphone",
-        _ => "Disable microphone"
+        { MicrophoneAvailable: false } => LocalizedText.R.no_mic_available,
+        { MicrophoneEnabled: false } => LocalizedText.R.enable_mic,
+        _ => LocalizedText.R.disable_mic
     };
 
     private string CameraTooltipText => RtcMediaControl switch
     {
-        { CameraAvailable: false } => "Camera is unavailable",
-        { CameraEnabled: false } => "Enable camera",
-        _ => "Disable camera"
+        { CameraAvailable: false } => LocalizedText.R.no_camera_available,
+        { CameraEnabled: false } => LocalizedText.R.enable_camera,
+        _ => LocalizedText.R.disable_camera
     };
 
-    private string ScreenShareTooltipText => RtcMediaControl.ScreenShareEnabled ? "Stop screen share" : "Share your screen";
-
+    private string ScreenShareTooltipText => RtcMediaControl.ScreenShareEnabled
+        ? LocalizedText.R.stop_screen_share
+        : LocalizedText.R.share_screen;
 }

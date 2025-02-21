@@ -124,6 +124,21 @@ group_name_set: Ustaw nazwę grupy
 change_group_name: Zmień nazwę grupy
 clear_group_name: Usuń nazwę grupy
 
+user_volume: Głośność użytkownika
+
+leave_call: Opuść rozmowę
+
+no_mic_available: Brak dostępnego mikrofonu
+enable_mic: Włącz mikrofon
+disable_mic: Wyłącz mikrofon
+
+no_camera_available: Brak dostępnej kamery
+enable_camera: Włącz kamerę
+disable_camera: Wyłącz kamerę
+
+share_screen: Udostępnij ekran
+stop_screen_share: Zatrzymaj udostępnianie ekranu
+
 network_error: Błąd połączenia
 
 change_username: Zmień swoją nazwę użytkownika

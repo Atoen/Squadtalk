@@ -1,16 +1,19 @@
+using Shared.Data;
+using Shared.Data.TypedIds;
+using Shared.Enums;
 using Shared.Reactive;
 using Shared.Services;
 
 namespace Shared.Models;
 
-public sealed class CallParticipantModel : Observable<CallParticipantModel>, ISubscriber, IDisposable
+public sealed class CallParticipantModel : Observable<CallParticipantModel>, ISubscriber, IDisposable, IChatUser
 {
     private bool _isSpeaking;
     private bool _microphoneEnabled;
     private Volume _volume;
     private ConnectionQuality _connectionQuality;
 
-    public required UserModel User { get; init; }
+    public UserModel User { get; }
 
     public bool IsSpeaking
     {
@@ -37,6 +40,9 @@ public sealed class CallParticipantModel : Observable<CallParticipantModel>, ISu
     }
 
     public bool IsRemote => User.IsRemote;
+    public string Username => User.Username;
+    public UserId Id => User.Id;
+    public UserStatus Status => User.Status;
 
     private readonly IDisposable? _userSubscription;
 

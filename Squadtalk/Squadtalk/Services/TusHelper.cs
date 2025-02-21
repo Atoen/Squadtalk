@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.Extensions.Options;
 using Shared.Extensions;
 using Squadtalk.Configuration;
 using Squadtalk.Data.TypedIds;
@@ -13,11 +14,11 @@ public class TusHelper
 
     public TusDiskStore DiskStore { get; }
 
-    public TusHelper(TusConfiguration configuration, ILogger<TusHelper> logger)
+    public TusHelper(IOptions<TusConfiguration> options, ILogger<TusHelper> logger)
     {
         _logger = logger;
 
-        StorePath = configuration.StorePath;
+        StorePath = options.Value.StorePath;
         DiskStore = new TusDiskStore(StorePath);
     }
 

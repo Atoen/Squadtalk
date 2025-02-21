@@ -1,11 +1,8 @@
-<div class="d-flex flex-column align-center">
-    <div class="d-flex">
-        @foreach (var friend in ContactManager.FriendList)
+<div class="d-flex flex-column align-center mud-width-full">
+    <div class="gap-1 mud-width-full d-flex flex-wrap justify-center">
+        @foreach (var participant in _callParticipants)
         {
-            <div class="rounded d-flex flex-column ma-1 align-center" style="background: red">
-                @UserAvatar.NoBadgeMedium(friend)
-                @friend.Username
-            </div>
+            <CallParticipant Participant="participant"/>
         }
     </div>
 
@@ -16,6 +13,32 @@
 
 @code
 {
-   [Parameter, EditorRequired]
-   public ChatModel Chat { get; set; } = default!;
+    [Parameter, EditorRequired]
+    public ChatModel Chat { get; set; } = default!;
+
+    private readonly List<CallParticipantModel> _callParticipants = [];
+
+    protected override void OnInitialized()
+    {
+        _callParticipants.Add(new CallParticipantModel(ContactManager.LocalUserModel)
+        {
+           ConnectionQuality = ConnectionQuality.Excellent,
+           IsSpeaking = false,
+           MicrophoneEnabled = true
+        });
+
+        _callParticipants.Add(new CallParticipantModel(ContactManager.FriendList.First())
+        {
+           ConnectionQuality = ConnectionQuality.Good,
+           IsSpeaking = true,
+           MicrophoneEnabled = true
+        });
+
+        _callParticipants.Add(new CallParticipantModel(ContactManager.FriendList.Skip(1).First())
+        {
+           ConnectionQuality = ConnectionQuality.Poor,
+           IsSpeaking = false,
+           MicrophoneEnabled = false
+       });
+    }
 }

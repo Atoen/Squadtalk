@@ -240,11 +240,7 @@ public static class ApplicationBuilderExtensions
         }
         else
         {
-            var emailConfig = builder.Configuration
-                .GetSection("Mail")
-                .GetRequired<EmailConfiguration>();
-
-            services.AddSingleton(emailConfig);
+            services.Configure<EmailConfiguration>(builder.Configuration.GetRequiredSection("Mail"));
             services.AddSingleton<IEmailSender, EmailSender>();
         }
 
@@ -252,12 +248,10 @@ public static class ApplicationBuilderExtensions
 
         services.AddTransient<SystemMessageService>();
 
-        var tusConfig = builder.Configuration
-            .GetSection("Tus")
-            .GetRequired<TusConfiguration>();
-
-        services.AddSingleton(tusConfig);
+        services.Configure<TusConfiguration>(builder.Configuration.GetRequiredSection("Tus"));
         services.AddSingleton<TusHelper>();
+
+        services.Configure<RtcConfiguration>(builder.Configuration.GetRequiredSection("Rtc"));
 
         services.AddBlazoredLocalStorage();
         services.AddMudServices();

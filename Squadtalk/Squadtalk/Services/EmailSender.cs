@@ -1,4 +1,5 @@
 using MailKit.Net.Smtp;
+using Microsoft.Extensions.Options;
 using MimeKit;
 using MimeKit.Text;
 using Polly;
@@ -26,14 +27,14 @@ internal sealed class EmailSender : IEmailSender, IDisposable
 
     private readonly MailboxAddress _sender;
 
-    public EmailSender(SmtpClient client, EmailConfiguration configuration, ILogger<EmailSender> logger, ResiliencePipelineRegistry<string> registry)
+    public EmailSender(SmtpClient client, IOptions<EmailConfiguration> options, ILogger<EmailSender> logger, ResiliencePipelineRegistry<string> registry)
     {
         _client = client;
-        _configuration = configuration;
+        _configuration = options.Value;
         _logger = logger;
         _registry = registry;
 
-        _sender = new MailboxAddress(configuration.Username, configuration.Address);
+        _sender = new MailboxAddress(_configuration.Username, _configuration.Address);
     }
 
     public Task SendConfirmationLinkAsync(string username, string email, string confirmationLink)

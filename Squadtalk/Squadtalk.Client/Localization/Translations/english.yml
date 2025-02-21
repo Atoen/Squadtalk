@@ -35,6 +35,20 @@ you_cleared_channel_name: You cleared channel name
 user_cleared_channel_name: {0} cleared channel name
 write_to_channel: Write to @{0}
 
+leave_call: Leave call
+
+user_volume: User volume
+no_mic_available: No microphone available
+enable_mic: Enable microphone
+disable_mic: Disable microphone
+
+no_camera_available: No camera available
+enable_camera: Enable camera
+disable_camera: Disable camera
+
+share_screen: Share your screen
+stop_screen_share: Stop screen share
+
 incoming_friend_requests: Incoming requests
 outgoing_friend_requests: Outgoing requests
 friend_request_accept: Accept

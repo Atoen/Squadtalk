@@ -1,116 +1,63 @@
-<div class="call-participant">
-    <img class="avatar" style="@AvatarBorderStyle" src="user.png" alt="Avatar" draggable="false"/>
-    <div class="username">@ModelOld.Username</div>
-    <div class="status">
-        @* *@
-        @* @if (Model.Remote) *@
-        @* { *@
-        @*     <Dropdown Size="DropdownSize.Small"> *@
-        @*         <DropdownToggleButton><Icon Name="@VolumeIcon" Size="IconSize.x5"/></DropdownToggleButton> *@
-        @*         <DropdownMenu> *@
-        @*             <div class="d-flex px-2"> *@
-        @*                 <RangeInput TValue="int" Min="0" Max="100" *@
-        @*                             Value="_volume" *@
-        @*                             ValueExpression="() => _volume" *@
-        @*                             ValueChanged="VolumeChanged"/> *@
-        @*                 <span class="volume">@_volume%</span> *@
-        @*             </div> *@
-        @*         </DropdownMenu> *@
-        @*     </Dropdown> *@
-        @* } *@
-        @* *@
-        @* <Icon Name="ConnectionQualityIcon" Color="ConnectionQualityColor" Size="IconSize.x5"/> *@
-        @* <Icon Name="MicrophoneIcon" Color="MicrophoneColor"/> *@
-        @* *@
-        @* <div class="camera-screen-share"> *@
-        @*     @if (Model.CameraOn) *@
-        @*     { *@
-        @*         <Button @onclick="ShowCamera"><Icon Name="IconName.CameraVideoFill" Size="IconSize.x5"/></Button> *@
-        @*     } *@
-        @*     @if (Model.ScreenShareOn) *@
-        @*     { *@
-        @*         <Button @onclick="ShowScreenShare"><Icon Name="IconName.DisplayFill" Size="IconSize.x5"/></Button> *@
-        @*     } *@
-        @* </div> *@
+<MudPaper class="rounded d-flex flex-column my-1 align-center pa-1 mud-ripple flex-auto"
+          MaxWidth="120px" MinWidth="100px">
+    @UserAvatar.NoBadgeMedium(Participant.User)
+    @Participant.Username
+
+    <div class="d-flex gap-1 mt-1">
+        @if (Participant.IsRemote)
+        {
+            <MudMenu Icon="@VolumeIcon" Size="Size.Small" Dense="true">
+                <MudSlider @bind-Value="_volumeFraction" Class="ps-5 pe-6 pt-6 pb-1"
+                           Size="Size.Small" ValueLabel="true" ValueLabelFormat="P0"
+                           Max="1" Step="0.01"/>
+            </MudMenu>
+        }
+
+        <MudIcon Icon="@Participant.ConnectionQuality.Icon()"
+                 Color="@Participant.ConnectionQuality.IconColor()"/>
+
+        <MudIcon Icon="@MicIcon" Color="MicIconColor"/>
     </div>
-</div>
+</MudPaper>
 
-@using Shared.Data.TypedIds
+@implements ISubscriber
 @implements IDisposable
-@inject IVoiceChatServiceOld VoiceChatServiceOld
-@inject ILogger<CallParticipantModelOld> Logger
 
-@code {
+@inject LocalizedText LocalizedText
 
-    [Parameter, EditorRequired] public CallParticipantModelOld ModelOld { get; set; } = default!;
+@code
+{
+    [Parameter, EditorRequired]
+    public CallParticipantModel Participant { get; set; } = default!;
 
-    protected override async Task OnInitializedAsync()
+    private double _volumeFraction;
+
+    private string VolumeIcon => (_volumeFraction * 100) switch
     {
-        VoiceChatServiceOld.ParticipantUpdated += ParticipantUpdated;
-        _volume = await VoiceChatServiceOld.GetUserVolumeAsync(ModelOld);
-    }
+        0 => Icons.Material.Rounded.VolumeOff,
+        < 20 => Icons.Material.Rounded.VolumeMute,
+        < 80 => Icons.Material.Rounded.VolumeDown,
+        _ => Icons.Material.Rounded.VolumeUp
+    };
 
-    private void ParticipantUpdated(UserId userId, ChatModel chatModel)
+    private string MicIcon => Participant.MicrophoneEnabled
+        ? Icons.Material.Rounded.Mic
+        : Icons.Material.Rounded.MicOff;
+
+    private Color MicIconColor
     {
-        if (ModelOld.Id == userId)
+        get
         {
-            StateHasChanged();
+            if (!Participant.MicrophoneEnabled) return Color.Error;
+            return Participant.IsSpeaking ? Color.Success : Color.Default;
         }
     }
 
-    private int _volume;
+    protected override void OnInitialized() => _subscription = Participant.Subscribe(this);
 
-    private int Volume => ModelOld.Volume.Value;
-    private bool _firstChange = true;
+    private IDisposable? _subscription;
 
-    private async Task VolumeChanged(int value)
-    {
-        if (_firstChange)
-        {
-            _firstChange = false;
-            return;
-        }
+    public void OnChange() => StateHasChanged();
 
-        _volume = value;
-        await VoiceChatServiceOld.ChangeVolumeAsync(ModelOld, new Volume(value));
-    }
-
-    private Task ShowCamera() => VoiceChatServiceOld.MaximizeVideoAsync(ModelOld, VideoSource.Camera);
-
-    private Task ShowScreenShare() => VoiceChatServiceOld.MaximizeVideoAsync(ModelOld, VideoSource.ScreenShare);
-
-    private string AvatarBorderStyle => ModelOld.IsSpeaking ? "border-color: limegreen;" : string.Empty;
-
-    // private IconName VolumeIcon => _volume switch
-    // {
-    //     0 => IconName.VolumeMuteFill,
-    //     < 20 => IconName.VolumeOffFill,
-    //     < 80 => IconName.VolumeDownFill,
-    //     _ => IconName.VolumeUpFill
-    // };
-    //
-    // private IconName ConnectionQualityIcon => Model.ConnectionQuality switch
-    // {
-    //     ConnectionQuality.Excellent => IconName.Wifi,
-    //     ConnectionQuality.Good => IconName.Wifi2,
-    //     ConnectionQuality.Poor => IconName.Wifi1,
-    //     ConnectionQuality.Unknown => IconName.Broadcast,
-    //     _ => IconName.WifiOff,
-    // };
-    //
-    // private IconColor ConnectionQualityColor => Model.ConnectionQuality switch
-    // {
-    //     ConnectionQuality.Excellent or ConnectionQuality.Good => IconColor.Success,
-    //     ConnectionQuality.Poor => IconColor.Warning,
-    //     ConnectionQuality.Unknown => IconColor.Primary,
-    //     _ => IconColor.Danger,
-    // };
-    //
-    // private IconName MicrophoneIcon => Model.MicrophoneOn ? IconName.MicFill : IconName.MicMuteFill;
-    // private IconColor MicrophoneColor => Model.MicrophoneOn ? IconColor.Secondary : IconColor.Danger;
-
-    public void Dispose()
-    {
-        VoiceChatServiceOld.ParticipantUpdated -= ParticipantUpdated;
-    }
+    public void Dispose() => _subscription?.Dispose();
 }
