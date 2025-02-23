@@ -1,10 +1,20 @@
+using Shared.Data.TypedIds;
 using Shared.Models;
+using Shared.Reactive;
 
 namespace Shared.Services;
 
 public interface IRtcConnectionService
 {
+    event Action<ChatModel>? IncomingCall;
+
     bool ConnectedToCall { get; }
+
+    ChatModel? CallChat { get; }
+
+    CallParticipantModel LocalParticipant { get; }
+
+    IObservableCollection<CallParticipantModel> CallParticipants { get; }
 
     Task StartCallAsync(ChatModel chat);
 
@@ -12,9 +22,15 @@ public interface IRtcConnectionService
 
     Task DeclineCallAsync(ChatModel chat);
 
-    Task LeaveCallAsync(ChatModel chat);
+    Task LeaveCallAsync();
+
+    CallParticipantModel? GetParticipantById(UserId userId);
 
     Task<bool> GroupHasActiveCallAsync(ChatModel chat);
+
+    Task ChangeUserVolumeAsync(CallParticipantModel participant, Volume volume, AudioSource audioSource = AudioSource.Microphone);
+
+    Task<Volume> GetSavedUserVolumeAsync(CallParticipantModel participant);
 }
 
 public interface IRtcMediaControlService
@@ -26,28 +42,18 @@ public interface IRtcMediaControlService
     bool CameraEnabled { get; }
     bool ScreenShareEnabled { get; }
 
-    IEnumerable<MediaDeviceModel> Microphones { get; }
-    IEnumerable<MediaDeviceModel> Cameras { get; }
+    CallParticipantModel LocalParticipant { get; }
 
-    MediaDeviceModel? SelectedMicrophone { get; }
-    MediaDeviceModel? SelectedCamera { get; }
+    IObservableCollection<MicrophoneModel> Microphones { get; }
+    IObservableCollection<CameraModel> Cameras { get; }
 
-    Task SelectMicrophoneAsync(MediaDeviceModel microphone);
-    Task SelectCameraAsync(MediaDeviceModel camera);
+    MicrophoneModel? SelectedMicrophone { get; }
+    CameraModel? SelectedCamera { get; }
+
+    Task SelectMicrophoneAsync(MicrophoneModel microphone);
+    Task SelectCameraAsync(CameraModel camera);
 
     Task ToggleMicrophoneAsync();
     Task ToggleCameraAsync();
     Task ToggleScreenShareAsync();
-}
-
-public interface IRtcCallParticipantManager
-{
-    IEnumerable<CallParticipantModelOld> ActiveCallParticipants { get; }
-
-    event Action? LocalParticipantStateUpdated;
-
-    Task ChangeVolumeAsync(CallParticipantModelOld participant, Volume volume, AudioSource audioSource = AudioSource.Microphone);
-    Task<Volume> GetUserVolumeAsync(CallParticipantModelOld participantModelOld);
-    Task MaximizeVideoAsync(CallParticipantModelOld participant, VideoSource videoSource);
-    Task MinimizeVideoAsync();
 }

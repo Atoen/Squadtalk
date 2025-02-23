@@ -12,6 +12,7 @@ public abstract class ChatModel : Observable<ChatModel>, IKeyId<GroupId>
     public static readonly GroupId GlobalChatId = new(GlobalChanelIdValue);
 
     private string? _imageUrl;
+    private bool _hasActiveCall;
 
     public abstract string Name { get; }
 
@@ -21,6 +22,12 @@ public abstract class ChatModel : Observable<ChatModel>, IKeyId<GroupId>
     {
         get => _imageUrl;
         set => SetField(ref _imageUrl, value);
+    }
+
+    public bool HasActiveCall
+    {
+        get => _hasActiveCall;
+        set => SetField(ref _hasActiveCall, value);
     }
 
     public abstract IEnumerable<GroupParticipantModel> Participants { get; }

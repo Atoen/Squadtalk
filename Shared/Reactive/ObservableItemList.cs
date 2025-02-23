@@ -4,9 +4,9 @@ namespace Shared.Reactive;
 
 public sealed class ObservableItemList<T>
     : Observable<ObservableItemList<T>>,
-        IObservableCollection<T>,
-        ISubscriber,
-        IDisposable
+      IObservableCollection<T>,
+      ISubscriber,
+      IDisposable
     where T : IObservable
 {
     private readonly List<T> _list;
@@ -91,7 +91,6 @@ public sealed class ObservableItemList<T>
         var array = values as T[] ?? values.ToArray();
         _list.AddRange(array);
         _subscriptions.AddRange(array.Select(x => x.Subscribe(this)));
-
 
         var refreshedCount = Count;
 

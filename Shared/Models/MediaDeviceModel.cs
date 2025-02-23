@@ -1,11 +1,12 @@
 namespace Shared.Models;
 
-public class MediaDeviceModel
+public abstract record MediaDeviceModel(string Label, string Id)
 {
-    public string Label { get; set; } = default!;
-    public string Id { get; set; } = default!;
-
     public bool IsUnknown => string.IsNullOrEmpty(Label);
 
-    public string LabelOrDefault => IsUnknown ? "Unknown device" : Label;
+    public string LabelOrDefault(string defaultName) => IsUnknown ? defaultName : Label;
 }
+
+public sealed record MicrophoneModel(string Label, string Id) : MediaDeviceModel(Label, Id);
+
+public sealed record CameraModel(string Label, string Id) : MediaDeviceModel(Label, Id);

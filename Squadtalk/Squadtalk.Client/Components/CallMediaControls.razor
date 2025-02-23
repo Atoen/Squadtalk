@@ -14,7 +14,7 @@
 
                     <MudMenuItem OnClick="() => RtcMediaControl.SelectMicrophoneAsync(microphone)"
                                  Icon="@icon">
-                        @microphone.LabelOrDefault
+                        @microphone.LabelOrDefault(LocalizedText.R.unknown_device)
                     </MudMenuItem>
                 }
             </MudMenu>
@@ -35,7 +35,7 @@
 
                     <MudMenuItem OnClick="() => RtcMediaControl.SelectCameraAsync(camera)"
                                  Icon="@icon">
-                        @camera.LabelOrDefault
+                        @camera.LabelOrDefault(LocalizedText.R.unknown_device)
                     </MudMenuItem>
                 }
             </MudMenu>
@@ -50,13 +50,17 @@
     </MudTooltip>
 
     <MudTooltip Text="@LocalizedText.R.leave_call">
-        <MudButton Color="Color.Error" Variant="Variant.Filled">
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="RtcConnectionService.LeaveCallAsync">
             <MudIcon Icon="@Icons.Material.Rounded.CallEnd" Class="mx-1"/>
         </MudButton>
     </MudTooltip>
 
 </div>
 
+@implements IDisposable
+@implements ISubscriber
+
+@inject IRtcConnectionService RtcConnectionService
 @inject IRtcMediaControlService RtcMediaControl
 @inject LocalizedText LocalizedText
 
@@ -92,4 +96,15 @@
     private string ScreenShareTooltipText => RtcMediaControl.ScreenShareEnabled
         ? LocalizedText.R.stop_screen_share
         : LocalizedText.R.share_screen;
+
+    protected override void OnInitialized()
+    {
+        _subscription = RtcMediaControl.LocalParticipant.Subscribe(this);
+    }
+
+    private IDisposable? _subscription;
+
+    public void OnChange() => StateHasChanged();
+
+    public void Dispose() => _subscription?.Dispose();
 }

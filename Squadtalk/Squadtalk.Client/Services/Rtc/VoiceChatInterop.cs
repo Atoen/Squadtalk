@@ -1,9 +1,13 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.JSInterop;
 using Microsoft.JSInterop.Implementation;
 using Shared;
 using Shared.Data.TypedIds;
 using Shared.DTOs;
 using Shared.Models;
+using Shared.Services;
 using Squadtalk.Client.Extensions;
 
 namespace Squadtalk.Client.Services.Rtc;
@@ -19,6 +23,9 @@ internal sealed class VoiceChatInterop : IDisposable
     private IJSInProcessObjectReference? _jsModule;
     private bool _importedModule;
 
+    private RtcConnectionService? _connectionCallback;
+    private RtcMediaControlService? _mediaControlCallback;
+
     public bool Initialized { get; private set; }
 
     public VoiceChatInterop(
@@ -29,6 +36,18 @@ internal sealed class VoiceChatInterop : IDisposable
         _logger = logger;
 
         _dotNetObjectReference = DotNetObjectReference.Create(this);
+    }
+
+    public void SetConnectionCallback(RtcConnectionService connectionService)
+    {
+        Debug.Assert(_connectionCallback is null);
+        _connectionCallback = connectionService;
+    }
+
+    public void SetMediaControlCallback(RtcMediaControlService mediaControlService)
+    {
+        Debug.Assert(_mediaControlCallback is null);
+        _mediaControlCallback = mediaControlService;
     }
 
     public async Task InitializeAsync(string rtcEndpoint)
@@ -52,61 +71,107 @@ internal sealed class VoiceChatInterop : IDisposable
 
     public async Task<bool> JoinRoomAsync(RoomTokenDto token, ChatModel chat)
     {
-        return await _jsModule!.InvokeAsync<bool>("Start", token.Token);
+        if (!CheckInitialized())
+        {
+            return false;
+        }
+
+        return await _jsModule.InvokeAsync<bool>("Start", token.Token);
     }
 
-    [JSInvokable]
+    public async Task LeaveCallAsync()
+    {
+        if (!CheckInitialized()) return;
+
+        await _jsModule.InvokeVoidAsync("Stop");
+    }
+
+    public void ChangeUserVolume(CallParticipantModel participant, Volume volume, AudioSource audioSource)
+    {
+        if (!CheckInitialized()) return;
+
+        _jsModule.InvokeVoid("ChangeVolume", participant.Id, volume);
+    }
+
+    public async Task<bool> ToggleMicrophoneAsync()
+    {
+        if (!CheckInitialized())
+        {
+            return false;
+        }
+
+        return await _jsModule.InvokeAsync<bool>("ToggleMicrophoneEnabled");
+    }
+
+    [MemberNotNullWhen(true, nameof(_jsModule))]
+    private bool CheckInitialized() => _jsModule is not null;
+
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
     public void DisconnectedCallback(DisconnectReason reason)
     {
         _logger.LogInformation("Disconnected, reason: {Reason}", reason);
     }
 
-    [JSInvokable]
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
     public void ErrorCallback(string title, string message)
     {
         _logger.LogError("{Title}: {Message}", title, message);
     }
 
-    [JSInvokable]
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
     public void LocalParticipantStateUpdatedCallback(LocalParticipantState localParticipantState)
     {
         _logger.LogInformation("Local state updated");
     }
 
-    [JSInvokable]
-    public void MicrophonesUpdatedCallback(MediaDeviceInfo[] microphones)
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void MicrophonesUpdatedCallback(MediaDeviceInfo[] microphonesInfo)
     {
-        _logger.LogInformation("Microphones updated");
+        _mediaControlCallback?.MicrophoneListUpdated(microphonesInfo);
     }
 
-    [JSInvokable]
-    public void CamerasUpdatedCallback(MediaDeviceModel[] cameras)
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void CamerasUpdatedCallback(MediaDeviceInfo[] camerasInfo)
     {
-        _logger.LogInformation("Cameras updated");
+        _mediaControlCallback?.CameraListUpdated(camerasInfo);
     }
 
-    [JSInvokable]
-    public void ParticipantUpdatedCallback(RemoteParticipantState participantState, GroupId groupId)
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void ParticipantSpeakingStateChangedCallback(UserId userId, bool isSpeaking)
     {
-
+        if (_connectionCallback?.GetParticipantById(userId) is { } participant)
+        {
+            participant.IsSpeaking = isSpeaking;
+        }
     }
 
-    [JSInvokable]
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void ParticipantUpdatedCallback(RemoteParticipantState state, GroupId groupId)
+    {
+        if (_connectionCallback?.GetParticipantById(state.Id) is { } participant)
+        {
+            participant.IsSpeaking = state.IsSpeaking;
+            participant.ConnectionQuality = state.ConnectionQuality;
+            participant.MicrophoneEnabled = state.MicrophoneOn;
+        }
+    }
+
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
     public void ParticipantListReceivedCallback(RemoteParticipantState[] participants, GroupId groupId)
     {
-
+        _connectionCallback?.ParticipantListReceived(participants, groupId);
     }
 
-    [JSInvokable]
-    public void ParticipantConnectedCallback(RemoteParticipantState participantState, GroupId groupId)
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void ParticipantConnectedCallback(RemoteParticipantState participant, GroupId groupId)
     {
-
+        _connectionCallback?.ParticipantConnected(participant, groupId);
     }
 
-    [JSInvokable]
-    public void ParticipantDisconnectedCallback(RemoteParticipantState participantState, GroupId groupId)
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void ParticipantDisconnectedCallback(RemoteParticipantState participant, GroupId groupId)
     {
-
+        _connectionCallback?.ParticipantDisconnected(participant, groupId);
     }
 
     public void Dispose()

@@ -204,16 +204,6 @@ public static class ApplicationBuilderExtensions
             }).AddStackExchangeRedis(redisConnectionString, options =>
             {
                 options.Configuration.DefaultDatabase = 1;
-            })
-            .AddHubInstrumentation(options =>
-            {
-                options.OnException = static (activity, exception) =>
-                {
-                    if (exception is HubException)
-                    {
-                        activity.SetTag("otel.status_code", "OK");
-                    }
-                };
             });
 
         return builder;
@@ -274,12 +264,12 @@ public static class ApplicationBuilderExtensions
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IChannelSorter, ChannelSorter>();
 
-        services.AddSingleton<IRtcConnectionService, RtcConnectionService>();
-        services.AddSingleton<IRtcMediaControlService, RtcMediaControlService>();
+        services.AddScoped<IRtcConnectionService, RtcConnectionService>();
+        services.AddScoped<IRtcMediaControlService, RtcMediaControlService>();
         services.AddSingleton<RtcConnectionManager>();
 
         services.AddScoped<IFileTransferService, FileTransferService>();
-        services.AddScoped<IVoiceChatServiceOld, NoOpVoiceChatServiceOld>();
+        // services.AddScoped<IVoiceChatServiceOld, NoOpVoiceChatServiceOld>();
 
         services.AddScoped<EmbedService>();
         services.AddScoped<ImagePreviewGenerator>();

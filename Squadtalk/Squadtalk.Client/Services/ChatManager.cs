@@ -135,7 +135,7 @@ internal class ChatManager : IChatManager
 
         var chat = await CreateNewChatAsync(dm.Other);
 
-        _logger.LogInformation("Result id: {GroupId}", chat);
+        _logger.LogInformation("Result id: {@GroupId}", chat);
 
         if (chat is not null)
         {

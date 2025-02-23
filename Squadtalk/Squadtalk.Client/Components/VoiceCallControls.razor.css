@@ -1,8 +1,0 @@
-.status-container {
-    display: flex;
-    gap: 0.5rem;
-    grid-row: 2;
-    justify-content: center;
-    order: 4;
-    margin-bottom: 5px;
-}

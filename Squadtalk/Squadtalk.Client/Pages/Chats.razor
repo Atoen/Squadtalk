@@ -50,6 +50,13 @@
 {
     protected override async Task OnInitializedAsync()
     {
+        if (RendererInfo.IsInteractive)
+        {
+            ChatManager.ChatListChanged += StateHasChanged;
+            ChatManager.ChatChanged += StateHasChanged;
+            ChannelSorter.ChannelOrderChanged += StateHasChanged;
+        }
+
         await ConnectionService.ConnectAsync();
     }
 
@@ -84,15 +91,6 @@
 
         _dialogReference = await DialogService.ShowAsync<SelectFriendsDialog>(
              LocalizedText.R.select_friends, _dialogParameters, _dialogOptions);
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender) return;
-
-        ChatManager.ChatListChanged += StateHasChanged;
-        ChatManager.ChatChanged += StateHasChanged;
-        ChannelSorter.ChannelOrderChanged += StateHasChanged;
     }
 
     public void Dispose()

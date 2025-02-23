@@ -18,13 +18,6 @@ public class ChannelState(ChatModel chat) : Observable<ChannelState>
 
     public int UnreadMessages { get; set; }
 
-    private bool _hasActiveCall;
-    public bool HasActiveCall
-    {
-        get => _hasActiveCall;
-        set => SetField(ref _hasActiveCall, value);
-    }
-
     private MessageModel? _callInfoMessage;
 
     public void AddMessage(MessageModel message)

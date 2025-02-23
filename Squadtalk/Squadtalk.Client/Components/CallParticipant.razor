@@ -1,15 +1,16 @@
-<MudPaper class="rounded d-flex flex-column my-1 align-center pa-1 mud-ripple flex-auto"
+<MudPaper class="rounded d-flex flex-column my-1 align-center pa-1 mud-ripple flex-auto" Outlined="true"
           MaxWidth="120px" MinWidth="100px">
     @UserAvatar.NoBadgeMedium(Participant.User)
     @Participant.Username
 
-    <div class="d-flex gap-1 mt-1">
+    <div class="d-flex gap-2 mt-1">
         @if (Participant.IsRemote)
         {
             <MudMenu Icon="@VolumeIcon" Size="Size.Small" Dense="true">
-                <MudSlider @bind-Value="_volumeFraction" Class="ps-5 pe-6 pt-6 pb-1"
-                           Size="Size.Small" ValueLabel="true" ValueLabelFormat="P0"
-                           Max="1" Step="0.01"/>
+                <MudSlider T="double" Class="ps-5 pe-6 pt-6 pb-1" Size="Size.Small"
+                           ValueLabel="true" ValueLabelFormat="P0"
+                           Max="1" Step="0.01" Value="_volumeFraction"
+                           ValueChanged="UserVolumeChanged"/>
             </MudMenu>
         }
 
@@ -23,7 +24,9 @@
 @implements ISubscriber
 @implements IDisposable
 
+@inject IRtcConnectionService RtcConnectionService
 @inject LocalizedText LocalizedText
+@inject ILogger<CallParticipant> Logger
 
 @code
 {
@@ -32,7 +35,15 @@
 
     private double _volumeFraction;
 
-    private string VolumeIcon => (_volumeFraction * 100) switch
+    private Task UserVolumeChanged(double sliderValue)
+    {
+        _volumeFraction = sliderValue;
+
+        var volume = new Volume((int) (sliderValue * 100));
+        return RtcConnectionService.ChangeUserVolumeAsync(Participant, volume);
+    }
+
+    private string VolumeIcon => Participant.Volume.Value switch
     {
         0 => Icons.Material.Rounded.VolumeOff,
         < 20 => Icons.Material.Rounded.VolumeMute,
@@ -53,7 +64,16 @@
         }
     }
 
-    protected override void OnInitialized() => _subscription = Participant.Subscribe(this);
+    protected override async Task OnInitializedAsync()
+    {
+        _subscription = Participant.Subscribe(this);
+
+        if (!Participant.IsRemote) return;
+
+        var savedVolume = await RtcConnectionService.GetSavedUserVolumeAsync(Participant);
+        Participant.Volume = savedVolume;
+        _volumeFraction = savedVolume / 100.0;
+    }
 
     private IDisposable? _subscription;
 

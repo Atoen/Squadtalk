@@ -1,6 +1,9 @@
+using JetBrains.Annotations;
+
 namespace Squadtalk.Client.Services.Rtc;
 
-public class MediaDeviceInfo
+[UsedImplicitly]
+internal sealed class MediaDeviceInfo
 {
     public string Label { get; set; } = default!;
     public string Id { get; set; } = default!;

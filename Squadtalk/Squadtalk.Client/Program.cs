@@ -11,6 +11,13 @@ using Squadtalk.Client.Services.Rtc;
 using Squadtalk.Client.Services.SignalR;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+// builder.Logging.SetMinimumLevel(LogLevel.Debug); // Global minimum level
+
+// Add Console Logging with a custom format
+
+// Configure specific logging levels
+// builder.Logging.AddFilter("Microsoft.AspNetCore.Components.RenderTree.Renderer", LogLevel.Debug);
+
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddNetworking(builder.HostEnvironment.BaseAddress);
@@ -43,7 +50,7 @@ builder.Services.AddScoped<IRtcConnectionService, RtcConnectionService>();
 builder.Services.AddScoped<IRtcMediaControlService, RtcMediaControlService>();
 
 builder.Services.AddScoped<IFileTransferService, FileTransferService>();
-builder.Services.AddScoped<IVoiceChatServiceOld, VoiceChatServiceOld>();
+// builder.Services.AddScoped<IVoiceChatServiceOld, VoiceChatServiceOld>();
 builder.Services.AddScoped<UserVolumeManager>();
 
 builder.Services.AddScoped<ContactTabState>();

@@ -36,6 +36,7 @@ user_cleared_channel_name: {0} cleared channel name
 write_to_channel: Write to @{0}
 
 leave_call: Leave call
+unknown_device: Unknown device
 
 user_volume: User volume
 no_mic_available: No microphone available

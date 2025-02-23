@@ -8,6 +8,8 @@ public class ObservableCollection<T> : IObservableCollection<T>
 {
     public static readonly IObservableCollection<T> Empty = new ObservableCollection<T>();
 
+    private ObservableCollection() { }
+
     public IDisposable? Subscribe(ISubscriber subscriber) => null;
 
     public IEnumerator<T> GetEnumerator() => Enumerable.Empty<T>().GetEnumerator();

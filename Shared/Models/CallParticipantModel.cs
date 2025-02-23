@@ -6,7 +6,11 @@ using Shared.Services;
 
 namespace Shared.Models;
 
-public sealed class CallParticipantModel : Observable<CallParticipantModel>, ISubscriber, IDisposable, IChatUser
+public sealed class CallParticipantModel
+    : Observable<CallParticipantModel>,
+      ISubscriber,
+      IDisposable, IChatUser,
+      IKeyId<UserId>
 {
     private bool _isSpeaking;
     private bool _microphoneEnabled;
@@ -44,6 +48,8 @@ public sealed class CallParticipantModel : Observable<CallParticipantModel>, ISu
     public UserId Id => User.Id;
     public UserStatus Status => User.Status;
 
+    public UserId Key => User.Id;
+
     private readonly IDisposable? _userSubscription;
 
     public CallParticipantModel(UserModel user)
@@ -55,5 +61,6 @@ public sealed class CallParticipantModel : Observable<CallParticipantModel>, ISu
     public void OnChange() => Notify();
 
     public void Dispose() => _userSubscription?.Dispose();
+
 }
 

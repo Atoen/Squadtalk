@@ -1,10 +1,12 @@
+using Shared.Data;
 using Shared.Data.TypedIds;
+using Shared.Enums;
 using Shared.Models;
 using Shared.Services;
 
 namespace Squadtalk.Client.Services.Rtc;
 
-public class RemoteParticipantState
+public class RemoteParticipantState : IChatUser
 {
     public string Username { get; set; } = default!;
 
@@ -22,4 +24,6 @@ public class RemoteParticipantState
     public bool IsRemote { get; set; }
 
     public bool IsSpeaking { get; set; }
+
+    public UserStatus Status => UserStatus.Unknown;
 }

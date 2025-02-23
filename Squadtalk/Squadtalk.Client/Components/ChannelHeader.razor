@@ -12,7 +12,7 @@
             </div>
 
             <div class="order-3 d-flex ms-auto">
-                @if (!Chat.HasActiveCall())
+                @if (!Chat.HasActiveCall)
                 {
                     <MudTooltip Text="@LocalizedText.R.start_call" Class="z-100">
                         <MudIconButton Icon="@Icons.Material.Rounded.Call" Color="Color.Inherit"
@@ -84,10 +84,8 @@
 
     </div>
 
-    @if (Chat.HasActiveCall() || true)
+    @if (Chat.HasActiveCall)
     {
-        <MudDivider/>
-
         <CallStatus Chat="Chat"/>
     }
 

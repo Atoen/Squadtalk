@@ -1,14 +1,27 @@
-<div class="d-flex flex-column align-center mud-width-full">
-    <div class="gap-1 mud-width-full d-flex flex-wrap justify-center">
-        @foreach (var participant in _callParticipants)
-        {
-            <CallParticipant Participant="participant"/>
-        }
-    </div>
+<MudPaper class="d-flex flex-column align-center mud-width-full rounded-t-0">
 
-    <CallMediaControls/>
-</div>
+    @if (RtcConnectionService.CallChat == Chat)
+    {
+        <div class="gap-1 mud-width-full d-flex flex-wrap justify-center px-1">
+            @foreach (var participant in RtcConnectionService.CallParticipants)
+            {
+                <CallParticipant Participant="participant"/>
+            }
+        </div>
 
+        <CallMediaControls/>
+    }
+    else
+    {
+        <div @onclick="JoinExistingCall">Join voice call: @Chat.Name</div>
+    }
+
+</MudPaper>
+
+@implements ISubscriber
+@implements IDisposable
+
+@inject IRtcConnectionService RtcConnectionService
 @inject IContactManager ContactManager
 
 @code
@@ -16,29 +29,16 @@
     [Parameter, EditorRequired]
     public ChatModel Chat { get; set; } = default!;
 
-    private readonly List<CallParticipantModel> _callParticipants = [];
+    protected override void OnInitialized() => _subscription = RtcConnectionService.CallParticipants.Subscribe(this);
 
-    protected override void OnInitialized()
+    private IDisposable? _subscription;
+
+    public void OnChange() => StateHasChanged();
+
+    public void Dispose() => _subscription?.Dispose();
+
+    private async Task JoinExistingCall()
     {
-        _callParticipants.Add(new CallParticipantModel(ContactManager.LocalUserModel)
-        {
-           ConnectionQuality = ConnectionQuality.Excellent,
-           IsSpeaking = false,
-           MicrophoneEnabled = true
-        });
-
-        _callParticipants.Add(new CallParticipantModel(ContactManager.FriendList.First())
-        {
-           ConnectionQuality = ConnectionQuality.Good,
-           IsSpeaking = true,
-           MicrophoneEnabled = true
-        });
-
-        _callParticipants.Add(new CallParticipantModel(ContactManager.FriendList.Skip(1).First())
-        {
-           ConnectionQuality = ConnectionQuality.Poor,
-           IsSpeaking = false,
-           MicrophoneEnabled = false
-       });
+        await RtcConnectionService.AcceptCallAsync(Chat);
     }
 }

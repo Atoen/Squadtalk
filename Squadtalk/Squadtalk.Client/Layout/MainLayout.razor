@@ -33,10 +33,11 @@
 @implements IDisposable
 
 @inject IConnectionService ConnectionService
-@inject IVoiceChatServiceOld VoiceChatServiceOld
+@* @inject IVoiceChatServiceOld VoiceChatServiceOld *@
 @inject IUserPreferencesService UserPreferences
 @inject IUserAuthenticationService UserAuthenticationService
 @inject IContactManager ContactManager
+@inject IChatManager ChatManager
 @inject PersistentComponentState PersistentComponentState
 
 @code
@@ -60,14 +61,13 @@
     {
         if (!firstRender) return;
 
-        VoiceChatServiceOld.CallIncoming += CallIncoming;
+        // VoiceChatServiceOld.CallIncoming += CallIncoming;
         UserPreferences.UseDarkModeChanged += StateHasChanged;
         UserPreferences.PaletteChanged += PaletteChanged;
 
         if (UserAuthenticationService.IsAuthenticated)
         {
             await ContactManager.RefreshFriendListAsync();
-            await VoiceChatServiceOld.InitializeAsync();
         }
     }
 
@@ -102,14 +102,14 @@
     {
         // await _callIncomingModal.HideAsync();
 
-        if (accepted)
-        {
-            await VoiceChatServiceOld.AcceptCallAsync(groupId);
-        }
-        else
-        {
-            await VoiceChatServiceOld.DeclineCallAsync(groupId);
-        }
+        // if (accepted)
+        // {
+        //     await VoiceChatServiceOld.AcceptCallAsync(groupId);
+        // }
+        // else
+        // {
+        //     await VoiceChatServiceOld.DeclineCallAsync(groupId);
+        // }
     }
 
     public void Dispose()
@@ -118,7 +118,7 @@
 
         if (RendererInfo.IsInteractive)
         {
-            VoiceChatServiceOld.CallIncoming -= CallIncoming;
+            // VoiceChatServiceOld.CallIncoming -= CallIncoming;
             UserPreferences.UseDarkModeChanged -= StateHasChanged;
             UserPreferences.PaletteChanged -= PaletteChanged;
         }

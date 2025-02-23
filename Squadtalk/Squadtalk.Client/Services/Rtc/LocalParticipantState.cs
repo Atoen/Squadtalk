@@ -2,7 +2,7 @@ using Shared.Models;
 
 namespace Squadtalk.Client.Services.Rtc;
 
-public class LocalParticipantState
+public sealed class LocalParticipantState
 {
     public bool MicrophoneOn { get; set; }
     public bool CameraOn { get; set; }
