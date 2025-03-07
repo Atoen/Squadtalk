@@ -88,6 +88,29 @@ public partial class AppHub
         return messages.Select(x => x.ToDto()).ToList();
     }
 
+    public async Task<List<GroupDto>> GetGroups(MessageRepository messageRepository)
+    {
+        var user = await _userRepository.FindUserByIdAsync(Context.User, GroupInclusionOption.IncludeWithParticipants);
+        if (user is null || user.GroupParticipants.Count == 0)
+        {
+            return [];
+        }
+
+        var unreadMessagesPerGroup = await messageRepository.GetUnreadMessageCountPerGroupAsync(user.Id);
+
+        var groupDtos = user.Groups
+            .Select(x => x.ToDto())
+            .OrderByDescending(x => x.LastMessage?.Timestamp)
+            .ToList();
+
+        foreach (var groupDto in groupDtos)
+        {
+            groupDto.MessagesSince = unreadMessagesPerGroup.GetValueOrDefault(groupDto.Id);
+        }
+
+        return groupDtos;
+    }
+
     [HubMethodName(HubMethods.AddFriendsToGroup)]
     public async Task<HubResult> AddFriendsToGroup(
         GroupId groupId, List<UserId> friendIds, GroupRepository groupRepository)

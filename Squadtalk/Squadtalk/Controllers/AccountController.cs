@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -9,11 +10,13 @@ using Quartz;
 using Shared.Data.TypedIds;
 using Shared.DTOs.Account;
 using Shared.DTOs.Account.Results;
+using Shared.DTOs.Chat;
 using Shared.Routing;
 using Squadtalk.Data;
 using Squadtalk.Data.Entities;
 using Squadtalk.Data.Repositories;
 using Squadtalk.Jobs;
+using Squadtalk.Services;
 using Squadtalk.Signalr;
 
 namespace Squadtalk.Controllers;
@@ -43,7 +46,8 @@ public class AccountController : ControllerBase
     }
 
     [HttpPost(Routes.RelativeEndpoints.Login)]
-    public async Task<ActionResult> LoginUser(UserLoginDto loginDto)
+    public async Task<ActionResult> LoginUser(
+        UserLoginDto loginDto)
     {
         var user = await _userManager.FindByNameAsync(loginDto.UsernameOrEmail)
                 ?? await _userManager.FindByEmailAsync(loginDto.UsernameOrEmail);
@@ -59,8 +63,26 @@ public class AccountController : ControllerBase
             return Unauthorized(LoginResultDto.Fail);
         }
 
-        return Ok(LoginResultDto.Success);
+        return Ok(user.ToDto());
     }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<UserDto?> CurrentUser(
+        [FromServices] ChatUserRepository userRepository,
+        [FromServices] HubConnectionManager hubConnectionManager)
+    {
+        var user = await userRepository.FindUserByIdAsync(HttpContext.User);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var status = await hubConnectionManager.GetUserStatusAsync(user.Id);
+
+        return user.ToDto(status);
+    }
+
 
     [HttpPost(Routes.RelativeEndpoints.Register)]
     public async Task<ActionResult> RegisterUser(UserRegisterDto registerDto)
@@ -390,7 +412,8 @@ public class AccountController : ControllerBase
     public async Task<ActionResult> Logout([FromQuery] string? returnUrl)
     {
         await _signInManager.SignOutAsync();
-        return LocalRedirect($"~/{returnUrl}");
+        return Ok();
+        // return LocalRedirect($"~/{returnUrl}");
     }
 
     [HttpGet(Routes.RelativeEndpoints.LogOutExternal)]

@@ -198,8 +198,8 @@ public static class ApplicationBuilderExtensions
             .AddMessagePackProtocol(options =>
             {
                 options.SerializerOptions = MessagePackSerializerOptions.Standard
-                    .WithCompression(MessagePackCompression.Lz4BlockArray)
-                    .WithCompressionMinLength(256)
+                    // .WithCompression(MessagePackCompression.Lz4Block)
+                    // .WithCompressionMinLength(256)
                     .WithSecurity(MessagePackSecurity.UntrustedData);
             }).AddStackExchangeRedis(redisConnectionString, options =>
             {
