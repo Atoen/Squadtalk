@@ -1,6 +1,6 @@
 namespace Shared.Data.Personalization;
 
-public readonly struct ApplicationPreferences
+public readonly ref struct ApplicationPreferences
 {
     private const char Delimiter = '$';
     private const int MaxStackAllocLength = 128;

@@ -47,7 +47,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicy, policy =>
     {
-        policy.WithOrigins("app.squadtalk.net")
+        policy.WithOrigins("app.squadtalk.net", "http://localhost:4200")
+            .AllowCredentials()
             .AllowAnyHeader()
             .AllowAnyMethod()
             .WithExposedHeaders(CorsHelper.GetExposedHeaders());
